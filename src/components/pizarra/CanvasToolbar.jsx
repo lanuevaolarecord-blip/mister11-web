@@ -2,11 +2,14 @@ import React from 'react';
 import { TOOLS, STROKE_WIDTHS } from '../../lib/mister11-tools.js';
 import { useTranslation } from '../../hooks/useTranslation';
 
+import FieldSelector from './FieldSelector';
+
 const CanvasToolbar = ({
   fieldType,
   setFieldType,
   fullscreenMode,
   setFullscreenMode,
+  toggleFullscreen,
   autoSaveStatus,
   reducedDim,
   setReducedDim,
@@ -56,30 +59,21 @@ const CanvasToolbar = ({
 
           {!fullscreenMode && (
             <button className="topbar-btn secondary" onClick={() => {
-              setFullscreenMode(true);
               if (setLeftPanelOpen) setLeftPanelOpen(false);
               if (setRightPanelOpen) setRightPanelOpen(false);
               if (setShowTeamsDrawer) setShowTeamsDrawer(false);
               if (setShowMatsDrawer) setShowMatsDrawer(false);
-              setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+              if (toggleFullscreen) {
+                toggleFullscreen();
+              } else if (setFullscreenMode) {
+                setFullscreenMode(true);
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+              }
             }}>
               🗖 {t('board.toolbar.fullscreen')}
             </button>
           )}
-          <select className="topbar-select" value={fieldType} onChange={e => setFieldType(e.target.value)}>
-            <option value="full">{t('board.fields.full')}</option>
-            <option value="half-attack">{t('board.fields.halfAttack')}</option>
-            <option value="half-defense">{t('board.fields.halfDefense')}</option>
-            <option value="third_defense">{t('board.fields.thirdDefense')}</option>
-            <option value="third_mid">{t('board.fields.thirdMid')}</option>
-            <option value="third_attack">{t('board.fields.thirdAttack')}</option>
-            <option value="penalty_area">{t('board.fields.penaltyArea')}</option>
-            <option value="f7">{t('board.fields.f7')}</option>
-            <option value="f8">{t('board.fields.f8')}</option>
-            <option value="futsal">{t('board.fields.futsal')}</option>
-            <option value="reduced">{t('board.fields.reduced')}</option>
-            <option value="blank">{t('board.fields.blank')}</option>
-          </select>
+          <FieldSelector fieldType={fieldType} setFieldType={setFieldType} />
         </div>
 
         <div className="topbar-adaptive-content">

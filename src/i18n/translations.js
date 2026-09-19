@@ -1113,6 +1113,7 @@ export const translations = {
     'board.export.encodingProgress': 'Codificando video MP4...',
     'board.toolbar.strokeColor': 'Color de trazo',
     'board.toolbar.strokeWidth': 'Grosor de trazo',
+    'board.toolbar.fieldType': 'Tipo de campo',
 
     'board.fields.full': 'Campo Completo',
     'board.fields.halfAttack': '½ Ataque',
@@ -3604,6 +3605,7 @@ export const translations = {
     'board.export.encodingProgress': 'Encoding MP4 video...',
     'board.toolbar.strokeColor': 'Stroke color',
     'board.toolbar.strokeWidth': 'Stroke width',
+    'board.toolbar.fieldType': 'Pitch type',
 
     'board.fields.full': 'Full Pitch',
     'board.fields.halfAttack': '½ Attack',

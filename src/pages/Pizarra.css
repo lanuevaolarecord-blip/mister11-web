@@ -595,6 +595,10 @@ canvas.lower-canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  min-width: 48px;
+  touch-action: manipulation;
 }
 .material-item:hover { border-color: var(--accent); background: var(--bg-primary); }
 .material-item.active { border-color: var(--accent-gold); background: var(--bg-primary); }

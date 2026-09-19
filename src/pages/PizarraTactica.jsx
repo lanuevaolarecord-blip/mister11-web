@@ -42,6 +42,15 @@ import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
 import AnimationPanel from '../components/pizarra/AnimationPanel';
 import { useTranslation } from '../hooks/useTranslation';
+import {
+  WHITEBOARD_CONFIG,
+  getPlayerCircleRadius,
+  getPlayerFontSize,
+  getPlayerBorderWidth,
+  getPlayerPhotoSize,
+  getMaterialCircleRadius,
+  getMaterialFontSize
+} from '../config/whiteboardConfig.js';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -56,6 +65,7 @@ const toLibType = (t) => {
     '½ Defensa':      'half_defense',
     'third_defense':  'third_def',
     'third_mid':      'third_mid',
+    'third_middle':   'third_mid',
     'third_attack':   'third_off',
     'penalty_area':   'penalty_zoom',
     'f7':             'f7',
@@ -225,9 +235,11 @@ const PizarraTactica = () => {
 
   const normalizarTamañoJugadores = useCallback((canvas) => {
     if (!canvas) return;
-    const targetRadius = Math.max(10, Math.min(18, Math.round(canvas.width * 0.025)));
-    const borderWidth = Math.max(2, targetRadius * 0.18);
-    const targetFontSize = Math.round(targetRadius * 0.85);
+    // TAMAÑOS REDUCIDOS UN 30% (FIX 3) VÍA WHITEBOARD_CONFIG
+    const targetRadius = getPlayerCircleRadius(canvas.width);
+    const borderWidth = getPlayerBorderWidth(targetRadius);
+    const targetFontSize = getPlayerFontSize(targetRadius);
+    const touchPadding = WHITEBOARD_CONFIG.touchTarget.getPadding(targetRadius);
 
     canvas.getObjects().forEach(obj => {
       const isPlayer = obj.data?.type === 'player' || 
@@ -256,6 +268,7 @@ const PizarraTactica = () => {
           });
         }
         obj.set({
+          padding: touchPadding,
           scaleX: 1,
           scaleY: 1,
           dirty: true
@@ -486,6 +499,7 @@ const PizarraTactica = () => {
   const [isSwapped, setIsSwappedState] = useState(false);
   const [showRival, setShowRivalState] = useState(false);
   const [fieldType, setFieldTypeState] = useState('full');
+  const fieldTypeRef = useRef('full');
   
   const setLocalFormation = (v) => { 
     setLocalFormationState(v); 
@@ -505,8 +519,19 @@ const PizarraTactica = () => {
     setShowRivalState(v); 
   };
   const setFieldType = (v) => { 
+    fieldTypeRef.current = v;
     setFieldTypeState(v); 
   };
+
+  useEffect(() => {
+    fieldTypeRef.current = fieldType;
+  }, [fieldType]);
+
+  // FIX 3: toggleFullscreen SOLO alterna fullscreenMode y NUNCA resetea fieldType
+  const toggleFullscreen = useCallback(() => {
+    setFullscreenMode(prev => !prev);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+  }, []);
 
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showWidthPicker, setShowWidthPicker] = useState(false);
@@ -1278,27 +1303,31 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return null;
     
-    const targetRadius = Math.max(8.5, Math.min(15.5, Math.round(fc.width * 0.021)));
+    // REDUCCIÓN DEL 30% VÍA WHITEBOARD_CONFIG
+    const targetRadius = options.radius || getPlayerCircleRadius(fc.width);
     const { color = '#4CAF7D', label = '1', type = 'local', radius = targetRadius } = options;
     
     // Obtener coordenadas relativas al CAMPO REAL
     const { rx, ry } = fr.getRelativePoint(x, y);
 
-    const borderWidth = Math.max(2, radius * 0.18);
+    const borderWidth = getPlayerBorderWidth(radius);
+    const fontSize = getPlayerFontSize(radius);
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
       fill: color,
       stroke: '#FFFFFF', strokeWidth: borderWidth,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: Math.round(radius * 0.85), fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: fontSize, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const playerId = options.id || `player_${type}_${label}`;
+    const touchPadding = WHITEBOARD_CONFIG.touchTarget.getPadding(radius);
     const group = new fabric.Group([circle, text], {
       left: x, top: y,
       originX: 'center', originY: 'center',
       hasControls: true, hasBorders: false,
+      padding: touchPadding,
       // FIX: stroke en el Group para que sobreviva serialización/deserialización
       stroke: '#FFFFFF',
       strokeWidth: borderWidth,
@@ -1965,7 +1994,8 @@ const PizarraTactica = () => {
 
       // Paso 3: redibujar campo para que el renderer tenga bounds actualizados
       if (fr) {
-        fr.draw(toLibType(fieldType));
+        const activeType = fieldTypeRef.current || fieldType || 'full';
+        fr.draw(toLibType(activeType));
       }
 
       // Paso 4: reposicionar objetos usando coordenadas guardadas
@@ -3277,6 +3307,7 @@ const PizarraTactica = () => {
         setRightPanelOpen={setRightPanelOpen}
         setShowTeamsDrawer={setShowTeamsDrawer}
         setShowMatsDrawer={setShowMatsDrawer}
+        toggleFullscreen={toggleFullscreen}
       />
       
       {fullscreenMode && (
@@ -3284,10 +3315,7 @@ const PizarraTactica = () => {
           {/* Botón salir fullscreen */}
           <button
             className="floating-exit"
-            onClick={() => {
-              setFullscreenMode(false);
-              setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-            }}
+            onClick={toggleFullscreen}
           >
             ✖ Salir Pizarra
           </button>

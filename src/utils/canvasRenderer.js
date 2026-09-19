@@ -476,9 +476,9 @@ export const drawPlayerRow = (ctx, player, img, x, y, width, height, isGk = fals
 };
 
 /**
- * Pie institucional con entrenador y logo Míster11
+ * Pie institucional con cuerpo técnico (con roles oficiales) y logo Míster11
  */
-export const drawCoachFooter = (ctx, coachName, width, y) => {
+export const drawCoachFooter = (ctx, coachOrStaff, width, y, lang = 'es') => {
   ctx.save();
   // Línea divisoria en Oro
   ctx.strokeStyle = 'rgba(212, 168, 67, 0.35)';
@@ -488,27 +488,81 @@ export const drawCoachFooter = (ctx, coachName, width, y) => {
   ctx.lineTo(width - 48, y);
   ctx.stroke();
 
-  // Entrenador / Coach
-  const coachText = (coachName || 'Míster Principal').toUpperCase();
-  ctx.fillStyle = PALETTE.ORO;
-  ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('ENTRENADOR / COACH:', 56, y + 30);
+  const isEn = lang === 'en' || lang === 'English (EN)';
 
-  ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '700 17px system-ui, -apple-system, sans-serif';
-  ctx.fillText(coachText, 250, y + 30);
+  // Normalizar lista de miembros del staff
+  let staffList = [];
+  if (Array.isArray(coachOrStaff) && coachOrStaff.length > 0) {
+    staffList = coachOrStaff;
+  } else if (typeof coachOrStaff === 'string' && coachOrStaff.trim()) {
+    staffList = [{ name: coachOrStaff, roleLabel: isEn ? 'HEAD COACH' : 'ENTRENADOR PRINCIPAL' }];
+  } else if (coachOrStaff && typeof coachOrStaff === 'object' && coachOrStaff.name) {
+    staffList = [coachOrStaff];
+  } else {
+    staffList = [{ name: 'Míster Principal', roleLabel: isEn ? 'HEAD COACH' : 'ENTRENADOR PRINCIPAL' }];
+  }
 
   // Marca Míster11 (derecha)
   ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = PALETTE.ORO;
   ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-  ctx.fillText('MÍSTER 11', width - 56, y + 24);
+  ctx.fillText('MÍSTER 11', width - 56, y + 26);
 
   ctx.fillStyle = 'rgba(245, 240, 232, 0.6)';
   ctx.font = '500 13px system-ui, -apple-system, sans-serif';
-  ctx.fillText('Generado con Míster11 · Paleta Oficial Tierra y Campo', width - 56, y + 44);
+  ctx.fillText(isEn ? 'Generated with Míster11 · Official Field Palette' : 'Generado con Míster11 · Paleta Oficial Tierra y Campo', width - 56, y + 48);
+
+  // Renderizar Cuerpo Técnico a la izquierda
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  if (staffList.length === 1) {
+    const member = staffList[0];
+    const roleLabel = (member.roleLabel || member.role || (isEn ? 'HEAD COACH' : 'ENTRENADOR PRINCIPAL')).toUpperCase();
+    const name = (member.name || member.displayName || 'Míster').toUpperCase();
+
+    ctx.fillStyle = PALETTE.ORO;
+    ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`${roleLabel}:`, 56, y + 36);
+
+    const roleWidth = ctx.measureText(`${roleLabel}:`).width;
+    ctx.fillStyle = PALETTE.BLANCO;
+    ctx.font = '700 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText(name, 56 + roleWidth + 10, y + 36);
+  } else {
+    // Título de bloque
+    ctx.fillStyle = PALETTE.ORO_LIGHT;
+    ctx.font = '800 11px system-ui, -apple-system, sans-serif';
+    ctx.fillText(isEn ? 'COACHING STAFF / CUERPO TÉCNICO:' : 'CUERPO TÉCNICO CONVOCADO:', 56, y + 18);
+
+    // Distribuir los técnicos en 1 o 2 líneas
+    const maxCols = staffList.length > 2 ? 2 : staffList.length;
+    const colSpacing = 340;
+
+    staffList.slice(0, 4).forEach((member, idx) => {
+      const col = idx % maxCols;
+      const row = Math.floor(idx / maxCols);
+
+      const itemX = 56 + col * colSpacing;
+      const itemY = y + 38 + row * 24;
+
+      const roleLabel = (member.roleLabel || member.role || 'Staff').toUpperCase();
+      const name = (member.name || member.displayName || '').toUpperCase();
+
+      ctx.fillStyle = PALETTE.ORO;
+      ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+      const roleText = `${roleLabel}:`;
+      ctx.fillText(roleText, itemX, itemY);
+
+      const rW = ctx.measureText(roleText).width;
+      ctx.fillStyle = PALETTE.BLANCO;
+      ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+      // Truncar si el nombre es muy largo para evitar solapes
+      const displayName = name.length > 22 ? name.slice(0, 20) + '...' : name;
+      ctx.fillText(displayName, itemX + rW + 6, itemY);
+    });
+  }
 
   ctx.restore();
 };

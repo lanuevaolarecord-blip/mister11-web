@@ -1125,7 +1125,7 @@ const Partidos = () => {
 
       exportClone = pitchExportRef.current.cloneNode(true);
       exportClone.classList.add('export-lineup-hd-capture');
-      exportClone.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;max-width:780px;min-width:780px;box-sizing:border-box;z-index:-9999;';
+      exportClone.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;max-width:780px;min-width:780px;box-sizing:border-box;z-index:-9999;display:flex !important;visibility:visible !important;';
 
       const cloneImgs = exportClone.querySelectorAll('img[src]');
       cloneImgs.forEach((img) => {
@@ -1994,16 +1994,18 @@ const Partidos = () => {
                   coachName={user?.displayName || user?.email?.split('@')[0] || 'Míster Principal'}
                   lang={currentGlobalLanguage}
                   currentUserId={user?.uid}
-                  onSaveConvocation={async (newConvocados) => {
+                  onSaveConvocation={async (newConvocados, newConvocadosStaff) => {
                     const clean = (newConvocados || []).slice(0, 18);
                     const titulares = clean.slice(0, 11);
                     const suplentes = clean.slice(11, 18);
+                    const staffClean = newConvocadosStaff || matchData?.convocadosStaff || [];
                     setCalledPlayers(clean);
                     setMatchData(prev => ({
                       ...prev,
                       titulares,
                       suplentes,
-                      convocados: clean
+                      convocados: clean,
+                      convocadosStaff: staffClean
                     }));
                     if (matchData?.id && updateMatch) {
                       try {
@@ -2012,7 +2014,8 @@ const Partidos = () => {
                           ...currentWithoutActa,
                           titulares,
                           suplentes,
-                          convocados: clean
+                          convocados: clean,
+                          convocadosStaff: staffClean
                         });
                       } catch (err) {
                         console.error('[Partidos] Error saving convocation:', err);
@@ -2023,9 +2026,15 @@ const Partidos = () => {
               </div>
             )}
 
-            {/* PESTAÑA: ALINEACIÓN */}
-            {editTab === 'ALINEACIÓN' && (
-              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
+            {/* PESTAÑA: ALINEACIÓN (Permanece montada para garantizar captura idéntica de alineación en Informes PDF) */}
+            <div
+              style={{
+                display: editTab === 'ALINEACIÓN' ? 'flex' : 'none',
+                flexDirection: 'column',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
                 {/* Cabecera Superior de la Pestaña ALINEACIÓN con Botón Oficial de Descarga PNG */}
                 <div
                   className="lineup-header-bar"
@@ -2383,7 +2392,6 @@ const Partidos = () => {
                 </div>
               </div>
             </div>
-          )}
 
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (

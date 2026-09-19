@@ -15,6 +15,68 @@ import { t } from '../../i18n/translations';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { classifyPosition, calculateConvocationTime, generateConvocationPNG } from '../../utils/convocationPNGGenerator';
 import { ConvocationPreviewModal } from './ConvocationPreviewModal';
+import { useTeamMembers } from '../../hooks/useTeamMembers';
+
+const getRoleLabel = (roleId, currentLang = 'es') => {
+  const isEn = currentLang === 'en' || currentLang === 'English (EN)';
+  const norm = (roleId || '').toLowerCase().trim();
+  switch (norm) {
+    case 'admin':
+    case 'head_coach':
+    case 'first_coach':
+    case 'owner':
+      return isEn ? 'Head Coach' : 'Entrenador Principal';
+    case 'coach':
+    case 'second_coach':
+    case 'assistant_coach':
+      return isEn ? 'Assistant Coach' : 'Segundo Entrenador';
+    case 'fitness_coach':
+    case 'preparador_fisico':
+    case 'physical_trainer':
+    case 'fitness':
+      return isEn ? 'Fitness Coach' : 'Preparador Físico';
+    case 'gk_coach':
+      return isEn ? 'GK Coach' : 'Entrenador de Porteros';
+    case 'analyst':
+    case 'scout':
+      return isEn ? 'Tactical Analyst' : 'Analista Táctico';
+    case 'physio':
+    case 'medical':
+      return isEn ? 'Physiotherapist' : 'Fisioterapeuta';
+    case 'delegate':
+      return isEn ? 'Delegate' : 'Delegado';
+    case 'assistant':
+      return isEn ? 'Assistant' : 'Ayudante';
+    default:
+      return isEn ? 'Coaching Staff' : 'Cuerpo Técnico';
+  }
+};
+
+const getRoleBadgeColor = (roleId) => {
+  const norm = (roleId || '').toLowerCase().trim();
+  switch (norm) {
+    case 'admin':
+    case 'head_coach':
+    case 'first_coach':
+    case 'owner':
+      return { bg: 'rgba(212, 168, 67, 0.18)', border: '#D4A843', text: '#F0C764' };
+    case 'coach':
+    case 'second_coach':
+    case 'assistant_coach':
+      return { bg: 'rgba(76, 175, 125, 0.18)', border: '#4CAF7D', text: '#68C494' };
+    case 'fitness_coach':
+    case 'preparador_fisico':
+      return { bg: 'rgba(245, 158, 11, 0.18)', border: '#F59E0B', text: '#FBBF24' };
+    case 'gk_coach':
+      return { bg: 'rgba(16, 185, 129, 0.18)', border: '#10B981', text: '#34D399' };
+    case 'analyst':
+      return { bg: 'rgba(139, 92, 246, 0.18)', border: '#8B5CF6', text: '#A78BFA' };
+    case 'physio':
+      return { bg: 'rgba(239, 68, 68, 0.18)', border: '#EF4444', text: '#F87171' };
+    default:
+      return { bg: 'rgba(59, 130, 246, 0.18)', border: '#3B82F6', text: '#60A5FA' };
+  }
+};
 
 const MAX_CONVOCATION = 18;
 
@@ -74,6 +136,68 @@ export const ConvocationSelector = ({
   const selectedCount = selectedIds.length;
   const isAtLimit = selectedCount >= MAX_CONVOCATION;
 
+  // Cuerpo Técnico del equipo
+  const { members: teamMembers = [] } = useTeamMembers(teamId);
+  const coachingStaff = useMemo(() => {
+    const list = (teamMembers || []).filter(m => m.normalizedRole !== 'player' && m.role !== 'player');
+    if (list.length > 0) return list;
+    return [{
+      id: currentUserId || 'head_coach',
+      uid: currentUserId || 'head_coach',
+      name: coachName || 'Míster Principal',
+      displayName: coachName || 'Míster Principal',
+      role: 'admin',
+      normalizedRole: 'admin'
+    }];
+  }, [teamMembers, coachName, currentUserId]);
+
+  const [selectedStaffIds, setSelectedStaffIds] = useState(() => {
+    if (matchData?.convocadosStaff && Array.isArray(matchData.convocadosStaff)) {
+      return matchData.convocadosStaff
+        .map(s => (typeof s === 'string' ? s : (s?.id || s?.uid)))
+        .filter(Boolean);
+    }
+    return null;
+  });
+
+  const activeSelectedStaffIds = useMemo(() => {
+    if (selectedStaffIds !== null) return selectedStaffIds;
+    return coachingStaff.map(m => m.id || m.uid);
+  }, [selectedStaffIds, coachingStaff]);
+
+  const selectedStaffList = useMemo(() => {
+    return coachingStaff
+      .filter(s => activeSelectedStaffIds.includes(s.id || s.uid))
+      .map(s => ({
+        id: s.id || s.uid,
+        name: s.name || s.displayName || coachName,
+        role: s.normalizedRole || s.role || 'admin',
+        roleLabel: getRoleLabel(s.normalizedRole || s.role, lang)
+      }));
+  }, [coachingStaff, activeSelectedStaffIds, coachName, lang]);
+
+  const toggleStaff = (member) => {
+    const id = member.id || member.uid;
+    if (!id) return;
+    const current = activeSelectedStaffIds;
+    const isChecked = current.includes(id);
+    const next = isChecked ? current.filter(x => x !== id) : [...current, id];
+    setSelectedStaffIds(next);
+
+    const nextStaffList = coachingStaff
+      .filter(s => next.includes(s.id || s.uid))
+      .map(s => ({
+        id: s.id || s.uid,
+        name: s.name || s.displayName || coachName,
+        role: s.normalizedRole || s.role || 'admin',
+        roleLabel: getRoleLabel(s.normalizedRole || s.role, lang)
+      }));
+
+    if (onSaveConvocation) {
+      onSaveConvocation(selectedIds, nextStaffList);
+    }
+  };
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -85,24 +209,24 @@ export const ConvocationSelector = ({
     const id = player.id || player.uid || player.docId;
     if (!id) return;
 
+    let next;
     if (selectedIds.includes(id)) {
-      const next = selectedIds.filter(x => x !== id);
+      next = selectedIds.filter(x => x !== id);
       setSelectedIds(next);
-      if (onSaveConvocation) onSaveConvocation(next);
     } else {
       if (isAtLimit) {
         showToast(t('convocation.limitReached', lang));
         return;
       }
-      const next = [...selectedIds, id];
+      next = [...selectedIds, id];
       setSelectedIds(next);
-      if (onSaveConvocation) onSaveConvocation(next);
     }
+    if (onSaveConvocation) onSaveConvocation(next, selectedStaffList);
   };
 
   const clearSelection = () => {
     setSelectedIds([]);
-    if (onSaveConvocation) onSaveConvocation([]);
+    if (onSaveConvocation) onSaveConvocation([], selectedStaffList);
   };
 
   const selectedPlayersList = useMemo(() => {
@@ -126,6 +250,7 @@ export const ConvocationSelector = ({
         },
         matchData,
         selectedPlayers: selectedPlayersList,
+        selectedStaff: selectedStaffList,
         coachName,
         lang,
         orientation: 'vertical'
@@ -140,6 +265,7 @@ export const ConvocationSelector = ({
     }
   };
 
+  const isEn = lang === 'en' || lang === 'English (EN)';
   const opponentName = matchData?.rival || matchData?.opponent || 'Rival';
   const matchDate = matchData?.date || matchData?.fecha || 'Por definir';
   const matchTime = matchData?.time || matchData?.hora || '12:00';
@@ -346,6 +472,154 @@ export const ConvocationSelector = ({
               </>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* Sección: Cuerpo Técnico Convocado */}
+      <div
+        style={{
+          backgroundColor: '#1B3A2D',
+          borderRadius: '12px',
+          border: '1px solid rgba(76, 175, 125, 0.25)',
+          padding: '16px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
+            borderBottom: '1px solid rgba(212, 168, 67, 0.2)',
+            paddingBottom: '10px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Users size={18} color="#D4A843" />
+            <div>
+              <span style={{ color: '#D4A843', fontWeight: '800', fontSize: '15px', letterSpacing: '0.5px' }}>
+                {isEn ? 'COACHING STAFF' : 'CUERPO TÉCNICO CONVOCADO'}
+              </span>
+              <span style={{ color: '#94A3B8', fontSize: '12px', marginLeft: '8px', fontWeight: '600' }}>
+                / {isEn ? 'Select attending staff' : 'Selecciona los técnicos que asistirán'}
+              </span>
+            </div>
+          </div>
+          <span style={{ fontSize: '12px', color: '#68C494', fontWeight: '700' }}>
+            {selectedStaffList.length} / {coachingStaff.length} {isEn ? 'confirmed' : 'confirmados'}
+          </span>
+        </div>
+
+        {/* Grid de Miembros del Staff */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: '10px'
+          }}
+        >
+          {coachingStaff.map((member) => {
+            const mid = member.id || member.uid;
+            const isChecked = activeSelectedStaffIds.includes(mid);
+            const roleLabel = getRoleLabel(member.normalizedRole || member.role, lang);
+            const badgeStyle = getRoleBadgeColor(member.normalizedRole || member.role);
+            const memberName = member.name || member.displayName || coachName;
+
+            return (
+              <div
+                key={mid}
+                onClick={() => toggleStaff(member)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: isChecked ? 'rgba(76, 175, 125, 0.16)' : '#132B21',
+                  border: `1.5px solid ${isChecked ? '#4CAF7D' : 'rgba(255, 255, 255, 0.08)'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  minHeight: '48px',
+                  opacity: isChecked ? 1 : 0.55,
+                  userSelect: 'none'
+                }}
+              >
+                {/* Checkbox */}
+                <div
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${isChecked ? '#4CAF7D' : '#64748B'}`,
+                    backgroundColor: isChecked ? '#4CAF7D' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  {isChecked && <Check size={16} color="#FFFFFF" strokeWidth={3} />}
+                </div>
+
+                {/* Avatar con Iniciales y Borde de Rol */}
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: isChecked ? '#1B3A2D' : '#0D2118',
+                    border: `1.5px solid ${badgeStyle.border}`,
+                    color: badgeStyle.text,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '800',
+                    fontSize: '13px',
+                    flexShrink: 0
+                  }}
+                >
+                  {memberName.substring(0, 2).toUpperCase()}
+                </div>
+
+                {/* Datos */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: '#FFFFFF',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {memberName}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                    <span
+                      style={{
+                        fontSize: '10.5px',
+                        fontWeight: '800',
+                        color: badgeStyle.text,
+                        backgroundColor: badgeStyle.bg,
+                        border: `1px solid ${badgeStyle.border}`,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.4px'
+                      }}
+                    >
+                      {roleLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

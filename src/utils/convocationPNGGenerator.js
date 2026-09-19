@@ -75,6 +75,7 @@ export const generateConvocationPNG = async ({
   teamData = {},
   matchData = {},
   selectedPlayers = [],
+  selectedStaff = [],
   coachName = 'Míster Principal',
   lang = 'es',
   orientation = 'vertical' // 'vertical' (1080x1920) o 'horizontal' (1920x1080)
@@ -298,9 +299,10 @@ export const generateConvocationPNG = async ({
     currentY += rowsCount * (rowHeight + 10) + 24;
   }
 
-  // 7. Pie con Entrenador y Branding Oficial Míster11
-  const footerY = height - 95;
-  drawCoachFooter(ctx, coachName, width, footerY);
+  // 7. Pie con Cuerpo Técnico y Branding Oficial Míster11
+  const footerY = height - 105;
+  const staffToDraw = (selectedStaff && selectedStaff.length > 0) ? selectedStaff : coachName;
+  drawCoachFooter(ctx, staffToDraw, width, footerY, lang);
 
   // 8. Exportar a PNG
   const safeDate = (matchDate || 'partido').replace(/[/\\?%*:|"<> ]/g, '_');

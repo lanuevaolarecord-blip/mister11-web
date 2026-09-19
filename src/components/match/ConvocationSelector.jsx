@@ -118,7 +118,12 @@ export const ConvocationSelector = ({
     setIsGenerating(true);
     try {
       const result = await generateConvocationPNG({
-        teamData,
+        teamData: {
+          ...teamData,
+          nombre: teamData?.nombre || teamData?.name || 'Míster 11',
+          name: teamData?.name || teamData?.nombre || 'Míster 11',
+          escudo: teamData?.escudo || matchData?.escudo || matchData?.teamEscudo || null
+        },
         matchData,
         selectedPlayers: selectedPlayersList,
         coachName,
@@ -191,13 +196,40 @@ export const ConvocationSelector = ({
           color: '#FFFFFF'
         }}
       >
-        <div>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#D4A843', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {t('convocation.tab', lang)} · VS {opponentName.toUpperCase()}
-          </span>
-          <h3 style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: '800' }}>
-            {teamData?.name || 'Mi Equipo'} vs {opponentName}
-          </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {teamData?.escudo ? (
+            <img
+              src={teamData.escudo}
+              alt="Escudo"
+              style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '50%', border: '2px solid #D4A843' }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                backgroundColor: '#4CAF7D',
+                border: '2px solid #D4A843',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '900',
+                color: '#FFFFFF',
+                fontSize: '18px'
+              }}
+            >
+              {(teamData?.nombre || teamData?.name || 'M11').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: '#D4A843', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              {t('convocation.tab', lang)} · VS {opponentName.toUpperCase()}
+            </span>
+            <h3 style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: '800' }}>
+              {teamData?.nombre || teamData?.name || 'Mi Equipo'} vs {opponentName}
+            </h3>
+          </div>
         </div>
 
         {/* Chips de datos */}

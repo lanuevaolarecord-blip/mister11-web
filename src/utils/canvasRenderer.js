@@ -31,9 +31,21 @@ export const loadImage = (src) => {
       return;
     }
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
+    img.onerror = () => {
+      // Reintento sin crossOrigin por si falla CORS en URLs externas
+      if (img.crossOrigin) {
+        const retryImg = new Image();
+        retryImg.onload = () => resolve(retryImg);
+        retryImg.onerror = () => resolve(null);
+        retryImg.src = src;
+      } else {
+        resolve(null);
+      }
+    };
     img.src = src;
   });
 };
@@ -138,54 +150,65 @@ export const drawLucideIcon = (ctx, iconName, x, y, size = 20, color = PALETTE.B
       ctx.moveTo(x + 2, y + 9);
       ctx.lineTo(x + s - 2, y + 9);
       ctx.stroke();
-      // Puntos de fijación
-      ctx.beginPath();
-      ctx.moveTo(x + 6, y + 1); ctx.lineTo(x + 6, y + 4);
-      ctx.moveTo(x + s - 6, y + 1); ctx.lineTo(x + s - 6, y + 4);
-      ctx.stroke();
+      // Pequeñas marcas de días
+      ctx.fillRect(x + 5, y + 12, 2, 2);
+      ctx.fillRect(x + 9, y + 12, 2, 2);
+      ctx.fillRect(x + 13, y + 12, 2, 2);
       break;
     }
     case 'Clock':
     case 'clock': {
-      // Círculo + manecillas
+      // Esfera de reloj y manecillas
       ctx.beginPath();
       ctx.arc(cx, cy, s / 2 - 2, 0, Math.PI * 2);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.lineTo(cx, cy - s / 3.5);
+      ctx.lineTo(cx, cy - s / 4);
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + s / 4, cy);
       ctx.stroke();
       break;
     }
     case 'MapPin':
-    case 'mapPin': {
-      // Chincheta de mapa
+    case 'map-pin': {
+      // Marcador de ubicación
       ctx.beginPath();
-      ctx.arc(cx, y + s * 0.38, s * 0.3, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.arc(cx, cy - 2, s / 3.2, Math.PI * 0.8, Math.PI * 0.2, false);
       ctx.lineTo(cx, y + s - 2);
       ctx.closePath();
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(cx, y + s * 0.38, s * 0.12, 0, Math.PI * 2);
+      ctx.arc(cx, cy - 2, 2, 0, Math.PI * 2);
       ctx.fill();
       break;
     }
-    case 'Goal':
-    case 'glove':
+    case 'User':
+    case 'user': {
+      // Cabeza y hombros
+      ctx.beginPath();
+      ctx.arc(cx, y + s / 3, s / 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, y + s, s / 2 - 2, Math.PI, 0, false);
+      ctx.stroke();
+      break;
+    }
+    case 'Shield':
     case 'shield': {
       // Insignia de guardameta / escudo
       ctx.beginPath();
-      ctx.moveTo(cx, y + 2);
-      ctx.lineTo(x + s - 3, y + 5);
-      ctx.lineTo(x + s - 4, y + s * 0.65);
-      ctx.quadraticCurveTo(cx, y + s, cx, y + s);
-      ctx.quadraticCurveTo(cx, y + s, x + 4, y + s * 0.65);
-      ctx.lineTo(x + 3, y + 5);
+      ctx.moveTo(x + 3, y + 4);
+      ctx.lineTo(x + s - 3, y + 4);
+      ctx.lineTo(x + s - 3, y + s / 2);
+      ctx.quadraticCurveTo(x + s - 3, y + s - 2, cx, y + s);
+      ctx.quadraticCurveTo(x + 3, y + s - 2, x + 3, y + s / 2);
       ctx.closePath();
       ctx.stroke();
-      // Cruz central
+      break;
+    }
+    case 'Cross':
+    case 'plus': {
       ctx.beginPath();
       ctx.moveTo(cx, y + 6); ctx.lineTo(cx, y + s - 4);
       ctx.moveTo(x + 6, cy); ctx.lineTo(x + s - 6, cy);
@@ -204,7 +227,7 @@ export const drawLucideIcon = (ctx, iconName, x, y, size = 20, color = PALETTE.B
 };
 
 /**
- * Dibuja escudo de equipo con fallback profesional a medallón neutro
+ * Dibuja el escudo del equipo propio con soporte de imagen (PNG/SVG/WebP) y fallback a medallón dorado
  */
 export const drawTeamCrest = (ctx, img, x, y, size, teamName = 'M11') => {
   ctx.save();
@@ -225,10 +248,10 @@ export const drawTeamCrest = (ctx, img, x, y, size, teamName = 'M11') => {
 
   ctx.shadowColor = 'transparent';
 
-  // Fondo del escudo
+  // Fondo del escudo: blanco nítido si hay imagen para que el escudo contraste con el fondo verde
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = PALETTE.SELVA_DARK;
+  ctx.fillStyle = img ? '#FFFFFF' : PALETTE.SELVA_DARK;
   ctx.fill();
 
   if (img) {
@@ -236,10 +259,28 @@ export const drawTeamCrest = (ctx, img, x, y, size, teamName = 'M11') => {
     ctx.beginPath();
     ctx.arc(cx, cy, radius - 2, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(img, x + 2, y + 2, size - 4, size - 4);
+
+    // Renderizar imagen con proporción intacta (contain)
+    const imgW = img.naturalWidth || img.width || size;
+    const imgH = img.naturalHeight || img.height || size;
+    const padding = 8;
+    const maxDim = size - padding * 2;
+    let drawW = maxDim;
+    let drawH = maxDim;
+    if (imgW && imgH) {
+      const ratio = imgW / imgH;
+      if (ratio > 1) {
+        drawH = maxDim / ratio;
+      } else {
+        drawW = maxDim * ratio;
+      }
+    }
+    const drawX = cx - drawW / 2;
+    const drawY = cy - drawH / 2;
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
     ctx.restore();
   } else {
-    // Medallón neutro con iniciales
+    // Medallón con iniciales sobre fondo Verde Selva y letras doradas
     const initials = (teamName || 'M11')
       .split(' ')
       .map(w => w[0])
@@ -248,12 +289,66 @@ export const drawTeamCrest = (ctx, img, x, y, size, teamName = 'M11') => {
       .join('')
       .toUpperCase();
 
-    ctx.fillStyle = PALETTE.BLANCO;
+    ctx.fillStyle = PALETTE.ORO;
     ctx.font = `bold ${Math.round(size * 0.38)}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(initials, cx, cy);
   }
+
+  ctx.restore();
+};
+
+/**
+ * Dibuja medallón del equipo rival con sus iniciales
+ * (Cero logos de terceros por derechos de imagen)
+ */
+export const drawOpponentBadge = (ctx, x, y, size, opponentName = 'Rival') => {
+  ctx.save();
+  const radius = size / 2;
+  const cx = x + radius;
+  const cy = y + radius;
+
+  // Sombra suave
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 6;
+
+  // Borde circular exterior suave en color arena/oro sutil
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(212, 168, 67, 0.7)';
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+
+  // Fondo del medallón rival
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = PALETTE.SELVA_DARK;
+  ctx.fill();
+
+  // Aro interior sutil
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 4, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(242, 237, 228, 0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Iniciales del rival
+  const initials = (opponentName || 'R')
+    .split(' ')
+    .map(w => w[0])
+    .filter(Boolean)
+    .slice(0, 3)
+    .join('')
+    .toUpperCase();
+
+  ctx.fillStyle = PALETTE.BLANCO;
+  ctx.font = `bold ${Math.round(size * 0.36)}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(initials, cx, cy);
 
   ctx.restore();
 };

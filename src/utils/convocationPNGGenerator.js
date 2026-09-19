@@ -18,6 +18,7 @@ import {
   drawBrandTexture,
   drawLucideIcon,
   drawTeamCrest,
+  drawOpponentBadge,
   drawPlayerPhoto,
   drawPositionHeader,
   drawPlayerRow,
@@ -90,12 +91,21 @@ export const generateConvocationPNG = async ({
   if (!ctx) throw new Error('No se pudo inicializar el contexto 2D de Canvas');
 
   // 1. Cargar imágenes concurrentemente
-  const teamCrestUrl = teamData.crestUrl || teamData.escudoUrl || teamData.logoUrl || teamData.photoUrl || null;
-  const opponentCrestUrl = matchData.rivalCrestUrl || matchData.opponentCrestUrl || matchData.rivalLogo || null;
+  // El escudo del equipo propio sí puede y debe estar en el PNG
+  const teamCrestUrl =
+    teamData?.escudo ||
+    matchData?.escudo ||
+    matchData?.teamEscudo ||
+    teamData?.crestUrl ||
+    teamData?.escudoUrl ||
+    teamData?.logoUrl ||
+    teamData?.logo ||
+    teamData?.photoUrl ||
+    teamData?.shield ||
+    '/logo_mister11.png';
 
-  const [teamCrestImg, opponentCrestImg] = await Promise.all([
-    loadImage(teamCrestUrl),
-    loadImage(opponentCrestUrl)
+  const [teamCrestImg] = await Promise.all([
+    loadImage(teamCrestUrl)
   ]);
 
   // Cargar fotos de los jugadores seleccionados (hasta 18-23)
@@ -111,12 +121,13 @@ export const generateConvocationPNG = async ({
   const crestSize = 110;
   const headerTopY = 70;
 
-  // Escudo Propio (Izquierda)
-  drawTeamCrest(ctx, teamCrestImg, 70, headerTopY, crestSize, teamData.name || teamData.nombre || 'M11');
+  // Escudo Propio (Izquierda) - El escudo del equipo propio sí puede y debe estar
+  const myTeamName = teamData?.nombre || teamData?.name || 'Míster 11';
+  drawTeamCrest(ctx, teamCrestImg, 70, headerTopY, crestSize, myTeamName);
 
-  // Medallón / Escudo Rival (Derecha)
-  const opponentName = matchData.rival || matchData.opponent || 'Rival';
-  drawTeamCrest(ctx, opponentCrestImg, width - 70 - crestSize, headerTopY, crestSize, opponentName);
+  // Medallón / Escudo Rival (Derecha) - Círculo con iniciales (sin logo de terceros por derechos)
+  const opponentName = matchData?.rival || matchData?.opponent || 'Rival';
+  drawOpponentBadge(ctx, width - 70 - crestSize, headerTopY, crestSize, opponentName);
 
   // Título central
   const isEn = lang === 'en' || lang === 'English (EN)';

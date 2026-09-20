@@ -1155,6 +1155,29 @@ const Partidos = () => {
       });
 
       document.body.appendChild(exportClone);
+
+      // Reubicar cada ficha del clon usando coordenadas exactas en píxeles sin CSS transform
+      // para eliminar completamente el bug de desplazamiento de html2canvas
+      const pitchContainer = exportClone.querySelector('.alin-pitch-container-h3d');
+      const pitchW = pitchContainer ? (pitchContainer.clientWidth || 732) : 732;
+      const pitchH = pitchContainer ? (pitchContainer.clientHeight || 474) : 474;
+
+      const playerChips = exportClone.querySelectorAll('.pitch-player-3d');
+      playerChips.forEach((chip) => {
+        const topStr = chip.style.top || '50%';
+        const leftStr = chip.style.left || '50%';
+        const topVal = parseFloat(topStr);
+        const leftVal = parseFloat(leftStr);
+
+        chip.style.transform = 'none';
+        chip.style.webkitTransform = 'none';
+        // Centro exacto: ancho tarjeta 58px / 2 = 29px; alto centro cromo ~76px / 2 = 38px
+        const leftPx = Math.round((leftVal / 100) * pitchW - 29);
+        const topPx = Math.round((topVal / 100) * pitchH - 38);
+        chip.style.left = `${leftPx}px`;
+        chip.style.top = `${topPx}px`;
+      });
+
       // Esperar a que el browser layoutee y pinte todos los sub-elementos
       await new Promise((r) => setTimeout(r, 300));
 

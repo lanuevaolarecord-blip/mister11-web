@@ -3330,9 +3330,8 @@ html.dark .alin-player-item span.slot-role {
 
 .export-lineup-hd-capture .pitch-player-3d,
 .export-lineup-hd-capture .alin-pitch-container-h3d .pitch-player-3d {
-  transform: translate(-50%, -50%) scale(1) !important;
-  -webkit-transform: translate(-50%, -50%) scale(1) !important;
-  transform-origin: center center !important;
+  transform: none !important;
+  -webkit-transform: none !important;
   width: 58px !important;
 }
 

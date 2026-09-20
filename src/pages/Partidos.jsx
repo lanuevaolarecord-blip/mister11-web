@@ -1154,13 +1154,6 @@ const Partidos = () => {
         }
       });
 
-      // Eliminar transforms residuales en fichas de jugador para evitar desplazamientos
-      const playerChips = exportClone.querySelectorAll('.pitch-player-3d');
-      playerChips.forEach((chip) => {
-        chip.style.transform = 'none';
-        chip.style.webkitTransform = 'none';
-      });
-
       document.body.appendChild(exportClone);
       // Esperar a que el browser layoutee y pinte todos los sub-elementos
       await new Promise((r) => setTimeout(r, 300));

@@ -42,6 +42,7 @@ import CanvasToolbar from '../components/pizarra/CanvasToolbar';
 import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
 import AnimationPanel from '../components/pizarra/AnimationPanel';
+import ExportAnimationModal from '../components/ExportAnimationModal';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   WHITEBOARD_CONFIG,
@@ -545,6 +546,8 @@ const PizarraTactica = () => {
   const [captureToast,   setCaptureToast]   = useState(null);  // { type: 'success'|'error', msg: string }
   const [isRecording,    setIsRecording]    = useState(false);
   const [exportProgress, setExportProgress] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportResult,   setExportResult]   = useState(null);
   const fileImportInputRef = useRef(null);
 
   const autoExport = new URLSearchParams(location.search).get('autoExport');
@@ -881,7 +884,33 @@ const PizarraTactica = () => {
   }, []);
 
   // ─── Export Animation Video (MP4/WebM Determinista FIX 4) ────────────────
-  const exportAnimationVideo = async () => {
+  const openExportModal = () => {
+    if (!isProActive) {
+      setUpgradeModal({
+        open: true,
+        message: isEn
+          ? 'Exporting animations as MP4 video is a PRO feature. Upgrade to use it.'
+          : 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.'
+      });
+      return;
+    }
+    const fc = fcRef.current;
+    const fieldCanvas = fieldCanvasRef.current;
+    if (!fc || !fieldCanvas || framesR.current.length < 2) {
+      setCaptureToast({
+        type: 'info',
+        msg: isEn
+          ? 'You need at least 2 frames to export a video.'
+          : 'Necesitas al menos 2 frames para exportar un video.'
+      });
+      setTimeout(() => setCaptureToast(null), 3500);
+      return;
+    }
+    setExportResult(null);
+    setShowExportModal(true);
+  };
+
+  const exportAnimationVideo = async (options = null) => {
     const showToast = (msg, type = 'info') => {
       setCaptureToast({ type: type === 'info' ? 'success' : type, msg });
       setTimeout(() => setCaptureToast(null), type === 'error' ? 5000 : 3500);
@@ -894,6 +923,19 @@ const PizarraTactica = () => {
           ? 'Exporting animations as MP4 video is a PRO feature. Upgrade to use it.'
           : 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.'
       });
+      return;
+    }
+
+    const autoExport = new URLSearchParams(window.location.search).get('autoExport');
+    // Si se llama sin opciones y no es autoExport, abrir el modal de exportación paramétrico
+    if (!options && autoExport !== 'true') {
+      openExportModal();
+      return;
+    }
+
+    // Si la opción seleccionada es PNG:
+    if (options && options.format === 'PNG') {
+      handleCapture(true);
       return;
     }
 
@@ -922,12 +964,13 @@ const PizarraTactica = () => {
       await saveFrameState(true);
 
       // 2. Exportación determinista frame a frame
+      const exportTitle = options?.title ? options.title.trim().replace(/\s+/g, '_') : planId;
       const result = await exportAnimationMP4({
         fc,
         fr: frRef.current,
         fieldCanvas,
         frames: framesR.current,
-        planId: planId || 'export',
+        planId: exportTitle || 'export',
         onProgress: (pct) => {
           setExportProgress(pct);
         },
@@ -956,7 +999,8 @@ const PizarraTactica = () => {
       }
 
       setExportProgress(100);
-      const autoExport = new URLSearchParams(window.location.search).get('autoExport');
+      setExportResult(result);
+
       if (autoExport === 'true' && window.parent) {
         window.parent.postMessage({
           type: 'EXPORT_DONE',
@@ -979,13 +1023,12 @@ const PizarraTactica = () => {
           : `No se pudo completar el vídeo: ${err?.message || 'error'}. Pulsa para reintentar.`,
         'error'
       );
-      const autoExport = new URLSearchParams(window.location.search).get('autoExport');
       if (autoExport === 'true' && window.parent) {
         window.parent.postMessage('EXPORT_ERROR', '*');
       }
     } finally {
       setIsRecording(false);
-      setTimeout(() => setExportProgress(null), 1000);
+      setTimeout(() => setExportProgress(null), 1500);
     }
   };
 
@@ -3195,6 +3238,33 @@ const PizarraTactica = () => {
         playAnimation={playAnimation}
         addFrame={addFrame}
         deleteFrame={deleteFrame}
+        onOpenExportModal={openExportModal}
+      />
+
+      {/* ── Modal Paramétrico de Exportación MP4/PNG (Fix Crítico C) ── */}
+      <ExportAnimationModal
+        isOpen={showExportModal}
+        onClose={() => {
+          if (!isRecording) {
+            setShowExportModal(false);
+            setExportResult(null);
+          }
+        }}
+        fcRef={fcRef}
+        frRef={frRef}
+        fieldCanvasRef={fieldCanvasRef}
+        framesRef={framesR}
+        planId={planId || 'tactica'}
+        planTitle={title || 'Animación Táctica'}
+        sceneState={{
+          orientation: isPortrait ? 'portrait' : 'landscape',
+          fieldType
+        }}
+        onExport={exportAnimationVideo}
+        isRecording={isRecording}
+        exportProgress={exportProgress}
+        exportResult={exportResult}
+        onResetExportResult={() => setExportResult(null)}
       />
 
 

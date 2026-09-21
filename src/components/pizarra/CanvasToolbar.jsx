@@ -1,4 +1,18 @@
 import React from 'react';
+import {
+  ZoomIn,
+  ZoomOut,
+  Home,
+  Undo2,
+  Redo2,
+  Trash2,
+  Sparkles,
+  Camera,
+  FileText,
+  Film,
+  Save,
+  Loader2
+} from 'lucide-react';
 import { TOOLS, STROKE_WIDTHS } from '../../lib/mister11-tools.js';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -169,28 +183,49 @@ const CanvasToolbar = ({
               const zoom = fc.getZoom() * 1.1;
               fc.setZoom(zoom);
               setZoomLevel(zoom);
-            }} title={t('board.toolbar.zoomIn')}>🔍+</button>
+            }} title={t('board.toolbar.zoomIn')} aria-label={t('board.toolbar.zoomIn')}>
+              <ZoomIn size={16} />
+            </button>
             <button className="topbar-btn" onClick={() => {
               const fc = fcRef.current;
               if (!fc) return;
               const zoom = fc.getZoom() / 1.1;
               fc.setZoom(zoom);
               setZoomLevel(zoom);
-            }} title={t('board.toolbar.zoomOut')}>🔍-</button>
+            }} title={t('board.toolbar.zoomOut')} aria-label={t('board.toolbar.zoomOut')}>
+              <ZoomOut size={16} />
+            </button>
             <button className="topbar-btn" onClick={() => {
               const fc = fcRef.current;
               if (!fc) return;
               fc.setZoom(1);
               fc.absolutePan({ x: 0, y: 0 });
               setZoomLevel(1);
-            }} title={t('board.toolbar.resetZoom')}>🏠</button>
+            }} title={t('board.toolbar.resetZoom')} aria-label={t('board.toolbar.resetZoom')}>
+              <Home size={16} />
+            </button>
             <div className="topbar-divider" />
-            <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title={t('board.toolbar.undo')}>↩</button>
-            <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title={t('board.toolbar.redo')}>↪</button>
-            <button className="topbar-btn danger" onClick={clearCanvas} title={t('board.toolbar.clearCanvas')}>🗑</button>
-            <button className="topbar-btn secondary" onClick={handleNewPizarra} title={t('board.toolbar.new')} style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ {t('board.toolbar.new')}</button>
-            <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="PNG">📸 PNG</button>
-            <button className="topbar-btn" onClick={handleExportPDF} disabled={isCapturing} title="PDF">📄 PDF</button>
+            <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title={t('board.toolbar.undo')} aria-label={t('board.toolbar.undo')}>
+              <Undo2 size={16} />
+            </button>
+            <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title={t('board.toolbar.redo')} aria-label={t('board.toolbar.redo')}>
+              <Redo2 size={16} />
+            </button>
+            <button className="topbar-btn danger" onClick={clearCanvas} title={t('board.toolbar.clearCanvas')} aria-label={t('board.toolbar.clearCanvas')}>
+              <Trash2 size={16} />
+            </button>
+            <button className="topbar-btn secondary" onClick={handleNewPizarra} title={t('board.toolbar.new')} style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={15} />
+              <span>{t('board.toolbar.new')}</span>
+            </button>
+            <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="PNG" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Camera size={15} />
+              <span>PNG</span>
+            </button>
+            <button className="topbar-btn" onClick={handleExportPDF} disabled={isCapturing} title="PDF" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <FileText size={15} />
+              <span>PDF</span>
+            </button>
             <button
               className={`topbar-btn ${isRecording ? 'exporting disabled' : ''}`}
               onClick={exportAnimationVideo}
@@ -202,15 +237,22 @@ const CanvasToolbar = ({
                 fontWeight: 'bold',
                 position: 'relative',
                 overflow: 'hidden',
-                minWidth: isRecording ? '140px' : undefined
+                minWidth: isRecording ? '140px' : undefined,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
               {isRecording ? (
-                <span>
-                  ⏳ {exportProgress !== null && exportProgress !== undefined ? `${exportProgress}%` : t('board.toolbar.exportingMp4')}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>{exportProgress !== null && exportProgress !== undefined ? `${exportProgress}%` : t('board.toolbar.exportingMp4')}</span>
                 </span>
               ) : (
-                t('board.toolbar.exportMp4')
+                <>
+                  <Film size={15} />
+                  <span>{t('board.toolbar.exportMp4')}</span>
+                </>
               )}
               {isRecording && typeof exportProgress === 'number' && exportProgress > 0 && (
                 <div
@@ -226,7 +268,10 @@ const CanvasToolbar = ({
                 />
               )}
             </button>
-            <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title={t('board.toolbar.save')}>💾 {t('board.toolbar.save')}</button>
+            <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title={t('board.toolbar.save')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Save size={15} />
+              <span>{t('board.toolbar.save')}</span>
+            </button>
           </div>
         </div>
       </div>

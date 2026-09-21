@@ -14,7 +14,8 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating PDF...' : 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   const { jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
+  const autoTableMod = await import('jspdf-autotable');
+  const autoTable = autoTableMod.default || autoTableMod;
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();

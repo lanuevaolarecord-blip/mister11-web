@@ -3,7 +3,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import LegendCard from '../LegendCard';
 import { SvgRadar } from '../PlayerAnalyticsModal';
-import { calculatePlayerPerformanceScores, CANONICAL_TESTS_MAP } from '../../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from '../../utils/testScoreEngine';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerPerformanceBanner.css';

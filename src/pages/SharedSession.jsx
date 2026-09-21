@@ -9,7 +9,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import './SharedSession.css';
 
 const SharedSession = () => {
-  const { isEn, locale } = useTranslation();
+  const { t, isEn, locale } = useTranslation();
   const { shareId } = useParams();
   const navigate = useNavigate();
   const { user, getTeamPath } = useAuth();

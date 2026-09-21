@@ -43,6 +43,7 @@ import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
 import AnimationPanel from '../components/pizarra/AnimationPanel';
 import ExportAnimationModal from '../components/ExportAnimationModal';
+import { showToast } from '../utils/toast';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   WHITEBOARD_CONFIG,
@@ -428,7 +429,7 @@ const PizarraTactica = () => {
   }, [normalizarTamañoJugadores]);
 
   // Auth & URL
-  const { user, activeTeamId, getTeamPath: getTeamPathRaw } = useAuth();
+  const { user, activeTeamId, activeTeam, getTeamPath: getTeamPathRaw } = useAuth();
   const getTeamPath = useCallback((teamId = activeTeamId) => {
     return getTeamPathRaw(teamId || activeTeamId);
   }, [getTeamPathRaw, activeTeamId]);
@@ -2526,7 +2527,7 @@ const PizarraTactica = () => {
       const captureRes = await handleCapture(false, true);
       const canvasUrl = captureRes?.thumb || captureRes?.full || fc.toDataURL({ format: 'png', multiplier: 2 });
       await generatePizarraPDF({
-        boardTitle: currentPizarraTitle || 'Estrategia Táctica',
+        boardTitle: planName || 'Estrategia Táctica',
         canvasDataUrl: canvasUrl,
         frames: frames && frames.length > 1 ? frames : [],
         activeTeam,
@@ -2731,7 +2732,6 @@ const PizarraTactica = () => {
       cargarFrame(next[newIdx].state, () => {
         syncingR.current = false;
         fc.renderAll();
-        try { attachListeners(); } catch (_) {}
         resetHistory();
         presentR.current = JSON.stringify(next[newIdx].state);
       });
@@ -3255,9 +3255,9 @@ const PizarraTactica = () => {
         fieldCanvasRef={fieldCanvasRef}
         framesRef={framesR}
         planId={planId || 'tactica'}
-        planTitle={title || 'Animación Táctica'}
+        planTitle={planName || 'Animación Táctica'}
         sceneState={{
-          orientation: isPortrait ? 'portrait' : 'landscape',
+          orientation: isLandscape ? 'landscape' : 'portrait',
           fieldType
         }}
         onExport={exportAnimationVideo}

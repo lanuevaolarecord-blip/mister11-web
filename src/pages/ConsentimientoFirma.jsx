@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Shield, Check, Download, Share2, Sparkles, FileText, Lock } from 'lucide-react';
+import { Shield, Check, Download, Share2, Sparkles, FileText, Lock, PenTool } from 'lucide-react';
 import { drawPdfFooter } from '../utils/pdfTheme';
 import { useTranslation } from '../hooks/useTranslation';
 import './ConsentimientoFirma.css';

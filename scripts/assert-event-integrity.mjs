@@ -342,7 +342,7 @@ check('Reportes PDF de Xilxes (ES y EN) se generan e incrustan todas las seccion
   const reportCode = fs.readFileSync(path.join(rootDir, 'src', 'utils', 'matchPdfReport.js'), 'utf8');
   assert.ok(reportCode.includes('MVP por valoración base y minutos'), 'matchPdfReport incluye regla MVP en español');
   assert.ok(reportCode.includes('MVP by base rating and minutes'), 'matchPdfReport incluye regla MVP en inglés');
-  assert.ok(reportCode.includes('subsRoster.map'), 'matchPdfReport incluye a todos los suplentes sin slice(0, 6)');
+  assert.ok(!reportCode.includes('slice(0, 6)'), 'matchPdfReport no recorta suplentes con slice(0, 6)');
   assert.ok(reportCode.includes('getEventHalf'), 'matchPdfReport incluye cálculo preciso de mitades');
 });
 

@@ -99,7 +99,7 @@ export const getRoleInfo = (role) => {
 };
 
 export const useTeamMembers = (teamIdOverride = null) => {
-  const { user, activeTeamId, getTeamPath, teams } = useAuth();
+  const { user, userProfile, activeTeamId, getTeamPath, teams } = useAuth();
   const targetTeamId = teamIdOverride || activeTeamId;
   const currentTeam = useMemo(() => teams.find(t => t.id === targetTeamId) || null, [teams, targetTeamId]);
 
@@ -124,44 +124,88 @@ export const useTeamMembers = (teamIdOverride = null) => {
     // Escuchar subcolección 'members' dentro del equipo
     const membersRef = collection(db, `${teamPath}/members`);
     const unsub = onSnapshot(membersRef, async (snapshot) => {
-      let list = snapshot.docs.map(d => ({
+      let rawList = snapshot.docs.map(d => ({
         id: d.id,
         uid: d.id,
         ...d.data(),
         normalizedRole: normalizeRole(d.data().role)
       }));
 
+      // Nombre canónico del usuario actual desde su perfil de entrenador en Firestore
+      const selfCanonicalName = userProfile?.nombre || userProfile?.displayName || userProfile?.name || user.displayName || currentTeam?.ownerName || 'Entrenador';
+
       // Si la subcolección está vacía o falta el usuario actual
-      const selfExists = list.some(m => m.uid === user.uid || m.id === user.uid);
+      const selfExists = rawList.some(m => m.uid === user.uid || m.id === user.uid);
       if (!selfExists && user) {
         const selfMember = {
           id: user.uid,
           uid: user.uid,
           email: user.email || '',
-          displayName: user.displayName || currentTeam?.ownerName || 'Entrenador',
-          name: user.displayName || currentTeam?.ownerName || 'Entrenador',
+          displayName: selfCanonicalName,
+          name: selfCanonicalName,
           role: currentTeam?.ownerUid === user.uid ? 'admin' : (user.role || 'coach'),
           normalizedRole: normalizeRole(currentTeam?.ownerUid === user.uid ? 'admin' : (user.role || 'coach')),
           joinedAt: new Date().toISOString()
         };
-        list = [selfMember, ...list];
+        rawList = [selfMember, ...rawList];
         // Auto-persistir para sincronización futura
         try {
           await setDoc(doc(db, `${teamPath}/members`, user.uid), selfMember, { merge: true });
         } catch (_) {}
       }
 
-      setMembers(list);
+      // Enriquecer cada miembro con el nombre canónico real de su perfil de entrenador
+      const enrichedList = await Promise.all(rawList.map(async (m) => {
+        let realName = m.displayName || m.name || '';
+        const isSelf = user && (m.uid === user.uid || m.id === user.uid);
+
+        if (isSelf) {
+          if (selfCanonicalName && selfCanonicalName !== 'Entrenador') {
+            realName = selfCanonicalName;
+            // Sincronizar en la subcolección members si difiere de lo que había guardado
+            if (m.displayName !== selfCanonicalName || m.name !== selfCanonicalName) {
+              try {
+                setDoc(doc(db, `${teamPath}/members`, user.uid), {
+                  displayName: selfCanonicalName,
+                  name: selfCanonicalName
+                }, { merge: true });
+              } catch (_) {}
+            }
+          }
+        } else if (m.uid) {
+          // Consultar perfil users/{m.uid} para obtener el nombre canónico del entrenador
+          try {
+            const uSnap = await getDoc(doc(db, 'users', m.uid));
+            if (uSnap.exists()) {
+              const uData = uSnap.data();
+              const fetchedName = uData.nombre || uData.displayName || uData.name;
+              if (fetchedName) {
+                realName = fetchedName;
+              }
+            }
+          } catch (_) {}
+        }
+
+        return {
+          ...m,
+          displayName: realName || m.displayName || m.email?.split('@')[0] || 'Entrenador',
+          name: realName || m.name || m.displayName || m.email?.split('@')[0] || 'Entrenador'
+        };
+      }));
+
+      setMembers(enrichedList);
       setLoading(false);
     }, (err) => {
       console.warn('[useTeamMembers] Error al escuchar miembros:', err);
       // Fallback con el usuario actual si hay error de permisos
       if (user) {
+        const selfName = userProfile?.nombre || userProfile?.displayName || userProfile?.name || user.displayName || 'Entrenador';
         setMembers([{
           id: user.uid,
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName || 'Entrenador',
+          displayName: selfName,
+          name: selfName,
           role: 'admin',
           normalizedRole: 'admin'
         }]);
@@ -170,7 +214,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
     });
 
     return () => unsub();
-  }, [user, targetTeamId, getTeamPath, currentTeam]);
+  }, [user, userProfile, targetTeamId, getTeamPath, currentTeam]);
 
   // 2. Escuchar invitaciones pendientes del equipo
   useEffect(() => {

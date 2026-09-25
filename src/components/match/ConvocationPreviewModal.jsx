@@ -60,11 +60,12 @@ export const ConvocationPreviewModal = ({
           bottom: 0,
           backgroundColor: 'rgba(13, 33, 24, 0.9)',
           backdropFilter: 'blur(8px)',
-          zIndex: 9990,
+          zIndex: 10080,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '16px'
+          padding: '12px 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px',
+          overflowY: 'auto'
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
@@ -77,7 +78,7 @@ export const ConvocationPreviewModal = ({
             borderRadius: '16px',
             width: '100%',
             maxWidth: '680px',
-            maxHeight: '94vh',
+            maxHeight: 'min(88vh, 100dvh - 36px)',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 24px 48px rgba(0,0,0,0.6)',
@@ -91,9 +92,10 @@ export const ConvocationPreviewModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px 20px',
+              padding: '14px 18px',
               borderBottom: '1px solid rgba(212, 168, 67, 0.25)',
-              backgroundColor: '#132B21'
+              backgroundColor: '#132B21',
+              flexShrink: 0
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -140,11 +142,12 @@ export const ConvocationPreviewModal = ({
             style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '20px',
+              padding: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#0D2118'
+              backgroundColor: '#0D2118',
+              minHeight: '140px'
             }}
           >
             {pngUrl ? (
@@ -153,7 +156,7 @@ export const ConvocationPreviewModal = ({
                 alt="Convocatoria PNG"
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '65vh',
+                  maxHeight: 'min(50vh, 480px)',
                   objectFit: 'contain',
                   borderRadius: '8px',
                   boxShadow: '0 12px 28px rgba(0,0,0,0.5)',
@@ -171,14 +174,15 @@ export const ConvocationPreviewModal = ({
           {/* Action Bar */}
           <div
             style={{
-              padding: '16px 20px',
+              padding: '12px 16px',
               borderTop: '1px solid rgba(212, 168, 67, 0.25)',
               backgroundColor: '#132B21',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '10px'
+              gap: '8px',
+              flexShrink: 0
             }}
           >
             {/* Botón Regenerar / Volver a editar */}

@@ -496,6 +496,7 @@ const AdminPanel = () => {
           await setDoc(doc(db, 'users', user.uid), {
             displayName: profileData.profileName,
             nombre: profileData.profileName,
+            name: profileData.profileName,
             specialty: profileData.specialty,
             role: roleId,
             updatedAt: serverTimestamp()
@@ -509,11 +510,28 @@ const AdminPanel = () => {
             await setDoc(doc(db, `${teamPath}/members`, user.uid), {
               uid: user.uid,
               displayName: profileData.profileName,
+              name: profileData.profileName,
               email: user.email,
               role: roleId,
               updatedAt: serverTimestamp()
             }, { merge: true });
           } catch (_) {}
+        }
+
+        // 4. Sincronizar también en todos los equipos donde el usuario sea miembro
+        if (Array.isArray(teams)) {
+          teams.forEach(async (t) => {
+            if (t.id && t.id !== activeTeam?.id) {
+              try {
+                const tPath = getTeamPath(t.id);
+                await setDoc(doc(db, `${tPath}/members`, user.uid), {
+                  displayName: profileData.profileName,
+                  name: profileData.profileName,
+                  updatedAt: serverTimestamp()
+                }, { merge: true });
+              } catch (_) {}
+            }
+          });
         }
       }
 

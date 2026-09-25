@@ -18,7 +18,7 @@ import { InviteStaffModal } from './InviteStaffModal';
 import { StaffDetailModal } from './StaffDetailModal';
 
 export const TeamStaffTab = ({ activeTeam }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { darkMode } = useTheme();
   const { t, isEn, formatDate } = useTranslation();
   const { canInviteStaff, limits } = usePlan();
@@ -1004,11 +1004,11 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       fontSize: '1rem',
                       border: `2px solid ${roleData.color}`
                     }}>
-                      {(member.displayName || member.email || 'ET').substring(0, 2).toUpperCase()}
+                      {((isSelf ? (userProfile?.nombre || userProfile?.displayName || userProfile?.name || member.displayName || member.name) : (member.displayName || member.name)) || member.email || 'ET').substring(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '1rem', color: textColorPrimary, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {member.displayName || member.email?.split('@')[0] || 'Entrenador'}
+                        {isSelf ? (userProfile?.nombre || userProfile?.displayName || userProfile?.name || member.displayName || member.name || member.email?.split('@')[0] || 'Entrenador') : (member.displayName || member.name || member.email?.split('@')[0] || 'Entrenador')}
                         {isSelf && <span style={{ fontSize: '0.75rem', color: darkMode ? '#D4A843' : '#1B3A2D', fontWeight: 700 }}>{t('staff.you')}</span>}
                       </h4>
                       <span style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>

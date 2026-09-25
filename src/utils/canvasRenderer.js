@@ -5,6 +5,8 @@
  * Cero emojis: renderizado vectorial nativo de glifos e iconos Lucide.
  */
 
+import { imageUrlToBase64 } from './pdfTheme';
+
 // Paleta oficial
 export const PALETTE = {
   SELVA_DARK: '#0D2118',
@@ -22,31 +24,50 @@ export const PALETTE = {
 };
 
 /**
- * Carga una imagen de forma asíncrona con crossOrigin
+ * Carga una imagen de forma asíncrona garantizando que NUNCA contamine el Canvas (Tainted Canvas).
+ * Para URLs remotas (Firebase Storage, HTTPS externas), las precarga y convierte a Base64
+ * seguro libre de bloqueos CORS.
  */
-export const loadImage = (src) => {
-  return new Promise((resolve) => {
-    if (!src || typeof src !== 'string' || src.trim() === '') {
-      resolve(null);
-      return;
+export const loadImage = async (src) => {
+  if (!src || typeof src !== 'string' || src.trim() === '') {
+    return null;
+  }
+
+  let safeSrc = src.trim();
+
+  // Si no es un DataURL o Blob URL, convertirlo a Base64 dataURL
+  // (usa el SDK de Firebase Storage getBlob o fetch autenticado según corresponda)
+  if (!safeSrc.startsWith('data:') && !safeSrc.startsWith('blob:')) {
+    try {
+      const b64 = await imageUrlToBase64(safeSrc, '', false);
+      if (b64 && typeof b64 === 'string' && (b64.startsWith('data:') || b64.startsWith('blob:'))) {
+        safeSrc = b64;
+      }
+    } catch (err) {
+      console.warn('[canvasRenderer] Advertencia al precargar imagen a Base64:', err);
     }
+  }
+
+  return new Promise((resolve) => {
     const img = new Image();
-    if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+    const isLocalData = safeSrc.startsWith('data:') || safeSrc.startsWith('blob:');
+
+    if (!isLocalData) {
       img.crossOrigin = 'anonymous';
     }
-    img.onload = () => resolve(img);
-    img.onerror = () => {
-      // Reintento sin crossOrigin por si falla CORS en URLs externas
-      if (img.crossOrigin) {
-        const retryImg = new Image();
-        retryImg.onload = () => resolve(retryImg);
-        retryImg.onerror = () => resolve(null);
-        retryImg.src = src;
-      } else {
-        resolve(null);
-      }
+
+    img.onload = () => {
+      resolve(img);
     };
-    img.src = src;
+
+    img.onerror = () => {
+      // ⚠️ NUNCA reintentar sin crossOrigin: contaminaría el canvas e impediría exportar el PNG
+      // Si la imagen falla definitivamente, resolvemos null para que el canvas use el fallback vectorial
+      console.warn('[canvasRenderer] No se pudo cargar imagen externa con CORS:', safeSrc.slice(0, 80));
+      resolve(null);
+    };
+
+    img.src = safeSrc;
   });
 };
 
@@ -568,18 +589,38 @@ export const drawCoachFooter = (ctx, coachOrStaff, width, y, lang = 'es') => {
 };
 
 /**
- * Exporta el canvas a blob PNG y devuelve url de descarga
+ * Exporta el canvas a blob PNG y devuelve url de descarga y dataUrl
  */
 export const exportCanvasToPNG = (canvas, filename = 'convocatoria.png') => {
   return new Promise((resolve, reject) => {
     try {
       canvas.toBlob((blob) => {
         if (!blob) {
-          reject(new Error('No se pudo generar el Blob del canvas'));
-          return;
+          // Fallback a toDataURL si toBlob devolvió nulo
+          try {
+            const fallbackDataUrl = canvas.toDataURL('image/png');
+            const byteString = atob(fallbackDataUrl.split(',')[1]);
+            const mimeString = fallbackDataUrl.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            const fallbackBlob = new Blob([ab], { type: mimeString });
+            const fallbackUrl = URL.createObjectURL(fallbackBlob);
+            resolve({ blob: fallbackBlob, url: fallbackUrl, dataUrl: fallbackDataUrl, filename });
+            return;
+          } catch (dataUrlErr) {
+            reject(new Error('No se pudo generar el Blob del canvas'));
+            return;
+          }
         }
         const url = URL.createObjectURL(blob);
-        resolve({ blob, url, filename });
+        let dataUrl = null;
+        try {
+          dataUrl = canvas.toDataURL('image/png');
+        } catch (_) {}
+        resolve({ blob, url, dataUrl: dataUrl || url, filename });
       }, 'image/png');
     } catch (err) {
       reject(err);

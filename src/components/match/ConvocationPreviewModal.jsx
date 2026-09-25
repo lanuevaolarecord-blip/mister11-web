@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Download, Send, RefreshCw, Loader2, Image as ImageIcon } from 'lucide-react';
 import { t } from '../../i18n/translations';
+import { downloadImage } from '../../utils/download';
 import { SendConvocationModal } from './SendConvocationModal';
 
 export const ConvocationPreviewModal = ({
@@ -8,6 +9,7 @@ export const ConvocationPreviewModal = ({
   onClose,
   pngUrl,
   pngBlob,
+  pngDataUrl = null,
   filename = 'convocatoria.png',
   teamId,
   teamPath,
@@ -22,15 +24,24 @@ export const ConvocationPreviewModal = ({
 
   if (!isOpen) return null;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      const link = document.createElement('a');
-      link.href = pngUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const downloadTarget = pngDataUrl || pngUrl;
+      if (downloadTarget) {
+        await downloadImage(downloadTarget, filename);
+      } else if (pngBlob) {
+        const blobUrl = URL.createObjectURL(pngBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 150);
+      }
     } catch (err) {
       console.error('[ConvocationPreviewModal] Error downloading PNG:', err);
     } finally {

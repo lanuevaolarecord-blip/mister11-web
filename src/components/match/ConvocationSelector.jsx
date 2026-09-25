@@ -762,6 +762,7 @@ export const ConvocationSelector = ({
         onClose={() => setIsPreviewOpen(false)}
         pngUrl={generatedPNG?.url}
         pngBlob={generatedPNG?.blob}
+        pngDataUrl={generatedPNG?.dataUrl}
         filename={generatedPNG?.filename}
         teamId={teamId}
         teamPath={teamPath}

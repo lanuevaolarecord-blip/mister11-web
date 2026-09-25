@@ -117,7 +117,18 @@ export const generateConvocationPNG = async ({
 
   // Cargar fotos de los jugadores seleccionados (hasta 18-23)
   const playerImgs = await Promise.all(
-    selectedPlayers.map(p => loadImage(p.photoUrl || p.foto || p.avatar || p.avatarUrl || null))
+    selectedPlayers.map(p => {
+      const photoSrc =
+        p.photoUrl ||
+        p.avatarUrl ||
+        p.photo ||
+        p.photoPreview ||
+        p.foto ||
+        p.avatar ||
+        p.imageUrl ||
+        null;
+      return loadImage(photoSrc);
+    })
   );
 
   // 2. Fondo y Textura de Marca

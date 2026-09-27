@@ -32,7 +32,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
     }
     const minInt = Math.max(1, parseInt(minute, 10) || 1);
     const newEvent = {
-      id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: additional.id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       type,
       playerId: playerId || null,
       playerName: playerName || '',
@@ -68,13 +68,19 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         }));
 
       const updatedTarjetas = updatedEvents
-        .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja') && e.playerId)
-        .map(e => ({
-          jugadorId: e.playerId,
-          nombre: e.playerName,
-          tipo: e.type,
-          minuto: String(e.minute)
-        }));
+        .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja' || e.type === 'card_yellow_own' || e.type === 'card_red_own' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival') && (e.playerId || e.isRival || e.type?.includes('rival')))
+        .map(e => {
+          const isRed = e.type === 'roja' || e.type === 'card_red_own' || e.type === 'card_red_rival';
+          const isRival = e.isRival || e.type?.includes('rival') || e.playerId === 'rival';
+          return {
+            id: e.id,
+            jugadorId: e.playerId || (isRival ? 'rival' : null),
+            nombre: e.playerName || (isRival ? 'Rival' : ''),
+            tipo: isRed ? 'roja' : 'amarilla',
+            minuto: String(e.minute),
+            isRival
+          };
+        });
 
       const nextData = {
         ...prev,
@@ -248,6 +254,26 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         return toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp);
       });
 
+      const newCambio = {
+        id: newEvent.id,
+        minuto: String(minInt),
+        minute: minInt,
+        saleId: subOutId,
+        outId: subOutId,
+        playerOutId: subOutId,
+        saleNombre: playerOut.name,
+        playerOutName: playerOut.name,
+        entraId: subInId,
+        inId: subInId,
+        playerInId: subInId,
+        entraNombre: playerIn.name,
+        playerInName: playerIn.name,
+        timestamp: newEvent.timestamp
+      };
+
+      const currentCambios = Array.isArray(prev.cambiosList) ? [...prev.cambiosList] : [];
+      const updatedCambios = [...currentCambios, newCambio];
+
       const nextData = {
         ...prev,
         titulares: nextTitulares,
@@ -258,6 +284,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
           suplentes: nextSuplentes
         },
         convocados: nextConvocados,
+        cambiosList: updatedCambios,
         events: updatedEvents
       };
 

@@ -62,9 +62,25 @@ export const getUnifiedMatchEvents = (match = {}) => {
   const liveStatsEvents = Array.isArray(match.liveStatsEvents) ? match.liveStatsEvents : [];
 
   const map = new Map();
+  const seenCardSignatures = new Set();
+
+  const getCardSignature = (e) => {
+    if (!e) return null;
+    const t = String(e.type || '').toLowerCase();
+    const c = String(e.card || e.tipo || '').toLowerCase();
+    const isRed = t === 'roja' || t === 'card_red_own' || t === 'card_red_rival' || t === 'red_card' || c === 'roja' || c === 'red' || t === 'expulsion';
+    const isYellow = t === 'amarilla' || t === 'card_yellow_own' || t === 'card_yellow_rival' || t === 'yellow_card' || c === 'amarilla' || c === 'yellow';
+    if (!isRed && !isYellow) return null;
+    const pid = String(e.playerId || e.jugadorId || '');
+    const min = parseInt(e.minute || e.minuto || 0, 10);
+    return `card_${pid}_${min}_${isRed ? 'red' : 'yellow'}`;
+  };
+
   events.forEach((e) => {
     if (!e) return;
     if (e.isValid === false) return; // Omitir eventos invalidados
+    const cardSig = getCardSignature(e);
+    if (cardSig) seenCardSignatures.add(cardSig);
     const key = e.id || `evt_${e.type}_${e.minute || e.minuto || 0}_${e.playerId || e.playerInId || ''}_${e.playerOutId || ''}`;
     map.set(key, e);
   });
@@ -72,6 +88,12 @@ export const getUnifiedMatchEvents = (match = {}) => {
   liveStatsEvents.forEach((e) => {
     if (!e) return;
     if (e.isValid === false) return;
+    const cardSig = getCardSignature(e);
+    if (cardSig && seenCardSignatures.has(cardSig)) {
+      // Ya existe en events (evitar duplicado por doble emisión de LiveStats + onAddCard)
+      return;
+    }
+    if (cardSig) seenCardSignatures.add(cardSig);
     const key = e.id || `evt_${e.type}_${e.minute || e.minuto || 0}_${e.playerId || e.playerInId || ''}_${e.playerOutId || ''}`;
     if (!map.has(key)) {
       map.set(key, e);
@@ -387,7 +409,6 @@ export const calculateMinutesFromEvents = (
       expulsionMin = parseInt(redItem.minuto || redItem.minute || duration, 10);
     }
   }
-
   if (expulsionMin === null) {
     const yellowCards = (allEvents || []).filter(e => {
       if (!e || e.isValid === false) return false;
@@ -403,13 +424,33 @@ export const calculateMinutesFromEvents = (
       );
     });
 
-    if (yellowCards.length >= 2) {
-      yellowCards.sort((a, b) => {
+    // Deduplicar tarjetas amarillas si el mismo evento llegó por dos vías (MatchDay + LiveStats)
+    const deduplicatedYellows = [];
+    const seenYelSignatures = new Set();
+    yellowCards.forEach(yc => {
+      const min = parseInt(yc.minute || yc.minuto || 0, 10);
+      const sig = yc.id ? yc.id : `y_${min}`;
+      const isDupe = seenYelSignatures.has(sig) || deduplicatedYellows.some(ex => {
+        const exMin = parseInt(ex.minute || ex.minuto || 0, 10);
+        return exMin === min && ex.id !== yc.id && (
+          (ex.type === 'card_yellow_own' && yc.type === 'amarilla') ||
+          (ex.type === 'amarilla' && yc.type === 'card_yellow_own') ||
+          (ex.type === yc.type && ex.playerId === yc.playerId)
+        );
+      });
+      if (!isDupe) {
+        seenYelSignatures.add(sig);
+        deduplicatedYellows.push(yc);
+      }
+    });
+
+    if (deduplicatedYellows.length >= 2) {
+      deduplicatedYellows.sort((a, b) => {
         const mA = parseInt(a.minute || a.minuto || 0, 10);
         const mB = parseInt(b.minute || b.minuto || 0, 10);
         return mA - mB;
       });
-      expulsionMin = parseInt(yellowCards[1].minute || yellowCards[1].minuto || duration, 10);
+      expulsionMin = parseInt(deduplicatedYellows[1].minute || deduplicatedYellows[1].minuto || duration, 10);
     }
   }
 

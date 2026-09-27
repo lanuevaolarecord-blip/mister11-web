@@ -114,9 +114,9 @@ export const MatchStatsBlock = ({
   const goalsOwn = countOf('gol_local') + countOf('goal_own');
   const goalsRival = countOf('gol_rival') + countOf('goal_rival');
 
-  // 2. Defensa & Posesión
-  const recoveries = countOf('recovery');
-  const losses = countOf('loss');
+  // 2. Defensa & Posesión (Canónico Míster11: lectura tolerante con ball_loss y aliases)
+  const recoveries = countOf('recovery') + countOf('recuperacion');
+  const losses = countOf('ball_loss') + countOf('loss') + countOf('perdida') + countOf('turnover');
   const duelsWon = countOf('duel_won');
   const duelsLost = countOf('duel_lost');
   const totalPossEvents = recoveries + losses;

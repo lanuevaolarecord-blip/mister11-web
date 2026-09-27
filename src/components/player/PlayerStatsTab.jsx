@@ -765,9 +765,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               const duelos_ganados = le.filter(e => e.type === 'duel_won').length;
               const duelos_perdidos = le.filter(e => e.type === 'duel_lost').length;
               const duelos_total = duelos_ganados + duelos_perdidos;
-              const recuperaciones = le.filter(e => e.type === 'recovery').length;
-              const perdidas = le.filter(e => e.type === 'loss').length;
-              const pases_clave = le.filter(e => e.type === 'duel_won' && e.subtype === 'recovery_ind').length;
+              const recuperaciones = le.filter(e => e.type === 'recovery' || e.type === 'recuperacion').length;
+              const perdidas = le.filter(e => e.type === 'ball_loss' || e.type === 'loss' || e.type === 'perdida' || e.type === 'turnover').length;
+              const pases_clave = le.filter(e => e.type === 'key_pass' || (e.type === 'duel_won' && e.subtype === 'recovery_ind')).length;
               const faltas_cometidas = le.filter(e => e.type === 'foul_against').length;
 
               // Estim. xG simple: 0.1 por tiro fuera + 0.35 por tiro a puerta

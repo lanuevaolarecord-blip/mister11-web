@@ -42,15 +42,88 @@ import { CaptureCriteriaModal } from './CaptureCriteriaModal';
 import { CAPTURE_CRITERIA } from '../config/captureCriteria';
 import SectionErrorBoundary from './common/SectionErrorBoundary';
 
+import {
+  Target,
+  Crosshair,
+  Zap,
+  AlertTriangle,
+  Square,
+  Flag,
+  FastForward,
+  ShieldCheck,
+  TrendingDown,
+  TrendingUp,
+  Swords,
+  ShieldAlert,
+  Shield,
+  Star,
+  ChevronDown,
+  ChevronUp,
+  Radio,
+  Compass,
+  BarChart2,
+  Users,
+  FileText,
+  BookOpen,
+  Sparkles,
+  MapPin,
+  User,
+  ArrowUp,
+  Award
+} from 'lucide-react';
+
 import './LiveStats.css';
 import './MatchStats/MatchStats.css';
 
-// ── Paleta de acentos por categoría ──────────────────────────────────────────
+// ── Paleta de acentos por categoría (Canónica Tierra y Campo) ────────────────
 const C = {
   green: '#4CAF7D',
   gold: '#D4A843',
-  orange: '#F97316',
+  orange: '#C85A32', // Terracota canónico
   teal: '#0D9488',
+  terracota: '#C85A32',
+  tierra: '#9C6A3B'
+};
+
+// ── Renderizador de Iconos Lucide Canónicos (CERO Emojis) ────────────────────
+export const renderLiveIcon = (type, size = 18) => {
+  switch (type) {
+    case 'shot_own':
+      return <Target size={size} color="#4CAF7D" />;
+    case 'shot_rival':
+      return <Crosshair size={size} color="#C85A32" />;
+    case 'foul_favor':
+      return <Zap size={size} color="#4CAF7D" />;
+    case 'foul_against':
+      return <AlertTriangle size={size} color="#D97706" />;
+    case 'card_yellow_own':
+    case 'card_yellow_rival':
+      return <Square size={size} fill="#D4A843" color="#D4A843" />;
+    case 'card_red_own':
+    case 'card_red_rival':
+      return <Square size={size} fill="#C85A32" color="#C85A32" />;
+    case 'corner_favor':
+      return <Flag size={size} color="#4CAF7D" />;
+    case 'corner_against':
+      return <Flag size={size} color="#C85A32" />;
+    case 'offside_own':
+      return <FastForward size={size} color="#D4A843" />;
+    case 'offside_rival':
+      return <FastForward size={size} color="#9C6A3B" />;
+    case 'recovery':
+      return <ShieldCheck size={size} color="#0D9488" />;
+    case 'ball_loss':
+    case 'loss':
+      return <TrendingDown size={size} color="#C85A32" />;
+    case 'duel_won':
+      return <Swords size={size} color="#4CAF7D" />;
+    case 'duel_lost':
+      return <ShieldAlert size={size} color="#9C6A3B" />;
+    case 'key_pass':
+      return <Star size={size} color="#D4A843" />;
+    default:
+      return <Target size={size} color="#4CAF7D" />;
+  }
 };
 
 // ── Textos bilingüe ───────────────────────────────────────────────────────────
@@ -62,8 +135,8 @@ const TEXTS = {
   'live.totalEvents': { es: 'eventos capturados', en: 'events captured' },
   'live.fullscreen.enter': { es: 'Pantalla completa', en: 'Fullscreen' },
   'live.fullscreen.exit': { es: 'Salir', en: 'Exit' },
-  'live.timer.start': { es: '▶ INICIAR', en: '▶ START' },
-  'live.timer.pause': { es: '❚❚ PAUSAR', en: '❚❚ PAUSE' },
+  'live.timer.start': { es: 'INICIAR', en: 'START' },
+  'live.timer.pause': { es: 'PAUSAR', en: 'PAUSE' },
   'live.timer.reset': { es: 'Reiniciar cronómetro', en: 'Reset timer' },
   'live.goal.for': { es: '+1 Gol propio', en: '+1 Own Goal' },
   'live.goal.against': { es: '+1 Gol rival', en: '+1 Rival Goal' },
@@ -80,10 +153,10 @@ const TEXTS = {
   'live.label.offTarget': { es: 'Fuera', en: 'Off' },
   'live.label.recovery': { es: 'Recup', en: 'Rec' },
   'live.label.loss': { es: 'Pérd', en: 'Loss' },
-  'live.cat.shots': { es: '⚽ Remates', en: '⚽ Shots' },
-  'live.cat.possession': { es: '🔄 Defensa / Posesión', en: '🔄 Defense / Possession' },
-  'live.cat.fouls': { es: '⚡ Faltas / Transiciones', en: '⚡ Fouls / Transitions' },
-  'live.cat.discipline': { es: '🟨 Disciplina / Balón parado', en: '🟨 Discipline / Set Pieces' },
+  'live.cat.shots': { es: 'Remates', en: 'Shots' },
+  'live.cat.possession': { es: 'Defensa / Posesión', en: 'Defense / Possession' },
+  'live.cat.fouls': { es: 'Faltas / Transiciones', en: 'Fouls / Transitions' },
+  'live.cat.discipline': { es: 'Disciplina / Balón parado', en: 'Discipline / Set Pieces' },
   'live.btn.shot_on_own': { es: 'Tiro a puerta\n(Propio)', en: 'Shot on Target\n(Own)' },
   'live.btn.shot_on_rival': { es: 'Tiro a puerta\n(Rival)', en: 'Shot on Target\n(Rival)' },
   'live.btn.shot_off_own': { es: 'Tiro fuera\n(Propio)', en: 'Shot off Target\n(Own)' },
@@ -108,9 +181,9 @@ const TEXTS = {
   'live.btn.offside_rival': { es: 'Fuera de juego\n(Rival)', en: 'Offside\n(Rival)' },
   'live.btn.save_own': { es: 'Parada portero\n(Propio)', en: 'Goalkeeper Save\n(Own)' },
   'live.btn.save_rival': { es: 'Parada portero\n(Rival)', en: 'Goalkeeper Save\n(Rival)' },
-  'live.select.scorer': { es: '⚽ Seleccionar Goleador', en: '⚽ Select Goalscorer' },
-  'live.select.yellow': { es: '🟨 Tarjeta Amarilla (Propia)', en: '🟨 Yellow Card (Own)' },
-  'live.select.red': { es: '🟥 Tarjeta Roja (Propia)', en: '🟥 Red Card (Own)' },
+  'live.select.scorer': { es: 'Seleccionar Goleador', en: 'Select Goalscorer' },
+  'live.select.yellow': { es: 'Tarjeta Amarilla (Propia)', en: 'Yellow Card (Own)' },
+  'live.select.red': { es: 'Tarjeta Roja (Propia)', en: 'Red Card (Own)' },
   'live.select.unassigned_goal': { es: 'Autogol rival / Sin asignar', en: 'Opponent Own Goal / Unassigned' },
   'live.select.starters': { es: 'Titulares', en: 'Starters' },
   'live.select.substitutes': { es: 'Suplentes', en: 'Substitutes' },
@@ -144,17 +217,17 @@ const BUTTON_GROUPS = [
     color: C.green,
     colsClass: 'cols-2',
     buttons: [
-      { type: 'shot_own', labelKey: 'capture.team.shot_own', icon: '⚽', criterionId: 'shot_on_target' },
-      { type: 'shot_rival', labelKey: 'capture.team.shot_rival', icon: '🔴', criterionId: 'shot_on_target' },
+      { type: 'shot_own', labelKey: 'capture.team.shot_own', criterionId: 'shot_on_target' },
+      { type: 'shot_rival', labelKey: 'capture.team.shot_rival', criterionId: 'shot_on_target' },
     ],
   },
   {
     catKey: 'live.cat.fouls',
-    color: C.orange,
+    color: C.terracota,
     colsClass: 'cols-2',
     buttons: [
-      { type: 'foul_favor', labelKey: 'live.btn.foul_favor', icon: '✅', criterionId: 'foul_favor' },
-      { type: 'foul_against', labelKey: 'live.btn.foul_against', icon: '⚡', criterionId: 'foul_against' },
+      { type: 'foul_favor', labelKey: 'live.btn.foul_favor', criterionId: 'foul_favor' },
+      { type: 'foul_against', labelKey: 'live.btn.foul_against', criterionId: 'foul_against' },
     ],
   },
   {
@@ -162,10 +235,10 @@ const BUTTON_GROUPS = [
     color: C.gold,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'card_yellow_own', labelKey: 'live.btn.card_yellow_own', icon: '🟨', criterionId: 'card_yellow' },
-      { type: 'card_red_own', labelKey: 'live.btn.card_red_own', icon: '🟥', criterionId: 'card_red' },
-      { type: 'card_yellow_rival', labelKey: 'live.btn.card_yellow_rival', icon: '🟨', criterionId: 'card_yellow' },
-      { type: 'card_red_rival', labelKey: 'live.btn.card_red_rival', icon: '🟥', criterionId: 'card_red' },
+      { type: 'card_yellow_own', labelKey: 'live.btn.card_yellow_own', criterionId: 'card_yellow' },
+      { type: 'card_red_own', labelKey: 'live.btn.card_red_own', criterionId: 'card_red' },
+      { type: 'card_yellow_rival', labelKey: 'live.btn.card_yellow_rival', criterionId: 'card_yellow' },
+      { type: 'card_red_rival', labelKey: 'live.btn.card_red_rival', criterionId: 'card_red' },
     ],
   },
   {
@@ -173,10 +246,10 @@ const BUTTON_GROUPS = [
     color: C.teal,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'corner_favor', labelKey: 'live.btn.corner_favor', icon: '🚩', criterionId: 'corner' },
-      { type: 'corner_against', labelKey: 'live.btn.corner_against', icon: '⛳', criterionId: 'corner' },
-      { type: 'offside_own', labelKey: 'live.btn.offside_own', icon: '🏃', criterionId: 'offside' },
-      { type: 'offside_rival', labelKey: 'live.btn.offside_rival', icon: '🏃‍♂️', criterionId: 'offside' },
+      { type: 'corner_favor', labelKey: 'live.btn.corner_favor', criterionId: 'corner' },
+      { type: 'corner_against', labelKey: 'live.btn.corner_against', criterionId: 'corner' },
+      { type: 'offside_own', labelKey: 'live.btn.offside_own', criterionId: 'offside' },
+      { type: 'offside_rival', labelKey: 'live.btn.offside_rival', criterionId: 'offside' },
     ],
   },
 ];
@@ -279,28 +352,6 @@ const LiveStats = ({
   const [activePlayerId, setActivePlayerId] = useState(null);
   const [showPostMatchModal, setShowPostMatchModal] = useState(false);
   const [postMatchCounters, setPostMatchCounters] = useState({});
-
-  // Acciones rápidas individuales (≥56dp, táctil Android)
-  const PLAYER_QUICK_ACTIONS = [
-    { type: 'shot_on_target_own', label: isEn ? 'Shot\nOn Target' : 'Tiro\na Puerta',   icon: '🎯', color: '#4CAF7D' },
-    { type: 'shot_off_target_own', label: isEn ? 'Shot\nMissed' : 'Tiro\nFuera',        icon: '⬜', color: '#94A3B8' },
-    { type: 'duel_won',            label: isEn ? 'Key\nPass'    : 'Pase\nClave',         icon: '⭐', color: '#D4A843' },
-    { type: 'recovery',            label: isEn ? 'Pass\nCompl.' : 'Pase\nComplet.',      icon: '✅', color: '#0D9488' },
-    { type: 'duel_won',            label: isEn ? 'Recov.'       : 'Recuper.',             icon: '↑',  color: '#4CAF7D', subtype: 'recovery_ind' },
-    { type: 'foul_against',        label: isEn ? 'Foul'         : 'Falta',                icon: '⚡', color: '#F97316' },
-    { type: 'duel_won',            label: isEn ? 'Duel\nWon'   : 'Duelo\nGanado',        icon: '✊', color: '#0D9488', subtype: 'duel_ind' },
-  ];
-
-  // 7 acciones correctas por acción individual real
-  const PLAYER_ACTIONS_REAL = [
-    { type: 'shot_on_target_own',  label: isEn ? 'Shot\nOn Target' : 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
-    { type: 'shot_off_target_own', label: isEn ? 'Shot\nMissed'    : 'Tiro\nFuera',      icon: '⬜', color: '#94A3B8' },
-    { type: 'recovery',            label: isEn ? 'Key\nPass'       : 'Pase\nClave',      icon: '⭐', color: '#D4A843' },
-    { type: 'recovery',            label: isEn ? 'Pass\nCompl.'    : 'Pase\nComplet.',   icon: '✅', color: '#0D9488' },
-    { type: 'recovery',            label: isEn ? 'Recov.'          : 'Recuper.',          icon: '↑',  color: '#3B82F6' },
-    { type: 'foul_against',        label: isEn ? 'Foul'            : 'Falta',             icon: '⚡', color: '#F97316' },
-    { type: 'duel_won',            label: isEn ? 'Duel\nWon'       : 'Duelo\nGanado',    icon: '✊', color: '#0D9488' },
-  ];
 
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
 
@@ -531,10 +582,34 @@ const LiveStats = ({
   const countByType = useCallback(
     (type) => {
       if (type === 'shot_own') {
-        return filteredEvents.filter(e => e && (e.team === 'own' || !e.team || String(e.type || '').includes('own') || e.type === 'gol_local' || e.type === 'shot_favor')).length;
+        return filteredEvents.filter(e => e && (
+          ['shot_on_target_own', 'shot_off_target_own', 'shot_own', 'shot_favor'].includes(e.type) ||
+          (e.type === 'shot' && e.team === 'own')
+        )).length;
       }
       if (type === 'shot_rival') {
-        return filteredEvents.filter(e => e && (e.team === 'rival' || String(e.type || '').includes('rival') || e.type === 'gol_rival')).length;
+        return filteredEvents.filter(e => e && (
+          ['shot_on_target_rival', 'shot_off_target_rival', 'shot_rival'].includes(e.type) ||
+          (e.type === 'shot' && e.team === 'rival')
+        )).length;
+      }
+      if (type === 'card_yellow_own') {
+        return filteredEvents.filter(e => e && (e.type === 'card_yellow_own' || e.type === 'amarilla' || e.type === 'yellow_card') && !e.type?.includes('rival') && e.playerId !== 'rival').length;
+      }
+      if (type === 'card_red_own') {
+        return filteredEvents.filter(e => e && (e.type === 'card_red_own' || e.type === 'roja' || e.type === 'red_card' || e.type === 'expulsion') && !e.type?.includes('rival') && e.playerId !== 'rival').length;
+      }
+      if (type === 'card_yellow_rival') {
+        return filteredEvents.filter(e => e && (e.type === 'card_yellow_rival' || (e.type === 'amarilla' && (e.isRival || e.playerId === 'rival')))).length;
+      }
+      if (type === 'card_red_rival') {
+        return filteredEvents.filter(e => e && (e.type === 'card_red_rival' || (e.type === 'roja' && (e.isRival || e.playerId === 'rival')))).length;
+      }
+      if (type === 'loss' || type === 'ball_loss') {
+        return filteredEvents.filter(e => e && ['ball_loss', 'loss', 'perdida', 'turnover'].includes(e.type)).length;
+      }
+      if (type === 'recovery' || type === 'recuperacion') {
+        return filteredEvents.filter(e => e && ['recovery', 'recuperacion'].includes(e.type)).length;
       }
       return filteredEvents.filter((e) => e && e.type === type).length;
     },
@@ -822,6 +897,44 @@ const LiveStats = ({
         setPendingPlayerSelection({ action: 'card_red_own', title: tx('live.select.red') });
         return;
       }
+      if (type === 'card_yellow_rival' || type === 'card_red_rival') {
+        const cardType = type === 'card_yellow_rival' ? 'amarilla' : 'roja';
+        const rivalName = matchData?.rival || 'Rival';
+        const targetMin = currentHalf === 2
+          ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+          : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        if (onAddCard) {
+          onAddCard(cardType, 'rival', rivalName, { id: tempId, minute: targetMin, half: currentHalf, isRival: true });
+        }
+        const localDoc = {
+          id: tempId,
+          type,
+          half: currentHalf,
+          minute: targetMin,
+          sector: selectedSector || 'center',
+          team: 'rival',
+          playerId: 'rival',
+          playerName: rivalName,
+          timestamp: new Date().toISOString()
+        };
+        setLocalEvents(prev => [...prev, localDoc]);
+        const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+        if (hook) {
+          const realId = await hook(type, currentHalf, {
+            id: tempId,
+            minute: targetMin,
+            sector: selectedSector || 'center',
+            team: 'rival',
+            playerId: 'rival',
+            playerName: rivalName
+          });
+          if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+        }
+        setFlashType(type);
+        setTimeout(() => setFlashType(null), 650);
+        return;
+      }
 
       // Interceptar acciones de tiro para modal rápido de contexto (<= 3 taps)
       const isShotAction = [
@@ -880,7 +993,7 @@ const LiveStats = ({
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList, activeGoalkeeper]
+    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList, activeGoalkeeper, onAddCard, parentAddLiveEvent, liveStatsHook.addLiveEvent, currentMinute]
   );
 
   const handleConfirmPlayerSelection = useCallback(
@@ -928,10 +1041,10 @@ const LiveStats = ({
         setTimeout(() => setFlashType(null), 650);
       } else if (action === 'card_yellow_own' || action === 'card_red_own') {
         const cardType = action === 'card_yellow_own' ? 'amarilla' : 'roja';
-        if (onAddCard) {
-          onAddCard(cardType, playerId, playerName);
-        }
         const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        if (onAddCard) {
+          onAddCard(cardType, playerId, playerName, { id: tempId, minute: targetMin, half: currentHalf });
+        }
         const localDoc = {
           id: tempId,
           type: action,
@@ -948,6 +1061,8 @@ const LiveStats = ({
         const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
         if (hook) {
           const realId = await hook(action, currentHalf, {
+            id: tempId,
+            minute: targetMin,
             playerId: playerId || null,
             playerName: playerName || '',
             sector: selectedSector || 'center',
@@ -986,7 +1101,7 @@ const LiveStats = ({
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', padding: '64px 24px', gap: '16px', textAlign: 'center',
       }}>
-        <span style={{ fontSize: '48px' }}>📊</span>
+        <BarChart2 size={48} color="#D4A843" />
         <p style={{ color: darkMode ? '#94A3B8' : '#64748B', fontSize: '15px', maxWidth: '340px', lineHeight: 1.6 }}>
           {tx('live.noMatch')}
         </p>
@@ -999,16 +1114,16 @@ const LiveStats = ({
       ref={containerRef}
       className={`livestats-container ${darkMode ? 'dark-theme dark theme-dark' : 'light-theme theme-light'} ${isFullscreen ? 'livestats-fullscreen fullscreen-mode' : ''}`}
       style={{
-        backgroundColor: darkMode ? '#0B1317' : '#F1F5F9',
-        color: darkMode ? '#FFFFFF' : '#0F172A',
+        backgroundColor: darkMode ? '#1B3A2D' : '#F1F5F9',
+        color: darkMode ? '#FFFFFF' : '#1E293B',
       }}
     >
       {/* Aviso Banner de Partido Bloqueado / Histórico Inmutable */}
       {isLocked && (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.12)',
-          border: '1.5px solid rgba(239, 68, 68, 0.4)',
-          color: '#FCA5A5',
+          background: 'rgba(200, 90, 50, 0.15)',
+          border: '1.5px solid rgba(200, 90, 50, 0.4)',
+          color: '#E07A5F',
           padding: '10px 16px',
           borderRadius: '10px',
           fontSize: '13px',
@@ -1020,7 +1135,7 @@ const LiveStats = ({
           margin: '12px 16px 0',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
         }}>
-          <span>🔒</span>
+          <ShieldAlert size={16} color="#C85A32" />
           <span>{isEn ? 'Match finished — Controls locked (Immutable historical record. Reopen match sheet to edit)' : 'Partido finalizado — Controles bloqueados (Registro histórico inmutable. Reabre el acta para editar)'}</span>
         </div>
       )}
@@ -1032,29 +1147,37 @@ const LiveStats = ({
             type="button"
             className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
             onClick={() => setActiveTab('capture')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            🔴 {tx('live.tab.capture')}
+            <Radio size={14} color="#C85A32" />
+            <span>{tx('live.tab.capture')}</span>
           </button>
           <button
             type="button"
             className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
             onClick={() => setActiveTab('tactical')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            ⚽ {tx('live.tab.tactical')}
+            <Compass size={14} color="#4CAF7D" />
+            <span>{tx('live.tab.tactical')}</span>
           </button>
           <button
             type="button"
             className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            📈 {tx('live.tab.analytics')}
+            <TrendingUp size={14} color="#D4A843" />
+            <span>{tx('live.tab.analytics')}</span>
           </button>
           <button
             type="button"
             className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
             onClick={() => setActiveTab('players')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            📋 {tx('live.tab.players')}
+            <Users size={14} color="#0D9488" />
+            <span>{tx('live.tab.players')}</span>
           </button>
         </nav>
       )}
@@ -1105,8 +1228,9 @@ const LiveStats = ({
             <div className="livestats-timer-display" style={{ color: isMatchFinished ? '#94A3B8' : (isRunning ? '#4CAF7D' : '#D4A843') }}>
               <span className="livestats-timer-time">{formatMatchTime(displaySeconds)}</span>
               {isMatchFinished ? (
-                <span className="livestats-timer-badge" style={{ background: '#15803D', color: '#FFFFFF', fontWeight: '800' }}>
-                  ⏹️ {isEn ? 'FINAL' : 'FINAL'}
+                <span className="livestats-timer-badge" style={{ background: '#15803D', color: '#FFFFFF', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Square size={10} fill="#FFFFFF" color="#FFFFFF" />
+                  <span>{isEn ? 'FINAL' : 'FINAL'}</span>
                 </span>
               ) : (
                 <span className="livestats-timer-badge">
@@ -1165,7 +1289,7 @@ const LiveStats = ({
                   }}
                   title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : (isEn ? 'Finish match' : 'Finalizar partido')}
                 >
-                  {isMatchFinished ? (isEn ? '✓ Finished' : '✓ Terminado') : (isEn ? '🏁 Finish' : '🏁 Finalizar')}
+                  {isMatchFinished ? (isEn ? 'Terminado' : 'Terminado') : (isEn ? 'Finalizar' : 'Finalizar')}
                 </button>
               )}
             </div>
@@ -1224,9 +1348,9 @@ const LiveStats = ({
                 minWidth: '48px',
                 borderRadius: '8px',
                 padding: '0 12px',
-                background: darkMode ? 'rgba(59,130,246,0.15)' : '#EFF6FF',
-                border: '1.5px solid #3B82F6',
-                color: darkMode ? '#93C5FD' : '#1D4ED8',
+                background: darkMode ? 'rgba(212, 168, 67, 0.15)' : '#FEF3C7',
+                border: '1.5px solid #D4A843',
+                color: darkMode ? '#FBBF24' : '#92400E',
                 fontWeight: 700,
                 fontSize: '12px',
                 display: 'flex',
@@ -1235,7 +1359,7 @@ const LiveStats = ({
                 cursor: 'pointer'
               }}
             >
-              <span>📖</span>
+              <BookOpen size={16} color={darkMode ? '#FBBF24' : '#92400E'} />
               <span>{isEn ? 'Criteria' : 'Criterios'}</span>
             </button>
 
@@ -1284,7 +1408,7 @@ const LiveStats = ({
             <div className="jugador-activo-strip">
               <div className="jugador-activo-label">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>⚡</span>
+                  <Zap size={14} color="#D4A843" />
                   <span>{isEn ? 'ACTIVE PLAYER' : 'JUGADOR ACTIVO'}</span>
                   <span className="jugador-count-badge" style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '10px', background: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', fontWeight: 800, color: 'var(--partidos-gold)' }}>
                     {activePlayersWithMinutes.length}
@@ -1320,7 +1444,7 @@ const LiveStats = ({
                     cursor: 'pointer'
                   }}
                 >
-                  <span>{unattributedCount > 0 ? '✨' : '✅'}</span>
+                  {unattributedCount > 0 ? <Sparkles size={14} color="#D4A843" /> : <ShieldCheck size={14} color="#4CAF7D" />}
                   <span>{unattributedCount > 0 
                     ? (isEn ? `Refine (${unattributedCount})` : `Refinar (${unattributedCount})`) 
                     : t('capture.refine_empty')}</span>
@@ -1330,7 +1454,11 @@ const LiveStats = ({
                   className="jugador-postmatch-btn"
                   onClick={() => { setShowPostMatchModal(true); setPostMatchCounters({}); }}
                   title={isEn ? 'Post-match load: quick entry of +/- counters' : 'Carga post-partido: entrada rápida de contadores +/-'}
-                >📋 {isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</button>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FileText size={14} />
+                  <span>{isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</span>
+                </button>
               </div>
               <PlayerChipRow
                 id="livestats-active-player-chips"
@@ -1353,12 +1481,15 @@ const LiveStats = ({
                           color: 'var(--partidos-gold, #D4A843)',
                           padding: '0 12px',
                           cursor: 'pointer',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
                         }}
                         title={isEn ? 'Bench players with 0 minutes' : 'Jugadores suplentes con 0 minutos'}
                         aria-label={isEn ? `Bench: ${benchPlayersZeroMinutes.length} players with 0 minutes` : `Banquillo: ${benchPlayersZeroMinutes.length} jugadores con 0 minutos`}
                       >
-                        <span>🪑</span>
+                        <Users size={14} color="#D4A843" />
                         <span>+ {isEn ? 'Bench' : 'Banquillo'} ({benchPlayersZeroMinutes.length})</span>
                       </button>
 
@@ -1384,8 +1515,9 @@ const LiveStats = ({
                             gap: '4px'
                           }}
                         >
-                          <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--partidos-gold)', padding: '2px 6px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px' }}>
-                            🪑 {isEn ? 'BENCH (0 MIN)' : 'SUPLENTES (0 MIN)'}
+                          <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--partidos-gold)', padding: '2px 6px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Users size={12} color="var(--partidos-gold)" />
+                            <span>{isEn ? 'BENCH (0 MIN)' : 'SUPLENTES (0 MIN)'}</span>
                           </div>
                           {benchPlayersZeroMinutes.map(p => (
                             <button
@@ -1453,6 +1585,8 @@ const LiveStats = ({
                       const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
                       if (hook) {
                         const realId = await hook(actType, currentHalf, {
+                          id: tempId,
+                          minute: targetMin,
                           playerId: activePlayerId,
                           playerName: ap?.nombre || ap?.name || '',
                           sector: selectedSector || 'center',
@@ -1464,11 +1598,58 @@ const LiveStats = ({
                       }
                     };
 
+                    const handleIndividualCard = async (cardAction) => {
+                      if (isMatchLocked(matchData)) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
+                      setFlashType(`player_${cardAction}`);
+                      setTimeout(() => setFlashType(null), 650);
+
+                      const targetMin = currentHalf === 2 
+                        ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) 
+                        : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+
+                      const cardType = cardAction === 'card_yellow_own' ? 'amarilla' : 'roja';
+                      const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                      const playerName = ap?.nombre || ap?.name || '';
+
+                      if (onAddCard) {
+                        onAddCard(cardType, activePlayerId, playerName, { id: tempId, minute: targetMin, half: currentHalf });
+                      }
+
+                      const localDoc = {
+                        id: tempId,
+                        type: cardAction,
+                        half: currentHalf,
+                        minute: targetMin,
+                        sector: selectedSector || 'center',
+                        zone2D: selectedSector2D,
+                        x: 30,
+                        y: 50,
+                        playerId: activePlayerId,
+                        playerName,
+                        timestamp: new Date().toISOString()
+                      };
+                      setLocalEvents(prev => [...prev, localDoc]);
+                      const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+                      if (hook) {
+                        const realId = await hook(cardAction, currentHalf, {
+                          id: tempId,
+                          minute: targetMin,
+                          playerId: activePlayerId,
+                          playerName,
+                          sector: selectedSector || 'center',
+                          zone2D: selectedSector2D,
+                          x: 30,
+                          y: 50
+                        });
+                        if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                      }
+                    };
+
                     return (
                       <>
                         <div className="jugador-acciones-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>#{ap?.dorsal} <strong>{ap?.nombre || ap?.name}</strong> · {ap?.posicion}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>📍 {selectedSector2D.replace('_', ' ').toUpperCase()}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}><MapPin size={12} color="var(--text-secondary)" /><span>{selectedSector2D.replace('_', ' ').toUpperCase()}</span></span>
                         </div>
                         <div className="jugador-acciones-btns" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
                           {/* 1. TIRO */}
@@ -1486,7 +1667,9 @@ const LiveStats = ({
                               });
                             }}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#4CAF7D' }}>🎯</span>
+                            <span className="jugador-accion-icon" style={{ color: '#4CAF7D' }}>
+                              <Target size={18} color="#4CAF7D" />
+                            </span>
                             <span className="jugador-accion-label">{isEn ? 'Shot' : 'Tiro'}</span>
                           </button>
 
@@ -1494,10 +1677,12 @@ const LiveStats = ({
                           <button
                             type="button"
                             className={`jugador-accion-btn ${flashType === 'player_recovery' ? 'flashing' : ''}`}
-                            style={{ '--action-color': '#3B82F6', minHeight: '48px' }}
+                            style={{ '--action-color': '#0D9488', minHeight: '48px' }}
                             onClick={() => handleIndividualAction('recovery')}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#3B82F6' }}>🛡️</span>
+                            <span className="jugador-accion-icon" style={{ color: '#0D9488' }}>
+                              <ShieldCheck size={18} color="#0D9488" />
+                            </span>
                             <span className="jugador-accion-label">{isEn ? 'Recovery' : 'Recuper.'}</span>
                           </button>
 
@@ -1505,10 +1690,12 @@ const LiveStats = ({
                           <button
                             type="button"
                             className={`jugador-accion-btn ${flashType === 'player_duel_won' ? 'flashing' : ''}`}
-                            style={{ '--action-color': '#10B981', minHeight: '48px' }}
+                            style={{ '--action-color': '#4CAF7D', minHeight: '48px' }}
                             onClick={() => handleIndividualAction('duel_won')}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#10B981' }}>✊</span>
+                            <span className="jugador-accion-icon" style={{ color: '#4CAF7D' }}>
+                              <Swords size={18} color="#4CAF7D" />
+                            </span>
                             <span className="jugador-accion-label">{isEn ? 'Duel Won' : 'Duelo Gan.'}</span>
                           </button>
 
@@ -1516,10 +1703,12 @@ const LiveStats = ({
                           <button
                             type="button"
                             className="jugador-accion-btn"
-                            style={{ '--action-color': '#F59E0B', minHeight: '48px' }}
+                            style={{ '--action-color': '#D97706', minHeight: '48px' }}
                             onClick={() => setPendingFoulModal(prev => !prev)}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#F59E0B' }}>⚡</span>
+                            <span className="jugador-accion-icon" style={{ color: '#D97706' }}>
+                              <AlertTriangle size={18} color="#D97706" />
+                            </span>
                             <span className="jugador-accion-label">{isEn ? 'Foul...' : 'Falta...'}</span>
                           </button>
 
@@ -1527,10 +1716,12 @@ const LiveStats = ({
                           <button
                             type="button"
                             className={`jugador-accion-btn ${showAdvancedHud ? 'active' : ''}`}
-                            style={{ '--action-color': '#8B5CF6', minHeight: '48px', borderStyle: 'dashed' }}
+                            style={{ '--action-color': '#9C6A3B', minHeight: '48px', borderStyle: 'dashed' }}
                             onClick={() => setShowAdvancedHud(prev => !prev)}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#8B5CF6' }}>{showAdvancedHud ? '▲' : '▼'}</span>
+                            <span className="jugador-accion-icon" style={{ color: '#9C6A3B' }}>
+                              {showAdvancedHud ? <ChevronUp size={18} color="#9C6A3B" /> : <ChevronDown size={18} color="#9C6A3B" />}
+                            </span>
                             <span className="jugador-accion-label">{isEn ? 'Advanced' : 'Avanzado'}</span>
                           </button>
                         </div>
@@ -1540,17 +1731,19 @@ const LiveStats = ({
                           <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '8px', background: darkMode ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderRadius: '8px', border: '1px solid #CBD5E1', flexWrap: 'wrap' }}>
                             <button
                               type="button"
-                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', border: '1px solid #D97706', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                               onClick={() => { handleIndividualAction('foul_against'); setPendingFoulModal(false); }}
                             >
-                              ✋ {isEn ? 'Foul Conceded' : 'Falta Cometida'}
+                              <AlertTriangle size={14} color="#92400E" />
+                              <span>{isEn ? 'Foul Conceded' : 'Falta Cometida'}</span>
                             </button>
                             <button
                               type="button"
-                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: '#CFFAFE', color: '#155E75', border: '1px solid #06B6D4', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: 'rgba(76, 175, 125, 0.15)', color: '#166534', border: '1px solid #4CAF7D', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                               onClick={() => { handleIndividualAction('foul_favor'); setPendingFoulModal(false); }}
                             >
-                              ⚡ {isEn ? 'Foul Won' : 'Falta Recibida'}
+                              <Zap size={14} color="#166534" />
+                              <span>{isEn ? 'Foul Won' : 'Falta Recibida'}</span>
                             </button>
                             <button
                               type="button"
@@ -1560,24 +1753,24 @@ const LiveStats = ({
                                 minWidth: '92px',
                                 padding: '0 10px',
                                 borderRadius: '6px',
-                                background: '#FEF08A',
-                                color: '#854D0E',
-                                border: '1px solid #EAB308',
+                                background: '#FEF9C3',
+                                color: '#713F12',
+                                border: '1px solid #D4A843',
                                 fontWeight: 800,
                                 fontSize: '12px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '5px'
+                                gap: '6px'
                               }}
-                              onClick={() => { handlePress('card_yellow_own'); setPendingFoulModal(false); }}
+                              onClick={() => { handleIndividualCard('card_yellow_own'); setPendingFoulModal(false); }}
                               onTouchStart={() => handleTouchStartCriterion('card_yellow')}
                               onTouchEnd={handleTouchEndCriterion}
                               onMouseDown={() => handleTouchStartCriterion('card_yellow')}
                               onMouseUp={handleTouchEndCriterion}
                             >
-                              <span>🟨</span>
+                              <Square size={14} fill="#D4A843" color="#D4A843" />
                               <span>{isEn ? 'Yellow' : 'Tarjeta'}</span>
                             </button>
                             <button
@@ -1588,24 +1781,24 @@ const LiveStats = ({
                                 minWidth: '92px',
                                 padding: '0 10px',
                                 borderRadius: '6px',
-                                background: '#FEE2E2',
-                                color: '#991B1B',
-                                border: '1px solid #EF4444',
+                                background: 'rgba(200, 90, 50, 0.15)',
+                                color: '#A8432A',
+                                border: '1px solid #C85A32',
                                 fontWeight: 800,
                                 fontSize: '12px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '5px'
+                                gap: '6px'
                               }}
-                              onClick={() => { handlePress('card_red_own'); setPendingFoulModal(false); }}
+                              onClick={() => { handleIndividualCard('card_red_own'); setPendingFoulModal(false); }}
                               onTouchStart={() => handleTouchStartCriterion('card_red')}
                               onTouchEnd={handleTouchEndCriterion}
                               onMouseDown={() => handleTouchStartCriterion('card_red')}
                               onMouseUp={handleTouchEndCriterion}
                             >
-                              <span>🟥</span>
+                              <Square size={14} fill="#C85A32" color="#C85A32" />
                               <span>{isEn ? 'Red' : 'Tarjeta'}</span>
                             </button>
                           </div>
@@ -1620,25 +1813,31 @@ const LiveStats = ({
                               style={{ '--action-color': '#D4A843', minHeight: '48px' }}
                               onClick={() => handleIndividualAction('key_pass')}
                             >
-                              <span className="jugador-accion-icon" style={{ color: '#D4A843' }}>⭐</span>
+                              <span className="jugador-accion-icon" style={{ color: '#D4A843' }}>
+                                <Star size={18} color="#D4A843" />
+                              </span>
                               <span className="jugador-accion-label">{isEn ? 'Key Pass' : 'Pase Clave'}</span>
                             </button>
                             <button
                               type="button"
                               className="jugador-accion-btn"
-                              style={{ '--action-color': '#EF4444', minHeight: '48px' }}
+                              style={{ '--action-color': '#C85A32', minHeight: '48px' }}
                               onClick={() => handleIndividualAction('ball_loss')}
                             >
-                              <span className="jugador-accion-icon" style={{ color: '#EF4444' }}>🔴</span>
+                              <span className="jugador-accion-icon" style={{ color: '#C85A32' }}>
+                                <TrendingDown size={18} color="#C85A32" />
+                              </span>
                               <span className="jugador-accion-label">{isEn ? 'Turnover' : 'Pérdida'}</span>
                             </button>
                             <button
                               type="button"
                               className="jugador-accion-btn"
-                              style={{ '--action-color': '#F97316', minHeight: '48px' }}
+                              style={{ '--action-color': '#9C6A3B', minHeight: '48px' }}
                               onClick={() => handleIndividualAction('duel_lost')}
                             >
-                              <span className="jugador-accion-icon" style={{ color: '#F97316' }}>✋</span>
+                              <span className="jugador-accion-icon" style={{ color: '#9C6A3B' }}>
+                                <ShieldAlert size={18} color="#9C6A3B" />
+                              </span>
                               <span className="jugador-accion-label">{isEn ? 'Duel Lost' : 'Duelo Perd.'}</span>
                             </button>
                           </div>
@@ -1658,12 +1857,12 @@ const LiveStats = ({
               disabled={isLocked}
             />
 
-            {/* ── SECCIÓN DE PORTERO EN CAMPO (🧤) ── */}
+            {/* ── SECCIÓN DE PORTERO EN CAMPO ── */}
             <section
               className="livestats-category-card livestats-gk-card"
               style={{
-                backgroundColor: darkMode ? '#0F1E2E' : '#EFF6FF',
-                borderColor: darkMode ? '#1E3A8A' : '#93C5FD',
+                backgroundColor: darkMode ? '#1B3A2D' : '#F8FAFC',
+                borderColor: darkMode ? 'rgba(76, 175, 125, 0.4)' : '#CBD5E1',
                 borderWidth: '2px',
                 borderStyle: 'solid',
                 borderRadius: '14px',
@@ -1686,8 +1885,8 @@ const LiveStats = ({
                   marginBottom: '12px',
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  border: activeGoalkeeper ? (darkMode ? '1px solid #1E3A8A' : '1px solid #BFDBFE') : '1.5px dashed #EF4444',
-                  background: activeGoalkeeper ? (darkMode ? 'rgba(59,130,246,0.1)' : '#EFF6FF') : (darkMode ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2'),
+                  border: activeGoalkeeper ? (darkMode ? '1px solid #4CAF7D' : '1px solid #86EFAC') : '1.5px dashed #C85A32',
+                  background: activeGoalkeeper ? (darkMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(76, 175, 125, 0.08)') : (darkMode ? 'rgba(200, 90, 50, 0.15)' : '#FFF7ED'),
                   cursor: 'pointer',
                   minHeight: '48px',
                   boxSizing: 'border-box',
@@ -1696,12 +1895,14 @@ const LiveStats = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '20px' }}>{activeGoalkeeper ? '🧤' : '⚠️'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {activeGoalkeeper ? <ShieldCheck size={20} color="#4CAF7D" /> : <ShieldAlert size={20} color="#C85A32" />}
+                  </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                    <span style={{ fontWeight: 800, fontSize: '11px', color: darkMode ? '#93C5FD' : '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '11px', color: darkMode ? '#4CAF7D' : '#15803D', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       {t('gk.activeGoalkeeper')}
                     </span>
-                    <strong style={{ fontSize: '13px', color: activeGoalkeeper ? (darkMode ? '#60A5FA' : '#1D4ED8') : '#EF4444', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <strong style={{ fontSize: '13px', color: activeGoalkeeper ? (darkMode ? '#FFFFFF' : '#1E293B') : '#C85A32', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {activeGoalkeeper 
                         ? `${activeGoalkeeper.nombre || activeGoalkeeper.name} #${activeGoalkeeper.dorsal || activeGoalkeeper.number || '1'}` 
                         : t('gk.noActiveGoalkeeper')}
@@ -1709,7 +1910,7 @@ const LiveStats = ({
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: activeGoalkeeper ? '#2563EB' : '#EF4444', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: activeGoalkeeper ? '#4CAF7D' : '#C85A32', whiteSpace: 'nowrap' }}>
                     {activeGoalkeeper ? (isEn ? 'Edit in Lineup →' : 'Editar alineación →') : (isEn ? 'Tap to assign →' : 'Tocar para asignar →')}
                   </span>
                 </div>
@@ -1717,11 +1918,11 @@ const LiveStats = ({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                 {[
-                  { type: 'save', label: t('gk.btn.save'), icon: '🧤', color: '#22C55E' },
-                  { type: 'conceded', label: t('gk.btn.conceded'), icon: '🥅', color: '#EF4444' },
-                  { type: 'penaltySave', label: t('gk.btn.penaltySave'), icon: '🛡️', color: '#3B82F6' },
-                  { type: 'claim', label: t('gk.btn.claim'), icon: '⬆️', color: '#0D9488' },
-                  { type: 'errorGoal', label: t('gk.btn.errorGoal'), icon: '⚠️', color: '#F97316' },
+                  { type: 'save', label: t('gk.btn.save'), icon: <ShieldCheck size={16} color="#4CAF7D" />, color: '#4CAF7D' },
+                  { type: 'conceded', label: t('gk.btn.conceded'), icon: <Target size={16} color="#C85A32" />, color: '#C85A32' },
+                  { type: 'penaltySave', label: t('gk.btn.penaltySave'), icon: <Award size={16} color="#D4A843" />, color: '#D4A843' },
+                  { type: 'claim', label: t('gk.btn.claim'), icon: <ArrowUp size={16} color="#0D9488" />, color: '#0D9488' },
+                  { type: 'errorGoal', label: t('gk.btn.errorGoal'), icon: <AlertTriangle size={16} color="#9C6A3B" />, color: '#9C6A3B' },
                 ].map(gkAction => {
                   const isFlashingGk = flashType === `gk_${gkAction.type}`;
                   const count = (filteredEvents || []).filter(e => e.type === gkAction.type && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
@@ -1773,7 +1974,7 @@ const LiveStats = ({
                         padding: '8px 10px',
                         border: `1.5px solid ${isFlashingGk ? gkAction.color : (darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1')}`,
                         background: isFlashingGk ? `${gkAction.color}33` : (darkMode ? 'rgba(255,255,255,0.06)' : '#FFFFFF'),
-                        color: darkMode ? '#FFFFFF' : '#0F172A',
+                        color: darkMode ? '#FFFFFF' : '#1E293B',
                         cursor: isLocked ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -1847,10 +2048,10 @@ const LiveStats = ({
                             cursor: isLocked ? 'not-allowed' : 'pointer'
                           }}
                         >
-                          <span className="livestats-btn-icon">{icon}</span>
+                          <span className="livestats-btn-icon">{renderLiveIcon(type)}</span>
                           <span
                             className="livestats-btn-label"
-                            style={{ color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 800 }}
+                            style={{ color: darkMode ? '#FFFFFF' : '#1E293B', fontWeight: 800 }}
                           >
                             {lines[0]}
                             {lines[1] && (
@@ -1944,7 +2145,7 @@ const LiveStats = ({
         {activeTab === 'analytics' && (() => {
           // ── Calcular TODOS los stats desde eventos reales ──────────────────
           const recHome   = countByType('recovery');
-          const lossHome  = countByType('loss');
+          const lossHome  = countByType('ball_loss');
           const totalPossEvents = recHome + lossHome;
           // Posesión: proporción recuperaciones / (recuperaciones + pérdidas)
           const posHome = totalPossEvents > 0 ? Math.round((recHome / totalPossEvents) * 100) : 50;
@@ -2190,8 +2391,10 @@ const LiveStats = ({
         {showResetModal && (
           <div className="event-selector-overlay" onClick={() => setShowResetModal(false)} style={{ zIndex: 99999 }}>
             <div className="event-selector-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '24px', borderRadius: '16px' }}>
-              <div style={{ fontSize: '36px', marginBottom: '8px' }}>⚠️</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: darkMode ? '#F8FAFC' : '#0F172A', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                <AlertTriangle size={36} color="#D4A843" />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: darkMode ? '#F8FAFC' : '#1E293B', marginBottom: '12px' }}>
                 ¿Reiniciar eventos de este partido?
               </h3>
               <p style={{ fontSize: '13px', color: darkMode ? '#94A3B8' : '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>
@@ -2212,7 +2415,7 @@ const LiveStats = ({
                     if (resetLiveStats) await resetLiveStats();
                     if (onResetEvents) onResetEvents();
                   }}
-                  style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}
+                  style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: 'none', background: '#C85A32', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}
                 >
                   Sí, Reiniciar Conteo
                 </button>
@@ -2232,7 +2435,10 @@ const LiveStats = ({
               {/* Header */}
               <div style={{ background: 'linear-gradient(135deg, #1B3A2D 0%, #0F2419 100%)', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#FFFFFF' }}>📋 Carga Post-Partido</div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <FileText size={18} />
+                    <span>Carga Post-Partido</span>
+                  </div>
                   <div style={{ fontSize: '12px', color: '#9DC7AF', marginTop: '2px' }}>Entrada rápida de contadores +/− por jugador</div>
                 </div>
                 <button type="button" onClick={() => setShowPostMatchModal(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFFFFF', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 700 }}>✕</button>
@@ -2244,20 +2450,20 @@ const LiveStats = ({
                   const pid = p.id;
                   const counters = postMatchCounters[pid] || {};
                   const COUNTER_TYPES = [
-                    { key: 'goles',             label: 'Goles',        color: '#10B981' },
-                    { key: 'asistencias',       label: 'Asistencias',  color: '#8B5CF6' },
+                    { key: 'goles',             label: 'Goles',        color: '#4CAF7D' },
+                    { key: 'asistencias',       label: 'Asistencias',  color: '#0D9488' },
                     { key: 'tirosPuerta',       label: 'Tiros Puerta', color: '#4CAF7D' },
                     { key: 'tirosFuera',        label: 'Tiros Fuera',  color: '#94A3B8' },
                     { key: 'pasesCompletados',  label: 'Pases Compl.', color: '#0D9488' },
-                    { key: 'pasesFallidos',     label: 'Pases Fall.',  color: '#EF4444' },
+                    { key: 'pasesFallidos',     label: 'Pases Fall.',  color: '#C85A32' },
                     { key: 'pasesClave',        label: 'Pases Clave',  color: '#D4A843' },
-                    { key: 'duelosGanados',     label: 'Duelos Gan.',  color: '#10B981' },
-                    { key: 'duelosPerdidos',    label: 'Duelos Perd.', color: '#F43F5E' },
-                    { key: 'recuperaciones',    label: 'Recuperac.',   color: '#3B82F6' },
-                    { key: 'perdidas',          label: 'Pérdidas',     color: '#DC2626' },
-                    { key: 'faltas',            label: 'Faltas',       color: '#F97316' },
-                    { key: 'amarillas',         label: 'Amarilla 🟨',  color: '#EAB308' },
-                    { key: 'rojas',             label: 'Roja 🟥',      color: '#EF4444' },
+                    { key: 'duelosGanados',     label: 'Duelos Gan.',  color: '#4CAF7D' },
+                    { key: 'duelosPerdidos',    label: 'Duelos Perd.', color: '#9C6A3B' },
+                    { key: 'recuperaciones',    label: 'Recuperac.',   color: '#0D9488' },
+                    { key: 'perdidas',          label: 'Pérdidas',     color: '#C85A32' },
+                    { key: 'faltas',            label: 'Faltas',       color: '#D97706' },
+                    { key: 'amarillas',         label: 'Amarilla',     color: '#D4A843' },
+                    { key: 'rojas',             label: 'Roja',         color: '#C85A32' },
                   ];
                   return (
                     <div key={pid} style={{ background: 'var(--partidos-player-card-bg, rgba(255,255,255,0.05))', borderRadius: '12px', border: '1px solid var(--partidos-border, rgba(255,255,255,0.1))', padding: '12px 14px' }}>
@@ -2341,9 +2547,9 @@ const LiveStats = ({
                     showToast(t('livestats.post_match_saved'), 'success');
                     setShowPostMatchModal(false);
                   }}
-                  style={{ minHeight: '44px', padding: '0 24px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#0B1317', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}
+                  style={{ minHeight: '44px', padding: '0 24px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#FFFFFF', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}
                 >
-                  ✓ Guardar Contadores
+                  Guardar Contadores
                 </button>
               </div>
             </div>
@@ -2375,7 +2581,7 @@ const LiveStats = ({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0', paddingBottom: '10px' }}>
-                <h4 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                <h4 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: darkMode ? '#FFFFFF' : '#1E293B' }}>
                   {pendingPlayerSelection.title}
                 </h4>
                 <button
@@ -2420,7 +2626,7 @@ const LiveStats = ({
                       marginBottom: '4px'
                     }}
                   >
-                    <span style={{ fontSize: '20px' }}>⚽</span>
+                    <Target size={20} color="#D4A843" />
                     <span>{tx('live.select.unassigned_goal')}</span>
                   </button>
                 )}
@@ -2449,7 +2655,7 @@ const LiveStats = ({
                           borderRadius: '10px',
                           border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #E2E8F0',
                           background: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
-                          color: darkMode ? '#FFFFFF' : '#0F172A',
+                          color: darkMode ? '#FFFFFF' : '#1E293B',
                           cursor: 'pointer',
                           textAlign: 'left',
                           transition: 'background 0.15s ease'
@@ -2468,7 +2674,7 @@ const LiveStats = ({
                             fontWeight: 900,
                             fontSize: '12px'
                           }}>
-                            {pNum ? `#${pNum}` : '👤'}
+                            {pNum ? `#${pNum}` : <User size={14} />}
                           </span>
                           <span style={{ fontWeight: 800, fontSize: '13.5px' }}>{pName}</span>
                         </div>
@@ -2538,7 +2744,7 @@ const LiveStats = ({
                     borderRadius: '8px',
                     border: darkMode ? '1px solid rgba(255,255,255,0.2)' : '1px solid #CBD5E1',
                     background: 'transparent',
-                    color: darkMode ? '#FFFFFF' : '#0F172A',
+                    color: darkMode ? '#FFFFFF' : '#1E293B',
                     fontWeight: 700,
                     fontSize: '13px',
                     cursor: 'pointer'
@@ -2585,8 +2791,8 @@ const LiveStats = ({
               onClick={e => e.stopPropagation()}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '28px' }}>🥅</span>
-                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                <Target size={28} color="#C85A32" />
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#1E293B' }}>
                   {t('gk.suggest.title')}
                 </h3>
               </div>
@@ -2601,7 +2807,7 @@ const LiveStats = ({
                   id="livestats-btn-confirm-gk-conceded"
                   style={{
                     minHeight: '48px',
-                    backgroundColor: '#1E40AF',
+                    backgroundColor: '#C85A32',
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: '8px',
@@ -2632,7 +2838,7 @@ const LiveStats = ({
                     });
                   }}
                 >
-                  <span>🧤</span>
+                  <ShieldCheck size={16} />
                   <span>{t('gk.suggest.confirm')}</span>
                 </button>
 
@@ -2725,17 +2931,18 @@ const LiveStats = ({
               zIndex: 9999,
               maxWidth: '420px',
               width: '90%',
-              backgroundColor: darkMode ? '#0F172A' : '#FFFFFF',
-              color: darkMode ? '#FFFFFF' : '#0F172A',
+              backgroundColor: darkMode ? '#1B3A2D' : '#FFFFFF',
+              color: darkMode ? '#FFFFFF' : '#1E293B',
               padding: '16px',
               borderRadius: '12px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-              border: '2px solid #3B82F6'
+              border: '2px solid #D4A843'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <strong style={{ color: '#3B82F6', fontSize: '14px' }}>
-                📖 {isEn ? CAPTURE_CRITERIA[activeCriterionTooltip].nameEn : CAPTURE_CRITERIA[activeCriterionTooltip].nameEs}
+              <strong style={{ color: '#D4A843', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <BookOpen size={14} color="#D4A843" />
+                <span>{isEn ? CAPTURE_CRITERIA[activeCriterionTooltip].nameEn : CAPTURE_CRITERIA[activeCriterionTooltip].nameEs}</span>
               </strong>
               <button
                 type="button"
@@ -2749,14 +2956,14 @@ const LiveStats = ({
               {isEn ? CAPTURE_CRITERIA[activeCriterionTooltip].definitionEn : CAPTURE_CRITERIA[activeCriterionTooltip].definitionEs}
             </p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#10B981' }}>
+              <span style={{ fontSize: '11px', color: '#4CAF7D' }}>
                 ✓ {isEn ? 'Counts when:' : 'Anota si:'} {isEn ? (CAPTURE_CRITERIA[activeCriterionTooltip].countsWhenEn || '').slice(0, 45) : (CAPTURE_CRITERIA[activeCriterionTooltip].countsWhenEs || '').slice(0, 45)}...
               </span>
               <button
                 type="button"
                 onClick={() => { setActiveCriterionTooltip(null); setShowCriteriaModal(true); }}
                 style={{
-                  background: '#3B82F6',
+                  background: '#D4A843',
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '6px',

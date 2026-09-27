@@ -46,11 +46,21 @@ const TARGET_FILES = [
 ];
 
 console.log('==============================================================================');
-console.log('MÍSTER 11 — CI LINTER DE PALETA CANÓNICA PARA GRÁFICAS (TIERRA Y CAMPO)');
+console.log('MÍSTER 11 — CI LINTER DE PALETA CANÓNICA PARA GRÁFICAS Y CAPTURA (TIERRA Y CAMPO)');
 console.log('==============================================================================\n');
 
 let totalViolations = 0;
+const ALLOWED_ACTION_COLORS = new Set([
+  '#4CAF7D',
+  '#0D9488',
+  '#D4A843',
+  '#C85A32',
+  '#9C6A3B',
+  '#D97706'
+]);
+const EMOJI_REGEX = /[\p{Extended_Pictographic}]/u;
 
+// 1. Auditoría de archivos canónicos de gráficas
 for (const relPath of TARGET_FILES) {
   const fullPath = path.resolve(rootDir, relPath);
   if (!fs.existsSync(fullPath)) {
@@ -61,7 +71,6 @@ for (const relPath of TARGET_FILES) {
   const lines = content.split('\n');
 
   lines.forEach((line, idx) => {
-    // Ignorar líneas de comentarios explicativos de prohibición
     if (line.includes('PROHIBICIÓN ESTRICTA') || line.includes('pattern:') || line.includes('FORBIDDEN_PATTERNS') || line.includes('PROHIBIDO')) {
       return;
     }
@@ -76,12 +85,50 @@ for (const relPath of TARGET_FILES) {
   });
 }
 
+// 2. Auditoría exhaustiva de captura en vivo (LiveStats.jsx):
+//    - Cero emojis
+//    - Cero #EF4444 (rojo de bandera)
+//    - Validación estricta de todos los estilos inline '--action-color'
+const liveStatsPath = path.resolve(rootDir, 'src/components/LiveStats.jsx');
+if (fs.existsSync(liveStatsPath)) {
+  const liveContent = fs.readFileSync(liveStatsPath, 'utf-8');
+  const liveLines = liveContent.split('\n');
+
+  liveLines.forEach((line, idx) => {
+    // Emojis en captura
+    if (EMOJI_REGEX.test(line)) {
+      console.error(`❌ [Emoji prohibido en captura en vivo] en src/components/LiveStats.jsx:${idx + 1}`);
+      console.error(`   > ${line.trim()}`);
+      totalViolations++;
+    }
+
+    // Rojo genérico #EF4444 en captura
+    if (/#EF4444/i.test(line)) {
+      console.error(`❌ [Rojo #EF4444 prohibido en captura (usar terracota canónico #C85A32)] en src/components/LiveStats.jsx:${idx + 1}`);
+      console.error(`   > ${line.trim()}`);
+      totalViolations++;
+    }
+
+    // Estilos inline '--action-color'
+    if (line.includes('--action-color')) {
+      const match = line.match(/--action-color':\s*'([^']+)'/);
+      if (match) {
+        const val = match[1].toUpperCase();
+        if (!ALLOWED_ACTION_COLORS.has(val)) {
+          console.error(`❌ [Acción no canónica en --action-color: ${val}] en src/components/LiveStats.jsx:${idx + 1}`);
+          console.error(`   > ${line.trim()}`);
+          totalViolations++;
+        }
+      }
+    }
+  });
+}
+
 if (totalViolations > 0) {
-  console.error(`\n🚨 FALLO: Se encontraron ${totalViolations} violaciones de paleta en los componentes de gráficas.`);
-  console.error('   Regla: Queda terminantemente prohibido el uso de azules/navy y de #141A17.');
-  console.error('   Usa exclusivamente los tokens de src/config/chartTheme.js (fondo #1B3A2D).');
+  console.error(`\n🚨 FALLO: Se encontraron ${totalViolations} violaciones de paleta en los componentes auditados.`);
+  console.error('   Regla: Queda terminantemente prohibido el uso de azules/navy, rojo #EF4444, emojis y colores no canónicos en --action-color.');
   process.exit(1);
 } else {
-  console.log('✅ [PASS] 0 colores prohibidos. Todas las gráficas cumplen con la paleta oficial Tierra y Campo.');
+  console.log('✅ [PASS] 0 colores prohibidos, 0 emojis, y todos los --action-color son canónicos Tierra y Campo.');
   console.log('==============================================================================\n');
 }

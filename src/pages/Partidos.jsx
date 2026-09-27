@@ -442,20 +442,25 @@ const Partidos = () => {
   }, [matchData.events, matchData.rival, players, isGlobalEn, derivedGoalsFor, derivedGoalsAgainst, activeTeam?.nombre]);
 
   const derivedTarjetas = useMemo(() => {
-    return (matchData.events || [])
+    const allEvts = (effectiveLiveEvents && effectiveLiveEvents.length > 0) ? effectiveLiveEvents : (matchData.events || []);
+    return (allEvts || [])
       .filter(e => e && e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja' || e.type === 'card_yellow_own' || e.type === 'card_red_own' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival'))
       .map(e => {
         const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
         const minStr = (!isNaN(rawMin) && rawMin > 0) ? String(rawMin) : 's/m';
         const isYellow = e.type === 'amarilla' || e.type === 'card_yellow_own' || e.type === 'card_yellow_rival';
+        const isRival = e.type?.includes('rival') || e.isRival || e.playerId === 'rival';
         return {
-          jugadorId: e.playerId,
-          nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || (e.type?.includes('rival') ? (matchData.rival || 'Rival') : (isGlobalEn ? 'Player' : 'Jugador')),
+          id: e.id,
+          jugadorId: e.playerId || (isRival ? 'rival' : null),
+          nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || (isRival ? (matchData.rival || 'Rival') : (isGlobalEn ? 'Player' : 'Jugador')),
           tipo: isYellow ? 'amarilla' : 'roja',
-          minuto: minStr
+          minuto: minStr,
+          rawMinute: rawMin,
+          isRival
         };
       });
-  }, [matchData.events, matchData.rival, players, isGlobalEn]);
+  }, [effectiveLiveEvents, matchData.events, matchData.rival, players, isGlobalEn]);
 
   const derivedSubstitutions = useMemo(() => {
     const subs = [];
@@ -463,22 +468,23 @@ const Partidos = () => {
       matchData.cambiosList.forEach(c => {
         const pIn = (players || []).find(pl => String(pl.id) === String(c.entraId || c.inId || c.playerInId));
         const pOut = (players || []).find(pl => String(pl.id) === String(c.saleId || c.outId || c.playerOutId));
-        const nameIn = pIn?.name || (isGlobalEn ? 'Sub In' : 'Entra');
-        const nameOut = pOut?.name || (isGlobalEn ? 'Sub Out' : 'Sale');
+        const nameIn = pIn?.name || c.playerInName || c.entraNombre || (isGlobalEn ? 'Sub In' : 'Entra');
+        const nameOut = pOut?.name || c.playerOutName || c.saleNombre || (isGlobalEn ? 'Sub Out' : 'Sale');
         const rawMin = parseInt(c.minuto || c.minute, 10);
         const minStr = (!isNaN(rawMin) && rawMin > 0) ? `Min. ${rawMin}'` : 's/m';
         subs.push({ text: `${nameIn} ↔ ${nameOut}`, minuto: minStr });
       });
     }
 
-    const subEvents = (matchData.events || []).filter(e => e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'));
+    const allEvts = (effectiveLiveEvents && effectiveLiveEvents.length > 0) ? effectiveLiveEvents : (matchData.events || []);
+    const subEvents = allEvts.filter(e => e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'));
     subEvents.forEach(se => {
       const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId || se.entraId;
       const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId || se.saleId;
       const pIn = (players || []).find(pl => String(pl.id) === String(inId));
       const pOut = (players || []).find(pl => String(pl.id) === String(outId));
-      const nameIn = pIn?.name || (inId ? `J#${inId}` : (isGlobalEn ? 'Sub In' : 'Entra'));
-      const nameOut = pOut?.name || (outId ? `J#${outId}` : (isGlobalEn ? 'Sub Out' : 'Sale'));
+      const nameIn = pIn?.name || se.playerInName || (inId ? `J#${inId}` : (isGlobalEn ? 'Sub In' : 'Entra'));
+      const nameOut = pOut?.name || se.playerOutName || (outId ? `J#${outId}` : (isGlobalEn ? 'Sub Out' : 'Sale'));
       const rawMin = parseInt(se.minute || se.minuto, 10);
       const minStr = (!isNaN(rawMin) && rawMin > 0) ? `Min. ${rawMin}'` : 's/m';
       const entry = { text: `${nameIn} ↔ ${nameOut}`, minuto: minStr };
@@ -2821,7 +2827,7 @@ const Partidos = () => {
                 language={settings?.language || 'Español (ES)'}
                 onAddGoalFor={(playerId, playerName) => addEvent('gol_local', playerId || 'Equipo', playerName || (isGlobalEn ? 'Own Goal' : 'Gol Propio'), currentMinute)}
                 onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute)}
-                onAddCard={(cardType, playerId, playerName) => addEvent(cardType, playerId || 'Equipo', playerName || (isGlobalEn ? 'Player' : 'Jugador'), currentMinute)}
+                onAddCard={(cardType, playerId, playerName, extra) => addEvent(cardType, playerId || 'Equipo', playerName || (isGlobalEn ? 'Player' : 'Jugador'), currentMinute, extra || {})}
                 onFinishMatch={handleFinishMatch}
                 onNavigateToLineup={() => handleTabChange('ALINEACIÓN')}
               />

@@ -622,6 +622,23 @@ export const generateMatchPdfReport = async ({
           })
           .join(', ');
       }
+      if (!cardsText || cardsText === '') {
+        const cardEvents = safeEvents.filter(e => e && e.isValid !== false && (
+          e.type === 'amarilla' || e.type === 'roja' || e.type === 'card_yellow_own' || e.type === 'card_red_own' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival'
+        ));
+        if (cardEvents.length > 0) {
+          cardsText = cardEvents.map(e => {
+            const isRed = e.type === 'roja' || e.type === 'card_red_own' || e.type === 'card_red_rival';
+            const tipo = isRed ? (isEn ? 'Red' : 'Roja') : (isEn ? 'Yellow' : 'Amarilla');
+            const isRival = e.type?.includes('rival') || e.playerId === 'rival';
+            const pl = players.find(p => String(p.id) === String(e.playerId));
+            const pName = pl ? cleanPdfText(pl.name || pl.nombre) : (isRival ? cleanPdfText(rivalName) : (isEn ? 'Player' : 'Jugador'));
+            const rawMin = parseInt(e.minute ?? e.minuto ?? 0, 10);
+            const minStr = rawMin > 0 ? `${rawMin}'` : 's/m';
+            return `${tipo} - ${pName} (${minStr})`;
+          }).join(', ');
+        }
+      }
       if (!cardsText) cardsText = isEn ? 'None recorded' : 'Ninguna registrada';
 
       const allSubsListActa = [];
@@ -1233,6 +1250,23 @@ export const generateMatchPdfReport = async ({
             return `${tipo} - ${pName} (${minStr})`;
           })
           .join(', ');
+      }
+      if (!cardsText || cardsText === '') {
+        const cardEvents = unifiedMatchEvents.filter(e => e && e.isValid !== false && (
+          e.type === 'amarilla' || e.type === 'roja' || e.type === 'card_yellow_own' || e.type === 'card_red_own' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival'
+        ));
+        if (cardEvents.length > 0) {
+          cardsText = cardEvents.map(e => {
+            const isRed = e.type === 'roja' || e.type === 'card_red_own' || e.type === 'card_red_rival';
+            const tipo = isRed ? (isEn ? 'Red' : 'Roja') : (isEn ? 'Yellow' : 'Amarilla');
+            const isRival = e.type?.includes('rival') || e.playerId === 'rival';
+            const pl = players.find(p => String(p.id) === String(e.playerId));
+            const pName = pl ? cleanPdfText(pl.name || pl.nombre) : (isRival ? cleanPdfText(rivalName) : (isEn ? 'Player' : 'Jugador'));
+            const rawMin = parseInt(e.minute ?? e.minuto ?? 0, 10);
+            const minStr = rawMin > 0 ? `${rawMin}'` : 's/m';
+            return `${tipo} - ${pName} (${minStr})`;
+          }).join(', ');
+        }
       }
       if (!cardsText) cardsText = isEn ? 'None recorded' : 'Ninguna registrada';
 

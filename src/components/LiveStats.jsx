@@ -420,6 +420,9 @@ const LiveStats = ({
   // ── Extraer Jugadores Reales y Nombres de Equipo ────────────────────────────
   const homeTeamName = matchData?.local || matchData?.equipoLocal || 'Mi Equipo';
   const awayTeamName = matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival';
+  const rivalTeamName = awayTeamName;
+  const homeScore = matchData?.goalsFor ?? matchData?.marcadorLocal ?? 0;
+  const awayScore = matchData?.goalsAgainst ?? matchData?.marcadorVisitante ?? 0;
 
   const playersList = useMemo(() => {
     const rawList = (calledPlayers && calledPlayers.length > 0)
@@ -2419,7 +2422,7 @@ const LiveStats = ({
               })}
               teamName={homeTeamName}
               matchData={matchData}
-              rivalName={rivalTeamName}
+              rivalName={rivalTeamName || awayTeamName}
               matchDate={matchData?.fecha || matchData?.date || ''}
               score={`${homeScore} - ${awayScore}`}
               competition={matchData?.competicion || matchData?.competition || ''}

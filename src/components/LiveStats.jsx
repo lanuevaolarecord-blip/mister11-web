@@ -2418,6 +2418,11 @@ const LiveStats = ({
                 };
               })}
               teamName={homeTeamName}
+              matchData={matchData}
+              rivalName={rivalTeamName}
+              matchDate={matchData?.fecha || matchData?.date || ''}
+              score={`${homeScore} - ${awayScore}`}
+              competition={matchData?.competicion || matchData?.competition || ''}
             />
             </SectionErrorBoundary>
           </div>

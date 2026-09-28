@@ -1,13 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
+import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X, FileText, Info } from 'lucide-react';
 import { downloadCSV } from '../../utils/downloadCSV.js';
+import { generateIndividualPerformancePdf } from '../../utils/individualPerformancePdfReport.js';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { getEffectiveLanguage } from '../../i18n/translations';
 
 export const StatsDataTable = ({
   playerStats = [],
-  teamName = 'Local'
+  teamName = 'Local',
+  matchData = {},
+  rivalName = 'Rival',
+  matchDate = '',
+  score = '',
+  competition = ''
 }) => {
   const { isEn } = useTranslation();
   const { darkMode } = useTheme();
@@ -179,6 +185,28 @@ export const StatsDataTable = ({
     await downloadCSV(csvContent, filename);
   };
 
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExportingPdf(true);
+      await generateIndividualPerformancePdf({
+        matchData,
+        playerStats: sortedAndFiltered,
+        teamName,
+        rivalName,
+        matchDate,
+        score,
+        competition,
+        isEn
+      });
+    } catch (err) {
+      console.error('[StatsDataTable] Error generating PDF:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <div className="stats-table-container">
       {/* Barra superior de la tabla */}
@@ -238,6 +266,31 @@ export const StatsDataTable = ({
 
           <button
             type="button"
+            onClick={handleExportPDF}
+            disabled={isExportingPdf}
+            className="export-pdf-btn"
+            title={isEn ? "Download Individual Performance PDF" : "Descargar Informe PDF de Rendimiento Individual"}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              minHeight: '36px',
+              padding: '0 12px',
+              borderRadius: '8px',
+              border: darkMode ? '1px solid #4CAF7D' : '1.5px solid #1B3A2D',
+              background: darkMode ? 'rgba(76, 175, 125, 0.15)' : '#1B3A2D',
+              color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: isExportingPdf ? 'wait' : 'pointer'
+            }}
+          >
+            <FileText size={14} color={darkMode ? '#4CAF7D' : '#D4A843'} />
+            <span>{isExportingPdf ? (isEn ? 'Generating...' : 'Generando...') : (isEn ? 'Download PDF' : 'Descargar PDF')}</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleExportCSV}
             className="export-csv-btn"
             title={isEn ? "Download CSV for Excel" : "Descargar CSV para Excel"}
@@ -284,12 +337,12 @@ export const StatsDataTable = ({
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: 1.5 }}>
-              <div><strong>⭐ Nota (4.0 - 10.0):</strong> Nota mixta: base 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) + Duelos Ganados (+0.2) − Duelos Perdidos (−0.15) − Pérdidas (−0.15) − Faltas (−0.2).</div>
-              <div><strong>⚽ xG (Goles Esperados):</strong> Probabilidad matemática acumulada según disparos a puerta (0.25) y goles directos (0.40).</div>
-              <div><strong>👟 Pases C/F (%):</strong> Pases Completados (C) vs Fallidos (F) y % de acierto sobre el total intentado.</div>
-              <div><strong>⚔️ Duelos G/P (%):</strong> Duelos Ganados (G) vs Perdidos (P) y % de eficacia en disputas de balón.</div>
-              <div><strong>🛡️ Recup / Pérd:</strong> Balones recuperados vs pérdidas de posesión.</div>
-              <div><strong>🎯 Tiros P/Tot (%):</strong> Disparos a puerta sobre el total de tiros realizados y porcentaje de puntería.</div>
+              <div><strong>[Nota] (4.0 - 10.0):</strong> Nota mixta: base 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) + Duelos Ganados (+0.2) − Duelos Perdidos (−0.15) − Pérdidas (−0.15) − Faltas (−0.2).</div>
+              <div><strong>[xG] (Goles Esperados):</strong> Probabilidad matemática acumulada según disparos a puerta (0.25) y goles directos (0.40).</div>
+              <div><strong>[Pases] C/F (%):</strong> Pases Completados (C) vs Fallidos (F) y % de acierto sobre el total intentado.</div>
+              <div><strong>[Duelos] G/P (%):</strong> Duelos Ganados (G) vs Perdidos (P) y % de eficacia en disputas de balón.</div>
+              <div><strong>[Balón] Recup / Pérd:</strong> Balones recuperados vs pérdidas de posesión.</div>
+              <div><strong>[Tiros] P/Tot (%):</strong> Disparos a puerta sobre el total de tiros realizados y porcentaje de puntería.</div>
             </div>
           </div>
         </div>
@@ -308,9 +361,9 @@ export const StatsDataTable = ({
         alignItems: 'center',
         gap: '8px'
       }}>
-        <span>💡</span>
+        <Info size={15} color="#D4A843" style={{ flexShrink: 0 }} />
         <span>
-          <strong>Rendimiento Individual Verificable:</strong> Las estadísticas se consolidan automáticamente desde la <strong>Captura en Vivo</strong> (pulsando el chip del jugador activo), <strong>📋 Carga Post-Partido</strong> y el <strong>Acta Oficial</strong>. Los jugadores sin minutos ni acciones se muestran con nota pendiente (—).
+          <strong>Rendimiento Individual Verificable:</strong> Las estadísticas se consolidan automáticamente desde la <strong>Captura en Vivo</strong> (pulsando el chip del jugador activo), <strong>Carga Post-Partido</strong> y el <strong>Acta Oficial</strong>. Los jugadores sin minutos ni acciones se muestran con nota pendiente (—).
         </span>
       </div>
 
@@ -371,8 +424,8 @@ export const StatsDataTable = ({
                       </span>
                     )}
                   </td>
-                  <td className="center font-semibold">{p.goles > 0 ? `⚽ ${p.goles}` : '—'}</td>
-                  <td className="center font-semibold">{p.asistencias > 0 ? `👟 ${p.asistencias}` : '—'}</td>
+                  <td className="center font-semibold">{p.goles > 0 ? p.goles : '—'}</td>
+                  <td className="center font-semibold">{p.asistencias > 0 ? p.asistencias : '—'}</td>
                   <td className="center text-gold">{p.xG > 0 ? p.xG.toFixed(2) : '0.00'}</td>
                   <td className="center">
                     {p.pasesTot > 0 ? (
@@ -395,7 +448,7 @@ export const StatsDataTable = ({
                   <td className="center">
                     {(p.recuperaciones > 0 || p.perdidas > 0) ? (
                       <span style={{ fontWeight: 700 }}>
-                        <span style={{ color: '#3B82F6' }}>{p.recuperaciones}</span> / <span style={{ color: '#EF4444' }}>{p.perdidas}</span>
+                        <span style={{ color: '#4CAF7D' }}>{p.recuperaciones}</span> / <span style={{ color: '#C85A32' }}>{p.perdidas}</span>
                       </span>
                     ) : (
                       <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0 / 0</span>
@@ -411,7 +464,7 @@ export const StatsDataTable = ({
                     )}
                   </td>
                   <td className="center font-semibold" style={{ color: p.paradas > 0 ? (darkMode ? '#4ADE80' : '#059669') : 'inherit' }}>
-                    {p.paradas > 0 ? `🧤 ${p.paradas}` : '—'}
+                    {p.paradas > 0 ? p.paradas : '—'}
                   </td>
                   <td className="center" style={{ fontWeight: p.faltas > 0 ? 800 : 400, color: p.faltas > 0 ? (darkMode ? '#FBBF24' : '#B45309') : 'inherit' }}>
                     {p.faltas}
@@ -419,8 +472,8 @@ export const StatsDataTable = ({
                   <td className="center">
                     {(p.amarillas > 0 || p.rojas > 0) ? (
                       <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
-                        {p.amarillas > 0 && <span style={{ background: '#F59E0B25', color: '#F59E0B', border: '1px solid #F59E0B50', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.amarillas} 🟨</span>}
-                        {p.rojas > 0 && <span style={{ background: '#EF444425', color: '#EF4444', border: '1px solid #EF444450', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.rojas} 🟥</span>}
+                        {p.amarillas > 0 && <span style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#D4A843', border: '1px solid rgba(212, 168, 67, 0.4)', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.amarillas} A</span>}
+                        {p.rojas > 0 && <span style={{ background: 'rgba(200, 90, 50, 0.15)', color: '#C85A32', border: '1px solid rgba(200, 90, 50, 0.4)', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.rojas} R</span>}
                       </span>
                     ) : (
                       <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>—</span>

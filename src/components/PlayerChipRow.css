@@ -75,7 +75,7 @@
 .theme-light .player-chip-item {
   border-color: rgba(15, 23, 42, 0.14);
   background: #F8FAFC;
-  color: #0F172A;
+  color: #1B3A2D;
 }
 
 .player-chip-item:hover {
@@ -142,8 +142,8 @@
   height: 24px;
   padding: 0 4px;
   border-radius: 6px;
-  background: rgba(96, 165, 250, 0.15);
-  color: #60A5FA;
+  background: rgba(212, 168, 67, 0.15);
+  color: #D4A843;
   font-size: 12px;
   font-weight: 900;
   line-height: 1;

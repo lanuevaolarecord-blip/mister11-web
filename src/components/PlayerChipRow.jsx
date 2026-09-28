@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { User, UserX } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import './PlayerChipRow.css';
 
@@ -19,7 +20,7 @@ export const PlayerChipRow = memo(({
   showUnassigned = false,
   unassignedId = null,
   unassignedLabel = null,
-  unassignedIcon = '🔘',
+  unassignedIcon = null,
   allowDeselect = true,
   extraAfter = null,
   id = null,
@@ -97,7 +98,7 @@ export const PlayerChipRow = memo(({
             {dorsal ? (
               <span className="player-chip-dorsal-badge">#{dorsal}</span>
             ) : (
-              <span className="player-chip-dorsal-badge">👤</span>
+              <span className="player-chip-dorsal-badge"><User size={12} color="#D4A843" /></span>
             )}
             <span className="player-chip-name-text">{shortName}</span>
           </button>

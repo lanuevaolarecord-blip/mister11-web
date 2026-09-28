@@ -102,10 +102,10 @@
 }
 
 .shot-team-chip.active-rival {
-  background: #5C1D1D;
-  border-color: #EF4444;
+  background: #5C2718;
+  border-color: #C85A32;
   color: #FFFFFF;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 10px rgba(200, 90, 50, 0.3);
 }
 
 .shot-modal-body {
@@ -220,37 +220,37 @@
 
 .shot-chip-large.selected-success {
   background: #1B4D24;
-  border-color: #22C55E;
+  border-color: #4CAF7D;
   color: #FFFFFF;
 }
 
 .shot-chip-large.selected-gk {
-  background: #1E3A8A;
-  border-color: #3B82F6;
+  background: #1B3A2D;
+  border-color: #4CAF7D;
   color: #FFFFFF;
 }
 
 .shot-chip-large.selected-miss {
-  background: #334155;
-  border-color: #94A3B8;
+  background: #2E3338;
+  border-color: #9C6A3B;
   color: #FFFFFF;
 }
 
 .shot-chip-large.selected-block {
-  background: #4C1D95;
-  border-color: #A855F7;
+  background: #235F2D;
+  border-color: #4CAF7D;
   color: #FFFFFF;
 }
 
 .shot-chip-large.selected-gold {
-  background: #8C6207;
-  border-color: #F59E0B;
+  background: #6B4F1B;
+  border-color: #D4A843;
   color: #FFFFFF;
 }
 
 .shot-chip-large.selected-comfort {
-  background: #0D9488;
-  border-color: #14B8A6;
+  background: #1B4D24;
+  border-color: #4CAF7D;
   color: #FFFFFF;
 }
 
@@ -322,21 +322,21 @@
 }
 
 .shot-player-chip.selected {
-  background: #1E3A8A;
-  border-color: #3B82F6;
+  background: #1B3A2D;
+  border-color: #D4A843;
   color: #FFFFFF;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 8px rgba(212, 168, 67, 0.4);
 }
 
 .shot-player-chip.selected-unassigned {
   background: rgba(148, 163, 184, 0.2);
-  border-color: #94A3B8;
+  border-color: #9C6A3B;
   color: #E2E8F0;
 }
 
 .shot-player-chip.selected-assist {
   background: #1B4D24;
-  border-color: #22C55E;
+  border-color: #4CAF7D;
   color: #FFFFFF;
 }
 
@@ -347,13 +347,13 @@
 
 .shot-player-dorsal {
   font-weight: 800;
-  color: #60A5FA;
+  color: #D4A843;
 }
 
 .shot-pitch-toggle-btn {
   background: none;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  color: #60A5FA;
+  border: 1px solid rgba(212, 168, 67, 0.4);
+  color: #D4A843;
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;

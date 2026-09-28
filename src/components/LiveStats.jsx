@@ -80,7 +80,7 @@ const C = {
   green: '#4CAF7D',
   gold: '#D4A843',
   orange: '#C85A32', // Terracota canónico
-  teal: '#0D9488',
+  teal: '#4CAF7D',
   terracota: '#C85A32',
   tierra: '#9C6A3B'
 };
@@ -111,7 +111,7 @@ export const renderLiveIcon = (type, size = 18) => {
     case 'offside_rival':
       return <FastForward size={size} color="#9C6A3B" />;
     case 'recovery':
-      return <ShieldCheck size={size} color="#0D9488" />;
+      return <ShieldCheck size={size} color="#4CAF7D" />;
     case 'ball_loss':
     case 'loss':
       return <TrendingDown size={size} color="#C85A32" />;
@@ -1176,7 +1176,7 @@ const LiveStats = ({
             onClick={() => setActiveTab('players')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <Users size={14} color="#0D9488" />
+            <Users size={14} color="#D4A843" />
             <span>{tx('live.tab.players')}</span>
           </button>
         </nav>
@@ -1677,11 +1677,11 @@ const LiveStats = ({
                           <button
                             type="button"
                             className={`jugador-accion-btn ${flashType === 'player_recovery' ? 'flashing' : ''}`}
-                            style={{ '--action-color': '#0D9488', minHeight: '48px' }}
+                            style={{ '--action-color': '#4CAF7D', minHeight: '48px' }}
                             onClick={() => handleIndividualAction('recovery')}
                           >
-                            <span className="jugador-accion-icon" style={{ color: '#0D9488' }}>
-                              <ShieldCheck size={18} color="#0D9488" />
+                            <span className="jugador-accion-icon" style={{ color: '#4CAF7D' }}>
+                              <ShieldCheck size={18} color="#4CAF7D" />
                             </span>
                             <span className="jugador-accion-label">{isEn ? 'Recovery' : 'Recuper.'}</span>
                           </button>
@@ -1921,7 +1921,7 @@ const LiveStats = ({
                   { type: 'save', label: t('gk.btn.save'), icon: <ShieldCheck size={16} color="#4CAF7D" />, color: '#4CAF7D' },
                   { type: 'conceded', label: t('gk.btn.conceded'), icon: <Target size={16} color="#C85A32" />, color: '#C85A32' },
                   { type: 'penaltySave', label: t('gk.btn.penaltySave'), icon: <Award size={16} color="#D4A843" />, color: '#D4A843' },
-                  { type: 'claim', label: t('gk.btn.claim'), icon: <ArrowUp size={16} color="#0D9488" />, color: '#0D9488' },
+                  { type: 'claim', label: t('gk.btn.claim'), icon: <ArrowUp size={16} color="#D4A843" />, color: '#D4A843' },
                   { type: 'errorGoal', label: t('gk.btn.errorGoal'), icon: <AlertTriangle size={16} color="#9C6A3B" />, color: '#9C6A3B' },
                 ].map(gkAction => {
                   const isFlashingGk = flashType === `gk_${gkAction.type}`;
@@ -2451,15 +2451,15 @@ const LiveStats = ({
                   const counters = postMatchCounters[pid] || {};
                   const COUNTER_TYPES = [
                     { key: 'goles',             label: 'Goles',        color: '#4CAF7D' },
-                    { key: 'asistencias',       label: 'Asistencias',  color: '#0D9488' },
+                    { key: 'asistencias',       label: 'Asistencias',  color: '#D4A843' },
                     { key: 'tirosPuerta',       label: 'Tiros Puerta', color: '#4CAF7D' },
                     { key: 'tirosFuera',        label: 'Tiros Fuera',  color: '#94A3B8' },
-                    { key: 'pasesCompletados',  label: 'Pases Compl.', color: '#0D9488' },
+                    { key: 'pasesCompletados',  label: 'Pases Compl.', color: '#4CAF7D' },
                     { key: 'pasesFallidos',     label: 'Pases Fall.',  color: '#C85A32' },
                     { key: 'pasesClave',        label: 'Pases Clave',  color: '#D4A843' },
                     { key: 'duelosGanados',     label: 'Duelos Gan.',  color: '#4CAF7D' },
                     { key: 'duelosPerdidos',    label: 'Duelos Perd.', color: '#9C6A3B' },
-                    { key: 'recuperaciones',    label: 'Recuperac.',   color: '#0D9488' },
+                    { key: 'recuperaciones',    label: 'Recuperac.',   color: '#4CAF7D' },
                     { key: 'perdidas',          label: 'Pérdidas',     color: '#C85A32' },
                     { key: 'faltas',            label: 'Faltas',       color: '#D97706' },
                     { key: 'amarillas',         label: 'Amarilla',     color: '#D4A843' },

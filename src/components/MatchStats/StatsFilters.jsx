@@ -239,11 +239,11 @@ export const StatsFilters = ({
         </div>
         <div className="action-checkboxes-row">
           {[
-            { key: 'passes', label: isEn ? 'Passes' : 'Pases', color: '#3B82F6' },
-            { key: 'shots', label: isEn ? 'Shots' : 'Tiros', color: '#10B981' },
-            { key: 'defense', label: isEn ? 'Defense' : 'Defensa', color: '#F59E0B' },
-            { key: 'fouls', label: isEn ? 'Fouls' : 'Faltas', color: '#EF4444' },
-            { key: 'setPieces', label: isEn ? 'SP' : 'ABP', color: '#8B5CF6' },
+            { key: 'passes', label: isEn ? 'Passes' : 'Pases', color: '#4CAF7D' },
+            { key: 'shots', label: isEn ? 'Shots' : 'Tiros', color: '#1B3A2D' },
+            { key: 'defense', label: isEn ? 'Defense' : 'Defensa', color: '#D4A843' },
+            { key: 'fouls', label: isEn ? 'Fouls' : 'Faltas', color: '#C85A32' },
+            { key: 'setPieces', label: isEn ? 'SP' : 'ABP', color: '#9C6A3B' },
           ].map(act => (
             <label key={act.key} className="action-checkbox-item">
               <input

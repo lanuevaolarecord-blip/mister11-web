@@ -1,4 +1,22 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  Target, 
+  Trophy, 
+  Shield, 
+  Compass, 
+  ShieldAlert, 
+  Check, 
+  Star, 
+  Save, 
+  User, 
+  Footprints, 
+  MapPin, 
+  CircleDot, 
+  ChevronDown, 
+  ChevronUp, 
+  Zap, 
+  X 
+} from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { calculateShotXg } from '../config/xgWeights';
 import SectorMiniPitch2D from './SectorMiniPitch2D';
@@ -8,10 +26,9 @@ import './ShotCaptureModal.css';
 /**
  * ShotCaptureModal (ShotModal Canónico)
  * Componente único y fuente de verdad exclusiva para remates, goles y paradas.
- * - 3 entradas al mismo modal: barra de equipo (gol), panel de equipo (tiro libre), HUD individual (tiro propio).
- * - Selección rápida en ≤3 taps.
- * - Soporte para 9 zonas 2D tácticas, 3 niveles de comodidad, dificultad de parada (normal/decisiva),
- *   atribución de jugador (opcional, attributed: false si queda vacío) y asistencia opcional en gol.
+ * - Modo Rápido (≤3 taps) con guardado automático y pre-carga inteligente.
+ * - Modo Avanzado colapsable para jugadas a balón parado, penaltis y dificultades.
+ * - Cero emojis, paleta canónica Tierra y Campo 100% verificada.
  */
 export const ShotCaptureModal = ({
   isOpen,
@@ -30,8 +47,9 @@ export const ShotCaptureModal = ({
 }) => {
   const { t, isEn } = useTranslation();
 
-  const isOriginLocked = origin === 'individual' || origin === 'goal_own' || origin === 'goal_rival';
-  const lockedSide = (origin === 'goal_rival') ? 'rival' : 'own';
+  const isRivalInitial = initialTeam === 'rival' || origin === 'goal_rival';
+  const isOriginLocked = isRivalInitial || origin === 'goal_own' || (origin === 'individual' && initialTeam !== 'rival');
+  const lockedSide = isRivalInitial ? 'rival' : 'own';
 
   const [team, setTeam] = useState(isOriginLocked ? lockedSide : initialTeam);
   const [zone, setZone] = useState('centro_att');
@@ -42,17 +60,15 @@ export const ShotCaptureModal = ({
   const [selectedPlayerId, setSelectedPlayerId] = useState(activePlayerId);
   const [asistenciaId, setAsistenciaId] = useState(null);
   const [showPitchPicker, setShowPitchPicker] = useState(false);
+  const [isQuickMode, setIsQuickMode] = useState(true);
 
-  // Inicializar estado al abrir el modal
+  // Inicializar estado limpio al abrir el modal (evita estado residual entre aperturas)
   useEffect(() => {
     if (isOpen) {
-      if (origin === 'individual' || origin === 'goal_own') {
-        setTeam('own');
-      } else if (origin === 'goal_rival') {
-        setTeam('rival');
-      } else {
-        setTeam(initialTeam || 'own');
-      }
+      const targetTeam = (initialTeam === 'rival' || origin === 'goal_rival')
+        ? 'rival'
+        : (origin === 'individual' || origin === 'goal_own' ? 'own' : (initialTeam || 'own'));
+      setTeam(targetTeam);
 
       // Pre-rellenar zona según el sector 2D activo
       let defZone = initialSector2D || 'centro_att';
@@ -67,11 +83,12 @@ export const ShotCaptureModal = ({
       setResult(initialResult || null);
       setSaveDifficulty(initialDifficulty || null);
       setShooterComfort(null);
-      setSelectedPlayerId(activePlayerId || null);
+      setSelectedPlayerId(targetTeam === 'rival' ? null : (activePlayerId || null));
       setAsistenciaId(null);
       setShowPitchPicker(false);
+      setIsQuickMode(true);
     }
-  }, [isOpen, initialTeam, initialSector, initialSector2D, initialResult, initialDifficulty, activePlayerId]);
+  }, [isOpen, initialTeam, initialSector, initialSector2D, initialResult, initialDifficulty, activePlayerId, origin]);
 
   const handleSelectPlayType = (pt) => {
     setPlayType(pt);
@@ -157,7 +174,7 @@ export const ShotCaptureModal = ({
     onClose();
   }, [team, zone, playType, selectedPlayerId, asistenciaId, playersList, result, saveDifficulty, onConfirmShot, onClose]);
 
-  // Tap 1: Selección de Resultado
+  // Selección de Resultado
   const handleSelectResult = (r) => {
     setResult(r);
     if (r !== 'parada') {
@@ -165,15 +182,22 @@ export const ShotCaptureModal = ({
     }
   };
 
-  // Tap 2 (si parada): Selección de Dificultad
+  // Selección de Dificultad (normal / decisiva)
   const handleSelectDifficulty = (d) => {
     setSaveDifficulty(d);
   };
 
-  // Tap 2 o 3: Selección de Comodidad (Confirma inmediatamente)
+  // Selección de Comodidad (Confirma inmediatamente)
   const handleSelectComfort = (c) => {
     setShooterComfort(c);
-    finishAndDispatch(c, saveDifficulty, result, selectedPlayerId, asistenciaId);
+    finishAndDispatch(c, saveDifficulty || 'normal', result, selectedPlayerId, asistenciaId);
+  };
+
+  // Modo Rápido (1 tap en resultado -> auto-save inmediato con defaults canónicos)
+  const handleQuickResultTap = (r) => {
+    setResult(r);
+    const diff = r === 'parada' ? 'normal' : null;
+    finishAndDispatch('comodo', diff, r, selectedPlayerId, null);
   };
 
   if (!isOpen) return null;
@@ -184,10 +208,36 @@ export const ShotCaptureModal = ({
         {/* Cabecera */}
         <div className="shot-modal-header">
           <div className="shot-modal-title-row">
-            <h3 className="shot-modal-title">🎯 {t('shot.title')}</h3>
-            <button type="button" className="shot-modal-close-btn" onClick={onClose} aria-label={t('shot.cancel')}>
-              ✕
-            </button>
+            <h3 className="shot-modal-title">
+              <Target size={18} color="#4CAF7D" />
+              <span>{t('shot.title')}</span>
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setIsQuickMode(prev => !prev)}
+                style={{
+                  minHeight: '48px',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(212, 168, 67, 0.4)',
+                  background: isQuickMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(212, 168, 67, 0.15)',
+                  color: isQuickMode ? '#4CAF7D' : '#D4A843',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {isQuickMode ? <Zap size={13} color="#4CAF7D" /> : <ChevronDown size={13} color="#D4A843" />}
+                <span>{isQuickMode ? (t('liveStats.quickMode.title') || (isEn ? 'Quick' : 'Rápido')) : (t('liveStats.quickMode.advanced') || (isEn ? 'Advanced' : 'Avanzado'))}</span>
+              </button>
+              <button type="button" className="shot-modal-close-btn" onClick={onClose} aria-label={t('shot.cancel')}>
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Toggle Equipo Propio / Rival */}
@@ -195,9 +245,11 @@ export const ShotCaptureModal = ({
             {isOriginLocked ? (
               <div
                 className={`shot-team-chip fixed-locked ${lockedSide === 'own' ? 'active-own' : 'active-rival'}`}
-                style={{ cursor: 'default', fontWeight: 800, minHeight: '38px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ cursor: 'default', fontWeight: 800, minHeight: '48px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                <span>{lockedSide === 'own' ? '⚽' : '🥅'}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  {lockedSide === 'own' ? <CircleDot size={14} color="#4CAF7D" /> : <ShieldAlert size={14} color="#C85A32" />}
+                </span>
                 <span>{lockedSide === 'own' ? t('shot.team_own') : t('shot.team_rival')}</span>
                 <span style={{ fontSize: '10px', opacity: 0.8, textTransform: 'uppercase', padding: '1px 5px', borderRadius: '4px', background: 'rgba(0,0,0,0.15)' }}>
                   {isEn ? 'Fixed' : 'Fijo'}
@@ -210,14 +262,16 @@ export const ShotCaptureModal = ({
                   className={`shot-team-chip ${team === 'own' ? 'active-own' : ''}`}
                   onClick={() => setTeam('own')}
                 >
-                  {t('shot.team_own')}
+                  <CircleDot size={14} color="#4CAF7D" style={{ marginRight: '6px' }} />
+                  <span>{t('shot.team_own')}</span>
                 </button>
                 <button
                   type="button"
                   className={`shot-team-chip ${team === 'rival' ? 'active-rival' : ''}`}
                   onClick={() => setTeam('rival')}
                 >
-                  {t('shot.team_rival')}
+                  <ShieldAlert size={14} color="#C85A32" style={{ marginRight: '6px' }} />
+                  <span>{t('shot.team_rival')}</span>
                 </button>
               </>
             )}
@@ -229,7 +283,8 @@ export const ShotCaptureModal = ({
           {team === 'own' && (
             <div className="shot-section-group">
               <label className="shot-group-label">
-                👤 {isEn ? 'Shooter / Player:' : 'Rematador / Jugador:'}
+                <User size={14} color="var(--text-secondary)" />
+                <span>{isEn ? 'Shooter / Player:' : 'Rematador / Jugador:'}</span>
               </label>
               <PlayerChipRow
                 id="shot-shooter-chips"
@@ -238,235 +293,300 @@ export const ShotCaptureModal = ({
                 onSelect={(id) => setSelectedPlayerId(id)}
                 showUnassigned={true}
                 unassignedLabel={isEn ? 'Unattributed' : 'Sin atribuir'}
-                unassignedIcon="🔘"
+                unassignedIcon={null}
                 ariaLabel={isEn ? 'Select shooter or player' : 'Seleccionar rematador o jugador'}
               />
             </div>
           )}
 
-          {/* Asistencia (Solo visible si el resultado es gol propio) */}
-          {team === 'own' && result === 'gol' && (
-            <div className="shot-section-group fade-in-step">
-              <label className="shot-group-label">
-                👟 {isEn ? 'Assist (Optional):' : 'Asistencia (Opcional):'}
-              </label>
-              <PlayerChipRow
-                id="shot-assist-chips"
-                players={playersList.filter(p => String(p.id) !== String(selectedPlayerId))}
-                selectedId={asistenciaId}
-                onSelect={(id) => setAsistenciaId(id)}
-                showUnassigned={true}
-                unassignedLabel={isEn ? 'None' : 'Ninguna'}
-                unassignedIcon="👟"
-                ariaLabel={isEn ? 'Select assist player (optional)' : 'Seleccionar asistente (opcional)'}
-              />
-            </div>
-          )}
-
-          {/* Selector de Sector 2D Táctico (Mini-Campo 3x3) */}
-          <div className="shot-section-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label className="shot-group-label" style={{ margin: 0 }}>
-                📍 {t('shot.zone')}
-              </label>
-              <button
-                type="button"
-                className="shot-pitch-toggle-btn"
-                onClick={() => setShowPitchPicker(prev => !prev)}
-              >
-                {showPitchPicker ? (isEn ? '▲ Quick chips' : '▲ Chips rápidos') : (isEn ? '▼ 3x3 Pitch' : '▼ Campo 3x3')}
-              </button>
-            </div>
-
-            {showPitchPicker ? (
-              <SectorMiniPitch2D
-                selectedZone={zone}
-                onSelectZone={handleSelectZone}
-                compact={true}
-                showLabel={true}
-              />
-            ) : (
-              <div className="shot-chips-grid">
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'centro_att' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('centro_att')}
-                >
-                  {t('shot.zone_inside_center') || (isEn ? 'Center · Box' : 'Centro · Área')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'izq_att' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('izq_att')}
-                >
-                  {t('shot.zone_inside_left') || (isEn ? 'Left · Box' : 'Izq · Área')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'der_att' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('der_att')}
-                >
-                  {t('shot.zone_inside_right') || (isEn ? 'Right · Box' : 'Der · Área')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'centro_med' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('centro_med')}
-                >
-                  {t('shot.zone_outside_center') || (isEn ? 'Center · Mid' : 'Centro · Fuera')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'izq_med' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('izq_med')}
-                >
-                  {t('shot.zone_outside_left') || (isEn ? 'Left · Mid' : 'Izq · Fuera')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'der_med' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('der_med')}
-                >
-                  {t('shot.zone_outside_right') || (isEn ? 'Right · Mid' : 'Der · Fuera')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip ${zone === 'penalti' ? 'selected' : ''}`}
-                  onClick={() => handleSelectZone('penalti')}
-                >
-                  {t('shot.zone_penalty')}
-                </button>
+          {/* MODO RÁPIDO: Selección directa de Resultado en 1 Tap con guardado automático */}
+          {isQuickMode ? (
+            <div className="shot-section-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label className="shot-group-label" style={{ margin: 0 }}>
+                  <Zap size={14} color="#4CAF7D" />
+                  <span>{t('shot.result')} (1 Tap · Auto-Save)</span>
+                </label>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  {zone.replace('_', ' ').toUpperCase()}
+                </span>
               </div>
-            )}
-          </div>
-
-          {/* Tipo de Jugada */}
-          <div className="shot-section-group">
-            <label className="shot-group-label">{t('shot.playType')}</label>
-            <div className="shot-chips-row">
-              <button
-                type="button"
-                className={`shot-chip ${playType === 'jugada' ? 'selected' : ''}`}
-                onClick={() => handleSelectPlayType('jugada')}
-              >
-                {t('shot.playType_jugada')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip ${playType === 'contra' ? 'selected' : ''}`}
-                onClick={() => handleSelectPlayType('contra')}
-              >
-                {t('shot.playType_contra')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip ${playType === 'balon_parado' ? 'selected' : ''}`}
-                onClick={() => handleSelectPlayType('balon_parado')}
-              >
-                {t('shot.playType_balon_parado')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip ${playType === 'penalti' ? 'selected' : ''}`}
-                onClick={() => handleSelectPlayType('penalti')}
-              >
-                {t('shot.playType_penalti')}
-              </button>
-            </div>
-          </div>
-
-          {/* PASO 1: Resultado del Tiro */}
-          <div className="shot-section-group">
-            <label className="shot-group-label">
-              <span className="shot-step-badge">1</span> {t('shot.result')}
-            </label>
-            <div className="shot-chips-grid-2x2">
-              <button
-                type="button"
-                className={`shot-chip-large ${result === 'gol' ? 'selected-success' : ''}`}
-                onClick={() => handleSelectResult('gol')}
-              >
-                {t('shot.result_gol')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip-large ${result === 'parada' ? 'selected-gk' : ''}`}
-                onClick={() => handleSelectResult('parada')}
-              >
-                {t('shot.result_parada')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip-large ${result === 'fuera' ? 'selected-miss' : ''}`}
-                onClick={() => handleSelectResult('fuera')}
-              >
-                {t('shot.result_fuera')}
-              </button>
-              <button
-                type="button"
-                className={`shot-chip-large ${result === 'bloqueado' ? 'selected-block' : ''}`}
-                onClick={() => handleSelectResult('bloqueado')}
-              >
-                {t('shot.result_bloqueado')}
-              </button>
-            </div>
-          </div>
-
-          {/* PASO 2 (Solo si Parada): Dificultad de la Parada */}
-          {result === 'parada' && (
-            <div className="shot-section-group fade-in-step">
-              <label className="shot-group-label">
-                <span className="shot-step-badge">2</span> {t('shot.difficulty')}
-              </label>
-              <div className="shot-chips-grid-2">
+              <div className="shot-chips-grid-2x2">
                 <button
                   type="button"
-                  className={`shot-chip-large ${saveDifficulty === 'normal' ? 'selected' : ''}`}
-                  onClick={() => handleSelectDifficulty('normal')}
+                  className={`shot-chip-large ${result === 'gol' ? 'selected-success' : ''}`}
+                  onClick={() => handleQuickResultTap('gol')}
+                  style={{ minHeight: '52px' }}
                 >
-                  {t('shot.diff_normal')}
+                  <Trophy size={16} color="#4CAF7D" />
+                  <span>{t('shot.result_gol')}</span>
                 </button>
                 <button
                   type="button"
-                  className={`shot-chip-large ${saveDifficulty === 'decisiva' ? 'selected-gold' : ''}`}
-                  onClick={() => handleSelectDifficulty('decisiva')}
+                  className={`shot-chip-large ${result === 'parada' ? 'selected-gk' : ''}`}
+                  onClick={() => handleQuickResultTap('parada')}
+                  style={{ minHeight: '52px' }}
                 >
-                  {t('shot.diff_decisive')}
+                  <Shield size={16} color="#D4A843" />
+                  <span>{t('shot.result_parada')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`shot-chip-large ${result === 'fuera' ? 'selected-miss' : ''}`}
+                  onClick={() => handleQuickResultTap('fuera')}
+                  style={{ minHeight: '52px' }}
+                >
+                  <Compass size={16} color="#9C6A3B" />
+                  <span>{t('shot.result_fuera')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`shot-chip-large ${result === 'bloqueado' ? 'selected-block' : ''}`}
+                  onClick={() => handleQuickResultTap('bloqueado')}
+                  style={{ minHeight: '52px' }}
+                >
+                  <ShieldAlert size={16} color="#4CAF7D" />
+                  <span>{t('shot.result_bloqueado')}</span>
                 </button>
               </div>
             </div>
-          )}
+          ) : (
+            /* MODO AVANZADO: Todas las opciones y pasos tácticos */
+            <>
+              {/* Asistencia (Solo visible si el resultado es gol propio) */}
+              {team === 'own' && result === 'gol' && (
+                <div className="shot-section-group fade-in-step">
+                  <label className="shot-group-label">
+                    <Footprints size={14} color="var(--text-secondary)" />
+                    <span>{isEn ? 'Assist (Optional):' : 'Asistencia (Opcional):'}</span>
+                  </label>
+                  <PlayerChipRow
+                    id="shot-assist-chips"
+                    players={playersList.filter(p => String(p.id) !== String(selectedPlayerId))}
+                    selectedId={asistenciaId}
+                    onSelect={(id) => setAsistenciaId(id)}
+                    showUnassigned={true}
+                    unassignedLabel={isEn ? 'None' : 'Ninguna'}
+                    unassignedIcon={null}
+                    ariaLabel={isEn ? 'Select assist player (optional)' : 'Seleccionar asistente (opcional)'}
+                  />
+                </div>
+              )}
 
-          {/* PASO 2 o 3: Comodidad del Rematador (Al tocar, confirma y cierra automáticamente) */}
-          {result && (result !== 'parada' || saveDifficulty) && (
-            <div className="shot-section-group fade-in-step">
-              <label className="shot-group-label">
-                <span className="shot-step-badge">{result === 'parada' ? '3' : '2'}</span> {t('shot.comfort')}
-              </label>
-              <div className="shot-chips-grid-3">
-                <button
-                  type="button"
-                  className={`shot-chip-large ${shooterComfort === 'comodo' ? 'selected-comfort' : ''}`}
-                  onClick={() => handleSelectComfort('comodo')}
-                >
-                  {t('shot.comfort_comfortable')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip-large ${shooterComfort === 'presionado' ? 'selected-comfort' : ''}`}
-                  onClick={() => handleSelectComfort('presionado')}
-                >
-                  {t('shot.comfort_pressed')}
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip-large ${shooterComfort === 'muy_presionado' ? 'selected-comfort' : ''}`}
-                  onClick={() => handleSelectComfort('muy_presionado')}
-                >
-                  {t('shot.comfort_very_pressed')}
-                </button>
+              {/* Selector de Sector 2D Táctico (Mini-Campo 3x3) */}
+              <div className="shot-section-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="shot-group-label" style={{ margin: 0 }}>
+                    <MapPin size={14} color="var(--text-secondary)" />
+                    <span>{t('shot.zone')}</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="shot-pitch-toggle-btn"
+                    onClick={() => setShowPitchPicker(prev => !prev)}
+                    style={{ minHeight: '48px', display: 'inline-flex', alignItems: 'center' }}
+                  >
+                    {showPitchPicker ? (isEn ? '▲ Quick chips' : '▲ Chips rápidos') : (isEn ? '▼ 3x3 Pitch' : '▼ Campo 3x3')}
+                  </button>
+                </div>
+
+                {showPitchPicker ? (
+                  <SectorMiniPitch2D
+                    selectedZone={zone}
+                    onSelectZone={handleSelectZone}
+                    compact={true}
+                    showLabel={true}
+                  />
+                ) : (
+                  <div className="shot-chips-grid">
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'centro_att' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('centro_att')}
+                    >
+                      {t('shot.zone_inside_center') || (isEn ? 'Center · Box' : 'Centro · Área')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'izq_att' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('izq_att')}
+                    >
+                      {t('shot.zone_inside_left') || (isEn ? 'Left · Box' : 'Izq · Área')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'der_att' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('der_att')}
+                    >
+                      {t('shot.zone_inside_right') || (isEn ? 'Right · Box' : 'Der · Área')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'centro_med' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('centro_med')}
+                    >
+                      {t('shot.zone_outside_center') || (isEn ? 'Center · Mid' : 'Centro · Fuera')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'izq_med' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('izq_med')}
+                    >
+                      {t('shot.zone_outside_left') || (isEn ? 'Left · Mid' : 'Izq · Fuera')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'der_med' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('der_med')}
+                    >
+                      {t('shot.zone_outside_right') || (isEn ? 'Right · Mid' : 'Der · Fuera')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip ${zone === 'penalti' ? 'selected' : ''}`}
+                      onClick={() => handleSelectZone('penalti')}
+                    >
+                      {t('shot.zone_penalty')}
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
+
+              {/* Tipo de Jugada */}
+              <div className="shot-section-group">
+                <label className="shot-group-label">{t('shot.playType')}</label>
+                <div className="shot-chips-row">
+                  <button
+                    type="button"
+                    className={`shot-chip ${playType === 'jugada' ? 'selected' : ''}`}
+                    onClick={() => handleSelectPlayType('jugada')}
+                  >
+                    {t('shot.playType_jugada')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip ${playType === 'contra' ? 'selected' : ''}`}
+                    onClick={() => handleSelectPlayType('contra')}
+                  >
+                    {t('shot.playType_contra')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip ${playType === 'balon_parado' ? 'selected' : ''}`}
+                    onClick={() => handleSelectPlayType('balon_parado')}
+                  >
+                    {t('shot.playType_balon_parado')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip ${playType === 'penalti' ? 'selected' : ''}`}
+                    onClick={() => handleSelectPlayType('penalti')}
+                  >
+                    {t('shot.playType_penalti')}
+                  </button>
+                </div>
+              </div>
+
+              {/* PASO 1: Resultado del Tiro */}
+              <div className="shot-section-group">
+                <label className="shot-group-label">
+                  <span className="shot-step-badge">1</span> {t('shot.result')}
+                </label>
+                <div className="shot-chips-grid-2x2">
+                  <button
+                    type="button"
+                    className={`shot-chip-large ${result === 'gol' ? 'selected-success' : ''}`}
+                    onClick={() => handleSelectResult('gol')}
+                  >
+                    <Trophy size={16} color="#4CAF7D" />
+                    <span>{t('shot.result_gol')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip-large ${result === 'parada' ? 'selected-gk' : ''}`}
+                    onClick={() => handleSelectResult('parada')}
+                  >
+                    <Shield size={16} color="#D4A843" />
+                    <span>{t('shot.result_parada')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip-large ${result === 'fuera' ? 'selected-miss' : ''}`}
+                    onClick={() => handleSelectResult('fuera')}
+                  >
+                    <Compass size={16} color="#9C6A3B" />
+                    <span>{t('shot.result_fuera')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`shot-chip-large ${result === 'bloqueado' ? 'selected-block' : ''}`}
+                    onClick={() => handleSelectResult('bloqueado')}
+                  >
+                    <ShieldAlert size={16} color="#4CAF7D" />
+                    <span>{t('shot.result_bloqueado')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* PASO 2 (Solo si Parada): Dificultad de la Parada */}
+              {result === 'parada' && (
+                <div className="shot-section-group fade-in-step">
+                  <label className="shot-group-label">
+                    <span className="shot-step-badge">2</span> {t('shot.difficulty')}
+                  </label>
+                  <div className="shot-chips-grid-2">
+                    <button
+                      type="button"
+                      className={`shot-chip-large ${saveDifficulty === 'normal' ? 'selected' : ''}`}
+                      onClick={() => handleSelectDifficulty('normal')}
+                    >
+                      <Check size={16} color="#4CAF7D" />
+                      <span>{t('shot.diff_normal')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip-large ${saveDifficulty === 'decisiva' ? 'selected-gold' : ''}`}
+                      onClick={() => handleSelectDifficulty('decisiva')}
+                    >
+                      <Star size={16} color="#D4A843" />
+                      <span>{t('shot.diff_decisive')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* PASO 2 o 3: Comodidad del Rematador (Al tocar, confirma y cierra automáticamente) */}
+              {result && (result !== 'parada' || saveDifficulty) && (
+                <div className="shot-section-group fade-in-step">
+                  <label className="shot-group-label">
+                    <span className="shot-step-badge">{result === 'parada' ? '3' : '2'}</span> {t('shot.comfort')}
+                  </label>
+                  <div className="shot-chips-grid-3">
+                    <button
+                      type="button"
+                      className={`shot-chip-large ${shooterComfort === 'comodo' ? 'selected-comfort' : ''}`}
+                      onClick={() => handleSelectComfort('comodo')}
+                    >
+                      {t('shot.comfort_comfortable')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip-large ${shooterComfort === 'presionado' ? 'selected-comfort' : ''}`}
+                      onClick={() => handleSelectComfort('presionado')}
+                    >
+                      {t('shot.comfort_pressed')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`shot-chip-large ${shooterComfort === 'muy_presionado' ? 'selected-comfort' : ''}`}
+                      onClick={() => handleSelectComfort('muy_presionado')}
+                    >
+                      {t('shot.comfort_very_pressed')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -499,7 +619,8 @@ export const ShotCaptureModal = ({
               gap: '6px'
             }}
           >
-            <span>💾</span> {isEn ? 'SAVE SHOT' : 'GUARDAR TIRO'}
+            <Save size={16} color={result ? '#FFFFFF' : 'var(--text-muted, #94A3B8)'} />
+            <span>{isEn ? 'SAVE SHOT' : 'GUARDAR TIRO'}</span>
           </button>
         </div>
       </div>

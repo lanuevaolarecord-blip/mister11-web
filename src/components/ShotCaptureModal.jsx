@@ -194,7 +194,7 @@ export const ShotCaptureModal = ({
     finishAndDispatch(c, saveDifficulty || 'normal', result, selectedPlayerId, asistenciaId);
   };
 
-  // Modo Rápido (1 tap en resultado -> auto-save inmediato con defaults canónicos)
+  // Apertura 6: Modo Rápido (1 tap en resultado -> auto-save inmediato con defaults canónicos <= 3 taps)
   const handleQuickResultTap = (r) => {
     setResult(r);
     const diff = r === 'parada' ? 'normal' : null;

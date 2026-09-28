@@ -205,7 +205,6 @@ export const ShotCaptureModal = ({
               <X size={18} />
             </button>
           </div>
-        </div>
 
           {/* Toggle Equipo Propio / Rival */}
           <div className="shot-team-toggle-row">

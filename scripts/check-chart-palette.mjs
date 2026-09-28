@@ -25,6 +25,10 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /#3[Bb]82[Ff]6/gi, name: 'Azul Eléctrico #3B82F6' },
   { pattern: /#2563[Ee][Bb]/gi, name: 'Azul #2563EB' },
   { pattern: /#1[Dd]4[Ee][Dd]8/gi, name: 'Azul #1D4ED8' },
+  { pattern: /#60[Aa]5[Ff][Aa]/gi, name: 'Azul Claro #60A5FA' },
+  { pattern: /#4[Cc]1[Dd]95/gi, name: 'Morado #4C1D95' },
+  { pattern: /#8[Bb]5[Cc][Ff]6/gi, name: 'Morado #8B5CF6' },
+  { pattern: /#0[Dd]9488/gi, name: 'Teal #0D9488 (Rojo de Gobernanza - Prohibido)' },
   { pattern: /#141[Aa]17/gi, name: 'Variante no canónica #141A17 (usar solo #1B3A2D)' }
 ];
 
@@ -42,7 +46,12 @@ const TARGET_FILES = [
   'src/utils/matchPdfReport.js',
   'src/components/MultiMatchAnalysis.css',
   'src/components/MultiMatchAnalysis.jsx',
-  'src/utils/analysisPdfReport.js'
+  'src/utils/analysisPdfReport.js',
+  'src/components/ShotCaptureModal.jsx',
+  'src/components/ShotCaptureModal.css',
+  'src/components/PlayerChipRow.jsx',
+  'src/components/PlayerChipRow.css',
+  'src/components/MatchStats/StatsFilters.jsx'
 ];
 
 console.log('==============================================================================');
@@ -52,11 +61,12 @@ console.log('===================================================================
 let totalViolations = 0;
 const ALLOWED_ACTION_COLORS = new Set([
   '#4CAF7D',
-  '#0D9488',
   '#D4A843',
   '#C85A32',
   '#9C6A3B',
-  '#D97706'
+  '#D97706',
+  '#1B3A2D',
+  '#235F2D'
 ]);
 const EMOJI_REGEX = /[\p{Extended_Pictographic}]/u;
 
@@ -85,26 +95,34 @@ for (const relPath of TARGET_FILES) {
   });
 }
 
-// 2. Auditoría exhaustiva de captura en vivo (LiveStats.jsx):
+// 2. Auditoría exhaustiva de captura y modales:
 //    - Cero emojis
 //    - Cero #EF4444 (rojo de bandera)
 //    - Validación estricta de todos los estilos inline '--action-color'
-const liveStatsPath = path.resolve(rootDir, 'src/components/LiveStats.jsx');
-if (fs.existsSync(liveStatsPath)) {
-  const liveContent = fs.readFileSync(liveStatsPath, 'utf-8');
-  const liveLines = liveContent.split('\n');
+const CAPTURE_COMPONENTS = [
+  'src/components/LiveStats.jsx',
+  'src/components/ShotCaptureModal.jsx',
+  'src/components/PlayerChipRow.jsx'
+];
 
-  liveLines.forEach((line, idx) => {
-    // Emojis en captura
+for (const relPath of CAPTURE_COMPONENTS) {
+  const fullPath = path.resolve(rootDir, relPath);
+  if (!fs.existsSync(fullPath)) continue;
+
+  const content = fs.readFileSync(fullPath, 'utf-8');
+  const lines = content.split('\n');
+
+  lines.forEach((line, idx) => {
+    // Emojis en captura y modales
     if (EMOJI_REGEX.test(line)) {
-      console.error(`❌ [Emoji prohibido en captura en vivo] en src/components/LiveStats.jsx:${idx + 1}`);
+      console.error(`❌ [Emoji prohibido en captura/modal] en ${relPath}:${idx + 1}`);
       console.error(`   > ${line.trim()}`);
       totalViolations++;
     }
 
-    // Rojo genérico #EF4444 en captura
+    // Rojo genérico #EF4444 en captura y modales
     if (/#EF4444/i.test(line)) {
-      console.error(`❌ [Rojo #EF4444 prohibido en captura (usar terracota canónico #C85A32)] en src/components/LiveStats.jsx:${idx + 1}`);
+      console.error(`❌ [Rojo #EF4444 prohibido en captura (usar terracota canónico #C85A32)] en ${relPath}:${idx + 1}`);
       console.error(`   > ${line.trim()}`);
       totalViolations++;
     }
@@ -115,7 +133,7 @@ if (fs.existsSync(liveStatsPath)) {
       if (match) {
         const val = match[1].toUpperCase();
         if (!ALLOWED_ACTION_COLORS.has(val)) {
-          console.error(`❌ [Acción no canónica en --action-color: ${val}] en src/components/LiveStats.jsx:${idx + 1}`);
+          console.error(`❌ [Acción no canónica en --action-color: ${val}] en ${relPath}:${idx + 1}`);
           console.error(`   > ${line.trim()}`);
           totalViolations++;
         }

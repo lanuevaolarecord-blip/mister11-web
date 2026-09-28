@@ -58,6 +58,7 @@ import {
   Shield,
   Star,
   ChevronDown,
+  Undo2,
   ChevronUp,
   Radio,
   Compass,
@@ -304,7 +305,13 @@ const LiveStats = ({
     initialTeam: 'own',
     initialResult: null,
     initialDifficulty: null,
+    openTimestamp: 0,
   });
+
+  // Undo de 3s para Modo Rápido de tiro (Apertura 6)
+  const [lastShotEvent, setLastShotEvent] = useState(null);
+  const [showShotUndo, setShowShotUndo] = useState(false);
+  const undoTimeoutRef = useRef(null);
 
   // Sincronizar automáticamente currentHalf si displayHalf avanza a la 2ª Parte
   useEffect(() => {
@@ -688,9 +695,11 @@ const LiveStats = ({
     if (type === 'shot_on_target_own' || type === 'shot_off_target_own') {
       setPendingShotModal({
         isOpen: true,
+        origin: 'individual',
         initialTeam: 'own',
         initialResult: type === 'shot_on_target_own' ? null : 'fuera',
-        initialDifficulty: null
+        initialDifficulty: null,
+        openTimestamp: Date.now()
       });
       return;
     }
@@ -834,7 +843,7 @@ const LiveStats = ({
     if (zone === 'penalti') xCoord = 88;
 
     // 1. Guardar evento de tiro con todo su contexto enriquecido
-    await addLiveEvent(eventType, currentHalf, {
+    const addedId = await addLiveEvent(eventType, currentHalf, {
       team,
       result,
       saveDifficulty: result === 'parada' ? (saveDifficulty || 'normal') : null,
@@ -851,6 +860,16 @@ const LiveStats = ({
       isGoal: result === 'gol',
       isDecisive: saveDifficulty === 'decisiva'
     });
+
+    if (addedId) {
+      setLastShotEvent({ id: addedId, type: eventType });
+      setShowShotUndo(true);
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      undoTimeoutRef.current = setTimeout(() => {
+        setShowShotUndo(false);
+        setLastShotEvent(null);
+      }, 3500);
+    }
 
     // 2. Si fue un remate rival detenido (parada del portero propio)
     // Genera tanto el tiro rival (xG/exposición) como el evento de portería con dificultad
@@ -882,6 +901,20 @@ const LiveStats = ({
     setFlashType(eventType);
     setTimeout(() => setFlashType(null), 650);
   }, [addLiveEvent, currentHalf, activePlayerId, selectedSector, activeGoalkeeper, playersList, onAddGoalFor, onAddGoalAgainst]);
+
+  // Handler de Deshacer Tiro Rápido (Undo de 3 segundos)
+  const handleUndoLastShot = useCallback(async () => {
+    if (!lastShotEvent) return;
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    setShowShotUndo(false);
+    const eventId = lastShotEvent.id;
+    setLocalEvents(prev => prev.filter(e => e.id !== eventId));
+    if (liveStatsHook?.updateLiveEvents) {
+      await liveStatsHook.updateLiveEvents([eventId], { isValid: false });
+    }
+    setLastShotEvent(null);
+    showToast(t('liveStats.quickMode.undone') || (isEn ? 'Shot undone' : 'Tiro deshecho'), 'info');
+  }, [lastShotEvent, liveStatsHook, showToast, t, isEn]);
 
   const handlePress = useCallback(
     async (type) => {
@@ -963,12 +996,14 @@ const LiveStats = ({
           initialResult = 'fuera';
         }
 
+        const isRival = initialTeam === 'rival';
         setPendingShotModal({
           isOpen: true,
-          origin: activePlayerId ? 'individual' : 'team',
+          origin: isRival ? 'team' : (activePlayerId ? 'individual' : 'team'),
           initialTeam,
           initialResult,
-          initialDifficulty
+          initialDifficulty,
+          openTimestamp: Date.now()
         });
         return;
       }
@@ -1304,7 +1339,7 @@ const LiveStats = ({
                 {onAddGoalFor && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_own', initialTeam: 'own', initialResult: 'gol', initialDifficulty: null })}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_own', initialTeam: 'own', initialResult: 'gol', initialDifficulty: null, openTimestamp: Date.now() })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.for')}
                     className="livestats-btn-goal for"
@@ -1323,7 +1358,7 @@ const LiveStats = ({
                 {onAddGoalAgainst && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_rival', initialTeam: 'rival', initialResult: 'gol', initialDifficulty: null })}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_rival', initialTeam: 'rival', initialResult: 'gol', initialDifficulty: null, openTimestamp: Date.now() })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.against')}
                     className="livestats-btn-goal against"
@@ -1663,7 +1698,8 @@ const LiveStats = ({
                                 origin: 'individual',
                                 initialTeam: 'own',
                                 initialResult: null,
-                                initialDifficulty: null
+                                initialDifficulty: null,
+                                openTimestamp: Date.now()
                               });
                             }}
                           >
@@ -2887,20 +2923,70 @@ const LiveStats = ({
 
         {/* Modal de Captura Canónica de Tiro con Contexto (<= 3 taps) */}
         <ShotCaptureModal
+          key={`shot_modal_${pendingShotModal.openTimestamp || 0}`}
           isOpen={pendingShotModal.isOpen}
           onClose={() => setPendingShotModal(prev => ({ ...prev, isOpen: false }))}
           onConfirmShot={handleConfirmShot}
-          origin={pendingShotModal.origin || (activePlayerId ? 'individual' : 'team')}
-          initialTeam={pendingShotModal.initialTeam}
+          origin={pendingShotModal.origin || (pendingShotModal.initialTeam === 'rival' ? 'team' : (activePlayerId ? 'individual' : 'team'))}
+          initialTeam={pendingShotModal.initialTeam || 'own'}
           initialSector={selectedSector || 'center'}
+          initialSector2D={selectedSector2D || 'centro_att'}
           zone2D={selectedSector2D}
           initialResult={pendingShotModal.initialResult}
           initialDifficulty={pendingShotModal.initialDifficulty}
-          activePlayerId={activePlayerId}
+          activePlayerId={pendingShotModal.initialTeam === 'rival' ? null : activePlayerId}
           activePlayerName={activePlayerId ? (playersList.find(p => String(p.id) === String(activePlayerId))?.nombre || '') : ''}
           playersList={onPitchPlayersList.length > 0 ? onPitchPlayersList : (activePlayersWithMinutes.length > 0 ? activePlayersWithMinutes : playersList)}
           activeGoalkeeper={activeGoalkeeper}
         />
+
+        {/* Toast Flotante de Deshacer Tiro Rápido (Undo de 3s) */}
+        {showShotUndo && lastShotEvent && (
+          <div
+            className="livestats-undo-toast"
+            style={{
+              position: 'fixed',
+              bottom: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 99999,
+              background: '#1B3A2D',
+              border: '1.5px solid #D4A843',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+              color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: '13px'
+            }}
+          >
+            <span>{t('liveStats.quickMode.shotSaved') || (isEn ? 'Shot recorded' : 'Tiro registrado')}</span>
+            <button
+              type="button"
+              onClick={handleUndoLastShot}
+              style={{
+                background: '#D4A843',
+                color: '#0B1812',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 12px',
+                fontWeight: 800,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                minHeight: '48px'
+              }}
+            >
+              <Undo2 size={14} />
+              <span>{t('liveStats.quickMode.undo') || (isEn ? 'Undo' : 'Deshacer')}</span>
+            </button>
+          </div>
+        )}
 
         {/* Modal de Manual de Criterios de Captura y Descarga PDF */}
         <CaptureCriteriaModal

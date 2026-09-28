@@ -48,10 +48,10 @@ export const ShotCaptureModal = ({
   const { t, isEn } = useTranslation();
 
   const isRivalInitial = initialTeam === 'rival' || origin === 'goal_rival';
-  const isOriginLocked = isRivalInitial || origin === 'goal_own' || (origin === 'individual' && initialTeam !== 'rival');
+  const isOriginLocked = origin === 'goal_own' || origin === 'goal_rival' || (origin === 'individual' && initialTeam === 'own');
   const lockedSide = isRivalInitial ? 'rival' : 'own';
 
-  const [team, setTeam] = useState(isOriginLocked ? lockedSide : initialTeam);
+  const [team, setTeam] = useState(isOriginLocked ? lockedSide : (initialTeam || 'own'));
   const [zone, setZone] = useState('centro_att');
   const [playType, setPlayType] = useState('jugada');
   const [result, setResult] = useState(initialResult);

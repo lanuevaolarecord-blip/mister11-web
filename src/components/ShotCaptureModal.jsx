@@ -62,7 +62,8 @@ export const ShotCaptureModal = ({
   const [showPitchPicker, setShowPitchPicker] = useState(false);
   const [isQuickMode, setIsQuickMode] = useState(true);
 
-  // Inicializar estado limpio al abrir el modal (evita estado residual entre aperturas)
+  // Apertura 5: Inicializar estado limpio al abrir el modal (evita estado residual entre aperturas)
+  // Cada apertura garantiza el reseteo de zona, playType, result, saveDifficulty y confort.
   useEffect(() => {
     if (isOpen) {
       const targetTeam = (initialTeam === 'rival' || origin === 'goal_rival')

@@ -12,9 +12,6 @@ import {
   Footprints, 
   MapPin, 
   CircleDot, 
-  ChevronDown, 
-  ChevronUp, 
-  Zap, 
   X 
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
@@ -55,12 +52,11 @@ export const ShotCaptureModal = ({
   const [zone, setZone] = useState('centro_att');
   const [playType, setPlayType] = useState('jugada');
   const [result, setResult] = useState(initialResult);
-  const [saveDifficulty, setSaveDifficulty] = useState(initialDifficulty);
-  const [shooterComfort, setShooterComfort] = useState(null);
+  const [saveDifficulty, setSaveDifficulty] = useState(initialDifficulty || 'normal');
+  const [shooterComfort, setShooterComfort] = useState('comodo');
   const [selectedPlayerId, setSelectedPlayerId] = useState(activePlayerId);
   const [asistenciaId, setAsistenciaId] = useState(null);
   const [showPitchPicker, setShowPitchPicker] = useState(false);
-  const [isQuickMode, setIsQuickMode] = useState(true);
 
   // Apertura 5: Inicializar estado limpio al abrir el modal (evita estado residual entre aperturas)
   // Cada apertura garantiza el reseteo de zona, playType, result, saveDifficulty y confort.
@@ -82,12 +78,11 @@ export const ShotCaptureModal = ({
 
       setPlayType('jugada');
       setResult(initialResult || null);
-      setSaveDifficulty(initialDifficulty || null);
-      setShooterComfort(null);
+      setSaveDifficulty(initialDifficulty || 'normal');
+      setShooterComfort('comodo');
       setSelectedPlayerId(targetTeam === 'rival' ? null : (activePlayerId || null));
       setAsistenciaId(null);
       setShowPitchPicker(false);
-      setIsQuickMode(true);
     }
   }, [isOpen, initialTeam, initialSector, initialSector2D, initialResult, initialDifficulty, activePlayerId, origin]);
 
@@ -188,17 +183,10 @@ export const ShotCaptureModal = ({
     setSaveDifficulty(d);
   };
 
-  // Selección de Comodidad (Confirma inmediatamente)
+  // Selección de Comodidad (Confirma inmediatamente o mediante Guardar Tiro)
   const handleSelectComfort = (c) => {
     setShooterComfort(c);
     finishAndDispatch(c, saveDifficulty || 'normal', result, selectedPlayerId, asistenciaId);
-  };
-
-  // Apertura 6: Modo Rápido (1 tap en resultado -> auto-save inmediato con defaults canónicos <= 3 taps)
-  const handleQuickResultTap = (r) => {
-    setResult(r);
-    const diff = r === 'parada' ? 'normal' : null;
-    finishAndDispatch('comodo', diff, r, selectedPlayerId, null);
   };
 
   if (!isOpen) return null;
@@ -213,33 +201,11 @@ export const ShotCaptureModal = ({
               <Target size={18} color="#4CAF7D" />
               <span>{t('shot.title')}</span>
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setIsQuickMode(prev => !prev)}
-                style={{
-                  minHeight: '48px',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(212, 168, 67, 0.4)',
-                  background: isQuickMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(212, 168, 67, 0.15)',
-                  color: isQuickMode ? '#4CAF7D' : '#D4A843',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {isQuickMode ? <Zap size={13} color="#4CAF7D" /> : <ChevronDown size={13} color="#D4A843" />}
-                <span>{isQuickMode ? (t('liveStats.quickMode.title') || (isEn ? 'Quick' : 'Rápido')) : (t('liveStats.quickMode.advanced') || (isEn ? 'Advanced' : 'Avanzado'))}</span>
-              </button>
-              <button type="button" className="shot-modal-close-btn" onClick={onClose} aria-label={t('shot.cancel')}>
-                <X size={18} />
-              </button>
-            </div>
+            <button type="button" className="shot-modal-close-btn" onClick={onClose} aria-label={t('shot.cancel')}>
+              <X size={18} />
+            </button>
           </div>
+        </div>
 
           {/* Toggle Equipo Propio / Rival */}
           <div className="shot-team-toggle-row">
@@ -300,60 +266,7 @@ export const ShotCaptureModal = ({
             </div>
           )}
 
-          {/* MODO RÁPIDO: Selección directa de Resultado en 1 Tap con guardado automático */}
-          {isQuickMode ? (
-            <div className="shot-section-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <label className="shot-group-label" style={{ margin: 0 }}>
-                  <Zap size={14} color="#4CAF7D" />
-                  <span>{t('shot.result')} (1 Tap · Auto-Save)</span>
-                </label>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  {zone.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div className="shot-chips-grid-2x2">
-                <button
-                  type="button"
-                  className={`shot-chip-large ${result === 'gol' ? 'selected-success' : ''}`}
-                  onClick={() => handleQuickResultTap('gol')}
-                  style={{ minHeight: '52px' }}
-                >
-                  <Trophy size={16} color="#4CAF7D" />
-                  <span>{t('shot.result_gol')}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip-large ${result === 'parada' ? 'selected-gk' : ''}`}
-                  onClick={() => handleQuickResultTap('parada')}
-                  style={{ minHeight: '52px' }}
-                >
-                  <Shield size={16} color="#D4A843" />
-                  <span>{t('shot.result_parada')}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip-large ${result === 'fuera' ? 'selected-miss' : ''}`}
-                  onClick={() => handleQuickResultTap('fuera')}
-                  style={{ minHeight: '52px' }}
-                >
-                  <Compass size={16} color="#9C6A3B" />
-                  <span>{t('shot.result_fuera')}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`shot-chip-large ${result === 'bloqueado' ? 'selected-block' : ''}`}
-                  onClick={() => handleQuickResultTap('bloqueado')}
-                  style={{ minHeight: '52px' }}
-                >
-                  <ShieldAlert size={16} color="#4CAF7D" />
-                  <span>{t('shot.result_bloqueado')}</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* MODO AVANZADO: Todas las opciones y pasos tácticos */
-            <>
+
               {/* Asistencia (Solo visible si el resultado es gol propio) */}
               {team === 'own' && result === 'gol' && (
                 <div className="shot-section-group fade-in-step">
@@ -587,8 +500,6 @@ export const ShotCaptureModal = ({
                   </div>
                 </div>
               )}
-            </>
-          )}
         </div>
 
         {/* Footer */}

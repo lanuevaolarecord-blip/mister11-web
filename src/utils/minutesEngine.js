@@ -424,22 +424,16 @@ export const calculateMinutesFromEvents = (
       );
     });
 
-    // Deduplicar tarjetas amarillas si el mismo evento llegó por dos vías (MatchDay + LiveStats)
+    // Deduplicar tarjetas amarillas si el mismo evento llegó por dos vías o re-lanzado en el mismo minuto
     const deduplicatedYellows = [];
-    const seenYelSignatures = new Set();
+    const seenYellowKeys = new Set();
     yellowCards.forEach(yc => {
       const min = parseInt(yc.minute || yc.minuto || 0, 10);
-      const sig = yc.id ? yc.id : `y_${min}`;
-      const isDupe = seenYelSignatures.has(sig) || deduplicatedYellows.some(ex => {
-        const exMin = parseInt(ex.minute || ex.minuto || 0, 10);
-        return exMin === min && ex.id !== yc.id && (
-          (ex.type === 'card_yellow_own' && yc.type === 'amarilla') ||
-          (ex.type === 'amarilla' && yc.type === 'card_yellow_own') ||
-          (ex.type === yc.type && ex.playerId === yc.playerId)
-        );
-      });
-      if (!isDupe) {
-        seenYelSignatures.add(sig);
+      const cardType = (yc.type === 'roja' || yc.card === 'roja') ? 'red' : 'yellow';
+      // Clave canónica de deduplicación (playerId, cardType, minute)
+      const dedupKey = `card_${pid}_${cardType}_${min}`;
+      if (!seenYellowKeys.has(dedupKey)) {
+        seenYellowKeys.add(dedupKey);
         deduplicatedYellows.push(yc);
       }
     });

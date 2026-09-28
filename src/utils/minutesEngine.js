@@ -80,6 +80,9 @@ export const getUnifiedMatchEvents = (match = {}) => {
     if (!e) return;
     if (e.isValid === false) return; // Omitir eventos invalidados
     const cardSig = getCardSignature(e);
+    if (cardSig && seenCardSignatures.has(cardSig)) {
+      return;
+    }
     if (cardSig) seenCardSignatures.add(cardSig);
     const key = e.id || `evt_${e.type}_${e.minute || e.minuto || 0}_${e.playerId || e.playerInId || ''}_${e.playerOutId || ''}`;
     map.set(key, e);

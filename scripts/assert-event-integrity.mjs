@@ -42,7 +42,7 @@ function check(desc, fn) {
 }
 
 // ── 1. AUDITORÍA DE MINUTOS SIN DEFAULT 1' ──────────────────────────────────
-console.log('▶ [1/6] Verificando esquema de minutos (cero default 1\')...');
+console.log('▶ [1/11] Verificando esquema de minutos (cero default 1\')...');
 check('Eventos con minuto nulo o desconocido no reciben 1\' por defecto', () => {
   const dummyEvent = { type: 'shot_on_target_own', id: 'e1' };
   const rawMin = parseInt(dummyEvent.minute || dummyEvent.minuto || dummyEvent.min, 10);
@@ -50,8 +50,8 @@ check('Eventos con minuto nulo o desconocido no reciben 1\' por defecto', () => 
   assert.strictEqual(minLabel, 's/m', 'No debe asignar 1\' cuando no hay minuto');
 });
 
-// ── 2. MARCADOR Y GOLEADORES (0-1 XILXES) ───────────────────────────────────
-console.log('▶ [2/6] Verificando derivación de marcador y anotadores desde eventos...');
+// ── 2. MARCADOR Y GOLEADORES (0-1 XILXES + FIXTURE ACTA REAL 0-3) ───────────
+console.log('▶ [2/11] Verificando derivación de marcador y anotadores desde eventos (0-1 Xilxes y 0-3 Real)...');
 const mockEventsXilxes = [
   { id: 'ev1', type: 'shot_on_target_own', minute: 14, shooterComfort: 'comodo', sector: 'center' },
   { id: 'ev2', type: 'gol_rival', minute: 62, shooterComfort: 'comodo', sector: 'center', playType: 'jugada' },
@@ -69,16 +69,53 @@ const mockMatchXilxes = {
   events: mockEventsXilxes
 };
 
-check('Marcador y anotadores derivan de eventos (0-1 Xilxes presente)', () => {
+const mockMatchReal03 = {
+  id: 'match_real_0_3_fixture',
+  rival: 'Rival Potente',
+  date: '2026-10-02',
+  duration: 90,
+  goalsFor: 0,
+  goalsAgainst: 3,
+  actaOficial: {
+    closed: true,
+    goalsFor: 0,
+    goalsAgainst: 3,
+    golesLocal: 0,
+    golesVisita: 3,
+    totalDuration: 90
+  },
+  events: [
+    { id: 'ev_own_shot', type: 'shot_on_target_own', minute: 12, isGoal: false, shooterComfort: 'incomodo' },
+    { id: 'ev_riv_g1', type: 'gol_rival', minute: 18, isGoal: true },
+    { id: 'ev_riv_g2', type: 'gol_rival', minute: 42, isGoal: true },
+    { id: 'ev_riv_g3', type: 'goal_rival', minute: 75, isGoal: true }
+  ],
+  liveStatsEvents: [
+    // Simula evento duplicado emitido por LiveStats con ID distinto en min 75
+    { id: 'ls_dup_g3', type: 'gol_rival', minute: 75, isGoal: true }
+  ]
+};
+
+check('Marcador y anotadores derivan de eventos (0-1 Xilxes y 0-3 Real con dedup)', () => {
   const ownGoals = mockEventsXilxes.filter(e => e.type === 'gol_local' || e.type === 'goal_own');
   const rivalGoals = mockEventsXilxes.filter(e => e.type === 'gol_rival' || e.type === 'goal_rival');
   assert.strictEqual(ownGoals.length, 0, 'Goles propios debe ser 0');
   assert.strictEqual(rivalGoals.length, 1, 'Goles rivales debe ser 1');
   assert.strictEqual(rivalGoals[0].minute, 62, 'El gol de Xilxes debe tener minuto 62');
+
+  // Comprobar fixture 0-3 con dedup
+  const unified03 = getUnifiedMatchEvents(mockMatchReal03);
+  const ownGoalsUnified = unified03.filter(e => e && (e.type === 'gol_local' || e.type === 'goal_own' || e.type === 'gol'));
+  const rivalGoalsUnified = unified03.filter(e => e && (e.type === 'gol_rival' || e.type === 'goal_rival'));
+
+  assert.strictEqual(ownGoalsUnified.length, 0, 'Goles propios debe ser estrictamente 0');
+  assert.strictEqual(rivalGoalsUnified.length, 3, 'Goles rivales unificados y deduplicados debe ser 3 (evitando duplicado de min 75)');
+  assert.strictEqual(mockMatchReal03.actaOficial.goalsFor, 0);
+  assert.strictEqual(mockMatchReal03.actaOficial.goalsAgainst, 3);
 });
 
 // ── 3. SUSTITUCIONES COHERENTES CON MINUTES ENGINE ───────────────────────────
-console.log('▶ [3/6] Verificando sustituciones y suplentes con minutos...');
+console.log('▶ [3/11] Verificando sustituciones y suplentes con minutos...');
 check('Suplente que entra en min 70 tiene 20 min y genera sustitución visible', () => {
   const minResult = calculateMinutesFromEvents('p2', mockEventsXilxes, ['p1', 'gk1'], ['p2'], 90);
   assert.strictEqual(minResult.minutes, 20, 'El suplente p2 jugó 20 minutos');
@@ -89,7 +126,7 @@ check('Suplente que entra en min 70 tiene 20 min y genera sustitución visible',
 });
 
 // ── 4. PORTERO: GOLES ENCAJADOS COHERENTES CON GOLES RIVALES ────────────────
-console.log('▶ [4/6] Verificando encajados del portero (0-1 -> Encajados: 1)...');
+console.log('▶ [4/11] Verificando encajados del portero (0-1 -> Encajados: 1)...');
 check('Portero en campo encaja los goles rivales ocurridos durante sus minutos', () => {
   const gkMin = calculateMinutesFromEvents('gk1', mockEventsXilxes, ['p1', 'gk1'], ['p2'], 90);
   assert.strictEqual(gkMin.minutes, 90, 'El portero jugó los 90 minutos');
@@ -101,7 +138,7 @@ check('Portero en campo encaja los goles rivales ocurridos durante sus minutos',
 });
 
 // ── 5. CONTEOS ÚNICOS VÍA MATCH ANALYTICS (SECCIÓN 5 Y SECCIÓN 6) ───────────
-console.log('▶ [5/6] Verificando conteos únicos de remates rivales en sec 5 y sec 6...');
+console.log('▶ [5/11] Verificando conteos únicos de remates rivales en sec 5 y sec 6...');
 check('Tiros rivales en matchAnalytics coinciden exactamente en ambas secciones', () => {
   const analytics = getMatchAnalytics(mockMatchXilxes, mockEventsXilxes);
   const rivalShotsSec6 = analytics.shots.rivalShots.length;
@@ -112,7 +149,7 @@ check('Tiros rivales en matchAnalytics coinciden exactamente en ambas secciones'
 });
 
 // ── 6. DAFO CON UMBRALES REALES Y CERO CHIPS VACÍOS ─────────────────────────
-console.log('▶ [6/6] Verificando reglas DAFO y ausencia de chips con valor 0...');
+console.log('▶ [6/11] Verificando reglas DAFO y ausencia de chips con valor 0...');
 check('Ninguna regla de Oportunidades se basa en attendance y chips no tienen valor 0', () => {
   const oppRules = SWOT_RULES.filter(r => r.quadrant === 'opportunities');
   const hasAttendanceOpp = oppRules.some(r => r.id.includes('attendance'));

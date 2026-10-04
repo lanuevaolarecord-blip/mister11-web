@@ -231,29 +231,24 @@ export const generateMatchPdfReport = async ({
     doc.setFillColor(...colorAccent);
     doc.rect(0, 34, pageW, 2, 'F');
 
-    // Logo oficial de Míster11 a la izquierda
+    // Carga concurrente de logo oficial de Míster11 y escudo del equipo
     try {
-      const mr11LogoData = await imageUrlToBase64('/logo_mister11.png', 'M11', false);
+      const shieldSrc = matchData?.escudo || matchData?.activeTeam?.escudo || null;
+      const [mr11LogoData, shieldData] = await Promise.all([
+        imageUrlToBase64('/logo_mister11.png', 'M11', false).catch(() => null),
+        shieldSrc ? imageUrlToBase64(shieldSrc, safeTeamName, false).catch(() => null) : Promise.resolve(null)
+      ]);
+
       if (mr11LogoData) {
         const fmt = (typeof mr11LogoData === 'string' && mr11LogoData.includes('jpeg')) ? 'JPEG' : 'PNG';
         doc.addImage(mr11LogoData, fmt, 14, 8, 18, 18);
       }
-    } catch (logoErr) {
-      console.warn('No se pudo añadir logo M11 en encabezado PDF:', logoErr);
-    }
-
-    // Escudo del equipo a la derecha
-    if (matchData?.escudo || matchData?.activeTeam?.escudo) {
-      try {
-        const shieldSrc = matchData.escudo || matchData.activeTeam.escudo;
-        const shieldData = await imageUrlToBase64(shieldSrc, safeTeamName, false);
-        if (shieldData) {
-          const fmt = (typeof shieldData === 'string' && shieldData.includes('jpeg')) ? 'JPEG' : 'PNG';
-          doc.addImage(shieldData, fmt, pageW - 32, 8, 18, 18);
-        }
-      } catch (shieldErr) {
-        console.warn('No se pudo añadir escudo en encabezado PDF:', shieldErr);
+      if (shieldData) {
+        const fmt = (typeof shieldData === 'string' && shieldData.includes('jpeg')) ? 'JPEG' : 'PNG';
+        doc.addImage(shieldData, fmt, pageW - 32, 8, 18, 18);
       }
+    } catch (headerImgsErr) {
+      console.warn('No se pudieron añadir imágenes en encabezado PDF:', headerImgsErr);
     }
 
     // Título Principal Centrado
@@ -1417,8 +1412,7 @@ export const generateMatchPdfReport = async ({
       doc.addPage();
       y = 18;
 
-      // 4. Barras Comparativas (10 Métricas Canónicas)
-      y = drawSectionHeader('sec4_bars');
+      // 4. Barras Comparativas y 5. Radar Táctico Oficial (Rasterizados en paralelo)
       const barsSvg = renderComparisonBarsSvgString({
         homeStats,
         awayStats,
@@ -1428,15 +1422,6 @@ export const generateMatchPdfReport = async ({
         width: 660,
         height: 250
       });
-      const barsImg = await rasterizeSvgToDataUrl(barsSvg, 660, 250, 3);
-      assertGraphicEmbedded('sec4_bars', barsImg);
-      const bW = pageW - 28;
-      const bH = (250 / 660) * bW;
-      doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
-      y += bH + 6;
-
-      // 5. Radar Táctico Oficial (6 Ejes Comparativos)
-      y = drawSectionHeader('sec5_radar');
       const radarSvg = renderRadarCompareSvgString({
         homeStats,
         awayStats,
@@ -1446,7 +1431,20 @@ export const generateMatchPdfReport = async ({
         width: 500,
         height: 260
       });
-      const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
+
+      const [barsImg, radarImg] = await Promise.all([
+        rasterizeSvgToDataUrl(barsSvg, 660, 250, 3),
+        rasterizeSvgToDataUrl(radarSvg, 500, 260, 3)
+      ]);
+
+      y = drawSectionHeader('sec4_bars');
+      assertGraphicEmbedded('sec4_bars', barsImg);
+      const bW = pageW - 28;
+      const bH = (250 / 660) * bW;
+      doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
+      y += bH + 6;
+
+      y = drawSectionHeader('sec5_radar');
       assertGraphicEmbedded('sec5_radar', radarImg);
       const rW = 110;
       const rH = (260 / 500) * rW;
@@ -1828,28 +1826,29 @@ export const generateMatchPdfReport = async ({
       const rawPostImages = matchData.postMatchImages || (matchData.postMatchPhoto ? [matchData.postMatchPhoto] : []);
       const validPostImages = Array.isArray(rawPostImages) ? rawPostImages.filter(Boolean) : [];
       if (validPostImages.length > 0) {
-        const postImagesB64 = [];
-        for (const imgUrl of validPostImages) {
-          if (typeof imgUrl === 'string' && imgUrl.startsWith('data:image')) {
-            if (imgUrl.startsWith('data:image/webp') || imgUrl.startsWith('data:image/svg')) {
-              try {
-                const converted = await imageUrlToBase64(imgUrl);
-                if (converted) postImagesB64.push(converted);
-              } catch (_) {
-                postImagesB64.push(imgUrl);
+        // Procesamiento concurrente de fotografías del entrenador
+        const postImagesB64Results = await Promise.all(
+          validPostImages.map(async (imgUrl) => {
+            if (typeof imgUrl === 'string' && imgUrl.startsWith('data:image')) {
+              if (imgUrl.startsWith('data:image/webp') || imgUrl.startsWith('data:image/svg')) {
+                try {
+                  const converted = await imageUrlToBase64(imgUrl);
+                  return converted || imgUrl;
+                } catch (_) {
+                  return imgUrl;
+                }
               }
-            } else {
-              postImagesB64.push(imgUrl);
+              return imgUrl;
             }
-          } else {
             try {
-              const b64 = await imageUrlToBase64(imgUrl);
-              if (b64) postImagesB64.push(b64);
+              return await imageUrlToBase64(imgUrl);
             } catch (err) {
               console.warn('Error convirtiendo imagen del entrenador a base64:', err);
+              return null;
             }
-          }
-        }
+          })
+        );
+        const postImagesB64 = postImagesB64Results.filter(Boolean);
 
         if (postImagesB64.length > 0) {
           if (y + 55 > pageH - 22) {

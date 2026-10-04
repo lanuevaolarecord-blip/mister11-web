@@ -968,18 +968,31 @@ const Partidos = () => {
       alert(isGlobalEn ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
       return;
     }
+    const effLang = currentGlobalLanguage || getEffectiveLanguage();
+    const isEn = isGlobalEn;
+
+    // Feedback visual instantáneo para el usuario
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('m11-loading', {
+        detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
+      }));
+    }
+    // Breve pausa para permitir que el navegador pinte el indicador en pantalla de inmediato
+    await new Promise((r) => setTimeout(r, 20));
+
     let lineupImageBase64 = null;
     try {
-      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      // Paralelizar la carga dinámica del módulo de PDF y la captura del terreno de juego
+      const [pdfModule, capturedLineup] = await Promise.all([
+        import('../utils/matchPdfReport'),
+        captureLineupDataUrl().catch((pitchErr) => {
+          console.warn('Could not capture lineup for PDF:', pitchErr);
+          return null;
+        })
+      ]);
+      lineupImageBase64 = capturedLineup;
 
-      const effLang = currentGlobalLanguage || getEffectiveLanguage();
-      const isEn = isGlobalEn;
-
-      try {
-        lineupImageBase64 = await captureLineupDataUrl();
-      } catch (pitchErr) {
-        console.warn('Could not capture lineup for PDF:', pitchErr);
-      }
+      const { generateMatchPdfReport } = pdfModule;
 
       await generateMatchPdfReport({
         mode: 'POST-MATCH',
@@ -993,7 +1006,11 @@ const Partidos = () => {
       });
     } catch (e) {
       console.error("Error al exportar el PDF del partido:", e);
-      alert(isGlobalEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
+      alert(isEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+      }
     }
   };
 

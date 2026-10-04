@@ -225,6 +225,9 @@ const convertImageToPngViaCanvas = (srcUrl, timeoutMs = 2500) => {
   });
 };
 
+// Caché en memoria para evitar re-descargas y re-conversiones de imágenes durante la sesión
+const imageBase64Cache = new Map();
+
 export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar = false) => {
   if (!url) {
     return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
@@ -255,13 +258,18 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     targetUrl = `${origin}${cleanPath}`;
   }
 
-  // Timeout helper configurable
-  const withTimeout = (promise, ms = 12000) =>
+  // Si ya está en caché en memoria, retornar instantáneamente
+  if (imageBase64Cache.has(targetUrl)) {
+    const cached = imageBase64Cache.get(targetUrl);
+    if (cached) return cached;
+    return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
+  }
+
+  // Timeout helper configurable ágil (evita bloqueos prolongados)
+  const withTimeout = (promise, ms = 3500) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
   // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path
-  //    (Evita 400 Bad Request y bloqueos CORS — funciona incluso en Android WebView)
-  //    Timeout aumentado a 12s para dispositivos móviles lentos.
   if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage.googleapis.com') || targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
     try {
       let path = targetUrl;
@@ -272,25 +280,25 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
         path = decodeURIComponent(rawPath);
       }
       const fileRef = storageRef(storage, path);
-      const blob = await withTimeout(getBlob(fileRef), 12000);
+      const blob = await withTimeout(getBlob(fileRef), 3500);
       if (blob) {
         const b64 = await blobToDataURL(blob);
         if (b64) {
+          let finalB64 = b64;
           if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
-            const png = await convertImageToPngViaCanvas(b64, 3000);
-            return png || b64;
+            const png = await convertImageToPngViaCanvas(b64, 2000);
+            finalB64 = png || b64;
           }
-          return b64;
+          imageBase64Cache.set(targetUrl, finalB64);
+          return finalB64;
         }
       }
-      console.warn('[imageUrlToBase64] Firebase Storage getBlob devolvió blob nulo para path:', path);
     } catch (sdkErr) {
       console.warn('[imageUrlToBase64] Firebase Storage getBlob falló:', sdkErr?.code || sdkErr?.message || sdkErr);
     }
   }
 
-  // 3. PRIORIDAD 2: Fetch autenticado con token Bearer (funciona en Android WebView cuando getBlob falla)
-  //    Obtiene el token del usuario actual y lo pasa en el header Authorization.
+  // 3. PRIORIDAD 2: Fetch autenticado con token Bearer
   if (typeof targetUrl === 'string' && targetUrl.includes('firebasestorage')) {
     try {
       const _auth = getAuth();
@@ -298,7 +306,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
       if (currentUser) {
         const idToken = await currentUser.getIdToken(false);
         const controller2 = new AbortController();
-        const timer2 = setTimeout(() => controller2.abort(), 8000);
+        const timer2 = setTimeout(() => controller2.abort(), 3000);
         const authResp = await fetch(targetUrl, {
           headers: { Authorization: `Bearer ${idToken}` },
           signal: controller2.signal
@@ -308,11 +316,13 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           const blob2 = await authResp.blob();
           const b64auth = await blobToDataURL(blob2);
           if (b64auth) {
+            let finalB64Auth = b64auth;
             if (b64auth.startsWith('data:image/webp') || b64auth.startsWith('data:image/svg')) {
-              const png2 = await convertImageToPngViaCanvas(b64auth, 3000);
-              return png2 || b64auth;
+              const png2 = await convertImageToPngViaCanvas(b64auth, 2000);
+              finalB64Auth = png2 || b64auth;
             }
-            return b64auth;
+            imageBase64Cache.set(targetUrl, finalB64Auth);
+            return finalB64Auth;
           }
         }
       }
@@ -321,34 +331,40 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     }
   }
 
-  // 4. PRIORIDAD 3: Direct Fetch con mode: 'cors' (funciona en web, puede fallar en Android WebView)
+  // 4. PRIORIDAD 3: Direct Fetch con mode: 'cors'
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = setTimeout(() => controller.abort(), 2500);
     const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
     clearTimeout(timer);
     if (response.ok) {
       const blob = await response.blob();
       const b64 = await blobToDataURL(blob);
       if (b64) {
+        let finalB64Cors = b64;
         if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
-          const png = await convertImageToPngViaCanvas(b64, 3000);
-          return png || b64;
+          const png = await convertImageToPngViaCanvas(b64, 2000);
+          finalB64Cors = png || b64;
         }
-        return b64;
+        imageBase64Cache.set(targetUrl, finalB64Cors);
+        return finalB64Cors;
       }
     }
   } catch (_fetchErr) {
-    // Silencioso: esperado en Android WebView sin CORS en Firebase Storage
+    // Silencioso
   }
 
-  // 4. PRIORIDAD 3: Fallback Canvas 2D (img element + crossOrigin)
+  // 5. Fallback Canvas 2D (img element + crossOrigin)
   try {
-    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 4000);
-    if (canvasB64) return canvasB64;
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 2000);
+    if (canvasB64) {
+      imageBase64Cache.set(targetUrl, canvasB64);
+      return canvasB64;
+    }
   } catch (_) {}
 
-  // 5. Fallback final: avatar con iniciales si es avatar, null si es diagrama/logo
+  // Fallback final: almacenar null en caché para no reintentar peticiones fallidas
+  imageBase64Cache.set(targetUrl, null);
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);
   }

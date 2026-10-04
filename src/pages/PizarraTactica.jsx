@@ -143,6 +143,7 @@ const PizarraTactica = () => {
   const recorderRef = useRef(null);
   const watchdogTimerRef = useRef(null);
   const isCancelledRef = useRef(false);
+  const animTimeoutR = useRef(null); // P-G2: captura los setTimeout recursivos de animacion
 
   const cancelExport = useCallback(() => {
     isCancelledRef.current = true;
@@ -235,6 +236,26 @@ const PizarraTactica = () => {
     fc.renderAll();
   }, []);
 
+  // P-G1: PROHIBIDO fc.clear() global. Remover piezas solo por categoría preservando campo/líneas/porterías
+  const removeAllPiecesPreservingField = useCallback((canvas) => {
+    if (!canvas) return;
+    const objs = [...canvas.getObjects()];
+    objs.forEach(obj => {
+      const isField = 
+        obj.isFieldLayer ||
+        obj.id === 'campo' ||
+        obj.id === 'field' ||
+        obj.data?.type === 'field' ||
+        obj.data?.type === 'campo' ||
+        obj.data?.type === 'background' ||
+        obj.type === 'field' ||
+        (obj.fill && (obj.fill === '#1b3a2d' || obj.fill === '#132a14' || obj.fill === '#224422'));
+      if (!isField) {
+        canvas.remove(obj);
+      }
+    });
+  }, []);
+
 
   const normalizarTamañoJugadores = useCallback((canvas) => {
     if (!canvas) return;
@@ -310,7 +331,7 @@ const PizarraTactica = () => {
       return;
     }
 
-    fc.clear();
+    removeAllPiecesPreservingField(fc);
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
     
     if (objsToEnliven.length === 0) {
@@ -401,7 +422,7 @@ const PizarraTactica = () => {
         if (callback) callback();
       }
     });
-  }, [normalizarTamañoJugadores]);
+  }, [normalizarTamañoJugadores, removeAllPiecesPreservingField]);
 
   const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
     const fc = fcRef.current;
@@ -461,6 +482,7 @@ const PizarraTactica = () => {
   }, [planId, activeTeamId, user, setSearchParams]);
 
   // React state (UI)
+  const [canvasMounted, setCanvasMounted] = useState(false);
   const [ready,        setReady]        = useState(false);
   const [planName,     setPlanName]     = useState('Sin título');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -1068,6 +1090,7 @@ const PizarraTactica = () => {
       stroke: '#FFFFFF',
       strokeWidth: borderWidth,
       id: playerId,
+      isPlayerPiece: true,
       data: { 
         id: playerId,
         type: 'player',
@@ -1079,6 +1102,7 @@ const PizarraTactica = () => {
         _strokeWidth: borderWidth  // guardar para restaurar al desserializar
       },
     });
+    group.isPlayerPiece = true;
     
     applyMister11Controls(group);
 
@@ -1087,8 +1111,17 @@ const PizarraTactica = () => {
 
   // ─── Draw players from formation onto canvas ──────────────────────────────
   const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
+    if (!canvas || !renderer) return;
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
+
+    // P-G1: Limpiar únicamente jugadores existentes antes de dibujar la formación para evitar acumulación
+    const currentObjects = [...canvas.getObjects()];
+    currentObjects.forEach(obj => {
+      if (obj.isPlayerPiece || obj.data?.type === 'player' || obj.data?.tipo === 'jugador') {
+        canvas.remove(obj);
+      }
+    });
 
     // Radio fijo igual en todos los modos de campo
     const playerRadius = RADIO_JUGADOR;
@@ -1264,20 +1297,132 @@ const PizarraTactica = () => {
     }
   }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, normalizarTamañoJugadores]);
 
-
-  // ─── Initialize canvases once on mount ───────────────────────────────────
-  useEffect(() => {
-    // Reset state on team/plan change
-    setFrames([]);
-    setReady(false);
-    readyR.current = false;
+  // ─── Handlers de sincronización y eventos del canvas ──────────────────────
+  const autoguardarEstado = useCallback(async () => {
+    if (!user || !activeTeamId || defaultDrawnR.current === false) return;
+    if (user.uid === 'invitado-local') return;
     
-    if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current || !user || !activeTeamId || !planId) return;
+    const frameState = serializarFrame();
+    setAutoSaveStatus('💾 Guardando...');
+    try {
+      const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
+      await setDoc(estadoRef, {
+        canvasState: JSON.stringify(frameState),
+        framesCount: framesR.current?.length || 0,
+        currentFrameIdx: frameIdxR.current || 0,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      setAutoSaveStatus('✓ Guardado');
+      setTimeout(() => setAutoSaveStatus(''), 2000);
+    } catch (err) {
+      console.error("[Pizarra] Error en autoguardarEstado:", err);
+      setAutoSaveStatus('❌ Error al guardar');
+    }
+  }, [user, activeTeamId, serializarFrame, getTeamPath]);
+
+  const debouncedSaveEstado = useCallback(() => {
+    if (saveEstadoTimeoutR.current) clearTimeout(saveEstadoTimeoutR.current);
+    saveEstadoTimeoutR.current = setTimeout(autoguardarEstado, 1500);
+  }, [autoguardarEstado]);
+
+  const onChange = useCallback((opt) => {
+    if (syncingR.current) return;
+    if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
+
+    if (opt.target && frRef.current) {
+      const targets = opt.target.type === 'activeSelection' ? (opt.target._objects || []) : [opt.target];
+      targets.forEach(t => {
+        if (t.data) {
+          let absX = t.left;
+          let absY = t.top;
+          
+          const matrix = t.calcTransformMatrix();
+          if (matrix) {
+            const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
+            absX = pt.x;
+            absY = pt.y;
+          }
+          
+          const { rx, ry } = frRef.current.getRelativePoint(absX, absY);
+          t.data.xRel = rx;
+          t.data.yRel = ry;
+        }
+      });
+    }
+
+    ensurePlayersOnTop();
+    saveFrameState(false);
+    pushToHistory();
+    const frameState = serializarFrame();
+    lastStateRef.current = frameState;
+    if (activeTeamId && planId) {
+      savePizarraLocal(activeTeamId, planId, frameState);
+      guardarEstado(planId, frameState);
+      try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
+    }
+    debouncedSaveEstado();
+  }, [ensurePlayersOnTop, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, debouncedSaveEstado]);
+
+  const onAddedOrRemoved = useCallback((opt) => {
+    if (syncingR.current) return;
+    if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
+    ensurePlayersOnTop();
+    saveFrameState(false);
+    pushToHistory();
+    const frameState = serializarFrame();
+    if (activeTeamId && planId) {
+      savePizarraLocal(activeTeamId, planId, frameState);
+      guardarEstado(planId, frameState);
+      try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
+    }
+    debouncedSaveEstado();
+  }, [ensurePlayersOnTop, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, debouncedSaveEstado]);
+
+  const onPathCreated = useCallback((opt) => {
+    if (syncingR.current) return;
+    if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
+    if (opt.path) {
+      opt.path.set({ data: { type: 'path' } });
+    }
+    ensurePlayersOnTop();
+    saveFrameState(false);
+    pushToHistory();
+    const frameState = serializarFrame();
+    if (activeTeamId && planId) {
+      savePizarraLocal(activeTeamId, planId, frameState);
+      guardarEstado(planId, frameState);
+      try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
+    }
+    debouncedSaveEstado();
+  }, [ensurePlayersOnTop, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, debouncedSaveEstado]);
+
+  const attachListeners = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    fc.off('object:modified', onChange);
+    fc.off('object:added',    onAddedOrRemoved);
+    fc.off('object:removed',  onAddedOrRemoved);
+    fc.off('path:created',    onPathCreated);
+    fc.on('object:modified', onChange);
+    fc.on('object:added',    onAddedOrRemoved);
+    fc.on('object:removed',  onAddedOrRemoved);
+    fc.on('path:created',    onPathCreated);
+  }, [onChange, onAddedOrRemoved, onPathCreated]);
+
+  const cargarFrameConListeners = useCallback((state, callback) => {
+    cargarFrame(state, () => {
+      if (callback) callback();
+      attachListeners();
+    });
+  }, [cargarFrame, attachListeners]);
+
+  // ─── 1. Initialize canvases once on mount (P-G3) ───────────────────────────
+  useEffect(() => {
+    if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current) return;
 
     let W = containerRef.current.offsetWidth;
     let H = containerRef.current.offsetHeight;
 
-    // Robust fallback if container is initially collapsed/not-laid-out:
     if (!W || !H) {
       W = window.innerWidth;
       H = Math.max(300, window.innerHeight - 120);
@@ -1296,6 +1441,7 @@ const PizarraTactica = () => {
     const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: { v: 12, h: 16 } });
     renderer.draw('full');
     frRef.current = renderer;
+
     // 2. Fabric overlay canvas
     const fc = new fabric.Canvas(fabricElemRef.current, {
       width: initW, height: initH,
@@ -1304,405 +1450,47 @@ const PizarraTactica = () => {
     });
     fcRef.current = fc;
 
-    // Cerrar los drawers flotantes cuando se haga tap en cualquier parte del canvas
+    // Cerrar drawers flotantes al pulsar sobre el canvas
     fc.on('mouse:down', () => {
       setShowTeamsDrawer(false);
       setShowMatsDrawer(false);
     });
 
-
     // 3. ToolManager
     const tm = new ToolManager(fc);
     tmRef.current = tm;
 
-    // 4. Obtener metadatos del plan (formación, campo, etc.)
-    if (user.uid !== 'invitado-local') {
-      const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);
-      getDoc(planDocRef).then(docSnap => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setPlanName(data.name || 'Sin título');
-          if (data.localFormation) setLocalFormationState(data.localFormation);
-          if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
-          if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
-          if (data.showRival !== undefined) setShowRivalState(data.showRival);
-          if (data.fieldType) setFieldTypeState(data.fieldType);
-        }
-      }).catch(err => console.error("Error fetching plan metadata:", err));
-    }
-    // 5. CARGA DEL CANVAS - se ejecuta después de definir handlers (ver initCanvas() más abajo)
-    let unsubscribe;
-    // La inicialización real ocurre en initCanvas() definida más abajo
+    attachListeners();
+    setCanvasMounted(true);
 
-    // 6. Auto-save en cada cambio del canvas
-    // Debounce manual de 1.5 segundos para pizarra/estado_actual en Firestore
-    const autoguardarEstado = async () => {
-      if (!user || !activeTeamId || defaultDrawnR.current === false) return;
-      if (user.uid === 'invitado-local') return;
-      
-      const frameState = serializarFrame();
-      setAutoSaveStatus('💾 Guardando...');
-      try {
-        // FIX: setDocument() no soporta rutas anidadas de Firestore (>2 segmentos)
-        // Usar setDoc directamente con doc() que acepta segmentos múltiples
-        const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
-        await setDoc(estadoRef, {
-          canvasState: JSON.stringify(frameState),
-          framesCount: framesR.current?.length || 0,
-          currentFrameIdx: frameIdxR.current || 0,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        setAutoSaveStatus('✓ Guardado');
-        setTimeout(() => setAutoSaveStatus(''), 2000);
-      } catch (err) {
-        console.error("[Pizarra] Error en autoguardarEstado:", err);
-        setAutoSaveStatus('❌ Error al guardar');
-      }
-    };
-
-    const debouncedSaveEstado = () => {
-      if (saveEstadoTimeoutR.current) clearTimeout(saveEstadoTimeoutR.current);
-      saveEstadoTimeoutR.current = setTimeout(autoguardarEstado, 1500);
-    };
-
-    const onChange = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-
-      // Actualizar coordenadas relativas del objeto movido
-      if (opt.target && frRef.current) {
-        const targets = opt.target.type === 'activeSelection' ? (opt.target._objects || []) : [opt.target];
-        targets.forEach(t => {
-          if (t.data) {
-            let absX = t.left;
-            let absY = t.top;
-            
-            const matrix = t.calcTransformMatrix();
-            if (matrix) {
-              const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
-              absX = pt.x;
-              absY = pt.y;
-            }
-            
-            const { rx, ry } = frRef.current.getRelativePoint(absX, absY);
-            t.data.xRel = rx;
-            t.data.yRel = ry;
-          }
-        });
-      }
-
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-      const frameState = serializarFrame();
-      // PERSISTENCIA: Mantener siempre el estado más reciente en la ref
-      lastStateRef.current = frameState;
-      if (activeTeamId && planId) {
-        savePizarraLocal(activeTeamId, planId, frameState);
-        guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
-      }
-      debouncedSaveEstado();
-    };
-
-    // Guardado al añadir/eliminar objetos (solo si NO es una carga)
-    const onAddedOrRemoved = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-      console.log('[Pizarra] 💾 onAddedOrRemoved - guardando estado...');
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-      const frameState = serializarFrame();
-      if (activeTeamId && planId) {
-        savePizarraLocal(activeTeamId, planId, frameState);
-        guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
-      }
-      debouncedSaveEstado();
-    };
-
-    const onPathCreated = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-      if (opt.path) {
-        opt.path.set({ data: { type: 'path' } });
-      }
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-      const frameState = serializarFrame();
-      if (activeTeamId && planId) {
-        savePizarraLocal(activeTeamId, planId, frameState);
-        guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
-        console.log('[Pizarra] 💾 Path guardado en localStorage y Context OK');
-      }
-      debouncedSaveEstado();
-    };
-
-    // ── Función para reconectar listeners (se llama tras cargarFrame) ──
-    // FIX-4: Usar fc.off(event, specificFn) en lugar de fc.off(event) para no eliminar
-    // los handlers internos de Fabric.js (causaba comportamiento errático tras uso prolongado).
-    const attachListeners = () => {
-      fc.off('object:modified', onChange);
-      fc.off('object:added',    onAddedOrRemoved);
-      fc.off('object:removed',  onAddedOrRemoved);
-      fc.off('path:created',    onPathCreated);
-      fc.on('object:modified', onChange);
-      fc.on('object:added',    onAddedOrRemoved);
-      fc.on('object:removed',  onAddedOrRemoved);
-      fc.on('path:created',    onPathCreated);
-      console.log('[Pizarra] 🎯 Listeners reconectados correctamente al canvas');
-    };
-
-    // cargarFrame con reconexión automática de listeners
-    const cargarFrameConListeners = (state, callback) => {
-      cargarFrame(state, () => {
-        if (callback) callback();
-        attachListeners();
-      });
-    };
-
-    // 5. CARGA DEL CANVAS - Flujo de una sola fuente de verdad
-    //    Prioridad:
-    //      1. localStorage clave de EQUIPO (mister11_pizarra_active_${teamId}) — máxima prioridad
-    //      2. localStorage clave de PLAN (planId específico)
-    //      3. Firestore pizarraEstado
-    //      4. Frames de Firestore
-    //      5. Formación por defecto (solo si el canvas está vacío y no se ha dibujado aún)
-    if (user && planId && activeTeamId) {
-      // Clave de estado activo por equipo y plan (para segregación limpia de pizarras)
-      const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}_${planId}`;
-
-      // ── FUENTE 0: Context API (Memoria volátil, mayor prioridad) ──
-      let memoryCache = obtenerEstado(planId);
-
-      // ── FUENTE 1: localStorage clave de EQUIPO y PLAN (máxima prioridad) ──
-      let localCache = null;
-      try {
-        const raw = localStorage.getItem(ACTIVE_STATE_KEY);
-        if (raw) localCache = JSON.parse(raw);
-      } catch (_) {}
-
-      // ── FUENTE 1b: localStorage clave de PLAN (fallback) ─────────────────────
-      if (!localCache || !localCache.objects || localCache.objects.length === 0) {
-        localCache = getPizarraLocal(activeTeamId, planId);
-      }
-      
-      const cachedState = memoryCache || localCache;
-
-      if (user.uid === 'invitado-local') {
-        console.log("[Pizarra] Modo Invitado Local - Cargando en memoria/local únicamente");
-        defaultDrawnR.current = true;
-        if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
-          cargarFrameConListeners(cachedState, () => {
-            ensurePlayersOnTop();
-            fc.renderAll();
-            if (!readyR.current) { readyR.current = true; setReady(true); }
-          });
-        } else {
-          console.log("[Pizarra] Modo Invitado Local - Dibujando formación por defecto");
-          const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
-          objsActuales.forEach(o => fc.remove(o));
-          syncingR.current = true;
-          const fr = frRef.current;
-          drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-          syncingR.current = false;
-          attachListeners();
-          const state = serializarFrame();
-          try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(state)); } catch (_) {}
-          savePizarraLocal(activeTeamId, planId, state);
-          setFrames([{ id: 'frame-1', name: 'Frame 1', state, duration: 800, order: 0 }]);
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        }
-        return;
-      }
-
-      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
-      const estadoDocRef = doc(db, getTeamPath(), 'pizarraEstado', planId);
-
-      if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
-        console.log("[Pizarra] ✅ Restaurando desde Contexto / localStorage");
-        defaultDrawnR.current = true; // marcar que ya hay estado — no dibujar formación
-        cargarFrameConListeners(cachedState, () => {
-          ensurePlayersOnTop();
-          fc.renderAll();
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-        const q = query(framesColRef, orderBy('order', 'asc'));
-        unsubscribe = onSnapshot(q, (snap) => {
-          if (playingR.current) return; // IGNORAR actualizaciones durante la reproducción/exportación
-          if (!snap.empty) {
-            const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
-
-            const dbFrames = snap.docs
-              .filter(d => !deletedFrameIdsR.current.has(d.id))
-              .map(d => {
-                const data = d.data();
-                const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
-                const localFrame = localMap.get(d.id);
-                
-                // Si este frame existe en memoria local con estado válido, PRESERVAR estado local
-                if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
-                  return {
-                    id: d.id,
-                    ...data,
-                    state: localFrame.state
-                  };
-                }
-                
-                return { id: d.id, ...data, state: parsedState };
-              });
-
-            const dbIds = new Set(snap.docs.map(d => d.id));
-            const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
-            const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-            if (merged.length > 0) {
-              setFrames(merged);
-              framesR.current = merged;
-            }
-          }
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-      } else {
-        // ── FUENTE 2: Firestore pizarra/estado_actual ────────────────────────────────
-        // FIX: getDocument() no soporta rutas anidadas — usar getDoc directamente
-        const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
-        getDoc(estadoRef).then(snap => {
-          const data = snap.exists() ? snap.data() : null;
-          if (data && data.canvasState) {
-            const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
-            if (serverState && serverState.objects && serverState.objects.length > 0) {
-              console.log("[Pizarra] ✅ Restaurando desde Firestore estado_actual");
-              defaultDrawnR.current = true;
-              cargarFrameConListeners(serverState, () => {
-                ensurePlayersOnTop();
-                fc.renderAll();
-                lastStateRef.current = serverState;
-                savePizarraLocal(activeTeamId, planId, serverState);
-                try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(serverState)); } catch (_) {}
-                if (!readyR.current) { readyR.current = true; setReady(true); }
-              });
-              return;
-            }
-          }
-          // ── FUENTE 3: Frames de Firestore ────────────────────────────────
-          const q = query(framesColRef, orderBy('order', 'asc'));
-          unsubscribe = onSnapshot(q, (snapshot) => {
-            if (playingR.current) return; // IGNORAR actualizaciones durante la reproducción/exportación
-            if (snapshot.empty) {
-              // ── FUENTE 4: Formación por defecto ──────────────────────────
-              // GUARDIA: solo dibujar UNA VEZ y solo si el canvas está verdaderamente vacío
-              if (defaultDrawnR.current) return;
-              defaultDrawnR.current = true;
-              console.log("[Pizarra] ✅ Pizarra nueva: dibujando formación por defecto");
-              // Limpiar canvas por si acaso hay objetos residuales antes de dibujar
-              const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
-              objsActuales.forEach(o => fc.remove(o));
-              syncingR.current = true;
-              const fr = frRef.current;
-              drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-              syncingR.current = false;
-              attachListeners();
-              const state = serializarFrame();
-              // Guardar estado inicial en ambas claves
-              try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(state)); } catch (_) {}
-              savePizarraLocal(activeTeamId, planId, state);
-              addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
-              if (!readyR.current) { readyR.current = true; setReady(true); }
-              return;
-            }
-            const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
-
-            const dbFrames = snapshot.docs
-              .filter(d => !deletedFrameIdsR.current.has(d.id))
-              .map(d => {
-                const data = d.data();
-                const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
-                const localFrame = localMap.get(d.id);
-                
-                // Si este frame existe en memoria local con estado válido, PRESERVAR estado local
-                if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
-                  return {
-                    id: d.id,
-                    ...data,
-                    state: localFrame.state
-                  };
-                }
-                
-                return { id: d.id, ...data, state: parsedState };
-              });
-
-            const dbIds = new Set(snapshot.docs.map(d => d.id));
-            const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
-            const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-            setFrames(merged);
-            framesR.current = merged;
-            if (!readyR.current) {
-              readyR.current = true;
-              setReady(true);
-              if (merged.length > 0 && !defaultDrawnR.current) {
-                defaultDrawnR.current = true;
-                cargarFrameConListeners(merged[0].state, () => {
-                  setFrameIdx(0);
-                  frameIdxR.current = 0;
-                });
-              }
-            }
-          });
-        }).catch(e => {
-          console.error("[Pizarra] Error cargando pizarraEstado:", e);
-          attachListeners(); // Siempre conectar listeners aunque haya error
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-      }
-    } else {
-      // Sin user/planId: conectar listeners de todas formas
-      attachListeners();
-    }
-
-    // 7. Resize logic with ResizeObserver
+    // 7. Resize logic con ResizeObserver
     const resizeCanvas = () => {
-      // FIX-3: No redimensionar mientras hay una carga asíncrona activa (race condition con enlivenObjects)
       if (syncingR.current) return;
       const contenedor = document.getElementById('canvas-container');
-      const fc = fcRef.current;
-      const fr = frRef.current;
+      const curFc = fcRef.current;
+      const curFr = frRef.current;
       const fieldCanvas = fieldCanvasRef.current;
-      if (!contenedor || !fc || !fieldCanvas) return;
+      if (!contenedor || !curFc || !fieldCanvas) return;
 
       let anchoContenedor = contenedor.offsetWidth;
       let altoContenedor  = contenedor.offsetHeight;
 
-      // Salvaguarda: si el contenedor colapsa temporalmente a 0
       if (anchoContenedor <= 0 || altoContenedor <= 0) {
         anchoContenedor = window.innerWidth;
         altoContenedor = Math.max(300, window.innerHeight - 120);
       }
 
-      // En fullscreen, el contenedor flex ya ocupa el espacio correcto,
-      // pero debemos descontar el espacio que tapan las toolbars flotantes (position: fixed).
       const isFS = document.querySelector('.pizarra-fullscreen') !== null;
       if (isFS) {
-        // Toolbar izq (~76px) + Toolbar der (~76px) + margen = ~180px
         anchoContenedor = Math.max(anchoContenedor - 180, 200);
-        // Pequeño padding vertical para que no toque los bordes superior/inferior
         altoContenedor = Math.max(altoContenedor - 32, 200);
       }
 
-      // Layout adaptativo: 768px es el breakpoint estándar.
-      // Solo consideramos mobile si el ancho es menor a 768px, o si la altura es extremadamente pequeña (orientación horizontal en móvil).
       const isMobileView = window.innerWidth < 768 || (window.innerWidth < 950 && window.innerHeight < 500);
       const isTabletView = !isMobileView && window.innerWidth <= 1024;
       setIsMobile(isMobileView);
       setIsTablet(isTabletView);
 
-      // Removida la inversión por rotación forzada para alinearse al flujo elástico de pantalla vertical.
-
-      // Aspect Ratio Contain: el campo siempre visible (1.5:1)
       const aspect = 1.5;
       let nuevoAncho = anchoContenedor;
       let nuevoAlto  = anchoContenedor / aspect;
@@ -1711,10 +1499,9 @@ const PizarraTactica = () => {
         nuevoAncho = altoContenedor * aspect;
       }
 
-      // Paso 1: capturar posiciones ANTES de cambiar dimensiones
-      const anchoActual = fc.width  || nuevoAncho;
-      const altoActual  = fc.height || nuevoAlto;
-      const snapshots = fc.getObjects().map(obj => ({
+      const anchoActual = curFc.width  || nuevoAncho;
+      const altoActual  = curFc.height || nuevoAlto;
+      const snapshots = curFc.getObjects().map(obj => ({
         obj,
         xRel: obj.data?.xRel,
         yRel: obj.data?.yRel,
@@ -1723,26 +1510,23 @@ const PizarraTactica = () => {
         hasFieldCoords: obj.data?.xRel !== undefined && obj.data?.yRel !== undefined,
       }));
 
-      // Paso 2: actualizar dimensiones del canvas
       fieldCanvas.width  = nuevoAncho;
       fieldCanvas.height = nuevoAlto;
-      fc.setDimensions({ width: nuevoAncho, height: nuevoAlto });
+      curFc.setDimensions({ width: nuevoAncho, height: nuevoAlto });
 
-      // Paso 3: redibujar campo para que el renderer tenga bounds actualizados
-      if (fr) {
+      if (curFr) {
         const activeType = fieldTypeRef.current || fieldType || 'full';
-        fr.draw(toLibType(activeType));
+        curFr.draw(toLibType(activeType));
       }
 
-      // Paso 4: reposicionar objetos usando coordenadas guardadas
       snapshots.forEach(({ obj, xRel, yRel, xPct, yPct, hasFieldCoords }) => {
-        if (hasFieldCoords && fr) {
-          const point = fr.getCanvasPoint(xRel, yRel);
+        if (hasFieldCoords && curFr) {
+          const point = curFr.getCanvasPoint(xRel, yRel);
           obj.set({
             left: point.x,
             top:  point.y,
             visible: (
-              point.x >= -20 &&
+              point.x >= -20 && 
               point.x <= nuevoAncho + 20 &&
               point.y >= -20 &&
               point.y <= nuevoAlto  + 20
@@ -1754,15 +1538,14 @@ const PizarraTactica = () => {
         obj.setCoords();
       });
 
-      normalizarTamañoJugadores(fc);
-      fc.renderAll();
+      normalizarTamañoJugadores(curFc);
+      curFc.renderAll();
 
       if (readyR.current && !presentR.current) {
         const stateObj = serializarFrame();
         presentR.current = JSON.stringify(stateObj);
       }
     };
-
 
     let resizeTimer;
     const ro = new ResizeObserver(() => {
@@ -1771,13 +1554,11 @@ const PizarraTactica = () => {
     });
     ro.observe(document.getElementById('canvas-container'));
 
-    // orientationchange listener
     const handleOrientationChange = () => {
       setTimeout(resizeCanvas, 300);
     };
     window.addEventListener('orientationchange', handleOrientationChange);
 
-    // 8. Cerrar dropdowns al hacer click fuera
     const handleOutsideClick = (e) => {
       if (!e.target.closest('.color-picker-container') && !e.target.closest('.pizarra-dropdown.color-grid')) {
         setShowColorPicker(false);
@@ -1789,14 +1570,10 @@ const PizarraTactica = () => {
     document.addEventListener('mousedown', handleOutsideClick);
     document.addEventListener('touchstart', handleOutsideClick);
 
-
-    // 9. Keyboard shortcuts (Undo/Redo/Copy/Paste)
     const onKeyDown = (e) => {
-      // Evitar borrar si estamos escribiendo en un input
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') {
         return;
       }
-
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         undo();
@@ -1807,7 +1584,7 @@ const PizarraTactica = () => {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         e.preventDefault();
-        const activeObj = fcRef.current.getActiveObject();
+        const activeObj = fcRef.current?.getActiveObject();
         if (activeObj) {
           activeObj.clone((cloned) => {
             clipboardR.current = cloned;
@@ -1816,68 +1593,67 @@ const PizarraTactica = () => {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         e.preventDefault();
-        if (clipboardR.current) {
+        if (clipboardR.current && fcRef.current) {
           clipboardR.current.clone((clonedObj) => {
-            const fc = fcRef.current;
-            fc.discardActiveObject();
+            const currentFc = fcRef.current;
+            currentFc.discardActiveObject();
             clonedObj.set({
               left: clonedObj.left + 20,
               top: clonedObj.top + 20,
               evented: true,
             });
             if (clonedObj.type === 'activeSelection') {
-              clonedObj.canvas = fc;
-              clonedObj.forEachObject((obj) => fc.add(obj));
+              clonedObj.canvas = currentFc;
+              clonedObj.forEachObject((obj) => currentFc.add(obj));
               clonedObj.setCoords();
             } else {
-              fc.add(clonedObj);
+              currentFc.add(clonedObj);
             }
             clipboardR.current.top += 20;
             clipboardR.current.left += 20;
-            fc.setActiveObject(clonedObj);
-            fc.requestRenderAll();
+            currentFc.setActiveObject(clonedObj);
+            currentFc.requestRenderAll();
             pushToHistory();
           }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
         }
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const fc = fcRef.current;
-        const activeObj = fc.getActiveObject();
+        const currentFc = fcRef.current;
+        const activeObj = currentFc?.getActiveObject();
         if (activeObj && !activeObj.isEditing) {
           if (activeObj.type === 'activeSelection') {
-            activeObj.forEachObject(o => fc.remove(o));
-            fc.discardActiveObject();
+            activeObj.forEachObject(o => currentFc.remove(o));
+            currentFc.discardActiveObject();
           } else {
-            fc.remove(activeObj);
+            currentFc.remove(activeObj);
           }
-          fc.requestRenderAll();
+          currentFc.requestRenderAll();
           pushToHistory();
         }
       }
     };
     window.addEventListener('keydown', onKeyDown);
 
-    // Ctrl+Click to duplicate
     const onMouseDownClone = (opt) => {
       if ((opt.e.ctrlKey || opt.e.metaKey) && opt.target) {
         opt.target.clone((clonedObj) => {
-          const fc = fcRef.current;
-          fc.discardActiveObject();
+          const currentFc = fcRef.current;
+          if (!currentFc) return;
+          currentFc.discardActiveObject();
           clonedObj.set({
             left: clonedObj.left + 20,
             top: clonedObj.top + 20,
             evented: true,
           });
-          fc.add(clonedObj);
-          fc.setActiveObject(clonedObj);
-          fc.requestRenderAll();
+          currentFc.add(clonedObj);
+          currentFc.setActiveObject(clonedObj);
+          currentFc.requestRenderAll();
           pushToHistory();
         }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
       }
     };
     fc.on('mouse:down', onMouseDownClone);
 
-    // 10. Zoom / Pan (Mouse Wheel & Touch)
     const handleMouseWheel = (opt) => {
       const delta = opt.e.deltaY;
       let zoom = fc.getZoom();
@@ -1917,16 +1693,12 @@ const PizarraTactica = () => {
     fc.on('mouse:wheel', handleMouseWheel);
     fc.on('touch:gesture', handleTouch);
 
-    // ── PERSISTENCIA: guardar al cambiar de tab/minimizar app (crítico en Android) ──
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        // El usuario sale del módulo o minimiza la app
-        const stateToSave = lastStateRef.current || serializarFrame();
+        const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
         if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
-          // a) localStorage (síncrono, siempre funciona)
           savePizarraLocal(activeTeamId, planId, stateToSave);
           try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
-          // b) Firestore (async, best-effort)
           if (user.uid !== 'invitado-local') {
             const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
             setDoc(estadoRef, {
@@ -1940,9 +1712,8 @@ const PizarraTactica = () => {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // ── PERSISTENCIA: guardar al cerrar la pestaña / app ──
     const handleBeforeUnload = () => {
-      const stateToSave = lastStateRef.current || serializarFrame();
+      const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
       if (stateToSave && activeTeamId) {
         savePizarraLocal(activeTeamId, planId, stateToSave);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
@@ -1951,54 +1722,223 @@ const PizarraTactica = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      // Cancelar timers pendientes
+      // P-G2: Cancelar animación en desmontaje
+      playingR.current = false;
+      if (animTimeoutR.current) {
+        clearTimeout(animTimeoutR.current);
+        animTimeoutR.current = null;
+      }
+
       if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
       if (saveFrameTimeoutR.current) clearTimeout(saveFrameTimeoutR.current);
       if (saveEstadoTimeoutR.current) clearTimeout(saveEstadoTimeoutR.current);
 
-      // Guardado SÍNCRONO al desmontar — usar lastStateRef (no necesita serializar)
-      const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
-      if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
-        // a) localStorage (síncrono e inmediato)
-        savePizarraLocal(activeTeamId, planId, stateToSave);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
-        // b) Firestore (async, usando la referencia correcta)
-        if (user.uid !== 'invitado-local') {
-          const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
-          setDoc(estadoRef, {
-            canvasState: JSON.stringify(stateToSave),
-            framesCount: framesR.current?.length || 0,
-            updatedAt: new Date().toISOString()
-          }, { merge: true }).catch(() => {});
-          // c) Guardar el frame actual si existe
-          if (planId) {
-            const frame = framesR.current[frameIdxR.current];
-            if (frame && frame.id) {
-              const frameRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', frame.id);
-              setDoc(frameRef, { state: JSON.stringify(stateToSave), updatedAt: serverTimestamp() }, { merge: true })
-                .catch(() => {});
-            }
-          }
-        }
-      }
-
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (unsubscribe) unsubscribe();
       ro.disconnect();
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('touchstart', handleOutsideClick);
-      fc.off('object:modified', onChange);
-      fc.off('object:added',    onChange);
-      fc.off('object:removed',  onChange);
       fc.off('mouse:down', onMouseDownClone);
       fc.off('mouse:wheel', handleMouseWheel);
       fc.off('touch:gesture', handleTouch);
       fc.dispose();
+      fcRef.current = null;
+      frRef.current = null;
+      tmRef.current = null;
+      setCanvasMounted(false);
     };
-  }, [user, planId, activeTeamId, cargarFrame, serializarFrame, saveFrameState, pushToHistory]);
+  }, []); // Deps vacías: solo monta y desmonta una vez
+
+  // ─── 2. Subscription & State Sync Effect (P-G3) ──────────────────────────
+  useEffect(() => {
+    if (!canvasMounted || !user || !activeTeamId || !planId) return;
+    const fc = fcRef.current;
+    const fr = frRef.current;
+    if (!fc || !fr) return;
+
+    let unsubscribe;
+
+    // Obtener metadatos del plan (formación, campo, etc.)
+    if (user.uid !== 'invitado-local') {
+      const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);
+      getDoc(planDocRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setPlanName(data.name || 'Sin título');
+          if (data.localFormation) setLocalFormationState(data.localFormation);
+          if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
+          if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
+          if (data.showRival !== undefined) setShowRivalState(data.showRival);
+          if (data.fieldType) setFieldTypeState(data.fieldType);
+        }
+      }).catch(err => console.error("Error fetching plan metadata:", err));
+    }
+
+    const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}_${planId}`;
+
+    let memoryCache = obtenerEstado(planId);
+    let localCache = null;
+    try {
+      const raw = localStorage.getItem(ACTIVE_STATE_KEY);
+      if (raw) localCache = JSON.parse(raw);
+    } catch (_) {}
+
+    if (!localCache || !localCache.objects || localCache.objects.length === 0) {
+      localCache = getPizarraLocal(activeTeamId, planId);
+    }
+
+    const cachedState = memoryCache || localCache;
+
+    if (user.uid === 'invitado-local') {
+      defaultDrawnR.current = true;
+      if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
+        cargarFrameConListeners(cachedState, () => {
+          ensurePlayersOnTop();
+          fc.renderAll();
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+      } else {
+        const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
+        objsActuales.forEach(o => fc.remove(o));
+        syncingR.current = true;
+        drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+        syncingR.current = false;
+        attachListeners();
+        const state = serializarFrame();
+        try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(state)); } catch (_) {}
+        savePizarraLocal(activeTeamId, planId, state);
+        setFrames([{ id: 'frame-1', name: 'Frame 1', state, duration: 800, order: 0 }]);
+        if (!readyR.current) { readyR.current = true; setReady(true); }
+      }
+      return;
+    }
+
+    const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
+
+    if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
+      defaultDrawnR.current = true;
+      cargarFrameConListeners(cachedState, () => {
+        ensurePlayersOnTop();
+        fc.renderAll();
+        if (!readyR.current) { readyR.current = true; setReady(true); }
+      });
+      const q = query(framesColRef, orderBy('order', 'asc'));
+      unsubscribe = onSnapshot(q, (snap) => {
+        if (playingR.current) return;
+        if (!snap.empty) {
+          const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
+          const dbFrames = snap.docs
+            .filter(d => !deletedFrameIdsR.current.has(d.id))
+            .map(d => {
+              const data = d.data();
+              const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+              const localFrame = localMap.get(d.id);
+              if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
+                return { id: d.id, ...data, state: localFrame.state };
+              }
+              return { id: d.id, ...data, state: parsedState };
+            });
+
+          const dbIds = new Set(snap.docs.map(d => d.id));
+          const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
+          const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+          if (merged.length > 0) {
+            setFrames(merged);
+            framesR.current = merged;
+          }
+        }
+        if (!readyR.current) { readyR.current = true; setReady(true); }
+      });
+    } else {
+      const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
+      getDoc(estadoRef).then(snap => {
+        const data = snap.exists() ? snap.data() : null;
+        if (data && data.canvasState) {
+          const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
+          if (serverState && serverState.objects && serverState.objects.length > 0) {
+            defaultDrawnR.current = true;
+            cargarFrameConListeners(serverState, () => {
+              ensurePlayersOnTop();
+              fc.renderAll();
+              lastStateRef.current = serverState;
+              savePizarraLocal(activeTeamId, planId, serverState);
+              try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(serverState)); } catch (_) {}
+              if (!readyR.current) { readyR.current = true; setReady(true); }
+            });
+            return;
+          }
+        }
+
+        const q = query(framesColRef, orderBy('order', 'asc'));
+        unsubscribe = onSnapshot(q, (snapshot) => {
+          if (playingR.current) return;
+          if (snapshot.empty) {
+            if (defaultDrawnR.current) return;
+            defaultDrawnR.current = true;
+            const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
+            objsActuales.forEach(o => fc.remove(o));
+            syncingR.current = true;
+            drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+            syncingR.current = false;
+            attachListeners();
+            const state = serializarFrame();
+            try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(state)); } catch (_) {}
+            savePizarraLocal(activeTeamId, planId, state);
+            addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
+            if (!readyR.current) { readyR.current = true; setReady(true); }
+            return;
+          }
+
+          const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
+          const dbFrames = snapshot.docs
+            .filter(d => !deletedFrameIdsR.current.has(d.id))
+            .map(d => {
+              const data = d.data();
+              const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+              const localFrame = localMap.get(d.id);
+              if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
+                return { id: d.id, ...data, state: localFrame.state };
+              }
+              return { id: d.id, ...data, state: parsedState };
+            });
+
+          const dbIds = new Set(snapshot.docs.map(d => d.id));
+          const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
+          const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+          setFrames(merged);
+          framesR.current = merged;
+          if (!readyR.current) {
+            readyR.current = true;
+            setReady(true);
+            if (merged.length > 0 && !defaultDrawnR.current) {
+              defaultDrawnR.current = true;
+              cargarFrameConListeners(merged[0].state, () => {
+                setFrameIdx(0);
+                frameIdxR.current = 0;
+              });
+            }
+          }
+        });
+      }).catch(e => {
+        console.error("[Pizarra] Error cargando pizarraEstado:", e);
+        attachListeners();
+        if (!readyR.current) { readyR.current = true; setReady(true); }
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+      const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
+      if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
+        savePizarraLocal(activeTeamId, planId, stateToSave);
+        try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(stateToSave)); } catch (_) {}
+      }
+    };
+  }, [canvasMounted, user, activeTeamId, planId]);
 
   // ─── Auto-redibujar y Guardar al cambiar formación ──────────────────────────
 
@@ -2287,7 +2227,7 @@ const PizarraTactica = () => {
     if (!window.confirm(isEn ? 'Clear board? (This clears the current drawing, but does not delete animation frames. Use "NEW" to start from scratch)' : '¿Limpiar pizarra? (Esto borra el dibujo actual, pero no elimina los frames de la animación. Usa "NUEVA" para empezar de cero)')) return;
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr) return;
-    fc.clear();
+    removeAllPiecesPreservingField(fc);
     clearPizarraLocal(activeTeamId, planId);
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     saveFrameState();
@@ -2329,7 +2269,7 @@ const PizarraTactica = () => {
     // Limpiar canvas y dibujar formación inicial
     const fc = fcRef.current;
     if (fc) {
-      fc.clear();
+      removeAllPiecesPreservingField(fc);
       drawPlayers(fc, frRef.current, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
       saveFrameState();
       resetHistory();
@@ -2830,7 +2770,8 @@ const PizarraTactica = () => {
           cargarFrame(stateB, () => {
             if (!playingR.current) return;
             fc.renderAll();
-            setTimeout(() => {
+            if (animTimeoutR.current) clearTimeout(animTimeoutR.current);
+            animTimeoutR.current = setTimeout(() => {
               if (!playingR.current) return;
               animate(idx + 1);
             }, 300);
@@ -2862,7 +2803,8 @@ const PizarraTactica = () => {
           cargarFrame(stateB, () => {
             if (!playingR.current) return;
             fc.renderAll();
-            setTimeout(() => {
+            if (animTimeoutR.current) clearTimeout(animTimeoutR.current);
+            animTimeoutR.current = setTimeout(() => {
               if (!playingR.current) return;
               animate(idx + 1);
             }, 200);
@@ -2870,44 +2812,49 @@ const PizarraTactica = () => {
           return;
         }
 
-        let completed = 0;
-        let transitionScheduled = false;
-
-        animatableObjs.forEach((obj, i) => {
+        // P-G4: Preparar interpolación agrupada de todos los objetos
+        const animationsData = animatableObjs.map((obj, i) => {
           const objId = getObjectIdentifier(obj);
           const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
           const sLeft = obj.left || 0;
           const sTop  = obj.top  || 0;
           const tLeft = t.left !== undefined ? t.left : sLeft;
           const tTop  = t.top !== undefined ? t.top : sTop;
+          return { obj, sLeft, sTop, tLeft, tTop };
+        });
 
-          fabric.util.animate({
-            startValue: 0, endValue: 1, duration: dur,
-            easing: fabric.util.ease.easeInOutSine,
-            onChange: (v) => {
-              if (!playingR.current) return;
+        let transitionScheduled = false;
+
+        // P-G4: Un único fabric.util.animate maestro que mueve todos los objetos y llama a fc.renderAll() 1 sola vez por tick
+        fabric.util.animate({
+          startValue: 0,
+          endValue: 1,
+          duration: dur,
+          easing: fabric.util.ease.easeInOutSine,
+          onChange: (v) => {
+            if (!playingR.current) return;
+            animationsData.forEach(({ obj, sLeft, sTop, tLeft, tTop }) => {
               obj.set({
                 left: sLeft + (tLeft - sLeft) * v,
                 top:  sTop  + (tTop  - sTop ) * v,
               });
+            });
+            fc.renderAll(); // 1 sola llamada por tick (baja de 22 a 1)
+          },
+          onComplete: () => {
+            if (!playingR.current || transitionScheduled) return;
+            transitionScheduled = true;
+            cargarFrame(stateB, () => {
+              if (!playingR.current) return;
               fc.renderAll();
-            },
-            onComplete: () => {
-              if (!playingR.current || transitionScheduled) return;
-              completed++;
-              if (completed >= animatableObjs.length) {
-                transitionScheduled = true;
-                cargarFrame(stateB, () => {
-                  if (!playingR.current) return;
-                  fc.renderAll();
-                  setTimeout(() => {
-                    if (!playingR.current) return;
-                    animate(idx + 1);
-                  }, 200);
-                });
-              }
-            },
-          });
+              // P-G2: Guardar setTimeout recursivo en animTimeoutR
+              if (animTimeoutR.current) clearTimeout(animTimeoutR.current);
+              animTimeoutR.current = setTimeout(() => {
+                if (!playingR.current) return;
+                animate(idx + 1);
+              }, 200);
+            });
+          },
         });
       });
     };
@@ -2918,6 +2865,11 @@ const PizarraTactica = () => {
   const stopAnimation = () => {
     setIsPlaying(false);
     playingR.current = false;
+    // P-G2: Limpiar timeout activo al pausar/detener animación
+    if (animTimeoutR.current) {
+      clearTimeout(animTimeoutR.current);
+      animTimeoutR.current = null;
+    }
     // Recargar frame actual sin guardar el estado a mitad de animación
     loadFrame(frameIdxR.current, false);
   };

@@ -1154,6 +1154,7 @@ export const translations = {
     'board.toolbar.strokeColor': 'Color de trazo',
     'board.toolbar.strokeWidth': 'Grosor de trazo',
     'board.toolbar.fieldType': 'Tipo de campo',
+    'board.tool.straight_dashed_line': 'Línea recta punteada',
 
     'board.fields.full': 'Campo Completo',
     'board.fields.halfAttack': '½ Ataque',
@@ -3703,6 +3704,7 @@ export const translations = {
     'board.toolbar.strokeColor': 'Stroke color',
     'board.toolbar.strokeWidth': 'Stroke width',
     'board.toolbar.fieldType': 'Pitch type',
+    'board.tool.straight_dashed_line': 'Straight dashed line',
 
     'board.fields.full': 'Full Pitch',
     'board.fields.halfAttack': '½ Attack',

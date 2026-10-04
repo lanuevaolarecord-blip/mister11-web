@@ -76,6 +76,16 @@ export const TOOLS = {
     group: 'draw',
   },
 
+  straight_dashed_line: {
+    id: 'straight_dashed_line',
+    label: isEn ? 'Straight dashed line' : 'Línea recta punteada',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4,3">
+      <line x1="4" y1="20" x2="20" y2="4"/>
+    </svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
+  },
+
   zone_circle: {
     id: 'zone_circle',
     label: 'Zona circular',
@@ -291,13 +301,28 @@ export class ToolManager {
       case 'shot':
       case 'pressure':
       case 'sprint_pro':
+      case 'straight_dashed_line':
         if (this._drawState.phase === 'idle') {
           this._drawState.phase = 'started';
           this._drawState.startX = x;
           this._drawState.startY = y;
         } else if (this._drawState.phase === 'started') {
           if (this.activeTool === 'shot') {
-            this._createShotArrow(this._drawState.startX, this._drawState.startY, x, y);
+            const obj = this._createShotArrow(this._drawState.startX, this._drawState.startY, x, y);
+            this.canvas.add(obj);
+            this.canvas.setActiveObject(obj);
+          } else if (this.activeTool === 'straight_dashed_line') {
+            const obj = this._createStraightDashedLine(this._drawState.startX, this._drawState.startY, x, y);
+            this.canvas.add(obj);
+            this.canvas.setActiveObject(obj);
+          } else if (this.activeTool === 'pressure') {
+            const obj = this._createWavyLine(this._drawState.startX, this._drawState.startY, x, y);
+            this.canvas.add(obj);
+            this.canvas.setActiveObject(obj);
+          } else if (this.activeTool === 'sprint_pro') {
+            const obj = this._createSprintLinePro(this._drawState.startX, this._drawState.startY, x, y);
+            this.canvas.add(obj);
+            this.canvas.setActiveObject(obj);
           } else {
             this._createArrow(
               this._drawState.startX, this._drawState.startY,
@@ -307,6 +332,7 @@ export class ToolManager {
           }
           this._drawState.phase = 'idle';
           this._removeTempLine();
+          this.canvas.renderAll();
         }
         break;
 
@@ -377,11 +403,11 @@ export class ToolManager {
       const sx = this._drawState.startX;
       const sy = this._drawState.startY;
 
-      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
+      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot' || this.activeTool === 'straight_dashed_line') {
         const line = new fabric.Line([sx, sy, x, y], {
           stroke: this.activeTool === 'shot' ? '#EF4444' : this.strokeColor,
           strokeWidth: this.strokeWidth,
-          strokeDashArray: this.activeTool === 'dashed' ? [8, 6] : null,
+          strokeDashArray: (this.activeTool === 'dashed' || this.activeTool === 'straight_dashed_line') ? [8, 5] : null,
           selectable: false, evented: false, opacity: 0.6, data: { type: 'temp' }
         });
         this._drawState.tempLine = line;
@@ -437,14 +463,21 @@ export class ToolManager {
       const sx = this._drawState.startX;
       const sy = this._drawState.startY;
 
-      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
-        this._removeTempLine();
-        const obj = (this.activeTool === 'shot')
-          ? this._createShotArrow(sx, sy, x, y)
-          : this._createArrow(sx, sy, x, y, this.activeTool === 'dashed');
-        this.canvas.add(obj);
-        this.canvas.setActiveObject(obj);
-        this._drawState.phase = 'idle';
+      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot' || this.activeTool === 'straight_dashed_line') {
+        const dist = Math.hypot(x - sx, y - sy);
+        if (dist > 5) {
+          this._removeTempLine();
+          const obj = (this.activeTool === 'shot')
+            ? this._createShotArrow(sx, sy, x, y)
+            : (this.activeTool === 'straight_dashed_line')
+              ? this._createStraightDashedLine(sx, sy, x, y)
+              : this._createArrow(sx, sy, x, y, this.activeTool === 'dashed');
+          if (this.activeTool === 'straight_dashed_line') {
+            this.canvas.add(obj);
+          }
+          this.canvas.setActiveObject(obj);
+          this._drawState.phase = 'idle';
+        }
       } else if (this.activeTool === 'zone_circle') {
         const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
         if (radius > 5) {
@@ -555,6 +588,33 @@ export class ToolManager {
     const group = new fabric.Group([line1, line2, head], { selectable: true, hasControls: false, hasBorders: false, data: { type: 'stroke', tool: 'shot' } });
     applyMister11Controls(group);
     return group;
+  }
+
+  // ───────────────────────────────────────
+  // CREAR LÍNEA RECTA PUNTEADA SIN FLECHA (TOOL-1)
+  // ───────────────────────────────────────
+  _createStraightDashedLine(x1, y1, x2, y2, extraOptions = {}) {
+    const line = new fabric.Line([x1, y1, x2, y2], {
+      stroke: this.strokeColor,
+      strokeWidth: this.strokeWidth,
+      strokeDashArray: [8, 5],
+      selectable: true,
+      hasControls: true,
+      hasBorders: true,
+      isTool: true,
+      isMaterial: true,
+      data: {
+        type: 'material',
+        tool: 'straight_dashed_line',
+        kind: 'straight_dashed_line'
+      },
+      ...extraOptions
+    });
+
+    if (!extraOptions.data || extraOptions.data.type !== 'temp') {
+      applyMister11Controls(line);
+    }
+    return line;
   }
 
   _createWavyLine(x1, y1, x2, y2, extraOptions = {}) {

@@ -9,6 +9,7 @@ import { usePlayerPlans } from '../hooks/usePlayerPlans';
 import { useNavigate } from 'react-router-dom';
 import { usePlan } from '../hooks/usePlan';
 import { isDeveloperEmail } from '../config/admins';
+import { getNextUpcomingMatch } from '../utils/nextUpcomingOpponent';
 import { 
   Users, 
   ClipboardList, 
@@ -194,8 +195,8 @@ const Dashboard = () => {
     .filter(Boolean)
     .slice(0, 5);
 
-  const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
-  const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
+  const nextMatch = useMemo(() => getNextUpcomingMatch(matches), [matches]);
+  const lastMatches = useMemo(() => matches.filter(m => m.status === 'Terminado').slice(-3), [matches]);
 
   const stats = [
     { label: t('dashboard.stats.players', settings.language), value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },

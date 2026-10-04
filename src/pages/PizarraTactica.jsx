@@ -1760,6 +1760,10 @@ const PizarraTactica = () => {
 
     let unsubscribe;
 
+    // VERIF-2 (P-G1/G3): Limpiar piezas del equipo anterior por categoría antes de instanciar las nuevas
+    removeAllPiecesPreservingField(fc);
+    defaultDrawnR.current = false;
+
     // Obtener metadatos del plan (formación, campo, etc.)
     if (user.uid !== 'invitado-local') {
       const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);

@@ -56,7 +56,7 @@ export const getNextUpcomingMatch = (matches = [], referenceDate = new Date()) =
   const upcoming = matches.filter((m) => {
     if (!m) return false;
 
-    // 1. Descartar partidos finalizados o con acta cerrada
+    // 1. VERIF-1: Descartar partidos finalizados o con acta cerrada (!== Terminado && !== Finalizado && !acta.closed)
     const isExplicitlyFinished = Boolean(
       m.status === 'Terminado' ||
       m.status === 'Finalizado' ||

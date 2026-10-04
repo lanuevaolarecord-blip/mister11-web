@@ -63,6 +63,7 @@ export const getUnifiedMatchEvents = (match = {}) => {
 
   const map = new Map();
   const seenCardSignatures = new Set();
+  const seenGoalSignatures = new Set();
 
   const getCardSignature = (e) => {
     if (!e) return null;
@@ -76,6 +77,18 @@ export const getUnifiedMatchEvents = (match = {}) => {
     return `card_${pid}_${min}_${isRed ? 'red' : 'yellow'}`;
   };
 
+  const getGoalSignature = (e) => {
+    if (!e) return null;
+    const t = String(e.type || '').toLowerCase();
+    const isOwn = t === 'gol_local' || t === 'goal_own' || t === 'gol' || (t.includes('own') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
+    const isRival = t === 'gol_rival' || t === 'goal_rival' || (t.includes('rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
+    if (!isOwn && !isRival) return null;
+    const pid = String(e.playerId || e.jugadorId || '');
+    const min = parseInt(e.minute ?? e.minuto ?? 0, 10);
+    const side = isOwn ? 'own' : 'rival';
+    return `goal_${side}_${pid}_${min}`;
+  };
+
   events.forEach((e) => {
     if (!e) return;
     if (e.isValid === false) return; // Omitir eventos invalidados
@@ -84,6 +97,13 @@ export const getUnifiedMatchEvents = (match = {}) => {
       return;
     }
     if (cardSig) seenCardSignatures.add(cardSig);
+
+    const goalSig = getGoalSignature(e);
+    if (goalSig && seenGoalSignatures.has(goalSig)) {
+      return;
+    }
+    if (goalSig) seenGoalSignatures.add(goalSig);
+
     const key = e.id || `evt_${e.type}_${e.minute || e.minuto || 0}_${e.playerId || e.playerInId || ''}_${e.playerOutId || ''}`;
     map.set(key, e);
   });
@@ -97,6 +117,14 @@ export const getUnifiedMatchEvents = (match = {}) => {
       return;
     }
     if (cardSig) seenCardSignatures.add(cardSig);
+
+    const goalSig = getGoalSignature(e);
+    if (goalSig && seenGoalSignatures.has(goalSig)) {
+      // Ya existe en events (evitar duplicado por doble emisión de LiveStats + events)
+      return;
+    }
+    if (goalSig) seenGoalSignatures.add(goalSig);
+
     const key = e.id || `evt_${e.type}_${e.minute || e.minuto || 0}_${e.playerId || e.playerInId || ''}_${e.playerOutId || ''}`;
     if (!map.has(key)) {
       map.set(key, e);

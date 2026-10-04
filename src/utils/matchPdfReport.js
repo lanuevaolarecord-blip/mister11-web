@@ -208,22 +208,49 @@ export const generateMatchPdfReport = async ({
     const dateLoc = isEn ? 'en-US' : 'es-ES';
     const fechaStr = matchData?.date ? new Date(matchData.date).toLocaleDateString(dateLoc) : new Date().toLocaleDateString(dateLoc);
 
-    // Eventos de gol propios y rivales
-    const ownGoalEvents = safeEvents.filter(e => e && (
-      e.type === 'gol_local' || e.type === 'goal_own' ||
-      (String(e.type || '').includes('own') && (e.outcome === 'goal' || e.isGoal || e.result === 'gol'))
-    ));
-    const rivalGoalEvents = safeEvents.filter(e => e && (
-      e.type === 'gol_rival' || e.type === 'goal_rival' ||
-      (String(e.type || '').includes('rival') && (e.outcome === 'goal' || e.isGoal || e.result === 'gol'))
-    ));
+    // Deduplicar eventos de gol propios y rivales por (playerId, minute)
+    const seenOwnGoals = new Set();
+    const ownGoalEvents = safeEvents.filter((e) => {
+      if (!e) return false;
+      const t = String(e.type || '').toLowerCase();
+      const isOwnGoal = t === 'gol_local' || t === 'goal_own' || t === 'gol' ||
+        (t.includes('own') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
+      if (!isOwnGoal) return false;
+      const pid = String(e.playerId || e.jugadorId || '');
+      const min = parseInt(e.minute ?? e.minuto ?? 0, 10);
+      const sig = `${pid}_${min}`;
+      if (seenOwnGoals.has(sig)) return false;
+      seenOwnGoals.add(sig);
+      return true;
+    });
 
-    const goalsFor = ownGoalEvents.length > 0
-      ? ownGoalEvents.length
-      : (matchData?.goalsFor ?? matchData?.golesLocal ?? 0);
-    const goalsAgainst = rivalGoalEvents.length > 0
-      ? rivalGoalEvents.length
-      : (matchData?.goalsAgainst ?? matchData?.golesVisita ?? 0);
+    const seenRivalGoals = new Set();
+    const rivalGoalEvents = safeEvents.filter((e) => {
+      if (!e) return false;
+      const t = String(e.type || '').toLowerCase();
+      const isRivalGoal = t === 'gol_rival' || t === 'goal_rival' ||
+        (t.includes('rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
+      if (!isRivalGoal) return false;
+      const pid = String(e.playerId || e.jugadorId || '');
+      const min = parseInt(e.minute ?? e.minuto ?? 0, 10);
+      const sig = `${pid}_${min}`;
+      if (seenRivalGoals.has(sig)) return false;
+      seenRivalGoals.add(sig);
+      return true;
+    });
+
+    // PRINCIPIO DE VERACIDAD: El acta cerrada es la única fuente de verdad
+    const isActaClosed = matchData?.actaOficial?.closed === true;
+    const actaGoalsFor = matchData?.actaOficial?.golesLocal ?? matchData?.actaOficial?.goalsFor ?? matchData?.goalsFor ?? matchData?.golesLocal;
+    const actaGoalsAgainst = matchData?.actaOficial?.golesVisita ?? matchData?.actaOficial?.goalsAgainst ?? matchData?.goalsAgainst ?? matchData?.golesVisita;
+
+    const goalsFor = (isActaClosed && actaGoalsFor !== undefined && actaGoalsFor !== null)
+      ? Number(actaGoalsFor)
+      : (ownGoalEvents.length > 0 ? ownGoalEvents.length : (actaGoalsFor ?? 0));
+
+    const goalsAgainst = (isActaClosed && actaGoalsAgainst !== undefined && actaGoalsAgainst !== null)
+      ? Number(actaGoalsAgainst)
+      : (rivalGoalEvents.length > 0 ? rivalGoalEvents.length : (actaGoalsAgainst ?? 0));
 
     // ── 1. ENCABEZADO INSTITUCIONAL ────────────────────────────────────────
     doc.setFillColor(...colorPrimary);

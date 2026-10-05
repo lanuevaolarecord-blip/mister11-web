@@ -29,7 +29,8 @@ import {
   getTacticalCategory,
   getTacticalPieceIdentifier,
   removeAllTacticalPieces,
-  TACTICAL_CATEGORIES
+  TACTICAL_CATEGORIES,
+  remapCoordinatesByWindow
 } from '../lib/mister11-pieces.js';
 import { useAuth } from '../context/AuthContext';
 import { usePizarra } from '../context/PizarraContext';
@@ -3077,8 +3078,7 @@ const PizarraTactica = () => {
           {/* MÓDULO 1: Paneles flotantes en pantalla completa */}
           {fullscreenMode && showTeamsDrawer && (
             <div 
-              className="absolute left-[90px] top-[80px] w-[320px] h-[calc(100vh-120px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-left"
-              style={{ zIndex: 10020, pointerEvents: 'auto', maxHeight: 'calc(100dvh - 120px)' }}
+              className="fullscreen-floating-panel fullscreen-floating-panel-left"
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onMouseUp={(e) => e.stopPropagation()}
@@ -3087,18 +3087,28 @@ const PizarraTactica = () => {
               onPointerDown={(e) => e.stopPropagation()}
               onPointerUp={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 className="font-bold text-lg text-gray-800">{t('board.panels.teams')}</h3>
-                <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowTeamsDrawer(false); }}>✕</button>
+              <div className="fullscreen-panel-header">
+                <div className="fullscreen-panel-header-title">
+                  <span className="fullscreen-panel-icon">📋</span>
+                  <span>{t('board.panels.teamsAndFormations', {}, 'Equipos')}</span>
+                </div>
+                <button 
+                  className="fullscreen-panel-close-btn" 
+                  onClick={(e) => { e.stopPropagation(); setShowTeamsDrawer(false); }}
+                  aria-label={t('common.close', {}, 'Cerrar')}
+                >
+                  ✕
+                </button>
               </div>
-              <TeamsPanel />
+              <div className="fullscreen-panel-body">
+                <TeamsPanel />
+              </div>
             </div>
           )}
 
           {fullscreenMode && showMatsDrawer && (
             <div 
-              className="absolute right-[90px] top-[140px] w-[320px] h-[calc(100vh-180px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-right"
-              style={{ zIndex: 10020, pointerEvents: 'auto', maxHeight: 'calc(100dvh - 180px)' }}
+              className="fullscreen-floating-panel fullscreen-floating-panel-right"
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onMouseUp={(e) => e.stopPropagation()}
@@ -3107,11 +3117,22 @@ const PizarraTactica = () => {
               onPointerDown={(e) => e.stopPropagation()}
               onPointerUp={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 className="font-bold text-lg text-gray-800">{t('board.panels.materials')}</h3>
-                <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowMatsDrawer(false); }}>✕</button>
+              <div className="fullscreen-panel-header">
+                <div className="fullscreen-panel-header-title">
+                  <span className="fullscreen-panel-icon">🧰</span>
+                  <span>{t('board.panels.materials', {}, 'Materiales')}</span>
+                </div>
+                <button 
+                  className="fullscreen-panel-close-btn" 
+                  onClick={(e) => { e.stopPropagation(); setShowMatsDrawer(false); }}
+                  aria-label={t('common.close', {}, 'Cerrar')}
+                >
+                  ✕
+                </button>
               </div>
-              <MaterialsPanelWrapper />
+              <div className="fullscreen-panel-body">
+                <MaterialsPanelWrapper />
+              </div>
             </div>
           )}
 

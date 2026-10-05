@@ -1,3 +1,49 @@
+  // O3: salir del modo sticky al elegir select (flecha) u otra herramienta
+  useEffect(() => {
+    if (activeTool !== 'place_material' && placingMat) setPlacingMat(null);
+  }, [activeTool]); // eslint-disable-line
+
+  // ─── Material placement (O3 STICKY / REPETICIÓN + REGLA DE GESTO - Frente K) ──
+  useEffect(() => {
+    const fc = fcRef.current;
+    if (!fc || !placingMat) return;
+
+    fc.defaultCursor = 'crosshair';
+
+    const onDown = (o) => {
+      // Regla de resolución de gesto: Si se pulsa sobre una pieza existente, ARRASTRARLA y no colocar material encima
+      if (o.target && !isFieldLayer(o.target) && o.target.data?.type !== 'temp') {
+        fc.setActiveObject(o.target);
+        fc.renderAll();
+        return;
+      }
+
+      // Clic sobre vacío/césped: colocar una instancia de material
+      const p = fc.getPointer(o.e);
+      placeMaterialOnCanvas(fc, placingMat, p.x, p.y);
+      saveFrameState();
+      // O3 STICKY: Permanece activo para colocar N materiales sucesivos (resuelve Picture 17)
+    };
+
+    // Tecla Esc para salir del modo de colocación repetida
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setPlacingMat(null);
+        setActiveTool('select');
+        if (fc) fc.defaultCursor = 'default';
+      }
+    };
+
+    fc.on('mouse:down', onDown);
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      fc.off('mouse:down', onDown);
+      window.removeEventListener('keydown', onKeyDown);
+      if (fc) fc.defaultCursor = 'default';
+    };
+  }, [placingMat, saveFrameState]);
+
 // 🛡️ SISTEMA DE COORDENADAS ADAPTATIVAS (CONFIRMADO Y OPERATIVO)
 // Posiciones y radios se calculan usando coordenadas relativas xRel/yRel (0.0-1.0)
 // y radio relativo radiusRel para garantizar el renderizado adaptativo e idéntico

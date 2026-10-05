@@ -39,6 +39,11 @@ const MaterialsPanel = ({
                       <div key={id}
                         className={`material-item ${placingMat === id ? 'active' : ''}`}
                         onClick={() => { 
+                          if (placingMat === id) {
+                            setPlacingMat(null);
+                            setActiveTool('select');
+                            return;
+                          }
                           setPlacingMat(id); 
                           setActiveTool('place_material');
                           if (isMobile && setShowMatsDrawer) setShowMatsDrawer(false);

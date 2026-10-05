@@ -1155,6 +1155,8 @@ export const translations = {
     'board.toolbar.strokeWidth': 'Grosor de trazo',
     'board.toolbar.fieldType': 'Tipo de campo',
     'board.tool.straight_dashed_line': 'Línea recta punteada',
+    'board.tool.zone_pentagon': 'Zona pentagonal',
+    'board.tool.zone_hexagon': 'Zona hexagonal',
 
     'board.fields.full': 'Campo Completo',
     'board.fields.halfAttack': '½ Ataque',
@@ -3705,6 +3707,8 @@ export const translations = {
     'board.toolbar.strokeWidth': 'Stroke width',
     'board.toolbar.fieldType': 'Pitch type',
     'board.tool.straight_dashed_line': 'Straight dashed line',
+    'board.tool.zone_pentagon': 'Pentagon zone',
+    'board.tool.zone_hexagon': 'Hexagon zone',
 
     'board.fields.full': 'Full Pitch',
     'board.fields.halfAttack': '½ Attack',

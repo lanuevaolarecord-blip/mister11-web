@@ -99,10 +99,30 @@ export const TOOLS = {
 
   zone_rect: {
     id: 'zone_rect',
-    label: 'Zona rectangular',
+    label: isEn ? 'Rectangular Zone' : 'Zona rectangular',
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-dasharray="4,2">
       <rect x="3" y="6" width="18" height="12" rx="1"/>
+    </svg>`,
+    cursor: 'crosshair',
+    group: 'shape',
+  },
+
+  zone_pentagon: {
+    id: 'zone_pentagon',
+    label: isEn ? 'Pentagon Zone' : 'Zona pentagonal',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4,2">
+      <polygon points="12,2 22,9 18,21 6,21 2,9"/>
+    </svg>`,
+    cursor: 'crosshair',
+    group: 'shape',
+  },
+
+  zone_hexagon: {
+    id: 'zone_hexagon',
+    label: isEn ? 'Hexagon Zone' : 'Zona hexagonal',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4,2">
+      <polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/>
     </svg>`,
     cursor: 'crosshair',
     group: 'shape',
@@ -360,6 +380,8 @@ export class ToolManager {
 
       case 'zone_circle':
       case 'zone_rect':
+      case 'zone_pentagon':
+      case 'zone_hexagon':
         if (this._drawState.phase === 'idle') {
           this._drawState.phase = 'started';
           this._drawState.startX = x;
@@ -375,13 +397,20 @@ export class ToolManager {
               selectable: false, evented: false,
               data: { type: 'temp' }
             });
-          } else {
+          } else if (this.activeTool === 'zone_rect') {
             this._drawState.tempObj = new fabric.Rect({
               left: x, top: y, width: 1, height: 1,
               fill: hexToRgba('#D4A843', 0.12),
               stroke: '#D4A843', strokeWidth: 2,
               strokeDashArray: [6, 4],
               selectable: false, evented: false,
+              data: { type: 'temp' }
+            });
+          } else {
+            const sides = this.activeTool === 'zone_pentagon' ? 5 : 6;
+            this._drawState.tempObj = this._createZonePolygon(x, y, 2, sides, {
+              selectable: false,
+              evented: false,
               data: { type: 'temp' }
             });
           }
@@ -436,6 +465,16 @@ export class ToolManager {
       } else if (this.activeTool === 'zone_circle' && this._drawState.tempObj) {
         const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
         this._drawState.tempObj.set({ radius: radius });
+      } else if ((this.activeTool === 'zone_pentagon' || this.activeTool === 'zone_hexagon') && this._drawState.tempObj) {
+        const radius = Math.max(2, Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2)));
+        this.canvas.remove(this._drawState.tempObj);
+        const sides = this.activeTool === 'zone_pentagon' ? 5 : 6;
+        this._drawState.tempObj = this._createZonePolygon(sx, sy, radius, sides, {
+          selectable: false,
+          evented: false,
+          data: { type: 'temp' }
+        });
+        this.canvas.add(this._drawState.tempObj);
       } else if (this.activeTool === 'zone_rect' && this._drawState.tempObj) {
         this._drawState.tempObj.set({
           width: Math.abs(x - sx),
@@ -483,6 +522,17 @@ export class ToolManager {
         if (radius > 5) {
           this._removeTempLine();
           const obj = this._createZoneCircle(sx, sy, radius);
+          this.canvas.setActiveObject(obj);
+        } else {
+          this._removeTempLine();
+        }
+        this._drawState.phase = 'idle';
+      } else if (this.activeTool === 'zone_pentagon' || this.activeTool === 'zone_hexagon') {
+        const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
+        if (radius > 10) {
+          this._removeTempLine();
+          const sides = this.activeTool === 'zone_pentagon' ? 5 : 6;
+          const obj = this._createZonePolygon(sx, sy, radius, sides);
           this.canvas.setActiveObject(obj);
         } else {
           this._removeTempLine();
@@ -766,6 +816,7 @@ export class ToolManager {
       selectable: true,
       hasControls: true,
       hasBorders: true,
+      isZone: true,
       data: { type: 'zone', shape: 'circle' },
     });
     applyMister11Controls(circle);
@@ -787,12 +838,54 @@ export class ToolManager {
       selectable: true,
       hasControls: true,
       hasBorders: true,
+      isZone: true,
       data: { type: 'zone', shape: 'rect' },
     });
     applyMister11Controls(rect);
     this.canvas.add(rect);
     this.canvas.renderAll();
     return rect;
+  }
+
+  // ───────────────────────────────────────
+  // CREAR ZONA POLÍGONO (PENTÁGONO / HEXÁGONO - ZON-1)
+  // ───────────────────────────────────────
+  _createZonePolygon(cx, cy, radius, sides, extraOptions = {}) {
+    const points = [];
+    for (let i = 0; i < sides; i++) {
+      const angle = (i * 2 * Math.PI / sides) - (Math.PI / 2);
+      points.push({
+        x: cx + radius * Math.cos(angle),
+        y: cy + radius * Math.sin(angle)
+      });
+    }
+    const poly = new fabric.Polygon(points, {
+      left: cx,
+      top: cy,
+      originX: 'center',
+      originY: 'center',
+      fill: hexToRgba('#D4A843', 0.12),
+      stroke: '#D4A843',
+      strokeWidth: 2,
+      strokeDashArray: [7, 5],
+      selectable: true,
+      hasControls: true,
+      hasBorders: true,
+      isZone: true,
+      data: {
+        type: 'zone',
+        shape: sides === 5 ? 'pentagon' : 'hexagon',
+        sides,
+        radius
+      },
+      ...extraOptions
+    });
+    if (!extraOptions.data || extraOptions.data.type !== 'temp') {
+      applyMister11Controls(poly);
+      this.canvas.add(poly);
+      this.canvas.renderAll();
+    }
+    return poly;
   }
 
   // ───────────────────────────────────────

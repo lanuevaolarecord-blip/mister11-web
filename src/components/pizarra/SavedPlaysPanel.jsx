@@ -1,9 +1,15 @@
 import React from 'react';
-import { FORMATIONS } from '../../lib/mister11-field.js';
+import { FORMATIONS, getFormatInfo } from '../../lib/mister11-field.js';
 import { useTranslation } from '../../hooks/useTranslation';
 
-const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply, applyLabel }) => {
+const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply, applyLabel, availableFormations = [] }) => {
   const { isEn } = useTranslation();
+  const options = (Array.isArray(availableFormations) && availableFormations.length > 0)
+    ? availableFormations
+    : Object.keys(FORMATIONS);
+
+  const currentFormation = options.includes(formation) ? formation : options[0];
+
   return (
   <div className="team-card-pizarra">
     <div className="team-header-pizarra">
@@ -21,22 +27,22 @@ const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onForma
           />
         )}
       </div>
-      <span className="team-name-pizarra">{name}</span>
+      <span className="team-name-pizarra">{name} ({count})</span>
       <button className="btn-add-player-pizarra" onClick={onAdd}>+</button>
     </div>
 
     {onFormationChange && (
       <div className="formation-select-container-pizarra">
         <select 
-          value={formation} 
+          value={currentFormation} 
           onChange={(e) => onFormationChange(e.target.value)}
           className="formation-select-pizarra"
         >
-          {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
+          {options.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
         <button 
           className="btn-apply-formation-pizarra"
-          onClick={onApply}
+          onClick={() => onApply(currentFormation)}
           title={isEn ? "Apply / Reset lineup" : "Aplicar / Reiniciar alineación"}
         >
           {applyLabel || 'APLICAR'}
@@ -63,8 +69,10 @@ const SavedPlaysPanel = ({
   showRival,
   setShowRival,
   deleteSelected,
+  fieldType = 'full'
 }) => {
   const { t } = useTranslation();
+  const formatInfo = getFormatInfo(fieldType);
 
   return (
     <div className="pizarra-sidebar-content">
@@ -73,23 +81,25 @@ const SavedPlaysPanel = ({
         <TeamCard 
           color={localColor} 
           name={t('board.teams.local')} 
-          count={11} 
+          count={formatInfo.count}
+          availableFormations={formatInfo.formations}
           onAdd={() => addManualPlayer('local')} 
           onColorChange={setLocalColor}
           formation={localFormation}
           onFormationChange={setLocalFormation}
-          onApply={() => aplicarFormacion('local', localFormation)}
+          onApply={(f) => aplicarFormacion('local', f || localFormation)}
           applyLabel={t('board.teams.apply')}
         />
         <TeamCard 
           color={rivalColor} 
           name={t('board.teams.rival')} 
-          count={11} 
+          count={formatInfo.count}
+          availableFormations={formatInfo.formations}
           onAdd={() => addManualPlayer('rival')} 
           onColorChange={setRivalColor}
           formation={rivalFormation}
           onFormationChange={setRivalFormation}
-          onApply={() => aplicarFormacion('rival', rivalFormation)}
+          onApply={(f) => aplicarFormacion('rival', f || rivalFormation)}
           applyLabel={t('board.teams.apply')}
         />
         <TeamCard 

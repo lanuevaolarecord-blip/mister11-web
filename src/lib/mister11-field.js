@@ -927,6 +927,107 @@ export const FORMATIONS = {
     { pos: 'SD', relX: 0.74, relY: 0.50 },
     { pos: 'EX', relX: 0.70, relY: 0.85 },
   ],
+
+  // ─────────────────────────────────────────
+  // FÚTBOL 8 (7 + PORTERO = 8 PIEZAS)
+  // ─────────────────────────────────────────
+  '3-3-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.20 },
+    { pos: 'DF', relX: 0.20, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.80 },
+    { pos: 'MC', relX: 0.48, relY: 0.22 },
+    { pos: 'MC', relX: 0.46, relY: 0.50 },
+    { pos: 'MC', relX: 0.48, relY: 0.78 },
+    { pos: 'DL', relX: 0.76, relY: 0.50 },
+  ],
+  '2-3-2': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.30 },
+    { pos: 'DF', relX: 0.22, relY: 0.70 },
+    { pos: 'MC', relX: 0.48, relY: 0.20 },
+    { pos: 'MC', relX: 0.48, relY: 0.50 },
+    { pos: 'MC', relX: 0.48, relY: 0.80 },
+    { pos: 'DL', relX: 0.76, relY: 0.35 },
+    { pos: 'DL', relX: 0.76, relY: 0.65 },
+  ],
+  '3-2-2': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.20 },
+    { pos: 'DF', relX: 0.20, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.80 },
+    { pos: 'MC', relX: 0.48, relY: 0.35 },
+    { pos: 'MC', relX: 0.48, relY: 0.65 },
+    { pos: 'DL', relX: 0.76, relY: 0.35 },
+    { pos: 'DL', relX: 0.76, relY: 0.65 },
+  ],
+  '4-2-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'LD', relX: 0.20, relY: 0.15 },
+    { pos: 'DC', relX: 0.20, relY: 0.38 },
+    { pos: 'DC', relX: 0.20, relY: 0.62 },
+    { pos: 'LI', relX: 0.20, relY: 0.85 },
+    { pos: 'MC', relX: 0.48, relY: 0.35 },
+    { pos: 'MC', relX: 0.48, relY: 0.65 },
+    { pos: 'DL', relX: 0.76, relY: 0.50 },
+  ],
+
+  // ─────────────────────────────────────────
+  // FÚTBOL 7 (6 + PORTERO = 7 PIEZAS)
+  // ─────────────────────────────────────────
+  '2-3-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.28 },
+    { pos: 'DF', relX: 0.22, relY: 0.72 },
+    { pos: 'MC', relX: 0.48, relY: 0.20 },
+    { pos: 'MC', relX: 0.48, relY: 0.50 },
+    { pos: 'MC', relX: 0.48, relY: 0.80 },
+    { pos: 'DL', relX: 0.76, relY: 0.50 },
+  ],
+  '3-2-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.20 },
+    { pos: 'DF', relX: 0.20, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.80 },
+    { pos: 'MC', relX: 0.48, relY: 0.35 },
+    { pos: 'MC', relX: 0.48, relY: 0.65 },
+    { pos: 'DL', relX: 0.76, relY: 0.50 },
+  ],
+  '2-2-2': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.30 },
+    { pos: 'DF', relX: 0.22, relY: 0.70 },
+    { pos: 'MC', relX: 0.48, relY: 0.30 },
+    { pos: 'MC', relX: 0.48, relY: 0.70 },
+    { pos: 'DL', relX: 0.75, relY: 0.32 },
+    { pos: 'DL', relX: 0.75, relY: 0.68 },
+  ],
+  '3-3-0': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.20 },
+    { pos: 'DF', relX: 0.20, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.80 },
+    { pos: 'MC', relX: 0.55, relY: 0.22 },
+    { pos: 'MC', relX: 0.55, relY: 0.50 },
+    { pos: 'MC', relX: 0.55, relY: 0.78 },
+  ],
 };
 
-export default { FieldRenderer, FIFA, FIELD_COLORS, FIELD_TYPES, FORMATIONS };
+export const FORMATIONS_BY_FORMAT = Object.freeze({
+  f11: ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-3-2-1', '3-4-3'],
+  f8:  ['3-3-1', '2-3-2', '3-2-2', '4-2-1'],
+  f7:  ['2-3-1', '3-2-1', '2-2-2', '3-3-0'],
+});
+
+export function getFormatInfo(fieldType = 'full') {
+  const norm = String(fieldType || '').toLowerCase();
+  if (norm === 'f7' || norm.includes('7')) {
+    return { format: 'f7', count: 7, defaultFormation: '2-3-1', formations: FORMATIONS_BY_FORMAT.f7 };
+  }
+  if (norm === 'f8' || norm.includes('8')) {
+    return { format: 'f8', count: 8, defaultFormation: '3-3-1', formations: FORMATIONS_BY_FORMAT.f8 };
+  }
+  return { format: 'f11', count: 11, defaultFormation: '4-3-3', formations: FORMATIONS_BY_FORMAT.f11 };
+}
+
+export default { FieldRenderer, FIFA, FIELD_COLORS, FIELD_TYPES, FORMATIONS, FORMATIONS_BY_FORMAT, getFormatInfo };

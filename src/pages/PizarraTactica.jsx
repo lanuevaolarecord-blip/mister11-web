@@ -23,7 +23,7 @@ if (typeof window !== 'undefined') {
 
 import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas, applyMister11Controls } from '../lib/mister11-materials.js';
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
-import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
+import { FieldRenderer, FORMATIONS, getFormatInfo } from '../lib/mister11-field.js';
 import {
   isFieldLayer,
   getTacticalCategory,
@@ -1128,7 +1128,9 @@ const PizarraTactica = () => {
     const playerRadius = RADIO_JUGADOR;
 
     const drawTeam = (type, form, color, side) => {
-      const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
+      const formatInfo = getFormatInfo(fieldType);
+      const targetForm = (form && formatInfo.formations.includes(form)) ? form : formatInfo.defaultFormation;
+      const positions = FORMATIONS[targetForm] || FORMATIONS['4-3-3'];
       const libType = toLibType(fieldType);
       const margin = playerRadius + 6;
 
@@ -1211,25 +1213,17 @@ const PizarraTactica = () => {
 
   // ─── Aplicar Formación Imperativa (Solución para Android/Táctil y Reset) ───
   const aplicarFormacion = useCallback((teamType, formationName) => {
-    const fc = fcRef.current; const fr = frRef.current;
-    if (!fc || !fr || playingR.current || !ready) return;
-
-    // Dibujar el fondo del campo primero
-    fr.draw(toLibType(fieldType));
-
-    // Borrar únicamente los jugadores del equipo que se va a aplicar
-    const objects = [...fc.getObjects()];
-    objects.forEach(obj => {
-      if (obj.data && obj.data.type === 'player' && obj.data.playerType === teamType) {
-        fc.remove(obj);
-      }
-    });
+    const fc = fcRef.current;
+    const fr = frRef.current;
+    if (!fc || !fr) return;
 
     const bounds = fr.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
     const playerRadius = RADIO_JUGADOR;
-    const positions = FORMATIONS[formationName] || FORMATIONS['4-3-3'];
+    const formatInfo = getFormatInfo(fieldType);
+    const targetFormation = (formationName && formatInfo.formations.includes(formationName)) ? formationName : formatInfo.defaultFormation;
+    const positions = FORMATIONS[targetFormation] || FORMATIONS['4-3-3'];
     const libType = toLibType(fieldType);
     const margin = playerRadius + 6;
 

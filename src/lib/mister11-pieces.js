@@ -208,3 +208,89 @@ export function removeAllTacticalPieces(canvas) {
     }
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECCIÓN 0.5 — CAPA DE INTERACCIÓN (O1, O2, O3 Y REGLA DE RESOLUCIÓN DE GESTO)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ventanas normalizadas por tipo de campo [x0, x1] x [y0, y1]
+ * Relativas a las proporciones reglamentarias 105:68
+ */
+export const FIELD_WINDOWS = Object.freeze({
+  full:         { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  halfAttack:   { x0: 0.5,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  half_attack:  { x0: 0.5,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  halfDefense:  { x0: 0.0,   x1: 0.5,   y0: 0.0,  y1: 1.0 },
+  half_defense: { x0: 0.0,   x1: 0.5,   y0: 0.0,  y1: 1.0 },
+  thirdDefense: { x0: 0.0,   x1: 0.333, y0: 0.0,  y1: 1.0 },
+  third_def:    { x0: 0.0,   x1: 0.333, y0: 0.0,  y1: 1.0 },
+  thirdMid:     { x0: 0.333, x1: 0.666, y0: 0.0,  y1: 1.0 },
+  third_mid:    { x0: 0.333, x1: 0.666, y0: 0.0,  y1: 1.0 },
+  thirdAttack:  { x0: 0.666, x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  third_off:    { x0: 0.666, x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  penaltyArea:  { x0: 0.75,  x1: 1.0,   y0: 0.15, y1: 0.85 },
+  penalty_zoom: { x0: 0.75,  x1: 1.0,   y0: 0.15, y1: 0.85 },
+  f7:           { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  f8:           { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  futsal:       { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  reduced:      { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+  blank:        { x0: 0.0,   x1: 1.0,   y0: 0.0,  y1: 1.0 },
+});
+
+/**
+ * O1: Remapeo Proporcional por Ventana Normalizada
+ * Mapea las coordenadas (x, y) de la ventana del campo de origen a la nueva ventana,
+ * clampeando dentro de márgenes de seguridad para que ninguna pieza quede en el margen negro.
+ */
+export function remapCoordinatesByWindow(x, y, fromFieldType = 'full', toFieldType = 'full') {
+  const fromWin = FIELD_WINDOWS[fromFieldType] || FIELD_WINDOWS.full;
+  const toWin = FIELD_WINDOWS[toFieldType] || FIELD_WINDOWS.full;
+
+  // 1. Proyectar de la ventana origen al espacio canónico global [0, 1]
+  const globalX = fromWin.x0 + (Number(x) || 0.5) * (fromWin.x1 - fromWin.x0);
+  const globalY = fromWin.y0 + (Number(y) || 0.5) * (fromWin.y1 - fromWin.y0);
+
+  // 2. Proyectar del espacio global a la nueva ventana
+  const newWinW = Math.max(0.001, toWin.x1 - toWin.x0);
+  const newWinH = Math.max(0.001, toWin.y1 - toWin.y0);
+
+  let newX = (globalX - toWin.x0) / newWinW;
+  let newY = (globalY - toWin.y0) / newWinH;
+
+  // 3. Clamping dentro de los límites del césped visible (evita margen negro de Picture 14)
+  const pad = 0.04;
+  newX = Math.max(pad, Math.min(1.0 - pad, newX));
+  newY = Math.max(pad, Math.min(1.0 - pad, newY));
+
+  return { x: newX, y: newY };
+}
+
+/**
+ * Regla de Resolución de Gesto (Sección 0.5)
+ * Define la intención del usuario ante mousedown / pointerdown según el target y tool:
+ *  - 'DRAG_EXISTING': mousedown sobre pieza existente -> arrastrar pieza, NUNCA crear encima.
+ *  - 'DRAW_NEW': mousedown sobre vacío + tool de dibujo -> crear trazo.
+ *  - 'PLACE_STICKY': mousedown sobre vacío + tool sticky -> colocar pieza repetible (O3).
+ *  - 'SELECT_CANVAS': mousedown sobre vacío + tool=select -> seleccionar / marco.
+ */
+export function resolvePointerGesture({ target, activeTool, placingMat }) {
+  const isExistingPiece = Boolean(target && !isFieldLayer(target) && target.data?.type !== 'temp');
+
+  if (isExistingPiece) {
+    // Regla de Oro: Mousedown SOBRE pieza existente SIEMPRE prioriza arrastrarla (O2 + Gesto)
+    return 'DRAG_EXISTING';
+  }
+
+  // Mousedown sobre vacío (césped)
+  if (placingMat || activeTool === 'place_material') {
+    return 'PLACE_STICKY';
+  }
+
+  const drawingTools = ['arrow', 'arrow_curve', 'dashed', 'dashed_curve', 'straight_dashed_line', 'shot', 'pressure', 'sprint_pro', 'zone_rect', 'zone_circle', 'zone_pentagon', 'zone_hexagon', 'text'];
+  if (drawingTools.includes(activeTool)) {
+    return 'DRAW_NEW';
+  }
+
+  return 'SELECT_CANVAS';
+}

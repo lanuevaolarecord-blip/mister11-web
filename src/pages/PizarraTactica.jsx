@@ -24,6 +24,13 @@ if (typeof window !== 'undefined') {
 import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas, applyMister11Controls } from '../lib/mister11-materials.js';
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
+import {
+  isFieldLayer,
+  getTacticalCategory,
+  getTacticalPieceIdentifier,
+  removeAllTacticalPieces,
+  TACTICAL_CATEGORIES
+} from '../lib/mister11-pieces.js';
 import { useAuth } from '../context/AuthContext';
 import { usePizarra } from '../context/PizarraContext';
 import { usePlan } from '../hooks/usePlan';
@@ -170,8 +177,11 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return { objects: [] };
 
-    const objects = fc.getObjects().map(obj => {
-      const serializado = obj.toObject(['data', 'id']);
+    const objects = fc.getObjects().filter(o => !isFieldLayer(o)).map(obj => {
+      const serializado = obj.toObject([
+        'data', 'id', 'isPlayerPiece', 'isMaterial', 'isBall', 'isComodin', 'isZone', 'isTool', 'isTrajectory',
+        'radius', 'width', 'height', 'scaleX', 'scaleY', 'angle', 'stroke', 'strokeWidth', 'strokeDashArray', 'fill'
+      ]);
       
       let absX = obj.left;
       let absY = obj.top;
@@ -186,23 +196,53 @@ const PizarraTactica = () => {
       }
       
       const { rx, ry } = fr.getRelativePoint(absX, absY);
+      const cat = getTacticalCategory(obj);
 
-      if (obj.data) {
-        obj.data.xRel = rx;
-        obj.data.yRel = ry;
-      }
+      const d = obj.data ? { ...obj.data } : {};
+      d.xRel = rx;
+      d.yRel = ry;
+      if (cat) d.category = cat;
+      if (obj.id && !d.id) d.id = obj.id;
 
       return {
         ...serializado,
-        data: obj.data ? { ...obj.data, xRel: rx, yRel: ry } : undefined,
+        id: obj.id || d.id,
+        category: cat,
+        data: d,
         xRel: rx,
         yRel: ry,
         radiusRel: obj.radius 
           ? obj.radius / Math.min(fc.width, fc.height)
-          : undefined
+          : undefined,
+        wRel: obj.width ? obj.width / fc.width : undefined,
+        hRel: obj.height ? obj.height / fc.height : undefined,
+        angle: obj.angle || 0,
+        scaleX: obj.scaleX || 1,
+        scaleY: obj.scaleY || 1
       };
     });
-    return { version: fabric.version, objects };
+
+    const positions = objects.map(o => ({
+      id: o.id || o.data?.id,
+      category: o.category,
+      x: o.xRel,
+      y: o.yRel,
+      team: o.data?.team,
+      num: o.data?.num,
+      isBall: o.isBall || o.category === 'ball',
+      isPlayer: o.isPlayerPiece || o.category === 'player',
+      fill: o.fill
+    }));
+
+    const trajectoryObjects = objects.filter(o => o.isTrajectory || o.category === TACTICAL_CATEGORIES.TRAJECTORY);
+    const paths = trajectoryObjects.map(t => ({
+      id: t.id || t.data?.id,
+      fromId: t.data?.fromId,
+      toId: t.data?.toId,
+      points: t.data?.points || (t.points ? t.points : [{ x: t.x1, y: t.y1 }, { x: t.x2, y: t.y2 }])
+    }));
+
+    return { version: fabric.version, objects, positions, paths };
   }, []);
 
   const ensurePlayersOnTop = useCallback(() => {
@@ -238,22 +278,7 @@ const PizarraTactica = () => {
 
   // P-G1: PROHIBIDO fc.clear() global. Remover piezas solo por categoría preservando campo/líneas/porterías
   const removeAllPiecesPreservingField = useCallback((canvas) => {
-    if (!canvas) return;
-    const objs = [...canvas.getObjects()];
-    objs.forEach(obj => {
-      const isField = 
-        obj.isFieldLayer ||
-        obj.id === 'campo' ||
-        obj.id === 'field' ||
-        obj.data?.type === 'field' ||
-        obj.data?.type === 'campo' ||
-        obj.data?.type === 'background' ||
-        obj.type === 'field' ||
-        (obj.fill && (obj.fill === '#1b3a2d' || obj.fill === '#132a14' || obj.fill === '#224422'));
-      if (!isField) {
-        canvas.remove(obj);
-      }
-    });
+    removeAllTacticalPieces(canvas);
   }, []);
 
 
@@ -379,14 +404,28 @@ const PizarraTactica = () => {
       // FIX-2: try/catch para garantizar que syncingR nunca queda en true permanentemente
       try {
         objects.forEach((o, objIdx) => {
-          if (!o.data && enlivenedData[objIdx]?.data) {
-            o.data = { ...enlivenedData[objIdx].data };
+          const itemData = enlivenedData[objIdx] || {};
+          if (!o.data && itemData.data) {
+            o.data = { ...itemData.data };
           }
-          if (!o.id && enlivenedData[objIdx]?.id) {
-            o.id = enlivenedData[objIdx].id;
+          if (!o.id && (itemData.id || itemData.data?.id)) {
+            o.id = itemData.id || itemData.data?.id;
           }
+
+          // Restaurar categoría taxonómica canónica (Puerta P3)
+          const cat = itemData.category || itemData.data?.category || getTacticalCategory(o) || getTacticalCategory(itemData);
+          if (cat === TACTICAL_CATEGORIES.PLAYER) o.isPlayerPiece = true;
+          if (cat === TACTICAL_CATEGORIES.MATERIAL) o.isMaterial = true;
+          if (cat === TACTICAL_CATEGORIES.BALL) o.isBall = true;
+          if (cat === TACTICAL_CATEGORIES.COMODIN) { o.isComodin = true; o.isPlayerPiece = true; }
+          if (cat === TACTICAL_CATEGORIES.ZONE) o.isZone = true;
+          if (cat === TACTICAL_CATEGORIES.TOOL) o.isTool = true;
+          if (cat === TACTICAL_CATEGORIES.TRAJECTORY) o.isTrajectory = true;
+
           // Restaurar borde blanco en los jugadores
-          const isPlayer = o.data?.type === 'player' || 
+          const isPlayer = cat === TACTICAL_CATEGORIES.PLAYER || 
+                           cat === TACTICAL_CATEGORIES.COMODIN ||
+                           o.data?.type === 'player' || 
                            o.data?.tipo === 'jugador' || 
                            (o.type === 'group' && 
                             o.getObjects && 
@@ -863,47 +902,9 @@ const PizarraTactica = () => {
     e.target.value = '';
   };
 
-  // ─── Identificador determinista para emparejar objetos entre frames ────────
+  // ─── Identificador determinista para emparejar objetos entre frames (Puerta P2) ────────
   const getObjectIdentifier = useCallback((obj) => {
-    if (!obj) return null;
-    const d = obj.data || {};
-    
-    // Balón (material o independiente)
-    const isBall = d.type === 'ball' || 
-                   d.tipo === 'balon' || 
-                   d.itemId === 'balon' || 
-                   d.itemId === 'balon_negro' || 
-                   d.itemId === 'balon_movimiento' ||
-                   d.matType === 'balon' ||
-                   obj.id === 'ball' ||
-                   obj.id === 'balon';
-    if (isBall) {
-      return 'ball';
-    }
-
-    if (d.id) return String(d.id);
-    if (obj.id) return String(obj.id);
-    
-    // Jugador
-    const isPlayer = d.type === 'player' || d.tipo === 'jugador' || (obj.type === 'group' && (d.playerType || d.tipo));
-    if (isPlayer) {
-      let label = d.label;
-      if (label === undefined && obj.getObjects) {
-        const textChild = obj.getObjects().find(c => c.type === 'text');
-        if (textChild) label = textChild.text;
-      }
-      const pType = d.playerType || 'local';
-      return `player_${pType}_${label ?? ''}`;
-    }
-    
-    // Materiales
-    if (d.type === 'material' || d.tipo === 'material' || d.matType || d.itemId) {
-      const kind = d.itemId || d.matType || d.tipo || 'mat';
-      const mIdx = d.materialIndex ?? d.id ?? obj.id ?? '';
-      return `material_${kind}_${mIdx}`;
-    }
-    
-    return null;
+    return getTacticalPieceIdentifier(obj);
   }, []);
 
   // ─── Export Animation Video (MP4/WebM Determinista FIX 4) ────────────────
@@ -2435,9 +2436,10 @@ const PizarraTactica = () => {
         }
       }
 
-      // Retornamos un objeto con ambas URLs para que handleSave decida qué usar
+      // Retornamos un objeto con ambas URLs para que handleSave y exportación decidan qué usar
       return {
-        full: finalUrl || '',                                       // Storage URL o ''
+        full: finalUrl || dataURL,                                             // Storage URL o DataURL PNG nativo
+        fullDataUrl: dataURL,                                                 // PNG nativo compuesto 1920x1280 (P4 / REGISTRO-2)
         thumb: (typeof thumbnailDataURL === 'string') ? thumbnailDataURL : ''  // Miniatura base64 o ''
       };
 
@@ -2469,7 +2471,8 @@ const PizarraTactica = () => {
     try {
       setIsCapturing(true);
       const captureRes = await handleCapture(false, true);
-      const canvasUrl = captureRes?.thumb || captureRes?.full || fc.toDataURL({ format: 'png', multiplier: 2 });
+      // FRENTE F (PDF-Q): Priorizar SIEMPRE resolución nativa de 2 capas (fullDataUrl / full) sobre miniatura thumb
+      const canvasUrl = captureRes?.fullDataUrl || captureRes?.full || fc.toDataURL({ format: 'png', multiplier: 2 });
       await generatePizarraPDF({
         boardTitle: planName || 'Estrategia Táctica',
         canvasDataUrl: canvasUrl,
@@ -2509,19 +2512,21 @@ const PizarraTactica = () => {
       // 2. Generar captura (silent)
       const captureResult = await handleCapture(false, true);
       const finalThumb = captureResult?.thumb || null;
+      const fullUrl = captureResult?.full && !captureResult.full.startsWith('data:') ? captureResult.full : null;
 
       // 3. Guardar Metadatos del ejercicio
       if (user.uid !== 'invitado-local') {
         const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
         
-        // IMPORTANTE: Nunca guardar base64 grande en el documento del ejercicio
-        // Usamos el thumbnail de 300px que garantizamos que es < 1MB
+        // Guardar metadata: thumbnail ligero + URL Storage de alta resolución si existe
         await setDoc(exerciseRef, {
           id: planId,
           title: isEn ? `Tactical Board (${new Date().toLocaleDateString('en-US')})` : `Pizarra Táctica (${new Date().toLocaleDateString('es-ES')})`,
           type: 'pizarra',
           framesCount: (framesR.current || []).length,
           thumbnail: finalThumb, // Siempre miniatura ligera
+          boardCaptureUrl: fullUrl, // Alta resolución para PDFs y exportación
+          imageUrl: fullUrl,
           timestamp: serverTimestamp(),
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -2801,8 +2806,8 @@ const PizarraTactica = () => {
           return tInfo;
         });
 
-        // Filtrar objetos animables (no el fondo ni el césped)
-        const animatableObjs = objs.filter(o => o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background');
+        // Filtrar objetos animables (todas las piezas tácticas, no el fondo ni el césped)
+        const animatableObjs = objs.filter(o => !isFieldLayer(o));
         if (animatableObjs.length === 0) {
           cargarFrame(stateB, () => {
             if (!playingR.current) return;
@@ -2842,6 +2847,7 @@ const PizarraTactica = () => {
                 left: sLeft + (tLeft - sLeft) * v,
                 top:  sTop  + (tTop  - sTop ) * v,
               });
+              obj.setCoords();
             });
             fc.renderAll(); // 1 sola llamada por tick (baja de 22 a 1)
           },

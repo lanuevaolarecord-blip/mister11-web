@@ -15,25 +15,16 @@ import {
   getPlayerFontSize,
   getPlayerBorderWidth
 } from '../config/whiteboardConfig.js';
+import { getTacticalPieceIdentifier } from '../lib/mister11-pieces.js';
 
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
 
 /**
- * Normaliza y devuelve el identificador de un objeto Fabric para interpolación
+ * Normaliza y devuelve el identificador de un objeto Fabric para interpolación (Puerta P2)
  */
 export function getObjectIdentifier(obj) {
-  if (!obj) return null;
-  const d = obj.data || {};
-  if (d.id) return String(d.id);
-  if (obj.id) return String(obj.id);
-  if (d.type === 'player' || d.tipo === 'jugador') {
-    return `player_${d.playerType || 'local'}_${d.label || '0'}`;
-  }
-  if (d.type === 'material' || d.tipo === 'material' || d.isMaterial) {
-    return `material_${d.matType || d.itemId || 'item'}_${d.materialIndex ?? obj.id ?? ''}`;
-  }
-  return null;
+  return getTacticalPieceIdentifier(obj);
 }
 
 /**

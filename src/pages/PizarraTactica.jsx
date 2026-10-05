@@ -1947,86 +1947,52 @@ const PizarraTactica = () => {
 
   // ─── Auto-redibujar y Guardar al cambiar formación ──────────────────────────
 
-  // ─── Field type change ────────────────────────────────────────────────────
+  // ─── Field type change (FRENTE H: O1 Remapeo Proporcional por Ventana Normalizada) ──
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
 
-    const oldType = toLibType(fr.currentType);
-    const newType = toLibType(fieldType);
-    const oldBounds = { ...fr.getFieldBounds() };
-    const oldScale = oldBounds.scale;
+    const oldLibType = toLibType(fr.currentType);
+    const newLibType = toLibType(fieldType);
 
-    // Capturar posiciones relativas al campo completo ANTES del cambio
-    // Incluimos materiales para que también se reposicionen y escalen
-    const objectsToMove = fc.getObjects().filter(o => o.data?.type === 'player' || o.data?.type === 'material');
-    const savedStates = objectsToMove.map(obj => {
-      let relX_full;
-      if (oldType === 'half_attack') {
-        relX_full = 0.5 + (obj.left - oldBounds.x) / (oldBounds.w * 2);
-      } else if (oldType === 'half_defense') {
-        relX_full = (obj.left - oldBounds.x) / (oldBounds.w * 2);
-      } else {
-        relX_full = (obj.left - oldBounds.x) / oldBounds.w;
-      }
-      const relY_full = (obj.top - oldBounds.y) / oldBounds.h;
-      return { obj, relX_full, relY_full };
-    });
-
-    // Cambiar vista del campo (el renderer ahora calcula su propia escala óptima)
-    if (newType === 'reduced') {
+    // 1. Redibujar el campo con el nuevo tipo
+    if (newLibType === 'reduced') {
       fr.setReducedDimensions(reducedDim.w, reducedDim.h);
     }
-    fr.draw(newType);
+    fr.draw(newLibType);
 
-    // Actualizar visibilidad de TODOS los objetos según el nuevo zoom/recorte
-    const objects = fc.getObjects();
-    objects.forEach(obj => {
-      if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
-        const point = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
-        const isVisible = (
-          point.x >= -20 && 
-          point.x <= fc.width + 20 &&
-          point.y >= -20 &&
-          point.y <= fc.height + 20
-        );
-        obj.set({ 
-          left: point.x, 
-          top: point.y, 
-          visible: isVisible 
-        });
-      }
-    });
-
-    const newBounds = fr.getFieldBounds();
-    const newScale = newBounds.scale;
-    const scaleFactor = newScale / oldScale;
-
-    // Reposicionar y escalar objetos existentes
+    // 2. Re-proyectar TODAS las piezas tácticas según la ventana normalizada (O1)
     syncingR.current = true;
-    savedStates.forEach(({ obj, relX_full, relY_full }) => {
-      let newX;
-      if (newType === 'half_attack') {
-        newX = newBounds.x + (relX_full - 0.5) * 2 * newBounds.w;
-      } else if (newType === 'half_defense') {
-        newX = newBounds.x + relX_full * 2 * newBounds.w;
-      } else {
-        newX = newBounds.x + relX_full * newBounds.w;
+    const pieces = fc.getObjects().filter(o => !isFieldLayer(o));
+
+    pieces.forEach(obj => {
+      let curRelX = obj.data?.xRel;
+      let curRelY = obj.data?.yRel;
+
+      if (curRelX === undefined || curRelY === undefined) {
+        const rel = fr.getRelativePoint(obj.left, obj.top);
+        curRelX = rel.rx;
+        curRelY = rel.ry;
       }
-      const newY = newBounds.y + relY_full * newBounds.h;
-      
-      // Actualizar posición
-      obj.set({ left: newX, top: newY });
-      
-      // Escalar materiales para mantener tamaño relativo al campo (Zoom effect)
-      if (obj.data?.type === 'material') {
-        obj.scale(obj.scaleX * scaleFactor);
-      }
-      
+
+      // O1: Remapeo proporcional a la nueva ventana con clamp de seguridad
+      const remapped = remapCoordinatesByWindow(curRelX, curRelY, oldLibType, newLibType);
+      const pt = fr.getCanvasPoint(remapped.x, remapped.y);
+
+      obj.set({
+        left: pt.x,
+        top: pt.y,
+        visible: true
+      });
+
+      if (!obj.data) obj.data = {};
+      obj.data.xRel = remapped.x;
+      obj.data.yRel = remapped.y;
+
       obj.setCoords();
     });
-    syncingR.current = false;
 
+    syncingR.current = false;
     fc.renderAll();
     ensurePlayersOnTop();
     saveFrameState();
@@ -2204,7 +2170,12 @@ const PizarraTactica = () => {
 
   // NOTA: El efecto de actualización de colores en tiempo real se unificó arriba bajo la guarda 'ready' para evitar sobreescribir el canvas en el mount.
 
-  // ─── Material placement ───────────────────────────────────────────────────
+  // O3: salir del modo sticky al elegir select (flecha) u otra herramienta
+  useEffect(() => {
+    if (activeTool !== 'place_material' && placingMat) setPlacingMat(null);
+  }, [activeTool]); // eslint-disable-line
+
+  // ─── Material placement (O3 STICKY / REPETICIÓN + REGLA DE GESTO - Frente K) ──
   useEffect(() => {
     const fc = fcRef.current;
     if (!fc || !placingMat) return;
@@ -2212,17 +2183,37 @@ const PizarraTactica = () => {
     fc.defaultCursor = 'crosshair';
 
     const onDown = (o) => {
+      // Regla de resolución de gesto: Si se pulsa sobre una pieza existente, ARRASTRARLA y no colocar material encima
+      if (o.target && !isFieldLayer(o.target) && o.target.data?.type !== 'temp') {
+        fc.setActiveObject(o.target);
+        fc.renderAll();
+        return;
+      }
+
+      // Clic sobre vacío/césped: colocar una instancia de material
       const p = fc.getPointer(o.e);
       placeMaterialOnCanvas(fc, placingMat, p.x, p.y);
-      setPlacingMat(null);
-      setActiveTool('select');
-      fc.defaultCursor = 'default';
       saveFrameState();
-      fc.off('mouse:down', onDown);
+      // O3 STICKY: Permanece activo para colocar N materiales sucesivos (resuelve Picture 17)
+    };
+
+    // Tecla Esc para salir del modo de colocación repetida
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setPlacingMat(null);
+        setActiveTool('select');
+        if (fc) fc.defaultCursor = 'default';
+      }
     };
 
     fc.on('mouse:down', onDown);
-    return () => fc.off('mouse:down', onDown);
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      fc.off('mouse:down', onDown);
+      window.removeEventListener('keydown', onKeyDown);
+      if (fc) fc.defaultCursor = 'default';
+    };
   }, [placingMat, saveFrameState]);
 
   // ─── Undo / Redo (connected to manual history) ──────────────────────────
@@ -2940,6 +2931,7 @@ const PizarraTactica = () => {
       showRival={showRival}
       setShowRival={setShowRival}
       deleteSelected={deleteSelected}
+      fieldType={fieldType}
     />
   );
 

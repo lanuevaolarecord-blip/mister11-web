@@ -36,14 +36,19 @@ export function createAnimationEngine({
   fieldCanvas,
   frames = [],
   compositeCanvas = null,
-  scale = 2
+  targetWidth = 1920,
+  targetHeight = 1080,
+  zoom = 1,
+  panX = 0,
+  panY = 0,
+  fieldType = 'full'
 }) {
   let isPaused = false;
 
-  // Canvas compuesto donde se unen césped + Fabric
+  // Canvas compuesto donde se unen césped + Fabric con la resolución exacta seleccionada
   const outputCanvas = compositeCanvas || document.createElement('canvas');
-  outputCanvas.width = (fc?.width || 800) * scale;
-  outputCanvas.height = (fc?.height || 533) * scale;
+  outputCanvas.width = targetWidth;
+  outputCanvas.height = targetHeight;
   const outputCtx = outputCanvas.getContext('2d', { willReadFrequently: true });
   outputCtx.imageSmoothingEnabled = true;
   outputCtx.imageSmoothingQuality = 'high';
@@ -56,17 +61,63 @@ export function createAnimationEngine({
   }
 
   /**
-   * Pinta el estado combinado en outputCanvas (Césped + Objetos)
+   * Pinta el estado combinado en outputCanvas (Césped + Objetos) con encuadre, zoom y resolución nativa
    */
   function paintComposite() {
+    outputCtx.save();
     outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+    // Fondo verde oscuro institucional (Tierra y Campo) para el marco/letterbox
+    outputCtx.fillStyle = '#102219';
+    outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+    // Aplicar zoom y pan si el usuario los modificó en la ventana de exportación
+    const cx = outputCanvas.width / 2;
+    const cy = outputCanvas.height / 2;
+    if (zoom !== 1 || panX !== 0 || panY !== 0) {
+      outputCtx.translate(cx, cy);
+      outputCtx.scale(zoom, zoom);
+      outputCtx.translate(panX * (outputCanvas.width / 600), panY * (outputCanvas.height / 400));
+      outputCtx.translate(-cx, -cy);
+    }
+
+    // Calcular encuadre para ajustar (fit contain) el campo manteniendo proporciones
+    const srcW = fc?.width || fieldCanvas?.width || 800;
+    const srcH = fc?.height || fieldCanvas?.height || 533;
+    const scale = Math.min(outputCanvas.width / srcW, outputCanvas.height / srcH);
+    const destW = Math.round(srcW * scale);
+    const destH = Math.round(srcH * scale);
+    const destX = Math.round((outputCanvas.width - destW) / 2);
+    const destY = Math.round((outputCanvas.height - destH) / 2);
+
+    // 1. Dibujar el césped / campo
     if (fieldCanvas && fieldCanvas.width > 0) {
-      outputCtx.drawImage(fieldCanvas, 0, 0, outputCanvas.width, outputCanvas.height);
+      outputCtx.drawImage(fieldCanvas, destX, destY, destW, destH);
     }
-    const fabricCanvasElem = fc?.getElement ? fc.getElement() : null;
-    if (fabricCanvasElem && fabricCanvasElem.width > 0) {
-      outputCtx.drawImage(fabricCanvasElem, 0, 0, outputCanvas.width, outputCanvas.height);
+
+    // 2. Dibujar las piezas tácticas de Fabric a máxima resolución vectorial
+    let drawnFabric = false;
+    if (fc && typeof fc.toCanvasElement === 'function') {
+      try {
+        const multiplier = Math.max(1, scale);
+        const hiResEl = fc.toCanvasElement(multiplier);
+        if (hiResEl && hiResEl.width > 0 && hiResEl.height > 0) {
+          outputCtx.drawImage(hiResEl, destX, destY, destW, destH);
+          drawnFabric = true;
+        }
+      } catch (_) {
+        drawnFabric = false;
+      }
     }
+
+    if (!drawnFabric) {
+      const fabricCanvasElem = fc?.getElement ? fc.getElement() : null;
+      if (fabricCanvasElem && fabricCanvasElem.width > 0) {
+        outputCtx.drawImage(fabricCanvasElem, destX, destY, destW, destH);
+      }
+    }
+
+    outputCtx.restore();
   }
 
   /**

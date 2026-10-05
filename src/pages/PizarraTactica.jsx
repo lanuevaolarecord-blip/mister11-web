@@ -1033,7 +1033,7 @@ const PizarraTactica = () => {
       // 1. Guardar frame actual antes de exportar
       await saveFrameState(true);
 
-      // 2. Exportación determinista frame a frame
+      // 2. Exportación determinista frame a frame con calidad, velocidad y encuadre
       const exportTitle = options?.title ? options.title.trim().replace(/\s+/g, '_') : planId;
       const result = await exportAnimationMP4({
         fc,
@@ -1041,6 +1041,13 @@ const PizarraTactica = () => {
         fieldCanvas,
         frames: framesR.current,
         planId: exportTitle || 'export',
+        quality: options?.quality || '1080p',
+        speed: options?.speed || '1x',
+        orientation: options?.orientation || (isLandscape ? 'landscape' : 'portrait'),
+        zoom: options?.zoom || 1,
+        panX: options?.panX || 0,
+        panY: options?.panY || 0,
+        fieldType: fieldType || 'full',
         onProgress: (pct) => {
           setExportProgress(pct);
         },

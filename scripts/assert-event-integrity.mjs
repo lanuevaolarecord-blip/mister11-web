@@ -2,13 +2,18 @@
  * scripts/assert-event-integrity.mjs
  * Míster 11 — Test de Integridad de Eventos, Goles, Sustituciones, GK y DAFO (CI)
  *
- * Verifica:
+ * Verifica (11/11):
  * 1. Ausencia absoluta de default minute=1' en eventos sin minuto registrado.
  * 2. Marcador == suma de goles (propio y rival); el 0-1 de Xilxes aparece en anotadores.
  * 3. Sustituciones listadas coherentes con suplentes que tienen minutos (>0).
  * 4. Goles encajados del portero == goles rivales con portero en campo (0-1 -> Encajados: 1).
  * 5. Conteos únicos de remates rivales idénticos entre Sección 5 y Sección 6 vía matchAnalytics.
  * 6. Matriz DAFO libre de ítems con valor 0 y sin presencia en Oportunidades.
+ * 7. Cronología de eventos en mitades precisas (1T/2T) y minutos canónicos de acta.
+ * 8. Sustituciones reconciliadas con minutesEngine (suma de minutos == 90' por pareja).
+ * 9. Sección 1: banquillo con 7 suplentes completos incluyendo Mario Ursea.
+ * 10. Regla MVP explícita (valoración base + minutos vs estadística atribuida).
+ * 11. Generación de informes PDF sin recortes de suplentes y con cálculo de mitades.
  */
 
 import assert from 'assert';

@@ -23,7 +23,7 @@ const AnimationPanel = ({
   deleteFrame,
   onOpenExportModal
 }) => {
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
 
   return (
     <div className="pizarra-timeline">
@@ -98,15 +98,101 @@ const AnimationPanel = ({
         </span>
 
         <div className="timeline-chips">
-          {frames.map((f, i) => (
-            <div
-              key={f.id || i}
-              className={`frame-chip ${i === frameIdx ? 'active' : ''}`}
-              onClick={() => !isPlaying && loadFrame(i)}
-            >
-              {i + 1}
-            </div>
-          ))}
+          {frames.map((f, i) => {
+            const isActive = i === frameIdx;
+            let positions = Array.isArray(f?.positions) ? f.positions : [];
+            if (positions.length === 0 && f?.state) {
+              try {
+                const s = typeof f.state === 'string' ? JSON.parse(f.state) : f.state;
+                positions = Array.isArray(s?.positions) ? s.positions : (Array.isArray(s?.objects) ? s.objects : []);
+              } catch (_) {}
+            }
+            const pieceCount = positions.length;
+            const tooltip = `Frame ${i + 1} (${pieceCount} ${isEn ? 'pieces' : 'piezas'})`;
+
+            return (
+              <div
+                key={f.id || i}
+                className={`frame-chip ${isActive ? 'active' : ''}`}
+                onClick={() => !isPlaying && loadFrame(i)}
+                title={tooltip}
+                aria-label={tooltip}
+                role="button"
+                tabIndex={0}
+                style={{
+                  minWidth: '56px',
+                  height: '48px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isActive ? '#1B3A2D' : '#142820',
+                  border: isActive ? '2px solid #4CAF7D' : '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: '6px',
+                  cursor: isPlaying ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {f?.thumbnail ? (
+                  <img
+                    src={f.thumbnail}
+                    alt={`Frame ${i + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <svg
+                    viewBox="0 0 100 65"
+                    style={{ width: '100%', height: '100%', display: 'block', opacity: 0.95 }}
+                  >
+                    {/* Césped canónico Tierra y Campo */}
+                    <rect x="0" y="0" width="100" height="65" fill="#1B3A2D" />
+                    {/* Líneas tácticas */}
+                    <rect x="4" y="4" width="92" height="57" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
+                    <line x1="50" y1="4" x2="50" y2="61" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
+                    <circle cx="50" cy="32.5" r="9" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
+                    {/* Puntos de piezas tácticas */}
+                    {positions.map((pos, pIdx) => {
+                      const px = Math.max(5, Math.min(95, (pos.x !== undefined ? pos.x : (pos.xRel !== undefined ? pos.xRel : 0.5)) * 100));
+                      const py = Math.max(5, Math.min(60, (pos.y !== undefined ? pos.y : (pos.yRel !== undefined ? pos.yRel : 0.5)) * 65));
+                      const isBall = pos.isBall || pos.category === 'ball' || pos.data?.type === 'ball';
+                      const isEquipA = pos.team === 'A' || pos.data?.team === 'A' || (!pos.team && pos.category === 'player');
+                      const fill = isBall ? '#F5F0E8' : (isEquipA ? '#D4A843' : '#4CAF7D');
+                      return (
+                        <circle
+                          key={pIdx}
+                          cx={px}
+                          cy={py}
+                          r={isBall ? 2 : 2.8}
+                          fill={fill}
+                          stroke="#142820"
+                          strokeWidth="0.5"
+                        />
+                      );
+                    })}
+                  </svg>
+                )}
+                {/* Badge número de frame */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '2px',
+                    left: '3px',
+                    background: isActive ? '#4CAF7D' : 'rgba(0,0,0,0.7)',
+                    color: '#FFFFFF',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    lineHeight: '12px',
+                    padding: '0 4px',
+                    borderRadius: '3px',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  {i + 1}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <button

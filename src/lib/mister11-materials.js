@@ -785,12 +785,16 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
         top: y,
         originX: 'center',
         originY: 'center',
+        isMaterial: !isBall,
+        isBall: isBall,
+        category: isBall ? 'ball' : 'material',
         hasControls: false,     // usar controles personalizados
         hasBorders: false,
         data: {
           id: uniqueMatId,
           type: isBall ? 'ball' : 'material',
           tipo: isBall ? 'balon' : 'material',
+          category: isBall ? 'ball' : 'material',
           itemId: itemId,
           color: chosenColor,
           label: item.label,

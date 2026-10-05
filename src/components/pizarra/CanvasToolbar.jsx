@@ -95,23 +95,88 @@ const CanvasToolbar = ({
           {fieldType === 'reduced' && (
             <div className="topbar-group reduced-controls-group">
               <div className="reduced-controls">
+                <div className="reduced-presets">
+                  {[
+                    { label: '30×20m', w: 30, h: 20 },
+                    { label: '40×30m', w: 40, h: 30 },
+                    { label: '50×35m', w: 50, h: 35 },
+                    { label: '60×40m', w: 60, h: 40 },
+                  ].map(preset => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      className={`reduced-preset-btn ${reducedDim.w === preset.w && reducedDim.h === preset.h ? 'active' : ''}`}
+                      onClick={() => {
+                        setReducedDim({ w: preset.w, h: preset.h });
+                        const fr = frRef?.current;
+                        const fc = fcRef?.current;
+                        if (fr) {
+                          fr.setReducedDimensions(preset.w, preset.h);
+                          fr.draw('reduced');
+                          if (fc) {
+                            fc.getObjects().forEach(obj => {
+                              if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
+                                const pt = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
+                                obj.set({ left: pt.x, top: pt.y });
+                                obj.setCoords();
+                              }
+                            });
+                            fc.renderAll();
+                          }
+                        }
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
                 <div className="slider-box">
                   <span>{t('board.toolbar.width')}: {reducedDim.w}m</span>
-                  <input type="range" min="10" max="105" value={reducedDim.w} 
+                  <input type="range" min="15" max="75" value={reducedDim.w} 
                     onChange={e => {
                       const w = parseInt(e.target.value);
                       setReducedDim(p => ({ ...p, w }));
-                      frRef.current?.setReducedDimensions(w, reducedDim.h);
+                      const fr = frRef?.current;
+                      const fc = fcRef?.current;
+                      if (fr) {
+                        fr.setReducedDimensions(w, reducedDim.h);
+                        fr.draw('reduced');
+                        if (fc) {
+                          fc.getObjects().forEach(obj => {
+                            if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
+                              const pt = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
+                              obj.set({ left: pt.x, top: pt.y });
+                              obj.setCoords();
+                            }
+                          });
+                          fc.renderAll();
+                        }
+                      }
                     }} 
                   />
                 </div>
                 <div className="slider-box">
                   <span>{t('board.toolbar.height')}: {reducedDim.h}m</span>
-                  <input type="range" min="10" max="70" value={reducedDim.h} 
+                  <input type="range" min="15" max="55" value={reducedDim.h} 
                     onChange={e => {
                       const h = parseInt(e.target.value);
                       setReducedDim(p => ({ ...p, h }));
-                      frRef.current?.setReducedDimensions(reducedDim.w, h);
+                      const fr = frRef?.current;
+                      const fc = fcRef?.current;
+                      if (fr) {
+                        fr.setReducedDimensions(reducedDim.w, h);
+                        fr.draw('reduced');
+                        if (fc) {
+                          fc.getObjects().forEach(obj => {
+                            if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
+                              const pt = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
+                              obj.set({ left: pt.x, top: pt.y });
+                              obj.setCoords();
+                            }
+                          });
+                          fc.renderAll();
+                        }
+                      }
                     }} 
                   />
                 </div>

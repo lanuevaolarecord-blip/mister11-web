@@ -16,6 +16,7 @@
 
 import { fabric } from 'fabric';
 import { applyMister11Controls } from './mister11-materials.js';
+import { isFieldLayer } from './mister11-pieces.js';
 import { isEn } from '../i18n/index.js';
 
 // ─────────────────────────────────────────
@@ -280,8 +281,8 @@ export class ToolManager {
         break;
 
       default:
-        // Herramientas de clic manual
-        this.canvas.forEachObject(o => { o.selectable = false; });
+        // Herramientas de clic manual: las piezas existentes siguen arrastrables (O2 + regla de gesto)
+        this.canvas.forEachObject(o => { o.selectable = !isFieldLayer(o); });
         break;
     }
 
@@ -312,6 +313,15 @@ export class ToolManager {
   // EVENTOS DE RATÓN / TÁCTIL
   // ───────────────────────────────────────
   _onMouseDown(e) {
+    // REGLA DE RESOLUCIÓN DE GESTO (SECCIÓN 0.5):
+    // Si se pulsa sobre una pieza existente (y no es el campo ni un objeto temporal),
+    // PRIORIZAR ARRASTRAR ESA PIEZA (O2) sin crear nada nuevo encima.
+    if (this._drawState.phase === 'idle' && e.target && !isFieldLayer(e.target) && e.target.data?.type !== 'temp') {
+      this.canvas.setActiveObject(e.target);
+      this.canvas.renderAll();
+      return;
+    }
+
     const { x, y } = this._getPointer(e);
 
     switch (this.activeTool) {

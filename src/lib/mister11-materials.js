@@ -816,7 +816,8 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
  * a cualquier objeto Fabric (material, jugador, trazo)
  */
 export function applyMister11Controls(obj) {
-  // Configuración base de controles
+  // Configuración base de controles (O2: hit-area generoso >= 48dp para agarre directo)
+  const isLineOrPath = obj.type === 'line' || obj.type === 'path' || obj.data?.tool === 'straight_dashed_line';
   obj.set({
     hasControls: true,
     hasBorders: true,
@@ -825,7 +826,10 @@ export function applyMister11Controls(obj) {
     cornerStrokeColor: '#4CAF7D',
     cornerSize: 10,
     transparentCorners: false,
-    padding: 5
+    padding: isLineOrPath ? 16 : 8,
+    perPixelTargetFind: false, // Permite tocar el cuerpo de la línea sin requerir pixel exacto de 2px
+    hoverCursor: 'move',
+    moveCursor: 'move'
   });
 
   // Eliminar controles predeterminados de Fabric

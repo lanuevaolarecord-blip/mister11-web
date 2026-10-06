@@ -53,6 +53,19 @@ export function createAnimationEngine({
   outputCtx.imageSmoothingEnabled = true;
   outputCtx.imageSmoothingQuality = 'high';
 
+  // Canvas Fabric DEDICADO Y AISLADO para exportación: NUNCA muta ni borra fcRef del usuario
+  const baseW = fc?.width || fieldCanvas?.width || 800;
+  const baseH = fc?.height || fieldCanvas?.height || 533;
+  const exportCanvasEl = document.createElement('canvas');
+  exportCanvasEl.width = baseW;
+  exportCanvasEl.height = baseH;
+
+  const renderFc = new fabric.StaticCanvas(exportCanvasEl, {
+    width: baseW,
+    height: baseH,
+    renderOnAddRemove: false
+  });
+
   /**
    * Pausa cualquier reproducción en vivo activa
    */
@@ -82,8 +95,8 @@ export function createAnimationEngine({
     }
 
     // Calcular encuadre para ajustar (fit contain) el campo manteniendo proporciones
-    const srcW = fc?.width || fieldCanvas?.width || 800;
-    const srcH = fc?.height || fieldCanvas?.height || 533;
+    const srcW = renderFc.width || baseW;
+    const srcH = renderFc.height || baseH;
     const scale = Math.min(outputCanvas.width / srcW, outputCanvas.height / srcH);
     const destW = Math.round(srcW * scale);
     const destH = Math.round(srcH * scale);
@@ -97,10 +110,10 @@ export function createAnimationEngine({
 
     // 2. Dibujar las piezas tácticas de Fabric a máxima resolución vectorial
     let drawnFabric = false;
-    if (fc && typeof fc.toCanvasElement === 'function') {
+    if (renderFc && typeof renderFc.toCanvasElement === 'function') {
       try {
         const multiplier = Math.max(1, scale);
-        const hiResEl = fc.toCanvasElement(multiplier);
+        const hiResEl = renderFc.toCanvasElement(multiplier);
         if (hiResEl && hiResEl.width > 0 && hiResEl.height > 0) {
           outputCtx.drawImage(hiResEl, destX, destY, destW, destH);
           drawnFabric = true;
@@ -111,7 +124,7 @@ export function createAnimationEngine({
     }
 
     if (!drawnFabric) {
-      const fabricCanvasElem = fc?.getElement ? fc.getElement() : null;
+      const fabricCanvasElem = renderFc?.getElement ? renderFc.getElement() : exportCanvasEl;
       if (fabricCanvasElem && fabricCanvasElem.width > 0) {
         outputCtx.drawImage(fabricCanvasElem, destX, destY, destW, destH);
       }
@@ -129,8 +142,8 @@ export function createAnimationEngine({
     return new Promise((resolve, reject) => {
       pauseLivePlayback();
 
-      if (!fc || !fr) {
-        return reject(new Error('Canvas o FieldRenderer no inicializado'));
+      if (!fr) {
+        return reject(new Error('FieldRenderer no inicializado'));
       }
 
       const frameData = frames[frameIndex];
@@ -144,15 +157,15 @@ export function createAnimationEngine({
 
       const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
 
-      fc.clear();
+      renderFc.clear();
 
       if (objsToEnliven.length === 0) {
-        fc.renderAll();
+        renderFc.renderAll();
         paintComposite();
         return resolve(outputCanvas);
       }
 
-      const targetRadius = getPlayerCircleRadius(fc.width);
+      const targetRadius = getPlayerCircleRadius(renderFc.width);
       const borderWidth = getPlayerBorderWidth(targetRadius);
       const targetFontSize = getPlayerFontSize(targetRadius);
       const touchPadding = WHITEBOARD_CONFIG.touchTarget.getPadding(targetRadius);
@@ -166,18 +179,18 @@ export function createAnimationEngine({
           top = point.y;
           visible = (
             point.x >= -20 &&
-            point.x <= fc.width + 20 &&
+            point.x <= renderFc.width + 20 &&
             point.y >= -20 &&
-            point.y <= fc.height + 20
+            point.y <= renderFc.height + 20
           );
         } else {
-          left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
-          top = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
+          left = (objData.left / CANVAS_REF_WIDTH) * renderFc.width;
+          top = (objData.top / CANVAS_REF_HEIGHT) * renderFc.height;
         }
 
         let radius = objData.radius || targetRadius;
         if (objData.radiusRel !== undefined) {
-          radius = objData.radiusRel * Math.min(fc.width, fc.height);
+          radius = objData.radiusRel * Math.min(renderFc.width, renderFc.height);
         }
 
         return { ...objData, left, top, radius, visible };
@@ -229,10 +242,10 @@ export function createAnimationEngine({
               o.setCoords();
             }
 
-            fc.add(o);
+            renderFc.add(o);
           });
 
-          fc.renderAll();
+          renderFc.renderAll();
           paintComposite();
           resolve(outputCanvas);
         } catch (err) {
@@ -273,15 +286,15 @@ export function createAnimationEngine({
         left = point.x;
         top = point.y;
       } else {
-        left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
-        top = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
+        left = (objData.left / CANVAS_REF_WIDTH) * renderFc.width;
+        top = (objData.top / CANVAS_REF_HEIGHT) * renderFc.height;
       }
       const id = getObjectIdentifier(objData) || `idx_${i}`;
       targetsByKey.set(id, { left, top });
     });
 
     // Desplazar objetos linealmente de su pos inicial a la pos destino
-    const animatableObjs = fc.getObjects().filter(o => 
+    const animatableObjs = renderFc.getObjects().filter(o => 
       o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background'
     );
 
@@ -299,7 +312,7 @@ export function createAnimationEngine({
       }
     });
 
-    fc.renderAll();
+    renderFc.renderAll();
     paintComposite();
     return outputCanvas;
   }
@@ -309,7 +322,12 @@ export function createAnimationEngine({
     renderFrame,
     renderInterpolatedStep,
     getCompositeCanvas: () => outputCanvas,
-    getTotalKeyframes: () => frames.length
+    getTotalKeyframes: () => frames.length,
+    dispose: () => {
+      try {
+        renderFc.dispose();
+      } catch (_) {}
+    }
   };
 }
 

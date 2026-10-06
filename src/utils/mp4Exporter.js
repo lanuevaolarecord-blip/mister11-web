@@ -252,6 +252,10 @@ export async function exportAnimationMP4({
     document.body.removeChild(recCanvas);
   }
 
+  if (animationEngine && typeof animationEngine.dispose === 'function') {
+    animationEngine.dispose();
+  }
+
   if (typeof onStatus === 'function') {
     onStatus('Empaquetando video final...');
   }

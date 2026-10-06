@@ -994,16 +994,25 @@ const PizarraTactica = () => {
     );
 
     try {
-      // 1. Guardar frame actual antes de exportar
+      // 1. Cancelar cualquier timer pendiente de autoguardado para evitar colisiones
+      if (saveFrameTimeoutR.current) clearTimeout(saveFrameTimeoutR.current);
+
+      // 2. Guardar frame actual antes de exportar
       await saveFrameState(true);
 
-      // 2. Exportación determinista frame a frame con calidad, velocidad y encuadre
+      // 3. Instantánea inmutable y profunda de los frames para garantizar que el último frame nunca se pierda
+      const exportFrames = (framesR.current || []).map(f => ({
+        ...f,
+        state: typeof f.state === 'string' ? f.state : JSON.stringify(f.state)
+      }));
+
+      // 4. Exportación determinista frame a frame con calidad, velocidad y encuadre
       const exportTitle = options?.title ? options.title.trim().replace(/\s+/g, '_') : planId;
       const result = await exportAnimationMP4({
         fc,
         fr: frRef.current,
         fieldCanvas,
-        frames: framesR.current,
+        frames: exportFrames,
         planId: exportTitle || 'export',
         quality: options?.quality || '1080p',
         speed: options?.speed || '1x',

@@ -985,6 +985,7 @@ const PizarraTactica = () => {
     }
 
     if (isRecording) return;
+    const activeFrameIdxBeforeExport = frameIdxR.current;
     setIsRecording(true);
     setExportProgress(1);
     showToast(
@@ -1069,6 +1070,8 @@ const PizarraTactica = () => {
     } finally {
       setIsRecording(false);
       setTimeout(() => setExportProgress(null), 1500);
+      // Restaurar el frame activo en el canvas para que no quede modificado
+      loadFrame(activeFrameIdxBeforeExport, false);
     }
   };
 

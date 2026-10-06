@@ -173,6 +173,7 @@ export async function exportAnimationMP4({
 
   // Bucle determinista frame a frame con ritmo temporal compensado
   for (let step = 0; step < timing.totalSteps; step++) {
+    const isLastStep = step === timing.totalSteps - 1;
     // Calcular keyframes origen y destino y el factor de interpolación
     const transitionIndex = Math.min(Math.floor(step / timing.stepsPerTransition), timing.numTransitions - 1);
     const subStep = step % timing.stepsPerTransition;
@@ -183,7 +184,10 @@ export async function exportAnimationMP4({
 
     // Watchdog individual de 5 segundos con hasta 2 reintentos
     await captureFrameWithRetry(async () => {
-      if (subStep === 0) {
+      if (isLastStep) {
+        // En el último step se garantiza el renderizado íntegro del frame final de la animación
+        await animationEngine.renderFrame(frames.length - 1);
+      } else if (subStep === 0) {
         await animationEngine.renderFrame(fromIdx);
       } else {
         await animationEngine.renderInterpolatedStep(fromIdx, toIdx, progressInTransition);
@@ -209,6 +213,18 @@ export async function exportAnimationMP4({
     if (typeof onStatus === 'function') {
       onStatus(`Exportando frame ${step + 1} de ${timing.totalSteps} (${currentPercent}%)`);
     }
+  }
+
+  // Asegurar retención visible del frame final (hold) durante ~0.6-0.8s para que el desenlace táctico sea claramente visible
+  const holdDurationMs = Math.max(400, Math.min(1000, Math.round(800 / timing.speedFactor)));
+  const holdFramesCount = Math.max(10, Math.round((holdDurationMs / 1000) * timing.targetFps));
+  const holdIntervalMs = holdDurationMs / holdFramesCount;
+
+  for (let h = 0; h < holdFramesCount; h++) {
+    if (videoTrack && typeof videoTrack.requestFrame === 'function') {
+      videoTrack.requestFrame();
+    }
+    await new Promise(r => setTimeout(r, holdIntervalMs));
   }
 
   // Solicitar datos finales antes de detener

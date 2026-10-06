@@ -1011,16 +1011,52 @@ export const FORMATIONS = {
     { pos: 'MC', relX: 0.55, relY: 0.50 },
     { pos: 'MC', relX: 0.55, relY: 0.78 },
   ],
+
+  // ─────────────────────────────────────────
+  // FÚTBOL SALA (4 + PORTERO = 5 PIEZAS)
+  // ─────────────────────────────────────────
+  '1-2-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.22, relY: 0.50 },
+    { pos: 'MC', relX: 0.48, relY: 0.20 },
+    { pos: 'MC', relX: 0.48, relY: 0.80 },
+    { pos: 'DL', relX: 0.78, relY: 0.50 },
+  ],
+  '2-2': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.25, relY: 0.30 },
+    { pos: 'DF', relX: 0.25, relY: 0.70 },
+    { pos: 'DL', relX: 0.72, relY: 0.30 },
+    { pos: 'DL', relX: 0.72, relY: 0.70 },
+  ],
+  '3-1': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.20, relY: 0.50 },
+    { pos: 'MC', relX: 0.35, relY: 0.22 },
+    { pos: 'MC', relX: 0.35, relY: 0.78 },
+    { pos: 'DL', relX: 0.78, relY: 0.50 },
+  ],
+  '4-0': [
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'MC', relX: 0.38, relY: 0.18 },
+    { pos: 'DF', relX: 0.30, relY: 0.40 },
+    { pos: 'DF', relX: 0.30, relY: 0.60 },
+    { pos: 'MC', relX: 0.38, relY: 0.82 },
+  ],
 };
 
 export const FORMATIONS_BY_FORMAT = Object.freeze({
-  f11: ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-3-2-1', '3-4-3'],
-  f8:  ['3-3-1', '2-3-2', '3-2-2', '4-2-1'],
-  f7:  ['2-3-1', '3-2-1', '2-2-2', '3-3-0'],
+  f11:    ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-3-2-1', '3-4-3'],
+  f8:     ['3-3-1', '2-3-2', '3-2-2', '4-2-1'],
+  f7:     ['2-3-1', '3-2-1', '2-2-2', '3-3-0'],
+  futsal: ['1-2-1', '2-2', '3-1', '4-0'],
 });
 
 export function getFormatInfo(fieldType = 'full') {
   const norm = String(fieldType || '').toLowerCase();
+  if (norm === 'futsal' || norm.includes('sala')) {
+    return { format: 'futsal', count: 5, defaultFormation: '1-2-1', formations: FORMATIONS_BY_FORMAT.futsal };
+  }
   if (norm === 'f7' || norm.includes('7')) {
     return { format: 'f7', count: 7, defaultFormation: '2-3-1', formations: FORMATIONS_BY_FORMAT.f7 };
   }

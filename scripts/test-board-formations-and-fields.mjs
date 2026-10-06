@@ -16,7 +16,12 @@ console.log('MÍSTER 11 — TEST DE FORMACIONES, CAMPOS Y NO-DUPLICADOS');
 console.log('==============================================================================');
 
 // 1. Validar getFormatInfo
-console.log('▶ [1/5] Verificando getFormatInfo para F7, F8 y F11...');
+console.log('▶ [1/6] Verificando getFormatInfo para Futsal, F7, F8 y F11...');
+const futsalInfo = getFormatInfo('futsal');
+assert.strictEqual(futsalInfo.count, 5, 'Futsal debe tener count 5');
+assert.strictEqual(futsalInfo.defaultFormation, '1-2-1', 'Futsal default debe ser 1-2-1');
+assert.deepStrictEqual(futsalInfo.formations, ['1-2-1', '2-2', '3-1', '4-0']);
+
 const f7Info = getFormatInfo('f7');
 assert.strictEqual(f7Info.count, 7, 'F7 debe tener count 7');
 assert.strictEqual(f7Info.defaultFormation, '2-3-1', 'F7 default debe ser 2-3-1');
@@ -30,7 +35,7 @@ assert.deepStrictEqual(f8Info.formations, ['3-3-1', '2-3-2', '3-2-2', '4-2-1']);
 const f11Info = getFormatInfo('full');
 assert.strictEqual(f11Info.count, 11, 'F11 debe tener count 11');
 assert.strictEqual(f11Info.defaultFormation, '4-3-3', 'F11 default debe ser 4-3-3');
-console.log('  ✅ getFormatInfo devuelve recuentos y formaciones exactas para F7, F8 y F11');
+console.log('  ✅ getFormatInfo devuelve recuentos y formaciones exactas para Futsal, F7, F8 y F11');
 
 // 2. Validar que cada formación F7 tiene exactamente 7 posiciones
 console.log('▶ [2/5] Verificando que cada formación F7 tiene exactamente 7 piezas...');
@@ -105,8 +110,8 @@ simularAplicarFormacion('rival', '4-3-3', 'full');
 assert.strictEqual(canvasObjects.length, 22, 'Local (11) + Rival (11) tras actualizar rival = 22');
 console.log('  ✅ Deduplicación estricta confirmada: aplicarFormacion nunca acumula clones');
 
-// 5. Cambio de formato a F7 y F8
-console.log('▶ [5/5] Simulando cambio a F7 y F8...');
+// 5. Cambio de formato a F7, F8 y Fútbol Sala
+console.log('▶ [5/6] Simulando cambio a F7, F8 y Fútbol Sala...');
 // Cambio a F7:
 simularAplicarFormacion('local', '2-3-1', 'f7');
 simularAplicarFormacion('rival', '2-3-1', 'f7');
@@ -120,8 +125,25 @@ simularAplicarFormacion('rival', '3-3-1', 'f8');
 assert.strictEqual(canvasObjects.filter(o => o.data?.playerType === 'local').length, 8, 'En F8 local debe tener 8');
 assert.strictEqual(canvasObjects.filter(o => o.data?.playerType === 'rival').length, 8, 'En F8 rival debe tener 8');
 assert.strictEqual(canvasObjects.length, 16, 'Total F8 local + rival = 16');
-console.log('  ✅ Formatos F7 y F8 reorganizan y reducen el número de jugadores al conteo reglamentario');
+
+// Cambio a Fútbol Sala (Futsal):
+simularAplicarFormacion('local', '1-2-1', 'futsal');
+simularAplicarFormacion('rival', '1-2-1', 'futsal');
+assert.strictEqual(canvasObjects.filter(o => o.data?.playerType === 'local').length, 5, 'En Futsal local debe tener 5');
+assert.strictEqual(canvasObjects.filter(o => o.data?.playerType === 'rival').length, 5, 'En Futsal rival debe tener 5');
+assert.strictEqual(canvasObjects.length, 10, 'Total Futsal local + rival = 10');
+console.log('  ✅ Formatos F7, F8 y Futsal reorganizan y reducen el número de jugadores al conteo reglamentario (7, 8 y 5)');
+
+// 6. Validar que cada formación de Futsal tiene exactamente 5 piezas
+console.log('▶ [6/6] Verificando que cada formación de Fútbol Sala tiene exactamente 5 piezas...');
+FORMATIONS_BY_FORMAT.futsal.forEach(form => {
+  const positions = FORMATIONS[form];
+  assert(Array.isArray(positions), `Formación ${form} debe existir en FORMATIONS`);
+  assert.strictEqual(positions.length, 5, `Formación Futsal ${form} debe tener 5 posiciones, tiene ${positions.length}`);
+  assert.strictEqual(positions[0].pos, 'PO', `La primera posición de ${form} debe ser PO (portero)`);
+});
+console.log('  ✅ Todas las formaciones de Fútbol Sala tienen exactamente 5 piezas y portero');
 
 console.log('==============================================================================');
-console.log('🎉 [PASS] 5/5 VERIFICACIONES DE FORMACIONES Y CAMPOS EXITOSAS');
+console.log('🎉 [PASS] 6/6 VERIFICACIONES DE FORMACIONES Y CAMPOS EXITOSAS');
 console.log('==============================================================================');

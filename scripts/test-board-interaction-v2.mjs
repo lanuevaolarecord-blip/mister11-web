@@ -83,7 +83,7 @@ test('Ventanas declaradas para todos los fieldType del prompt', () => {
 
 // ── FRENTE I — FORMAT (fixture Picture 15) ──────────────────────────────────
 console.log('\n▶ [FRENTE I] Formato -> nº jugadores y catálogo de formaciones');
-const expected = { f11: 11, f8: 8, f7: 7 };
+const expected = { f11: 11, f8: 8, f7: 7, futsal: 5 };
 Object.entries(FORMATIONS_BY_FORMAT).forEach(([fmt, list]) => test(`${fmt}: todas las formaciones del dropdown tienen exactamente ${expected[fmt]} piezas`, () => {
   assert.ok(list.length >= 4);
   list.forEach(f => assert.strictEqual(FORMATIONS[f].length, expected[fmt], `${f}`));
@@ -92,9 +92,9 @@ test('Picture 15: Fútbol 7 NO ofrece 4-3-3 y APLICAR 2-3-1 da 7 piezas', () => 
   assert.ok(!FORMATIONS_BY_FORMAT.f7.includes('4-3-3'));
   assert.strictEqual(FORMATIONS['2-3-1'].length, 7);
 });
-test('Formatos disjuntos (ninguna formación de 11 aparece en f7/f8)', () => {
+test('Formatos disjuntos (ninguna formación de 11 aparece en f7/f8/futsal)', () => {
   FORMATIONS_BY_FORMAT.f11.forEach(f => {
-    assert.ok(!FORMATIONS_BY_FORMAT.f7.includes(f) && !FORMATIONS_BY_FORMAT.f8.includes(f));
+    assert.ok(!FORMATIONS_BY_FORMAT.f7.includes(f) && !FORMATIONS_BY_FORMAT.f8.includes(f) && (!FORMATIONS_BY_FORMAT.futsal || !FORMATIONS_BY_FORMAT.futsal.includes(f)));
   });
 });
 test('Cambio f11 -> f7 con remoción por categoría: 7 jugadores, cero restos de 11', () => {

@@ -69,7 +69,10 @@ const SavedPlaysPanel = ({
   showRival,
   setShowRival,
   deleteSelected,
-  fieldType = 'full'
+  fieldType = 'full',
+  localCount,
+  rivalCount,
+  jokerCount
 }) => {
   const { t } = useTranslation();
   const formatInfo = getFormatInfo(fieldType);
@@ -81,7 +84,7 @@ const SavedPlaysPanel = ({
         <TeamCard 
           color={localColor} 
           name={t('board.teams.local')} 
-          count={formatInfo.count}
+          count={localCount !== undefined ? localCount : formatInfo.count}
           availableFormations={formatInfo.formations}
           onAdd={() => addManualPlayer('local')} 
           onColorChange={setLocalColor}
@@ -93,7 +96,7 @@ const SavedPlaysPanel = ({
         <TeamCard 
           color={rivalColor} 
           name={t('board.teams.rival')} 
-          count={formatInfo.count}
+          count={rivalCount !== undefined ? rivalCount : (showRival ? formatInfo.count : 0)}
           availableFormations={formatInfo.formations}
           onAdd={() => addManualPlayer('rival')} 
           onColorChange={setRivalColor}
@@ -105,7 +108,7 @@ const SavedPlaysPanel = ({
         <TeamCard 
           color={jokerColor} 
           name={t('board.teams.wildcard')} 
-          count={0} 
+          count={jokerCount !== undefined ? jokerCount : 0} 
           onAdd={() => addManualPlayer('joker')} 
           onColorChange={setJokerColor}
         />

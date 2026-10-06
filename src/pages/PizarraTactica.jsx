@@ -613,6 +613,14 @@ const PizarraTactica = () => {
   const [exportResult,   setExportResult]   = useState(null);
   const fileImportInputRef = useRef(null);
 
+  const [playerCountsRevision, setPlayerCountsRevision] = useState(0);
+
+  const getPlayerCount = useCallback((type) => {
+    const fc = fcRef.current;
+    if (!fc) return undefined;
+    return fc.getObjects().filter(o => (o.isPlayerPiece || o.data?.type === 'player' || o.data?.tipo === 'jugador') && o.data?.playerType === type).length;
+  }, [playerCountsRevision]);
+
   const autoExport = new URLSearchParams(location.search).get('autoExport');
   const [autoExportTriggered, setAutoExportTriggered] = useState(false);
 
@@ -1228,6 +1236,20 @@ const PizarraTactica = () => {
     const bounds = fr.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
+    if (teamType === 'rival' && !showRival) {
+      setShowRival(true);
+    }
+
+    // Limpiar únicamente jugadores existentes de este equipo antes de aplicar la formación para evitar duplicados
+    const currentObjects = [...fc.getObjects()];
+    currentObjects.forEach(obj => {
+      const isPlayer = obj.isPlayerPiece || obj.data?.type === 'player' || obj.data?.tipo === 'jugador';
+      const objTeam = obj.data?.playerType || (obj.id?.startsWith('player_local') ? 'local' : obj.id?.startsWith('player_rival') ? 'rival' : (obj.id?.startsWith('player_joker') ? 'joker' : null));
+      if (isPlayer && objTeam === teamType) {
+        fc.remove(obj);
+      }
+    });
+
     const playerRadius = RADIO_JUGADOR;
     const formatInfo = getFormatInfo(fieldType);
     const targetFormation = (formationName && formatInfo.formations.includes(formationName)) ? formationName : formatInfo.defaultFormation;
@@ -1289,6 +1311,7 @@ const PizarraTactica = () => {
     fc.renderAll();
     saveFrameState();
     pushToHistory();
+    setPlayerCountsRevision(c => c + 1);
     
     // PERSISTENCIA INMEDIATA TRAS APLICAR FORMACIÓN
     const frameState = serializarFrame();
@@ -1298,7 +1321,7 @@ const PizarraTactica = () => {
       guardarEstado(planId, frameState);
       try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
     }
-  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, normalizarTamañoJugadores]);
+  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, normalizarTamañoJugadores, showRival]);
 
   // ─── Handlers de sincronización y eventos del canvas ──────────────────────
   const autoguardarEstado = useCallback(async () => {
@@ -1379,6 +1402,7 @@ const PizarraTactica = () => {
       try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
     }
     debouncedSaveEstado();
+    setPlayerCountsRevision(c => c + 1);
   }, [ensurePlayersOnTop, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, debouncedSaveEstado]);
 
   const onPathCreated = useCallback((opt) => {
@@ -1949,7 +1973,7 @@ const PizarraTactica = () => {
 
   // ─── Auto-redibujar y Guardar al cambiar formación ──────────────────────────
 
-  // ─── Field type change (FRENTE H: O1 Remapeo Proporcional por Ventana Normalizada) ──
+  // ─── Field type change (Reorganización limpia por formato y ventana) ──
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
@@ -1963,11 +1987,27 @@ const PizarraTactica = () => {
     }
     fr.draw(newLibType);
 
-    // 2. Re-proyectar TODAS las piezas tácticas según la ventana normalizada (O1)
-    syncingR.current = true;
-    const pieces = fc.getObjects().filter(o => !isFieldLayer(o));
+    // 2. Verificar formato y actualizar formaciones si la actual no pertenece al nuevo formato
+    const formatInfo = getFormatInfo(fieldType);
+    let targetLocal = localFormation;
+    if (!formatInfo.formations.includes(localFormation)) {
+      targetLocal = formatInfo.defaultFormation;
+      setLocalFormationState(targetLocal);
+    }
+    let targetRival = rivalFormation;
+    if (!formatInfo.formations.includes(rivalFormation)) {
+      targetRival = formatInfo.defaultFormation;
+      setRivalFormationState(targetRival);
+    }
 
-    pieces.forEach(obj => {
+    // 3. Re-proyectar únicamente piezas NO-jugador (conos, balones, porterías, líneas)
+    // para que permanezcan visibles dentro del campo redefinido
+    syncingR.current = true;
+    const nonPlayerPieces = fc.getObjects().filter(o => 
+      !isFieldLayer(o) && !o.isPlayerPiece && o.data?.type !== 'player' && o.data?.tipo !== 'jugador'
+    );
+
+    nonPlayerPieces.forEach(obj => {
       let curRelX = obj.data?.xRel;
       let curRelY = obj.data?.yRel;
 
@@ -1977,7 +2017,6 @@ const PizarraTactica = () => {
         curRelY = rel.ry;
       }
 
-      // O1: Remapeo proporcional a la nueva ventana con clamp de seguridad
       const remapped = remapCoordinatesByWindow(curRelX, curRelY, oldLibType, newLibType);
       const pt = fr.getCanvasPoint(remapped.x, remapped.y);
 
@@ -1994,11 +2033,19 @@ const PizarraTactica = () => {
       obj.setCoords();
     });
 
+    // 4. Reorganizar a los jugadores según el nuevo tipo de campo y formato
+    // - En F7: exactamente 7 jugadores con formación F7
+    // - En F8: exactamente 8 jugadores con formación F8
+    // - En F11: 11 jugadores
+    // - En medio campo / tercio: distribuidos en el área visible sin perderse ni apiñarse
+    drawPlayers(fc, fr, fieldType, { local: targetLocal, rival: targetRival }, isSwapped);
+
     syncingR.current = false;
     fc.renderAll();
     ensurePlayersOnTop();
     saveFrameState();
     pushToHistory();
+    setPlayerCountsRevision(c => c + 1);
   }, [fieldType]); // eslint-disable-line
 
   const lastSwappedR = useRef(isSwapped);
@@ -2025,20 +2072,23 @@ const PizarraTactica = () => {
     lastShowRivalR.current = showRival;
 
     if (showRival) {
-      const hasRivals = fc.getObjects().some(obj => obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival');
+      const hasRivals = fc.getObjects().some(obj => (obj.isPlayerPiece || obj.data?.type === 'player' || obj.data?.tipo === 'jugador') && obj.data?.playerType === 'rival');
       if (!hasRivals) {
         aplicarFormacion('rival', rivalFormation);
       }
     } else {
       const objects = [...fc.getObjects()];
       objects.forEach(obj => {
-        if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival') {
+        const isPlayer = obj.isPlayerPiece || obj.data?.type === 'player' || obj.data?.tipo === 'jugador';
+        const objTeam = obj.data?.playerType || (obj.id?.startsWith('player_rival') ? 'rival' : null);
+        if (isPlayer && objTeam === 'rival') {
           fc.remove(obj);
         }
       });
       fc.renderAll();
       saveFrameState();
       pushToHistory();
+      setPlayerCountsRevision(c => c + 1);
     }
   }, [showRival, ready, rivalFormation, aplicarFormacion]);
 
@@ -2883,14 +2933,19 @@ const PizarraTactica = () => {
     if (!fc) return;
     
     let color = localColor;
-    if (type === 'rival') color = rivalColor;
+    if (type === 'rival') {
+      color = rivalColor;
+      if (!showRival) setShowRival(true);
+    }
     if (type === 'joker') color = jokerColor;
 
-    const existing = fc.getObjects().filter(o => o.data?.playerType === type);
+    const existing = fc.getObjects().filter(o => (o.isPlayerPiece || o.data?.type === 'player' || o.data?.tipo === 'jugador') && o.data?.playerType === type);
     const label = String(existing.length + 1);
 
     const center = fc.getCenter();
-    const player = createPlayer(center.left, center.top, { 
+    const offsetX = ((existing.length % 5) - 2) * 26;
+    const offsetY = Math.floor(existing.length / 5) * 28;
+    const player = createPlayer(center.left + offsetX, center.top + offsetY, { 
       color, 
       label, 
       type, 
@@ -2902,6 +2957,7 @@ const PizarraTactica = () => {
     fc.setActiveObject(player);
     fc.renderAll();
     saveFrameState();
+    setPlayerCountsRevision(c => c + 1);
   };
 
   const deleteSelected = () => {
@@ -2912,6 +2968,7 @@ const PizarraTactica = () => {
       fc.remove(active);
       fc.renderAll();
       saveFrameState();
+      setPlayerCountsRevision(c => c + 1);
     }
   };
 
@@ -2934,6 +2991,9 @@ const PizarraTactica = () => {
       setShowRival={setShowRival}
       deleteSelected={deleteSelected}
       fieldType={fieldType}
+      localCount={getPlayerCount('local')}
+      rivalCount={getPlayerCount('rival')}
+      jokerCount={getPlayerCount('joker')}
     />
   );
 

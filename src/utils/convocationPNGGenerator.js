@@ -24,7 +24,7 @@ import {
   drawPlayerRow,
   drawCoachFooter,
   exportCanvasToPNG
-} from './canvasRenderer';
+} from './canvasRenderer.js';
 
 /**
  * Normaliza y clasifica la posición de un jugador en 4 grupos canónicos
@@ -35,16 +35,16 @@ export const classifyPosition = (pos = '') => {
     return 'GK';
   }
   if ([
-    'DEF', 'DF', 'CB', 'LB', 'RB', 'LTD', 'LTI', 'LD', 'LI', 'CAD', 'CAI', 'LWB', 'RWB',
-    'DEFENSA', 'CENTRAL', 'LATERAL', 'CEN', 'LAT', 'DEFENDER'
-  ].some(k => p === k || p.includes(k))) {
-    return 'DEF';
-  }
-  if ([
     'MED', 'MC', 'MCD', 'MCO', 'MI', 'MD', 'MID',
-    'CENTROCAMPISTA', 'MEDIOCAMPISTA', 'VOL', 'VOLANTE', 'PIVOTE', 'INTERIOR', 'MIDFIELDER'
+    'MEDIOCENTRO', 'CENTROCAMPISTA', 'MEDIOCAMPISTA', 'VOL', 'VOLANTE', 'PIVOTE', 'INTERIOR', 'MIDFIELDER'
   ].some(k => p === k || p.includes(k))) {
     return 'MID';
+  }
+  if ([
+    'DEF', 'DF', 'CB', 'LB', 'RB', 'LTD', 'LTI', 'LD', 'LI', 'CAD', 'CAI', 'LWB', 'RWB',
+    'DEFENSA', 'CENTRAL', 'LATERAL', 'DEFENDER'
+  ].some(k => p === k || p.includes(k)) || p === 'CEN' || p === 'LAT') {
+    return 'DEF';
   }
   return 'FWD'; // Por defecto o DEL / DC / EXT / ED / EI / FORWARD / DELANTERO
 };
@@ -173,20 +173,20 @@ export const generateConvocationPNG = async ({
   ctx.restore();
 
   // 4. Bloque de Datos del Partido (chips con iconos Lucide vectoriales)
-  const matchInfoY = headerTopY + crestSize + 30;
-  const matchInfoH = 80;
+  const matchInfoY = headerTopY + crestSize + 26;
+  const matchInfoH = 92;
 
   ctx.save();
   // Caja contenedora de info con fondo oscuro elegante
   ctx.fillStyle = PALETTE.DARK_PANEL;
   ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.roundRect(60, matchInfoY, width - 120, matchInfoH, 12);
+    ctx.roundRect(60, matchInfoY, width - 120, matchInfoH, 14);
   } else {
     ctx.rect(60, matchInfoY, width - 120, matchInfoH);
   }
   ctx.fill();
-  ctx.strokeStyle = 'rgba(212, 168, 67, 0.35)';
+  ctx.strokeStyle = 'rgba(212, 168, 67, 0.4)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
@@ -205,44 +205,45 @@ export const generateConvocationPNG = async ({
   ctx.textBaseline = 'middle';
   ctx.fillStyle = PALETTE.ORO;
   ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
-  ctx.fillText('PARTIDO', c1X, itemY - 14);
+  ctx.fillText('PARTIDO', c1X, itemY - 15);
   ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '700 17px system-ui, -apple-system, sans-serif';
-  ctx.fillText(`VS ${opponentName.toUpperCase()}`, c1X, itemY + 14);
+  ctx.font = '700 18px system-ui, -apple-system, sans-serif';
+  const rivalTruncated = opponentName.length > 16 ? opponentName.slice(0, 14) + '...' : opponentName;
+  ctx.fillText(`VS ${rivalTruncated.toUpperCase()}`, c1X, itemY + 15);
 
   // Chip 2: Fecha (Icono Calendar)
   const c2X = 60 + colWidth * 1.5;
-  drawLucideIcon(ctx, 'Calendar', c2X - 60, itemY - 10, 20, PALETTE.ORO);
+  drawLucideIcon(ctx, 'Calendar', c2X - 65, itemY - 12, 24, PALETTE.ORO);
   ctx.textAlign = 'left';
   ctx.fillStyle = PALETTE.MUTED;
-  ctx.font = '600 13px system-ui, -apple-system, sans-serif';
-  ctx.fillText('FECHA', c2X - 32, itemY - 12);
+  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+  ctx.fillText('FECHA', c2X - 34, itemY - 14);
   ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '700 16px system-ui, -apple-system, sans-serif';
-  ctx.fillText(matchDate, c2X - 32, itemY + 12);
+  ctx.font = '700 17px system-ui, -apple-system, sans-serif';
+  ctx.fillText(matchDate, c2X - 34, itemY + 14);
 
   // Chip 3: Hora Partido + Convocatoria (-1h) (Icono Clock)
   const c3X = 60 + colWidth * 2.5;
-  drawLucideIcon(ctx, 'Clock', c3X - 70, itemY - 10, 20, PALETTE.ORO);
+  drawLucideIcon(ctx, 'Clock', c3X - 75, itemY - 12, 24, PALETTE.ORO);
   ctx.textAlign = 'left';
   ctx.fillStyle = PALETTE.MUTED;
-  ctx.font = '600 13px system-ui, -apple-system, sans-serif';
-  ctx.fillText(`CONV. ${callTime} (-1H)`, c3X - 42, itemY - 12);
+  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+  ctx.fillText(`CONV. ${callTime} (-1H)`, c3X - 44, itemY - 14);
   ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '700 16px system-ui, -apple-system, sans-serif';
-  ctx.fillText(`INICIO: ${matchTime}`, c3X - 42, itemY + 12);
+  ctx.font = '700 17px system-ui, -apple-system, sans-serif';
+  ctx.fillText(`INICIO: ${matchTime}`, c3X - 44, itemY + 14);
 
   // Chip 4: Lugar (Icono MapPin)
   const c4X = 60 + colWidth * 3.5;
-  drawLucideIcon(ctx, 'MapPin', c4X - 65, itemY - 10, 20, PALETTE.ORO);
+  drawLucideIcon(ctx, 'MapPin', c4X - 70, itemY - 12, 24, PALETTE.ORO);
   ctx.textAlign = 'left';
   ctx.fillStyle = PALETTE.MUTED;
-  ctx.font = '600 13px system-ui, -apple-system, sans-serif';
-  ctx.fillText('LUGAR', c4X - 38, itemY - 12);
+  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+  ctx.fillText('LUGAR', c4X - 40, itemY - 14);
   ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '700 15px system-ui, -apple-system, sans-serif';
+  ctx.font = '700 16px system-ui, -apple-system, sans-serif';
   const locTruncated = matchLocation.length > 18 ? matchLocation.slice(0, 16) + '...' : matchLocation;
-  ctx.fillText(locTruncated, c4X - 38, itemY + 12);
+  ctx.fillText(locTruncated, c4X - 40, itemY + 14);
 
   ctx.restore();
 
@@ -262,7 +263,7 @@ export const generateConvocationPNG = async ({
     FWD: playersWithImgs.filter(p => p.cat === 'FWD').sort((a, b) => a.dorsalNum - b.dorsalNum)
   };
 
-  // 6. Renderizar las 4 secciones por posición
+  // 6. Renderizar las 4 secciones por posición con ocupación armónica de espacio
   const categories = [
     { key: 'GK', es: 'Porteros', en: 'Goalkeepers', list: groups.GK, isGk: true },
     { key: 'DEF', es: 'Defensas', en: 'Defenders', list: groups.DEF, isGk: false },
@@ -270,27 +271,59 @@ export const generateConvocationPNG = async ({
     { key: 'FWD', es: 'Delanteros', en: 'Forwards', list: groups.FWD, isGk: false }
   ];
 
-  let currentY = matchInfoY + matchInfoH + 36;
+  const colCount = 2; // Grid de 2 columnas
   const sectionMarginX = 60;
   const sectionWidth = width - 120;
-  const rowHeight = 48;
-  const colGap = 20;
-  const colCount = 2; // Grid de 2 columnas como en la referencia 2
+  const colGap = 24;
   const itemWidth = (sectionWidth - colGap) / colCount;
+
+  // Cálculo dinámico de ocupación vertical para llenar el espacio sin huecos vacíos
+  const startY = matchInfoY + matchInfoH + 30;
+  const footerY = height - 130;
+  const totalAvailHeight = footerY - startY;
+
+  // Calcular total de filas requeridas
+  let totalGridRows = 0;
+  for (const cat of categories) {
+    const rows = cat.list.length === 0 ? 1 : Math.ceil(cat.list.length / colCount);
+    totalGridRows += rows;
+  }
+
+  // Dimensiones dinámicas adaptables
+  const headerHeight = 44;
+  const totalHeadersHeight = categories.length * headerHeight;
+  const remainingForRowsAndGaps = totalAvailHeight - totalHeadersHeight;
+
+  // Calcular altura de fila y espacios entre categorías para ocupar el 100% de la altura
+  let rowHeight = 64;
+  let rowGap = 12;
+  let categoryGap = 28;
+
+  if (totalGridRows > 0) {
+    // Si hay pocas filas (ej: 8-10), aumentamos la altura de tarjeta y gaps para llenar todo
+    const targetRowHeight = Math.floor((remainingForRowsAndGaps - (categories.length * 28)) / totalGridRows);
+    rowHeight = Math.max(56, Math.min(78, targetRowHeight));
+    const usedRowsHeight = totalGridRows * rowHeight;
+    const remainingForGaps = Math.max(0, remainingForRowsAndGaps - usedRowsHeight);
+    categoryGap = Math.max(16, Math.min(42, Math.floor(remainingForGaps / (categories.length + 1))));
+    rowGap = Math.max(8, Math.min(14, Math.floor(categoryGap * 0.35)));
+  }
+
+  let currentY = startY;
 
   for (const cat of categories) {
     // Dibujar encabezado bilingüe en Oro
-    drawPositionHeader(ctx, cat.es, cat.en, sectionMarginX, currentY, sectionWidth);
-    currentY += 44;
+    drawPositionHeader(ctx, cat.es, cat.en, sectionMarginX, currentY, sectionWidth, headerHeight);
+    currentY += headerHeight + 12;
 
     if (cat.list.length === 0) {
-      // Mensaje sutil si no hay jugadores en esa línea
+      // Mensaje si no hay convocados en esta posición
       ctx.save();
-      ctx.fillStyle = 'rgba(245, 240, 232, 0.35)';
-      ctx.font = 'italic 16px system-ui, -apple-system, sans-serif';
-      ctx.fillText(isEn ? 'No players selected in this position' : 'Sin convocados en esta posición', sectionMarginX + 16, currentY + 16);
+      ctx.fillStyle = 'rgba(245, 240, 232, 0.4)';
+      ctx.font = 'italic 18px system-ui, -apple-system, sans-serif';
+      ctx.fillText(isEn ? 'No players selected in this position' : 'Sin convocados en esta posición', sectionMarginX + 16, currentY + 20);
       ctx.restore();
-      currentY += 32;
+      currentY += 36 + categoryGap;
       continue;
     }
 
@@ -301,17 +334,16 @@ export const generateConvocationPNG = async ({
       const rowIndex = Math.floor(i / colCount);
 
       const px = sectionMarginX + colIndex * (itemWidth + colGap);
-      const py = currentY + rowIndex * (rowHeight + 10);
+      const py = currentY + rowIndex * (rowHeight + rowGap);
 
       drawPlayerRow(ctx, p, p.loadedImg, px, py, itemWidth, rowHeight, cat.isGk);
     }
 
     const rowsCount = Math.ceil(cat.list.length / colCount);
-    currentY += rowsCount * (rowHeight + 10) + 24;
+    currentY += rowsCount * (rowHeight + rowGap) + categoryGap;
   }
 
   // 7. Pie con Cuerpo Técnico y Branding Oficial Míster11
-  const footerY = height - 105;
   const staffToDraw = (selectedStaff && selectedStaff.length > 0) ? selectedStaff : coachName;
   drawCoachFooter(ctx, staffToDraw, width, footerY, lang);
 

@@ -5,7 +5,7 @@
  * Cero emojis: renderizado vectorial nativo de glifos e iconos Lucide.
  */
 
-import { imageUrlToBase64 } from './pdfTheme';
+import { imageUrlToBase64 } from './pdfTheme.js';
 
 // Paleta oficial
 export const PALETTE = {
@@ -412,32 +412,32 @@ export const drawPlayerPhoto = (ctx, img, x, y, size, name = 'J') => {
 /**
  * Encabezado bilingüe de sección de posición en Oro
  */
-export const drawPositionHeader = (ctx, textEs, textEn, x, y, width) => {
+export const drawPositionHeader = (ctx, textEs, textEn, x, y, width, customHeight = 44) => {
   ctx.save();
-  // Fondo de cinta estilizada
-  const h = 34;
+  // Fondo de cinta estilizada con degradado
+  const h = customHeight;
   const grad = ctx.createLinearGradient(x, y, x + width, y);
-  grad.addColorStop(0, 'rgba(212, 168, 67, 0.22)');
-  grad.addColorStop(0.5, 'rgba(212, 168, 67, 0.08)');
-  grad.addColorStop(1, 'rgba(212, 168, 67, 0)');
+  grad.addColorStop(0, 'rgba(212, 168, 67, 0.28)');
+  grad.addColorStop(0.4, 'rgba(212, 168, 67, 0.12)');
+  grad.addColorStop(1, 'rgba(212, 168, 67, 0.02)');
   ctx.fillStyle = grad;
   ctx.fillRect(x, y, width, h);
 
-  // Línea acento lateral Oro
+  // Línea acento lateral Oro institucional
   ctx.fillStyle = PALETTE.ORO;
-  ctx.fillRect(x, y, 5, h);
+  ctx.fillRect(x, y, 6, h);
 
-  // Texto bilingüe: ES / EN
+  // Texto bilingüe: ES / EN en alta visibilidad
   ctx.fillStyle = PALETTE.ORO;
-  ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(textEs.toUpperCase(), x + 16, y + h / 2);
+  ctx.fillText(textEs.toUpperCase(), x + 18, y + h / 2);
 
   const esWidth = ctx.measureText(textEs.toUpperCase()).width;
-  ctx.fillStyle = 'rgba(245, 240, 232, 0.65)';
-  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
-  ctx.fillText(`/  ${textEn.toUpperCase()}`, x + 16 + esWidth + 8, y + h / 2);
+  ctx.fillStyle = 'rgba(245, 240, 232, 0.75)';
+  ctx.font = '700 16px system-ui, -apple-system, sans-serif';
+  ctx.fillText(`/  ${textEn.toUpperCase()}`, x + 18 + esWidth + 10, y + h / 2);
 
   ctx.restore();
 };
@@ -448,50 +448,65 @@ export const drawPositionHeader = (ctx, textEs, textEn, x, y, width) => {
 export const drawPlayerRow = (ctx, player, img, x, y, width, height, isGk = false) => {
   ctx.save();
 
-  // Fondo sutil para tarjeta de jugador
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  // Fondo estilizado para tarjeta de jugador (sutil gradiente con relieve)
+  const cardGrad = ctx.createLinearGradient(x, y, x + width, y + height);
+  cardGrad.addColorStop(0, 'rgba(255, 255, 255, 0.07)');
+  cardGrad.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+  ctx.fillStyle = cardGrad;
+  
   ctx.beginPath();
   if (ctx.roundRect) {
-    ctx.roundRect(x, y, width, height, 6);
+    ctx.roundRect(x, y, width, height, 10);
   } else {
     ctx.rect(x, y, width, height);
   }
   ctx.fill();
 
-  // Borde muy sutil
-  ctx.strokeStyle = 'rgba(76, 175, 125, 0.2)';
-  ctx.lineWidth = 1;
+  // Borde verde campo
+  ctx.strokeStyle = isGk ? 'rgba(212, 168, 67, 0.4)' : 'rgba(76, 175, 125, 0.35)';
+  ctx.lineWidth = 1.2;
   ctx.stroke();
 
   // Avatar circular
-  const avatarSize = height - 12;
-  const avatarX = x + 8;
-  const avatarY = y + 6;
+  const avatarSize = height - 14;
+  const avatarX = x + 10;
+  const avatarY = y + 7;
   drawPlayerPhoto(ctx, img, avatarX, avatarY, avatarSize, player.name || player.nombre);
 
   // Dorsal destacado en Verde Campo u Oro
   const dorsal = player.number !== undefined && player.number !== null ? String(player.number) : (player.dorsal ? String(player.dorsal) : '-');
-  const dorsalX = avatarX + avatarSize + 12;
+  const dorsalX = avatarX + avatarSize + 14;
   const centerY = y + height / 2;
 
   ctx.fillStyle = isGk ? PALETTE.ORO : PALETTE.CAMPO_LIGHT;
-  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+  ctx.font = '900 26px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText(dorsal, dorsalX, centerY);
 
   // Distintivo de portero si aplica
-  let nameOffset = dorsalX + 34;
+  let nameOffset = dorsalX + (dorsal.length > 1 ? 40 : 32);
   if (isGk) {
-    drawLucideIcon(ctx, 'Goal', nameOffset, centerY - 8, 16, PALETTE.ORO);
-    nameOffset += 22;
+    drawLucideIcon(ctx, 'Goal', nameOffset, centerY - 10, 20, PALETTE.ORO);
+    nameOffset += 26;
   }
 
-  // Nombre del jugador
+  // Nombre del jugador en alta legibilidad
   const fullName = (player.name || player.nombre || '').trim();
   ctx.fillStyle = PALETTE.BLANCO;
-  ctx.font = '600 19px system-ui, -apple-system, sans-serif';
-  ctx.fillText(fullName, nameOffset, centerY);
+  ctx.font = '700 23px system-ui, -apple-system, sans-serif';
+  
+  // Truncar con elipsis si excede el ancho de tarjeta disponible
+  const maxTextWidth = (x + width) - nameOffset - 16;
+  let renderName = fullName;
+  if (ctx.measureText(renderName).width > maxTextWidth) {
+    while (renderName.length > 3 && ctx.measureText(renderName + '...').width > maxTextWidth) {
+      renderName = renderName.slice(0, -1);
+    }
+    renderName += '...';
+  }
+  
+  ctx.fillText(renderName, nameOffset, centerY);
 
   ctx.restore();
 };
@@ -502,11 +517,11 @@ export const drawPlayerRow = (ctx, player, img, x, y, width, height, isGk = fals
 export const drawCoachFooter = (ctx, coachOrStaff, width, y, lang = 'es') => {
   ctx.save();
   // Línea divisoria en Oro
-  ctx.strokeStyle = 'rgba(212, 168, 67, 0.35)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(212, 168, 67, 0.45)';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(48, y);
-  ctx.lineTo(width - 48, y);
+  ctx.moveTo(50, y);
+  ctx.lineTo(width - 50, y);
   ctx.stroke();
 
   const isEn = lang === 'en' || lang === 'English (EN)';
@@ -527,12 +542,12 @@ export const drawCoachFooter = (ctx, coachOrStaff, width, y, lang = 'es') => {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = PALETTE.ORO;
-  ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
-  ctx.fillText('MÍSTER 11', width - 56, y + 26);
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+  ctx.fillText('MÍSTER 11', width - 60, y + 32);
 
-  ctx.fillStyle = 'rgba(245, 240, 232, 0.6)';
-  ctx.font = '500 13px system-ui, -apple-system, sans-serif';
-  ctx.fillText(isEn ? 'Generated with Míster11 · Official Field Palette' : 'Generado con Míster11 · Paleta Oficial Tierra y Campo', width - 56, y + 48);
+  ctx.fillStyle = 'rgba(245, 240, 232, 0.7)';
+  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+  ctx.fillText(isEn ? 'Official Field & Pitch Palette' : 'Paleta Oficial Tierra y Campo', width - 60, y + 56);
 
   // Renderizar Cuerpo Técnico a la izquierda
   ctx.textAlign = 'left';
@@ -544,44 +559,43 @@ export const drawCoachFooter = (ctx, coachOrStaff, width, y, lang = 'es') => {
     const name = (member.name || member.displayName || 'Míster').toUpperCase();
 
     ctx.fillStyle = PALETTE.ORO;
-    ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-    ctx.fillText(`${roleLabel}:`, 56, y + 36);
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`${roleLabel}:`, 60, y + 42);
 
     const roleWidth = ctx.measureText(`${roleLabel}:`).width;
     ctx.fillStyle = PALETTE.BLANCO;
-    ctx.font = '700 16px system-ui, -apple-system, sans-serif';
-    ctx.fillText(name, 56 + roleWidth + 10, y + 36);
+    ctx.font = '700 20px system-ui, -apple-system, sans-serif';
+    ctx.fillText(name, 60 + roleWidth + 12, y + 42);
   } else {
     // Título de bloque
     ctx.fillStyle = PALETTE.ORO_LIGHT;
-    ctx.font = '800 11px system-ui, -apple-system, sans-serif';
-    ctx.fillText(isEn ? 'COACHING STAFF / CUERPO TÉCNICO:' : 'CUERPO TÉCNICO CONVOCADO:', 56, y + 18);
+    ctx.font = '800 13px system-ui, -apple-system, sans-serif';
+    ctx.fillText(isEn ? 'COACHING STAFF / CUERPO TÉCNICO:' : 'CUERPO TÉCNICO CONVOCADO:', 60, y + 22);
 
     // Distribuir los técnicos en 1 o 2 líneas
     const maxCols = staffList.length > 2 ? 2 : staffList.length;
-    const colSpacing = 340;
+    const colSpacing = 360;
 
     staffList.slice(0, 4).forEach((member, idx) => {
       const col = idx % maxCols;
       const row = Math.floor(idx / maxCols);
 
-      const itemX = 56 + col * colSpacing;
-      const itemY = y + 38 + row * 24;
+      const itemX = 60 + col * colSpacing;
+      const itemY = y + 46 + row * 26;
 
       const roleLabel = (member.roleLabel || member.role || 'Staff').toUpperCase();
       const name = (member.name || member.displayName || '').toUpperCase();
 
       ctx.fillStyle = PALETTE.ORO;
-      ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
       const roleText = `${roleLabel}:`;
       ctx.fillText(roleText, itemX, itemY);
 
       const rW = ctx.measureText(roleText).width;
       ctx.fillStyle = PALETTE.BLANCO;
-      ctx.font = '700 13px system-ui, -apple-system, sans-serif';
-      // Truncar si el nombre es muy largo para evitar solapes
-      const displayName = name.length > 22 ? name.slice(0, 20) + '...' : name;
-      ctx.fillText(displayName, itemX + rW + 6, itemY);
+      ctx.font = '700 16px system-ui, -apple-system, sans-serif';
+      const displayName = name.length > 24 ? name.slice(0, 22) + '...' : name;
+      ctx.fillText(displayName, itemX + rW + 8, itemY);
     });
   }
 

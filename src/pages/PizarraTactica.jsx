@@ -1512,8 +1512,10 @@ const PizarraTactica = () => {
 
       const isFS = document.querySelector('.pizarra-fullscreen') !== null;
       if (isFS) {
-        anchoContenedor = Math.max(anchoContenedor - 180, 200);
-        altoContenedor = Math.max(altoContenedor - 32, 200);
+        const horizontalSafeInset = window.innerWidth <= 768 ? 160 : 260;
+        const verticalSafeInset = window.innerHeight <= 500 ? 40 : 80;
+        anchoContenedor = Math.max(anchoContenedor - horizontalSafeInset, 240);
+        altoContenedor = Math.max(altoContenedor - verticalSafeInset, 200);
       }
 
       const isMobileView = window.innerWidth < 768 || (window.innerWidth < 950 && window.innerHeight < 500);

@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { translations, getEffectiveLanguage, t as tFunction } from '../i18n/translations';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  translations,
+  getEffectiveLanguage,
+  t as tFunction,
+  LOCALES_REGISTRY,
+  getActiveLocales,
+  normalizeLocaleCode,
+  getLocaleMetadata
+} from '../i18n/translations';
 import { db } from '../firebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
@@ -9,49 +17,88 @@ const LanguageContext = createContext();
 export const LanguageProvider = ({ children }) => {
   const { user } = useAuth() || {};
 
+  // 1. UI Language (Carril A)
   const [language, setLanguageState] = useState(() => {
     try {
       const saved = localStorage.getItem('mister11_language') || localStorage.getItem('language');
-      if (saved && (saved === 'English (EN)' || saved === 'Español (ES)')) {
-        return saved;
+      if (saved) {
+        return getEffectiveLanguage(saved);
       }
     } catch (_) {}
     return getEffectiveLanguage();
   });
 
-  const setLanguage = useCallback((newLang) => {
-    const validLang = newLang === 'English (EN)' || newLang === 'en' ? 'English (EN)' : 'Español (ES)';
-    setLanguageState(validLang);
+  // 2. Clinical Content Language (Carril B)
+  const [clinicalLanguage, setClinicalLanguageState] = useState(() => {
     try {
-      localStorage.setItem('mister11_language', validLang);
-      localStorage.setItem('language', validLang);
-      window.dispatchEvent(new CustomEvent('m11-language-changed', { detail: validLang }));
+      const saved = localStorage.getItem('mister11_clinical_language');
+      if (saved) return saved;
+    } catch (_) {}
+    return 'auto'; // 'auto' sigue a language si está activo clínico, o hace fallback a ES/EN
+  });
+
+  // 3. Author Text Language (Carril C - Texto del míster)
+  const [authorLanguage, setAuthorLanguageState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mister11_author_language');
+      if (saved) return saved;
+    } catch (_) {}
+    return 'es'; // Por defecto los textos del creador están en español
+  });
+
+  const localeMeta = useMemo(() => {
+    return getLocaleMetadata(language);
+  }, [language]);
+
+  const setLanguage = useCallback((newLang) => {
+    const effLang = getEffectiveLanguage(newLang);
+    setLanguageState(effLang);
+    const meta = getLocaleMetadata(effLang);
+
+    try {
+      localStorage.setItem('mister11_language', effLang);
+      localStorage.setItem('language', effLang);
+      window.dispatchEvent(new CustomEvent('m11-language-changed', { detail: effLang }));
       if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.lang = validLang === 'English (EN)' ? 'en' : 'es';
-        document.documentElement.dir = 'ltr';
+        document.documentElement.lang = meta.code;
+        document.documentElement.dir = meta.dir || 'ltr';
       }
     } catch (_) {}
 
     // Persistencia en segundo plano en Firestore para el usuario activo
-    if (user?.uid) {
+    if (user?.uid && user.uid !== 'invitado-local') {
       try {
         const userRef = doc(db, 'users', user.uid);
-        updateDoc(userRef, { language: validLang }).catch(() => {});
+        updateDoc(userRef, { language: effLang }).catch(() => {});
       } catch (_) {}
     }
   }, [user?.uid]);
 
+  const setClinicalLanguage = useCallback((cLang) => {
+    setClinicalLanguageState(cLang);
+    try {
+      localStorage.setItem('mister11_clinical_language', cLang);
+    } catch (_) {}
+  }, []);
+
+  const setAuthorLanguage = useCallback((aLang) => {
+    setAuthorLanguageState(aLang);
+    try {
+      localStorage.setItem('mister11_author_language', aLang);
+    } catch (_) {}
+  }, []);
+
   useEffect(() => {
     try {
       if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.lang = language === 'English (EN)' ? 'en' : 'es';
-        document.documentElement.dir = 'ltr';
+        document.documentElement.lang = localeMeta.code;
+        document.documentElement.dir = localeMeta.dir || 'ltr';
       }
     } catch (_) {}
-  }, [language]);
+  }, [localeMeta]);
 
   const isEn = language === 'English (EN)';
-  const locale = isEn ? 'en-GB' : 'es-ES';
+  const locale = localeMeta.intl || 'es-ES';
 
   const t = useCallback((key, replacements, fallback) => {
     return tFunction(key, language, replacements, fallback);
@@ -81,7 +128,7 @@ export const LanguageProvider = ({ children }) => {
     const num = Number(count) || 0;
     try {
       const pr = new Intl.PluralRules(locale);
-      const category = pr.select(num); // 'one', 'other', etc.
+      const category = pr.select(num); // 'zero' | 'one' | 'two' | 'few' | 'many' | 'other' (CLDR)
       const candidateKey = `${keyBase}.${category}`;
       const translated = tFunction(candidateKey, language, { count: num, n: num, ...params }, null);
       if (translated && translated !== candidateKey) {
@@ -95,7 +142,6 @@ export const LanguageProvider = ({ children }) => {
     try {
       const days = [];
       const dtf = new Intl.DateTimeFormat(locale, { weekday: style });
-      // 2026-01-05 es Lunes
       const baseDay = startMonday ? 5 : 4; // 5=Lunes, 4=Domingo
       for (let i = 0; i < 7; i++) {
         const d = new Date(2026, 0, baseDay + i);
@@ -109,8 +155,29 @@ export const LanguageProvider = ({ children }) => {
     }
   }, [locale, isEn]);
 
+  const activeLocales = useMemo(() => getActiveLocales(), []);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isEn, locale, formatDate, formatNumber, fmtPlural, getWeekdays }}>
+    <LanguageContext.Provider value={{
+      language,
+      ui_language: language,
+      clinical_language: clinicalLanguage,
+      clinical_content_language: clinicalLanguage,
+      author_text_language: authorLanguage,
+      setLanguage,
+      setClinicalLanguage,
+      setAuthorLanguage,
+      t,
+      isEn,
+      locale,
+      localeMeta,
+      localesRegistry: LOCALES_REGISTRY,
+      activeLocales,
+      formatDate,
+      formatNumber,
+      fmtPlural,
+      getWeekdays
+    }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -119,20 +186,27 @@ export const LanguageProvider = ({ children }) => {
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {
-    // Fallback defensivo si se usa fuera del provider
     const eff = getEffectiveLanguage();
-    const isE = eff === 'English (EN)';
-    const loc = isE ? 'en-GB' : 'es-ES';
+    const meta = getLocaleMetadata(eff);
     return {
       language: eff,
+      ui_language: eff,
+      clinical_language: 'auto',
+      clinical_content_language: 'auto',
+      author_text_language: 'es',
       setLanguage: () => {},
+      setClinicalLanguage: () => {},
+      setAuthorLanguage: () => {},
       t: (key, replacements) => tFunction(key, eff, replacements),
-      isEn: isE,
-      locale: loc,
+      isEn: eff === 'English (EN)',
+      locale: meta.intl || 'es-ES',
+      localeMeta: meta,
+      localesRegistry: LOCALES_REGISTRY,
+      activeLocales: getActiveLocales(),
       formatDate: (d) => String(d || ''),
       formatNumber: (n) => String(n || ''),
       fmtPlural: (count, keyBase, params) => tFunction(keyBase, eff, { count, n: count, ...params }),
-      getWeekdays: () => isE ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+      getWeekdays: () => ['L', 'M', 'X', 'J', 'V', 'S', 'D']
     };
   }
   return context;

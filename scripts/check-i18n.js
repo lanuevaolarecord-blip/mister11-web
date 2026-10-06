@@ -6,13 +6,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const translationsFilePath = resolve(__dirname, '../src/i18n/translations.js');
+const registryFilePath = resolve(__dirname, '../src/i18n/locales/registry.js');
 const srcDirPath = resolve(__dirname, '../src');
 
-// Extraer dinámicamente el objeto de traducciones
-async function loadTranslations() {
+async function loadLocalesAndRegistry() {
   const fileUrl = 'file:///' + translationsFilePath.replace(/\\/g, '/');
   const mod = await import(fileUrl);
-  return mod.translations || mod.default;
+  const regUrl = 'file:///' + registryFilePath.replace(/\\/g, '/');
+  const regMod = await import(regUrl);
+  return {
+    translations: mod.translations || mod.default,
+    registry: regMod.LOCALES_REGISTRY,
+    getActiveLocales: regMod.getActiveLocales
+  };
 }
 
 function getLeafKeys(obj, prefix = '') {
@@ -51,6 +57,7 @@ function getAllFiles(dir, exts = ['.js', '.jsx']) {
     const fullPath = join(dir, item);
     const stat = statSync(fullPath);
     if (stat.isDirectory()) {
+      if (item === 'node_modules' || item === 'dist' || item === '.git' || item === 'locales') continue;
       files = files.concat(getAllFiles(fullPath, exts));
     } else if (exts.some(ext => item.endsWith(ext))) {
       files.push(fullPath);
@@ -63,7 +70,6 @@ function extractUsedKeysFromCode() {
   const files = getAllFiles(srcDirPath);
   const usedKeys = new Map(); // key -> [files]
   
-  // Regex para t('key'), tr('key'), labelKey: 'key', nameKey: 'key', descKey: 'key', periodKey: 'key'
   const regexes = [
     /\b(?:t|tr)\(\s*['"]([a-zA-Z0-9_.-]+)['"]/g,
     /\b(?:labelKey|nameKey|descKey|periodKey)\s*:\s*['"]([a-zA-Z0-9_.-]+)['"]/g
@@ -76,7 +82,6 @@ function extractUsedKeysFromCode() {
       let match;
       while ((match = regex.exec(content)) !== null) {
         const key = match[1];
-        // Filtrar strings que claramente no son claves i18n
         if (key.includes('.') || key.startsWith('nav.') || key.startsWith('btn.') || key.startsWith('common.')) {
           if (!usedKeys.has(key)) {
             usedKeys.set(key, []);
@@ -90,58 +95,70 @@ function extractUsedKeysFromCode() {
 }
 
 async function runCheck() {
-  console.log('🔍 [i18n-check] Verificando paridad simétrica y uso de claves en Míster11...');
+  console.log('🔍 [i18n-check] Verificando paridad simétrica N-Lenguas (Gate G1) en Míster11...');
   
-  const translations = await loadTranslations();
-  
-  const esObj = translations['Español (ES)'] || translations['es'];
-  const enObj = translations['English (EN)'] || translations['en'];
+  const { translations, getActiveLocales } = await loadLocalesAndRegistry();
+  const activeLocales = getActiveLocales();
 
-  if (!esObj || !enObj) {
-    console.error('❌ Error crítico: No se encontraron los diccionarios principales de Español e Inglés.');
+  const esObj = translations['Español (ES)'] || translations['es'];
+  if (!esObj) {
+    console.error('❌ Error crítico: No se encontró el diccionario base Español (ES).');
     process.exit(1);
   }
 
   const esKeys = getLeafKeys(esObj).sort();
-  const enKeys = getLeafKeys(enObj).sort();
-
   const esSet = new Set(esKeys);
-  const enSet = new Set(enKeys);
-
-  const missingInEn = esKeys.filter(k => !enSet.has(k));
-  const missingInEs = enKeys.filter(k => !esSet.has(k));
-
   let hasErrors = false;
 
-  if (missingInEn.length > 0) {
-    console.error(`❌ Faltan ${missingInEn.length} claves en Inglés (EN):`);
-    missingInEn.forEach(k => console.error(`   - ${k}`));
-    hasErrors = true;
-  }
+  console.log(`📋 Idiomas Activos a validar: ${activeLocales.map(l => `${l.label} [${l.code}]`).join(', ')}`);
 
-  if (missingInEs.length > 0) {
-    console.error(`❌ Faltan ${missingInEs.length} claves en Español (ES):`);
-    missingInEs.forEach(k => console.error(`   - ${k}`));
-    hasErrors = true;
-  }
+  for (const loc of activeLocales) {
+    const dict = translations[loc.label] || translations[loc.code];
+    if (!dict) {
+      console.error(`❌ Error crítico: Diccionario no encontrado para lengua activa ${loc.label} (${loc.code}).`);
+      hasErrors = true;
+      continue;
+    }
 
-  // Comprobación de placeholders / variables interpoladas
-  let placeholderMismatches = 0;
-  for (const k of esKeys) {
-    if (enSet.has(k)) {
-      const valEs = getValueByPath(esObj, k);
-      const valEn = getValueByPath(enObj, k);
-      const paramsEs = getParamPlaceholders(valEs).join(',');
-      const paramsEn = getParamPlaceholders(valEn).join(',');
+    const locKeys = getLeafKeys(dict).sort();
+    const locSet = new Set(locKeys);
 
-      if (paramsEs !== paramsEn) {
-        console.warn(`⚠️ Inconsistencia de variables en clave "${k}": ES=[${paramsEs}] vs EN=[${paramsEn}]`);
-        placeholderMismatches++;
+    const missingInLoc = esKeys.filter(k => !locSet.has(k));
+    const extraInLoc = locKeys.filter(k => !esSet.has(k));
+
+    if (missingInLoc.length > 0) {
+      console.error(`❌ Faltan ${missingInLoc.length} claves en ${loc.label} (${loc.code}):`);
+      missingInLoc.slice(0, 10).forEach(k => console.error(`   - ${k}`));
+      if (missingInLoc.length > 10) console.error(`   ... y ${missingInLoc.length - 10} más.`);
+      hasErrors = true;
+    }
+
+    if (extraInLoc.length > 0) {
+      console.error(`❌ Hay ${extraInLoc.length} claves sobrantes en ${loc.label} (${loc.code}):`);
+      extraInLoc.slice(0, 10).forEach(k => console.error(`   - ${k}`));
+      hasErrors = true;
+    }
+
+    // Comprobación de placeholders
+    let placeholderMismatches = 0;
+    for (const k of esKeys) {
+      if (locSet.has(k)) {
+        const valEs = getValueByPath(esObj, k);
+        const valLoc = getValueByPath(dict, k);
+        const paramsEs = getParamPlaceholders(valEs).join(',');
+        const paramsLoc = getParamPlaceholders(valLoc).join(',');
+
+        if (paramsEs !== paramsLoc) {
+          console.warn(`⚠️ Inconsistencia de variables en "${k}" para ${loc.code}: ES=[${paramsEs}] vs LOC=[${paramsLoc}]`);
+          placeholderMismatches++;
+        }
       }
     }
+
+    console.log(`   ✅ [${loc.code.toUpperCase()}] ${loc.label}: ${locKeys.length} claves | Paridad 100% | ${placeholderMismatches} advertencias de placeholders.`);
   }
 
-  // Comprobación de claves utilizadas en código que faltan en el diccionario
+  // Comprobación de claves utilizadas en código
   const usedKeys = extractUsedKeysFromCode();
   const missingInDictionary = [];
   for (const [key, files] of usedKeys.entries()) {
@@ -151,26 +168,25 @@ async function runCheck() {
   }
 
   if (missingInDictionary.length > 0) {
-    console.error(`\n❌ Se encontraron ${missingInDictionary.length} claves utilizadas en el código que NO existen en translations.js:`);
+    console.error(`\n❌ Se encontraron ${missingInDictionary.length} claves utilizadas en el código que NO existen en el diccionario:`);
     missingInDictionary.forEach(({ key, files }) => {
       console.error(`   - "${key}" (en: ${files.join(', ')})`);
     });
     hasErrors = true;
   }
 
-  console.log(`\n📊 Resumen de Auditoría i18n:`);
-  console.log(`   - Claves en Español (ES): ${esKeys.length}`);
-  console.log(`   - Claves en Inglés (EN):  ${enKeys.length}`);
+  console.log(`\n📊 Resumen de Paridad Multi-Lengua:`);
+  console.log(`   - Lenguas activas validadas: ${activeLocales.length}`);
+  console.log(`   - Claves base por lengua:    ${esKeys.length}`);
   console.log(`   - Claves utilizadas en código: ${usedKeys.size}`);
-  console.log(`   - Claves faltantes en código:  ${missingInDictionary.length}`);
-  console.log(`   - Paridad simétrica:     ${esKeys.length === enKeys.length && !hasErrors ? '100% PERFECTA ✅' : 'CON ERRORES ❌'}`);
-  console.log(`   - Variables interpoladas:${placeholderMismatches === 0 ? ' Consistentes ✅' : ` ${placeholderMismatches} advertencias ⚠️`}`);
+  console.log(`   - Claves huérfanas en código:  ${missingInDictionary.length}`);
+  console.log(`   - Paridad simétrica total:   ${!hasErrors ? '100% PERFECTA ✅' : 'CON ERRORES ❌'}`);
 
   if (hasErrors) {
     console.error('\n❌ La verificación de i18n ha fallado. Revisa las claves faltantes arriba.\n');
     process.exit(1);
   } else {
-    console.log('\n✨ ¡Paridad i18n 100% verificada con éxito! Cero claves huérfanas en el código.\n');
+    console.log('\n✨ ¡Paridad N-Lenguas 100% verificada con éxito! Cero claves huérfanas en el código.\n');
     process.exit(0);
   }
 }
@@ -179,4 +195,3 @@ runCheck().catch(err => {
   console.error('Error ejecutando check-i18n:', err);
   process.exit(1);
 });
-

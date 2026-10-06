@@ -14,8 +14,8 @@ const OUT_FILE  = resolve(__dirname, '../OFFENDERS-STATIC.json');
 const FAIL_ON   = process.argv.includes('--fail-on-found');
 
 // ── Dirs/files to skip ────────────────────────────────────────────────────────
-const SKIP_DIRS  = new Set(['node_modules', '.git', 'dist', 'build', '__tests__', 'coverage']);
-const SKIP_FILES = new Set(['translations.js', 'i18n-singleton.js', 'index.js', 'I18nDevOverlay.jsx']);
+const SKIP_DIRS  = new Set(['node_modules', '.git', 'dist', 'build', '__tests__', 'coverage', 'locales']);
+const SKIP_FILES = new Set(['translations.js', 'i18n-singleton.js', 'index.js', 'I18nDevOverlay.jsx', 'es.js', 'en.js', 'es-419.js', 'pt.js', 'fr.js', 'id.js', 'registry.js']);
 
 // ── Line-level early exits (not UI literals) ──────────────────────────────────
 function shouldSkipLine(line) {

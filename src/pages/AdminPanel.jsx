@@ -1409,11 +1409,15 @@ const AdminPanel = () => {
                     <label>{isEn ? 'System Language' : 'Idioma del Sistema'}</label>
                     <select 
                       className="admin-select-input"
-                      value={prefData.language}
+                      value={prefData.language || currentGlobalLanguage}
                       onChange={(e) => toggleSetting('language', e.target.value)}
                     >
-                      <option>Español (ES)</option>
-                      <option>English (EN)</option>
+                      <option value="Español (ES)">🇪🇸 Español (ES)</option>
+                      <option value="Español (Latinoamérica)">🌎 Español (Latinoamérica)</option>
+                      <option value="English (EN)">🇬🇧 English (EN)</option>
+                      <option value="Português (Brasil)">🇧🇷 Português (Brasil)</option>
+                      <option value="Français (FR)">🇫🇷 Français (FR)</option>
+                      <option value="Bahasa Indonesia (ID)">🇮🇩 Bahasa Indonesia (ID)</option>
                     </select>
                   </div>
 

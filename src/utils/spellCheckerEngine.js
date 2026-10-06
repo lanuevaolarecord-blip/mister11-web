@@ -221,6 +221,11 @@ export const COMMON_TYPOS_MAP_ES = {
   'outocorrector': 'autocorrector',
   'reval': 'rival',
   'movilidat': 'movilidad',
+  'trancision': 'transición',
+  'pocesion': 'posesión',
+  'balo': 'balón',
+  'giados': 'guiados',
+  'sejun': 'según',
 };
 
 // ── MAPA DE ERRORES TIPOGRÁFICOS (INGLÉS) ──

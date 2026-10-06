@@ -145,52 +145,42 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
           <label style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-secondary, #94A3B8)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Globe size={15} color="#4CAF7D" /> {t('player.settings.language')}
           </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={() => handleLanguageChange('Español (ES)')}
-              style={{
-                minHeight: '48px',
-                padding: '10px',
-                borderRadius: '12px',
-                border: `1.5px solid ${language === 'Español (ES)' ? '#4CAF7D' : (darkMode ? 'rgba(255,255,255,0.1)' : '#CBD5E1')}`,
-                background: language === 'Español (ES)' ? 'rgba(76, 175, 125, 0.2)' : (darkMode ? 'rgba(27, 58, 45, 0.3)' : '#F8FAFC'),
-                color: language === 'Español (ES)' ? '#4CAF7D' : (darkMode ? '#FFFFFF' : '#0F172A'),
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>🇪🇸</span> Español (ES) {language === 'Español (ES)' && <Check size={16} />}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleLanguageChange('English (EN)')}
-              style={{
-                minHeight: '48px',
-                padding: '10px',
-                borderRadius: '12px',
-                border: `1.5px solid ${language === 'English (EN)' ? '#4CAF7D' : (darkMode ? 'rgba(255,255,255,0.1)' : '#CBD5E1')}`,
-                background: language === 'English (EN)' ? 'rgba(76, 175, 125, 0.2)' : (darkMode ? 'rgba(27, 58, 45, 0.3)' : '#F8FAFC'),
-                color: language === 'English (EN)' ? '#4CAF7D' : (darkMode ? '#FFFFFF' : '#0F172A'),
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>🇬🇧</span> English (EN) {language === 'English (EN)' && <Check size={16} />}
-            </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+            {[
+              { code: 'Español (ES)', label: 'Español (ES)', flag: '🇪🇸' },
+              { code: 'Español (Latinoamérica)', label: 'Español (Latam)', flag: '🌎' },
+              { code: 'English (EN)', label: 'English (EN)', flag: '🇬🇧' },
+              { code: 'Português (Brasil)', label: 'Português', flag: '🇧🇷' },
+              { code: 'Français (FR)', label: 'Français', flag: '🇫🇷' },
+              { code: 'Bahasa Indonesia (ID)', label: 'Bahasa', flag: '🇮🇩' }
+            ].map(loc => {
+              const isSelected = language === loc.code || (language === 'es' && loc.code.startsWith('Español (ES)')) || (language === 'en' && loc.code.startsWith('English'));
+              return (
+                <button
+                  key={loc.code}
+                  type="button"
+                  onClick={() => handleLanguageChange(loc.code)}
+                  style={{
+                    minHeight: '44px',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${isSelected ? '#4CAF7D' : (darkMode ? 'rgba(255,255,255,0.1)' : '#CBD5E1')}`,
+                    background: isSelected ? 'rgba(76, 175, 125, 0.2)' : (darkMode ? 'rgba(27, 58, 45, 0.3)' : '#F8FAFC'),
+                    color: isSelected ? '#4CAF7D' : (darkMode ? '#FFFFFF' : '#0F172A'),
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span>{loc.flag}</span> <span>{loc.label}</span> {isSelected && <Check size={14} />}
+                </button>
+              );
+            })}
           </div>
         </div>
 

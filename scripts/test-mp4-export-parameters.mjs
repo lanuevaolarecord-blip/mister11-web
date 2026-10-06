@@ -133,4 +133,9 @@ test('mp4Exporter utiliza timing y videoBitsPerSecond adaptados a la calidad', (
   assert.ok(mp4ExporterSrc.includes('recCanvas.captureStream(timing.targetFps)'));
 });
 
+test('mp4Exporter define totalSteps en scope para los callbacks finales de empaquetado', () => {
+  assert.ok(mp4ExporterSrc.includes('const totalSteps = timing.totalSteps;'));
+  assert.ok(mp4ExporterSrc.includes('onProgress(100, totalSteps, totalSteps);'));
+});
+
 console.log(`\n🎉 [PASS] ${pass}/${pass} verificaciones de exportación MP4 pasadas con éxito\n`);

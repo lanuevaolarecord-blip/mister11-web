@@ -114,6 +114,7 @@ export async function exportAnimationMP4({
   const { mimeType, extension } = getSupportedVideoMimeType();
   const { width: targetWidth, height: targetHeight, bitrate } = getVideoDimensions(quality, orientation);
   const timing = calculateAnimationTiming(frames.length, speed, 25);
+  const totalSteps = timing.totalSteps;
 
   const animationEngine = createAnimationEngine({
     fc,

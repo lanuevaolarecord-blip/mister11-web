@@ -209,7 +209,7 @@ const CanvasToolbar = ({
             ))}
           </div>
 
-          <div className="topbar-group color-picker-container" style={{ position: 'static' }}>
+          <div className="topbar-group color-picker-container">
             <button
               className="topbar-btn color-trigger"
               onClick={(e) => { 
@@ -223,7 +223,7 @@ const CanvasToolbar = ({
             </button>
           </div>
 
-          <div className="topbar-group width-picker-container" style={{ position: 'static' }}>
+          <div className="topbar-group width-picker-container">
             <button
               className="topbar-btn width-trigger"
               onClick={(e) => { 

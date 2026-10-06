@@ -263,8 +263,10 @@ export function createAnimationEngine({
    * @returns {Promise<HTMLCanvasElement>}
    */
   async function renderInterpolatedStep(fromIndex, toIndex, progress) {
-    if (progress <= 0) return renderFrame(fromIndex);
-    if (progress >= 1) return renderFrame(toIndex);
+    if (progress <= 0.001) return renderFrame(fromIndex);
+    if (progress >= 0.995 || (toIndex === frames.length - 1 && progress >= 0.98)) {
+      return renderFrame(toIndex);
+    }
 
     // Cargar frame A como base
     await renderFrame(fromIndex);

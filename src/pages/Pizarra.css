@@ -59,11 +59,26 @@ body.pizarra-active .main-wrapper {
 }
 
 .topbar-group {
-  display: flex;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   padding: 0 4px;
   flex-shrink: 0;
+  width: max-content;
+  min-width: max-content;
+}
+
+.topbar-group.tools {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  width: max-content;
+  min-width: max-content;
 }
 
 .topbar-divider {
@@ -72,23 +87,27 @@ body.pizarra-active .main-wrapper {
   background: var(--border-color);
   margin: 0 6px;
   opacity: 0.3;
+  flex-shrink: 0;
 }
 
 /* BOTONES DE HERRAMIENTAS (Min 48x48) */
 .tool-icon-btn, .topbar-btn-nav {
   width: 48px;
   height: 48px;
+  min-width: 48px !important;
+  min-height: 48px !important;
   border-radius: 8px;
   padding: 0;
   background: transparent;
   color: var(--text-primary);
   border: 1px solid transparent;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  flex-shrink: 0; /* Evitar que se encojan y se solapen */
+  flex-shrink: 0 !important; /* Evitar que se encojan y se solapen */
+  box-sizing: border-box !important;
 }
 .tool-icon-btn svg {
   width: 18px;
@@ -1324,13 +1343,19 @@ canvas.lower-canvas {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 24px 100px !important;
+  padding: 24px 140px !important;
   box-sizing: border-box !important;
+}
+
+@media (max-width: 1024px) {
+  .pizarra-fullscreen .canvas-area {
+    padding: 20px 110px !important;
+  }
 }
 
 @media (max-width: 768px) {
   .pizarra-fullscreen .canvas-area {
-    padding: 16px 20px !important;
+    padding: 16px 80px !important;
   }
 }
 

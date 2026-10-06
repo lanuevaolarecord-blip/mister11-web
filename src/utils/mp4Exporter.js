@@ -215,22 +215,23 @@ export async function exportAnimationMP4({
     }
   }
 
-  // Asegurar retención visible del frame final (hold) durante ~0.6-0.8s para que el desenlace táctico sea claramente visible
-  const holdDurationMs = Math.max(400, Math.min(1000, Math.round(800 / timing.speedFactor)));
-  const holdFramesCount = Math.max(10, Math.round((holdDurationMs / 1000) * timing.targetFps));
+  // Asegurar retención visible del frame final (hold) durante ~1.0s para que el desenlace táctico sea claramente visible
+  const holdDurationMs = Math.max(800, Math.min(1500, Math.round(1000 / timing.speedFactor)));
+  const holdFramesCount = Math.max(15, Math.round((holdDurationMs / 1000) * timing.targetFps));
   const holdIntervalMs = holdDurationMs / holdFramesCount;
 
   for (let h = 0; h < holdFramesCount; h++) {
+    await animationEngine.renderFrame(frames.length - 1);
     if (videoTrack && typeof videoTrack.requestFrame === 'function') {
       videoTrack.requestFrame();
     }
     await new Promise(r => setTimeout(r, holdIntervalMs));
   }
 
-  // Solicitar datos finales antes de detener
+  // Solicitar datos finales antes de detener y asegurar que el buffer capture los frames finales
   if (recorder.state === 'recording') {
     recorder.requestData();
-    await new Promise(r => setTimeout(r, 120));
+    await new Promise(r => setTimeout(r, 250));
   }
 
   // Detener grabación de stream

@@ -1486,6 +1486,8 @@ const PizarraTactica = () => {
       width: initW, height: initH,
       allowTouchScrolling: false,
       selection: true,
+      targetFindTolerance: 16,
+      perPixelTargetFind: true,
     });
     fcRef.current = fc;
 
@@ -2270,10 +2272,32 @@ const PizarraTactica = () => {
     if (!fc || !placingMat) return;
 
     fc.defaultCursor = 'crosshair';
+    let ghostObj = null;
+
+    const onMove = (o) => {
+      const p = fc.getPointer(o.e);
+      if (!ghostObj) {
+        ghostObj = new fabric.Circle({
+          left: p.x, top: p.y, radius: 14,
+          fill: 'rgba(212, 168, 67, 0.3)',
+          stroke: '#D4A843', strokeWidth: 1.5,
+          strokeDashArray: [4, 3],
+          originX: 'center', originY: 'center',
+          selectable: false, evented: false,
+          data: { type: 'temp' }
+        });
+        fc.add(ghostObj);
+      } else {
+        ghostObj.set({ left: p.x, top: p.y, visible: true });
+        ghostObj.setCoords();
+      }
+      fc.renderAll();
+    };
 
     const onDown = (o) => {
       // Regla de resolución de gesto: Si se pulsa sobre una pieza existente, ARRASTRARLA y no colocar material encima
       if (o.target && !isFieldLayer(o.target) && o.target.data?.type !== 'temp') {
+        if (ghostObj) ghostObj.set({ visible: false });
         fc.setActiveObject(o.target);
         fc.renderAll();
         return;
@@ -2281,7 +2305,11 @@ const PizarraTactica = () => {
 
       // Clic sobre vacío/césped: colocar una instancia de material
       const p = fc.getPointer(o.e);
-      placeMaterialOnCanvas(fc, placingMat, p.x, p.y);
+      if (ghostObj) ghostObj.set({ visible: false });
+      placeMaterialOnCanvas(fc, placingMat, p.x, p.y).then(() => {
+        if (ghostObj) ghostObj.set({ visible: true });
+        fc.renderAll();
+      });
       saveFrameState();
       // O3 STICKY: Permanece activo para colocar N materiales sucesivos (resuelve Picture 17)
     };
@@ -2289,16 +2317,20 @@ const PizarraTactica = () => {
     // Tecla Esc para salir del modo de colocación repetida
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
+        if (ghostObj) { fc.remove(ghostObj); ghostObj = null; }
         setPlacingMat(null);
         setActiveTool('select');
         if (fc) fc.defaultCursor = 'default';
       }
     };
 
+    fc.on('mouse:move', onMove);
     fc.on('mouse:down', onDown);
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
+      if (ghostObj) { fc.remove(ghostObj); ghostObj = null; }
+      fc.off('mouse:move', onMove);
       fc.off('mouse:down', onDown);
       window.removeEventListener('keydown', onKeyDown);
       if (fc) fc.defaultCursor = 'default';
@@ -2720,6 +2752,47 @@ const PizarraTactica = () => {
       : targetFrame.state;
 
     cargarFrame(targetState, () => {
+      // D-FRAME-1: Visualizar trayectorias de piezas entre frames en modo edición
+      if (idx > 0 && framesR.current[idx - 1]) {
+        try {
+          const prevState = typeof framesR.current[idx - 1].state === 'string'
+            ? JSON.parse(framesR.current[idx - 1].state)
+            : framesR.current[idx - 1].state;
+          const prevObjs = Array.isArray(prevState?.objects) ? prevState.objects : [];
+          const curObjs = Array.isArray(targetState?.objects) ? targetState.objects : [];
+          const fr = frRef.current;
+
+          curObjs.forEach(c => {
+            const cId = c.id || c.data?.id;
+            if (!cId || c.data?.type === 'field' || c.isFieldLayer) return;
+            const p = prevObjs.find(po => (po.id || po.data?.id) === cId);
+            if (p && fr) {
+              const pPt = (p.xRel !== undefined && p.yRel !== undefined)
+                ? fr.getCanvasPoint(p.xRel, p.yRel)
+                : { x: p.left, y: p.top };
+              const cPt = (c.xRel !== undefined && c.yRel !== undefined)
+                ? fr.getCanvasPoint(c.xRel, c.yRel)
+                : { x: c.left, y: c.top };
+              const dist = Math.hypot(cPt.x - pPt.x, cPt.y - pPt.y);
+              if (dist > 18) {
+                const trajectoryLine = new fabric.Line([pPt.x, pPt.y, cPt.x, cPt.y], {
+                  stroke: '#4CAF7D',
+                  strokeWidth: 2,
+                  strokeDashArray: [6, 4],
+                  opacity: 0.7,
+                  selectable: false,
+                  evented: false,
+                  isTrajectory: true,
+                  data: { type: 'trajectory', fromId: cId, toId: cId }
+                });
+                fc.add(trajectoryLine);
+                fc.sendToBack(trajectoryLine);
+              }
+            }
+          });
+        } catch (_) {}
+      }
+
       syncingR.current = false;
       fc.renderAll();
       setFrameIdx(idx);

@@ -93,6 +93,13 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       // Solo partidos cerrados computan goles oficiales
       if (!actaClosed) return 0;
 
+      if (actaActual?.goalsOverride !== undefined && actaActual?.goalsOverride !== null) {
+        return Math.max(0, parseInt(actaActual.goalsOverride, 10) || 0);
+      }
+      if (actaActual?.goals !== undefined && actaActual?.goals !== null) {
+        return Math.max(0, parseInt(actaActual.goals, 10) || 0);
+      }
+
       if (goleadoresList.length > 0) {
         return goleadoresList.filter(g2 => !g2.esRival && !g2.rival && String(g2.jugadorId || g2.playerId) === pid).length;
       }
@@ -106,6 +113,14 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     const calcAssists = () => {
       if (teamGoalsFor === 0) return 0;
       if (!actaClosed) return 0;
+
+      if (actaActual?.assistsOverride !== undefined && actaActual?.assistsOverride !== null) {
+        return Math.max(0, parseInt(actaActual.assistsOverride, 10) || 0);
+      }
+      if (actaActual?.assists !== undefined && actaActual?.assists !== null) {
+        return Math.max(0, parseInt(actaActual.assists, 10) || 0);
+      }
+
       if (goleadoresList.length > 0) {
         return goleadoresList.filter(g2 => !g2.esRival && !g2.rival && String(g2.asistenciaId) === pid).length;
       }

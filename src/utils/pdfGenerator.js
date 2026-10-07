@@ -746,9 +746,9 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
     detail: { show: true, message: `Procesando diagramas e imágenes...` }
   }));
 
-  // Precargar diagrama principal de la sesión si existe (Priorizar ALTA RESOLUCIÓN sobre thumbnail)
+  // Precargar diagrama principal de la sesión si existe (Priorizar ALTA RESOLUCIÓN nativa sobre thumbnail)
   let mainDiagramBase64 = null;
-  const rawMainDiagram = session.boardCaptureUrl || session.imageUrl || session.fullDataUrl || session.mainDiagramUrl || session.diagramUrl || session.diagram || session.image || session.thumbnail;
+  const rawMainDiagram = session.fullDataUrl || session.boardCaptureUrl || session.imageUrl || session.mainDiagramUrl || session.diagramUrl || session.diagram || session.image || session.thumbnail;
   if (rawMainDiagram) {
     try {
       mainDiagramBase64 = await preloadImageToDataURL(rawMainDiagram);
@@ -760,7 +760,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
   // Precargar todos los bloques concurrentemente en paralelo
   const updatedBlocks = await Promise.all(
     blocks.map(async (b, bi) => {
-      let rawImg = b.boardCaptureUrl || b.boardCapture || b.imageUrl || b.imagenProtocolo || b.canvasData || b.dataUrl || b.fullDataUrl || b.image || b.photo || b.previewUrl || b.pizarraUrl || b.img || b.diagram || b.thumbnail;
+      let rawImg = b.fullDataUrl || b.boardCaptureUrl || b.boardCapture || b.imageUrl || b.imagenProtocolo || b.canvasData || b.dataUrl || b.image || b.photo || b.previewUrl || b.pizarraUrl || b.img || b.diagram || b.thumbnail;
 
       // Si attachments es un array de URLs
       if (!rawImg && Array.isArray(b.attachments) && b.attachments.length > 0) {
@@ -778,7 +778,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
           (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
         );
         if (matchedEx) {
-          rawImg = matchedEx.boardCaptureUrl || matchedEx.imageUrl || matchedEx.fullDataUrl || matchedEx.imagenProtocolo || matchedEx.dataUrl || matchedEx.image || matchedEx.previewUrl || matchedEx.thumbnail;
+          rawImg = matchedEx.fullDataUrl || matchedEx.boardCaptureUrl || matchedEx.imageUrl || matchedEx.imagenProtocolo || matchedEx.dataUrl || matchedEx.image || matchedEx.previewUrl || matchedEx.thumbnail;
         }
       }
 
@@ -789,15 +789,15 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
           (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
         );
         if (matchedCap) {
-          rawImg = matchedCap.fullDataUrl || matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.boardCaptureUrl || matchedCap.imageData || matchedCap.thumbnail;
+          rawImg = matchedCap.fullDataUrl || matchedCap.boardCaptureUrl || matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.imageData || matchedCap.thumbnail;
         }
       }
 
       // Buscar en la pizarra vinculada a la sesión (Priorizar resolución nativa)
       if (!rawImg && (session.linkedPizarraId || session.pizarraId) && Array.isArray(pizarras)) {
         const linkedPiz = pizarras.find(p => p.id === (session.linkedPizarraId || session.pizarraId));
-        if (linkedPiz && (linkedPiz.boardCaptureUrl || linkedPiz.imageUrl || linkedPiz.fullDataUrl || linkedPiz.thumbnail)) {
-          rawImg = linkedPiz.boardCaptureUrl || linkedPiz.imageUrl || linkedPiz.fullDataUrl || linkedPiz.thumbnail;
+        if (linkedPiz && (linkedPiz.fullDataUrl || linkedPiz.boardCaptureUrl || linkedPiz.imageUrl || linkedPiz.thumbnail)) {
+          rawImg = linkedPiz.fullDataUrl || linkedPiz.boardCaptureUrl || linkedPiz.imageUrl || linkedPiz.thumbnail;
         }
       }
 
@@ -884,8 +884,8 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     if (!sessionDiagramBase64 && (session.linkedPizarraId || session.pizarraId)) {
       const targetPizId = session.linkedPizarraId || session.pizarraId;
       const found = (pizarras || []).find(p => p.id === targetPizId);
-      if (found && (found.boardCaptureUrl || found.imageUrl || found.fullDataUrl || found.thumbnail)) {
-        sessionDiagramBase64 = await imageUrlToBase64(found.boardCaptureUrl || found.imageUrl || found.fullDataUrl || found.thumbnail, 'Diagrama Principal', false);
+      if (found && (found.fullDataUrl || found.boardCaptureUrl || found.imageUrl || found.thumbnail)) {
+        sessionDiagramBase64 = await imageUrlToBase64(found.fullDataUrl || found.boardCaptureUrl || found.imageUrl || found.thumbnail, 'Diagrama Principal', false);
       }
     }
     if (!sessionDiagramBase64) {
@@ -904,7 +904,8 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       doc.setLineWidth(0.4);
       doc.roundedRect(14, currentY - 1, pageW - 28, 72, 3, 3, 'FD');
       try {
-        const fmt = sessionDiagramBase64.includes('jpeg') || sessionDiagramBase64.includes('jpg') ? 'JPEG' : 'PNG';
+        const isJpeg = (sessionDiagramBase64.includes('jpeg') || sessionDiagramBase64.includes('jpg')) && !sessionDiagramBase64.includes('png');
+        const fmt = isJpeg ? 'JPEG' : 'PNG';
         doc.addImage(sessionDiagramBase64, fmt, 16, currentY + 1, pageW - 32, 68);
       } catch (imgErr) {
         console.warn('Error renderizando diagrama principal:', imgErr);
@@ -1005,7 +1006,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
           doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'FD');
 
           try {
-            const isJpeg = imgBase64.includes('jpeg') || imgBase64.includes('jpg');
+            const isJpeg = typeof imgBase64 === 'string' && (imgBase64.includes('jpeg') || imgBase64.includes('jpg')) && !imgBase64.includes('png');
             const fmt = isJpeg ? 'JPEG' : 'PNG';
             doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
           } catch (imgErr) {
@@ -1061,7 +1062,8 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setLineWidth(0.3);
         doc.roundedRect(capImgX - 1, capRowY - 1, capImgW + 2, capImgH + 13, 2, 2, 'S');
         try {
-          const fmt = b64.includes('jpeg') || b64.includes('jpg') ? 'JPEG' : 'PNG';
+          const isJpeg = typeof b64 === 'string' && (b64.includes('jpeg') || b64.includes('jpg')) && !b64.includes('png');
+          const fmt = isJpeg ? 'JPEG' : 'PNG';
           doc.addImage(b64, fmt, capImgX, capRowY, capImgW, capImgH);
         } catch (imgErr) {
           console.warn('Error renderizando captura:', imgErr);
@@ -1888,7 +1890,7 @@ export const generateExpediente = async (player, activeTeam = null) => {
 
     doc.setFontSize(6.5);
     doc.setTextColor(140);
-    doc.text(isEnglish() ? `Official document issued on ${formatCurrentDate()} via Míster11 Club Engine.` : `Documento Oficial emitido el ${formatCurrentDate()} a través de Míster11 Club Engine.`, pageW / 2, pageH - 12, { align: 'center' });
+    doc.text(isEnglish() ? `Official document issued on ${formatCurrentDate()} via Mister11 Club Engine.` : `Documento Oficial emitido el ${formatCurrentDate()} a traves de Mister11 Club Engine.`, pageW / 2, pageH - 12, { align: 'center' });
 
     addFooter(doc);
     await savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
@@ -1952,7 +1954,8 @@ export const generatePizarraPDF = async ({
         const imgY = 32;
 
         try {
-          const fmt = imgData.includes('jpeg') || imgData.includes('jpg') ? 'JPEG' : 'PNG';
+          const isJpeg = typeof imgData === 'string' && (imgData.includes('jpeg') || imgData.includes('jpg')) && !imgData.includes('png');
+          const fmt = isJpeg ? 'JPEG' : 'PNG';
           doc.addImage(imgData, fmt, imgX, imgY, imgW, imgH);
         } catch (e) {
           console.warn('[generatePizarraPDF] Error incrustando imagen:', e);
@@ -2223,7 +2226,9 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
         }
         
         try {
-          doc.addImage(images[i], 'JPEG', imgX, currentY, imgW, imgH);
+          const isPng = typeof images[i] === 'string' && (images[i].includes('png') || images[i].startsWith('data:image/png'));
+          const fmt = isPng ? 'PNG' : 'JPEG';
+          doc.addImage(images[i], fmt, imgX, currentY, imgW, imgH);
         } catch (e) {
           console.error("Error al añadir imagen al PDF:", e);
         }
@@ -2322,7 +2327,8 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
       doc.roundedRect(imgX - 2, currentY - 1, imgW + 4, imgH + 2, 3, 3, 'FD');
 
       try {
-        const fmt = exerciseImgBase64.includes('jpeg') || exerciseImgBase64.includes('jpg') ? 'JPEG' : 'PNG';
+        const isJpeg = typeof exerciseImgBase64 === 'string' && (exerciseImgBase64.includes('jpeg') || exerciseImgBase64.includes('jpg')) && !exerciseImgBase64.includes('png');
+        const fmt = isJpeg ? 'JPEG' : 'PNG';
         doc.addImage(exerciseImgBase64, fmt, imgX, currentY, imgW, imgH);
       } catch (imgErr) {
         console.warn('Error renderizando imagen de ejercicio:', imgErr);

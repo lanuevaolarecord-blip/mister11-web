@@ -208,7 +208,7 @@ export const generateMatchPdfReport = async ({
     const dateLoc = isEn ? 'en-US' : 'es-ES';
     const fechaStr = matchData?.date ? new Date(matchData.date).toLocaleDateString(dateLoc) : new Date().toLocaleDateString(dateLoc);
 
-    // Deduplicar eventos de gol propios y rivales por (playerId, minute)
+    // Deduplicar eventos de gol propios y rivales por (playerId, minute) y procedencia
     const seenOwnGoals = new Set();
     const ownGoalEvents = safeEvents.filter((e) => {
       if (!e) return false;
@@ -218,7 +218,7 @@ export const generateMatchPdfReport = async ({
       if (!isOwnGoal) return false;
       const pid = String(e.playerId || e.jugadorId || '');
       const min = parseInt(e.minute ?? e.minuto ?? 0, 10);
-      const sig = `${pid}_${min}`;
+      const sig = min > 0 ? `own_${pid}_${min}` : (e.id || `own_${pid}_${seenOwnGoals.size}`);
       if (seenOwnGoals.has(sig)) return false;
       seenOwnGoals.add(sig);
       return true;
@@ -233,7 +233,7 @@ export const generateMatchPdfReport = async ({
       if (!isRivalGoal) return false;
       const pid = String(e.playerId || e.jugadorId || '');
       const min = parseInt(e.minute ?? e.minuto ?? 0, 10);
-      const sig = `${pid}_${min}`;
+      const sig = min > 0 ? `rival_${min}` : (e.id || `rival_${pid}_${seenRivalGoals.size}`);
       if (seenRivalGoals.has(sig)) return false;
       seenRivalGoals.add(sig);
       return true;

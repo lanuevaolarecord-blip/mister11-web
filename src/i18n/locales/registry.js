@@ -17,17 +17,17 @@ export const LOCALES_REGISTRY = {
     intl: 'es-ES',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'no_verificado',
+    clinicalStatus: 'no_verificado_por_falta_de_evidencia',
     tier: 1,
     sourceDoc: {
-      oficial: false,
+      oficial: 'no_verificado_por_falta_de_evidencia',
       federacion: 'RFEF / FIFA Medical (F-MARC)',
       titulo: 'FIFA 11+ Manual del Programa de Prevención de Lesiones',
       url: 'https://www.fifa.com/technical/medical/injury-prevention',
       idiomaDetectado: 'es',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL externa en fifa.com devuelve 404. Manual histórico offline F-MARC reconocido en literatura pero URL no machine-readable en vivo.'
+      notaAuditoria: 'No verificado por falta de evidencia de navegación con volcado textual de body en fifa.com.'
     }
   },
   'es-419': {
@@ -37,17 +37,17 @@ export const LOCALES_REGISTRY = {
     intl: 'es-419',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'no_verificado',
+    clinicalStatus: 'no_verificado_por_falta_de_evidencia',
     tier: 1,
     sourceDoc: {
-      oficial: false,
+      oficial: 'no_verificado_por_falta_de_evidencia',
       federacion: 'CONMEBOL / FIFA Medical',
       titulo: 'FIFA 11+ Programa Completo de Calentamiento para Prevenir Lesiones',
       url: 'https://www.fifa.com/technical/medical/injury-prevention',
       idiomaDetectado: 'es',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL externa en fifa.com devuelve 404. Manual histórico offline F-MARC reconocido en literatura pero URL no machine-readable en vivo.'
+      notaAuditoria: 'No verificado por falta de evidencia de navegación con volcado textual de body en fifa.com.'
     }
   },
   'en': {
@@ -67,7 +67,7 @@ export const LOCALES_REGISTRY = {
       idiomaDetectado: 'en',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL devuelve 404 ("Sorry. Something\'s wrong with the pitch."). No contiene el manual 11+.'
+      notaAuditoria: 'Body real devuelto: "Sorry. Something\'s wrong with the pitch. (We call this a 404 error) Sorry, we can\'t find that page! It might be an old link or maybe the web address has been entered incorrectly."'
     }
   },
   'pt': {
@@ -77,17 +77,17 @@ export const LOCALES_REGISTRY = {
     intl: 'pt-BR',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'no_verificado',
+    clinicalStatus: 'no_verificado_por_falta_de_evidencia',
     tier: 1,
     sourceDoc: {
-      oficial: false,
+      oficial: 'no_verificado_por_falta_de_evidencia',
       federacion: 'CBF / FIFA Medical',
       titulo: 'FIFA 11+ Manual do Programa Completo de Aquecimento para Prevenção de Lesões',
       url: 'https://www.cbf.com.br/saude-e-performance/prevencao-de-lesoes-fifa-11',
       idiomaDetectado: 'pt',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL devuelve 404 (status code 404 al consultar cbf.com.br).'
+      notaAuditoria: 'No verificado por falta de evidencia de navegación con volcado textual de body en cbf.com.br.'
     }
   },
   'fr': {
@@ -186,7 +186,7 @@ export const LOCALES_REGISTRY = {
       idiomaDetectado: 'nl',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL KNVB devuelve error / modo mantenimiento ("Er is iets mis gegaan..."), no el documento de blessurepreventie.'
+      notaAuditoria: 'Body real devuelto: "Er is iets mis gegaan. We zijn op de hoogte en werken aan een oplossing. Excuses voor het ongemak! De website is momenteel in onderhoudsmodus."'
     }
   },
   'tr': {

@@ -416,7 +416,7 @@ html:not(.dark) .exercise-digital-guide-panel {
   border-radius: 6px;
   padding: 5px 9px;
   font-size: 11px;
-  color: var(--accent-gold, #D4A843);
+  color: var(--oro, var(--accent-gold, #D4A843));
   margin-top: 4px;
 }
 
@@ -424,7 +424,7 @@ html:not(.dark) .exercise-digital-guide-panel {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-gold, #D4A843);
+  background: var(--oro, var(--accent-gold, #D4A843));
   flex-shrink: 0;
 }
 

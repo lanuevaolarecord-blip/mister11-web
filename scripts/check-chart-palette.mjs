@@ -28,8 +28,12 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /#60[Aa]5[Ff][Aa]/gi, name: 'Azul Claro #60A5FA' },
   { pattern: /#4[Cc]1[Dd]95/gi, name: 'Morado #4C1D95' },
   { pattern: /#8[Bb]5[Cc][Ff]6/gi, name: 'Morado #8B5CF6' },
-  { pattern: /#0[Dd]9488/gi, name: 'Teal #0D9488 (Rojo de Gobernanza - Prohibido)' },
-  { pattern: /#141[Aa]17/gi, name: 'Variante no canónica #141A17 (usar solo #1B3A2D)' }
+  { pattern: /#0[Dd]9488/gi, name: 'Teal #0D9488 (Rojo de Gobernanza - Prohibido) [BLOQUEO-DUEÑO: A]' },
+  { pattern: /#141[Aa]17/gi, name: 'Variante no canónica #141A17 (usar solo #1B3A2D)' },
+  { pattern: /rgba?\(\s*15\s*,\s*23\s*,\s*42/gi, name: 'Navy rgb(15, 23, 42)' },
+  { pattern: /rgba?\(\s*59\s*,\s*130\s*,\s*246/gi, name: 'Azul Eléctrico rgb(59, 130, 246)' },
+  { pattern: /rgba?\(\s*30\s*,\s*58\s*,\s*138/gi, name: 'Azul rgb(30, 58, 138)' },
+  { pattern: /rgba?\(\s*13\s*,\s*148\s*,\s*136/gi, name: 'Teal rgb(13, 148, 136) [BLOQUEO-DUEÑO: A]' }
 ];
 
 const TARGET_FILES = [

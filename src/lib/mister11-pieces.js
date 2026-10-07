@@ -247,23 +247,42 @@ export function remapCoordinatesByWindow(x, y, fromFieldType = 'full', toFieldTy
   const fromWin = FIELD_WINDOWS[fromFieldType] || FIELD_WINDOWS.full;
   const toWin = FIELD_WINDOWS[toFieldType] || FIELD_WINDOWS.full;
 
-  // 1. Proyectar de la ventana origen al espacio canónico global [0, 1]
-  const globalX = fromWin.x0 + (Number(x) || 0.5) * (fromWin.x1 - fromWin.x0);
-  const globalY = fromWin.y0 + (Number(y) || 0.5) * (fromWin.y1 - fromWin.y0);
+  const fromW = Math.max(0.001, fromWin.x1 - fromWin.x0);
+  const fromH = Math.max(0.001, fromWin.y1 - fromWin.y0);
+  const toW = Math.max(0.001, toWin.x1 - toWin.x0);
+  const toH = Math.max(0.001, toWin.y1 - toWin.y0);
 
-  // 2. Proyectar del espacio global a la nueva ventana
-  const newWinW = Math.max(0.001, toWin.x1 - toWin.x0);
-  const newWinH = Math.max(0.001, toWin.y1 - toWin.y0);
+  const numX = Number(x) || 0.5;
+  const numY = Number(y) || 0.5;
 
-  let newX = (globalX - toWin.x0) / newWinW;
-  let newY = (globalY - toWin.y0) / newWinH;
+  // 1. u, v: posición normalizada [0, 1] dentro de la ventana de origen
+  let u, v;
+  if (numX >= fromWin.x0 && numX <= fromWin.x1) {
+    u = (numX - fromWin.x0) / fromW;
+  } else if (numX >= 0 && numX <= 1) {
+    u = (numX - fromWin.x0) / fromW;
+  } else {
+    u = 0.5;
+  }
 
-  // 3. Clamping dentro de los límites del césped visible (evita margen negro de Picture 14)
+  if (numY >= fromWin.y0 && numY <= fromWin.y1) {
+    v = (numY - fromWin.y0) / fromH;
+  } else if (numY >= 0 && numY <= 1) {
+    v = (numY - fromWin.y0) / fromH;
+  } else {
+    v = 0.5;
+  }
+
+  // 2. Clamping dentro de los límites visibles (evita margen negro de Picture 14)
   const pad = 0.04;
-  newX = Math.max(pad, Math.min(1.0 - pad, newX));
-  newY = Math.max(pad, Math.min(1.0 - pad, newY));
+  u = Math.max(pad, Math.min(1.0 - pad, u));
+  v = Math.max(pad, Math.min(1.0 - pad, v));
 
-  return { x: newX, y: newY };
+  // 3. Proyectar de regreso a coordenada canónica global [0, 1] que consume getCanvasPoint
+  const globalX = toWin.x0 + u * toW;
+  const globalY = toWin.y0 + v * toH;
+
+  return { x: globalX, y: globalY, u, v };
 }
 
 /**

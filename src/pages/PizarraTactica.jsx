@@ -2014,45 +2014,68 @@ const PizarraTactica = () => {
       setRivalFormationState(targetRival);
     }
 
-    // 3. Re-proyectar únicamente piezas NO-jugador (conos, balones, porterías, líneas)
-    // para que permanezcan visibles dentro del campo redefinido
+    // 3. Re-proyectar TODAS las piezas tácticas (jugadores, conos, balones, comodines, zonas, herramientas)
+    // O1: Remapeo proporcional por ventana normalizada + clamp preservando relaciones (cero en margen negro)
     syncingR.current = true;
-    const nonPlayerPieces = fc.getObjects().filter(o => 
-      !isFieldLayer(o) && !o.isPlayerPiece && o.data?.type !== 'player' && o.data?.tipo !== 'jugador'
-    );
+    const allPieces = fc.getObjects().filter(o => !isFieldLayer(o));
 
-    nonPlayerPieces.forEach(obj => {
-      let curRelX = obj.data?.xRel;
-      let curRelY = obj.data?.yRel;
+    // Si cambiamos a formato F7, F8 o Futsal, retirar jugadores excedentes sobre el límite reglamentario
+    const maxCount = formatInfo.count;
+    const localPlayers = allPieces.filter(o => (o.isPlayerPiece || o.data?.type === 'player' || o.data?.tipo === 'jugador') && o.data?.playerType === 'local');
+    const rivalPlayers = allPieces.filter(o => (o.isPlayerPiece || o.data?.type === 'player' || o.data?.tipo === 'jugador') && o.data?.playerType === 'rival');
 
-      if (curRelX === undefined || curRelY === undefined) {
-        const rel = fr.getRelativePoint(obj.left, obj.top);
-        curRelX = rel.rx;
-        curRelY = rel.ry;
-      }
+    if (localPlayers.length > maxCount) {
+      localPlayers.slice(maxCount).forEach(p => fc.remove(p));
+    }
+    if (rivalPlayers.length > maxCount) {
+      rivalPlayers.slice(maxCount).forEach(p => fc.remove(p));
+    }
 
-      const remapped = remapCoordinatesByWindow(curRelX, curRelY, oldLibType, newLibType);
-      const pt = fr.getCanvasPoint(remapped.x, remapped.y);
+    const remainingPieces = fc.getObjects().filter(o => !isFieldLayer(o));
+    const hasRemainingPlayers = remainingPieces.some(o => o.isPlayerPiece || o.data?.type === 'player' || o.data?.tipo === 'jugador');
 
-      obj.set({
-        left: pt.x,
-        top: pt.y,
-        visible: true
+    if (!hasRemainingPlayers) {
+      // Si el canvas no tenía jugadores, dibujar la alineación reglamentaria inicial
+      drawPlayers(fc, fr, fieldType, { local: targetLocal, rival: targetRival }, isSwapped);
+    } else {
+      // Re-proyectar todas las piezas tácticas existentes preservando posiciones tácticas relativas
+      remainingPieces.forEach(obj => {
+        let curRelX = obj.data?.xRel;
+        let curRelY = obj.data?.yRel;
+
+        if (curRelX === undefined || curRelY === undefined) {
+          const rel = fr.getRelativePoint(obj.left, obj.top);
+          curRelX = rel.rx;
+          curRelY = rel.ry;
+        }
+
+        const remapped = remapCoordinatesByWindow(curRelX, curRelY, oldLibType, newLibType);
+        const pt = fr.getCanvasPoint(remapped.x, remapped.y);
+
+        obj.set({
+          left: pt.x,
+          top: pt.y,
+          visible: true
+        });
+
+        if (!obj.data) obj.data = {};
+        obj.data.xRel = remapped.x;
+        obj.data.yRel = remapped.y;
+
+        // Soporte de remapeo para herramientas con dos endpoints (líneas rectas, flechas)
+        if (obj.x1 !== undefined && obj.x2 !== undefined) {
+          const p1 = remapCoordinatesByWindow(obj.data?.x1Rel ?? curRelX, obj.data?.y1Rel ?? curRelY, oldLibType, newLibType);
+          const p2 = remapCoordinatesByWindow(obj.data?.x2Rel ?? curRelX, obj.data?.y2Rel ?? curRelY, oldLibType, newLibType);
+          const pt1 = fr.getCanvasPoint(p1.x, p1.y);
+          const pt2 = fr.getCanvasPoint(p2.x, p2.y);
+          obj.set({ x1: pt1.x, y1: pt1.y, x2: pt2.x, y2: pt2.y });
+          obj.data.x1Rel = p1.x; obj.data.y1Rel = p1.y;
+          obj.data.x2Rel = p2.x; obj.data.y2Rel = p2.y;
+        }
+
+        obj.setCoords();
       });
-
-      if (!obj.data) obj.data = {};
-      obj.data.xRel = remapped.x;
-      obj.data.yRel = remapped.y;
-
-      obj.setCoords();
-    });
-
-    // 4. Reorganizar a los jugadores según el nuevo tipo de campo y formato
-    // - En F7: exactamente 7 jugadores con formación F7
-    // - En F8: exactamente 8 jugadores con formación F8
-    // - En F11: 11 jugadores
-    // - En medio campo / tercio: distribuidos en el área visible sin perderse ni apiñarse
-    drawPlayers(fc, fr, fieldType, { local: targetLocal, rival: targetRival }, isSwapped);
+    }
 
     syncingR.current = false;
     fc.renderAll();
@@ -2845,8 +2868,7 @@ const PizarraTactica = () => {
           return;
         }
 
-        // Mapear objetivos por ID único determinista
-        const targetsByKey = new Map();
+        // Mapear objetivos de forma determinista para todas las categorías (P2)
         const targetListWithPos = rawTargets.map((objData, i) => {
           let left, top;
           if (objData.xRel !== undefined && objData.yRel !== undefined) {
@@ -2858,9 +2880,8 @@ const PizarraTactica = () => {
             top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
           }
           const id = getObjectIdentifier(objData);
-          const tInfo = { left, top, id, data: objData, index: i };
-          if (id) targetsByKey.set(id, tInfo);
-          return tInfo;
+          const cat = objData.category || objData.data?.category || getTacticalCategory(objData);
+          return { left, top, id, category: cat, data: objData, index: i };
         });
 
         // Filtrar objetos animables (todas las piezas tácticas, no el fondo ni el césped)
@@ -2878,14 +2899,43 @@ const PizarraTactica = () => {
           return;
         }
 
-        // P-G4: Preparar interpolación agrupada de todos los objetos
-        const animationsData = animatableObjs.map((obj, i) => {
+        // Emparejamiento determinista estricto sin saltos ni solapamientos de categoría (A-ANIM-1 y E-ANIM-2)
+        const matchedTargetIndices = new Set();
+        const animationsData = animatableObjs.map((obj) => {
           const objId = getObjectIdentifier(obj);
-          const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
+          const objCat = getTacticalCategory(obj);
+
+          // 1. Intentar emparejar por ID único exacto
+          let target = null;
+          if (objId) {
+            const foundIdx = targetListWithPos.findIndex((t, idxT) => !matchedTargetIndices.has(idxT) && t.id === objId);
+            if (foundIdx !== -1) {
+              matchedTargetIndices.add(foundIdx);
+              target = targetListWithPos[foundIdx];
+            }
+          }
+
+          // 2. Si no coincide ID, emparejar por misma categoría taxonómica y tipo (ej. platillo con platillo, balón con balón)
+          if (!target && objCat) {
+            const foundIdx = targetListWithPos.findIndex((t, idxT) => {
+              if (matchedTargetIndices.has(idxT)) return false;
+              if (t.category !== objCat) return false;
+              const tItem = t.data?.itemId || t.data?.matType;
+              const oItem = obj.data?.itemId || obj.data?.matType;
+              return !tItem || !oItem || tItem === oItem;
+            });
+            if (foundIdx !== -1) {
+              matchedTargetIndices.add(foundIdx);
+              target = targetListWithPos[foundIdx];
+            }
+          }
+
+          // 3. Fallback seguro: mantener posición actual (la pieza no salta a través del campo ni se teletransporta)
           const sLeft = obj.left || 0;
           const sTop  = obj.top  || 0;
-          const tLeft = t.left !== undefined ? t.left : sLeft;
-          const tTop  = t.top !== undefined ? t.top : sTop;
+          const tLeft = target?.left !== undefined ? target.left : sLeft;
+          const tTop  = target?.top  !== undefined ? target.top  : sTop;
+
           return { obj, sLeft, sTop, tLeft, tTop };
         });
 

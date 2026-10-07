@@ -67,7 +67,7 @@ export const LOCALES_REGISTRY = {
       idiomaDetectado: 'en',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'Body real devuelto: "Sorry. Something\'s wrong with the pitch. (We call this a 404 error) Sorry, we can\'t find that page! It might be an old link or maybe the web address has been entered incorrectly."'
+      notaAuditoria: 'Body real devuelto: "Sorry. Something\'s wrong with the pitch. (We call this a 404 error) Sorry, we can\'t find that page! It might be an old link or maybe the web address has been entered incorrectly. Please use the search above or try one of the links at the top of the page. Alternatively go back to the home page?"'
     }
   },
   'pt': {
@@ -107,7 +107,7 @@ export const LOCALES_REGISTRY = {
       idiomaDetectado: 'fr',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'URL devuelve artículo sobre futbolista Océane Hurtré (22 ans), no el manual 11+ ni protocolo preventivo.'
+      notaAuditoria: 'Body real devuelto: "#### ÉQUIPE DE FRANCE FÉMININE ### Océane Hurtré à la découverte des Bleues Nouvelle venue sur ce premier rassemblement, la milieu de Birmingham (22 ans) raconte comment elle a appris sa convocation, revient sur ses années en sélections jeunes et sur sa conquête de l\'Angleterre. Tout en se livrant sur son désir de s\'installer chez les Bleues."'
     }
   },
   'id': {
@@ -186,7 +186,7 @@ export const LOCALES_REGISTRY = {
       idiomaDetectado: 'nl',
       fechaConsulta: '2026-10-07',
       machineReadable: false,
-      notaAuditoria: 'Body real devuelto: "Er is iets mis gegaan. We zijn op de hoogte en werken aan een oplossing. Excuses voor het ongemak! De website is momenteel in onderhoudsmodus."'
+      notaAuditoria: 'Body real devuelto: "Er is iets mis gegaan. Het lukt niet om de pagina die je zocht op KNVB.nl te laden. Op dit moment is de website in onderhoudsmodus. Probeer het later nog eens. Gebruik je een adblocker? Probeer deze uit te zetten en laad de pagina opnieuw."'
     }
   },
   'tr': {

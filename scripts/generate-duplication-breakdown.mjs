@@ -32,8 +32,14 @@ function flatten(obj, prefix = '') {
 const flatEn = flatten(en);
 const targetLocales = { pt: flatten(pt), fr: flatten(fr), id: flatten(id) };
 
+const ALLOWLIST_TERMS = new Set([
+  'Admin', 'Club', 'General', 'GENERAL', 'Stats', 'Ranking', 'Zen', 'Sets', 'sets',
+  'Core / Pelvis', 'INDIVIDUAL', 'Individual', 'Manual', 'Auto', 'Error', 'Normal', 'Test',
+  'Nov', 'Mar', 'Jun', 'Jul', 'Sep', 'Oct', 'Feb', 'OK', 'ID', 'URL', 'Email',
+  'Original ES', 'Original EN', 'ES original', 'EN original'
+]);
+
 function classifyKey(key, val) {
-  const upper = val.toUpperCase();
   const trimmed = val.trim();
   
   if (['MC', 'DEF', 'LTI', 'EXT', 'POR', 'f8', 'MP', 'XI', 'DOR'].includes(trimmed)) {
@@ -42,16 +48,19 @@ function classifyKey(key, val) {
   if (/^[A-Z0-9_\-\.\/]{1,8}$/.test(trimmed)) {
     return '[SIGLA/ACRÓNIMO]';
   }
-  if (/Mister11|FIFA|Google|Apple|Chrome|Android|PWA|PDF|CSV|JSON|ACSI|MTQ|Nordic|Copenhagen/.test(val) && val.length < 35) {
+  if (/Mister11|FIFA|UEFA|Google|Apple|Chrome|Android|PWA|PDF|CSV|JSON|ACSI|MTQ|Nordic|Copenhagen|Club Starter|Club PRO|Club Premium|Global XP/.test(val) && val.length < 40) {
     return '[NOMBRE PROPIO/MARCA]';
   }
-  if (/^\{.*\}$/.test(trimmed) || /YYYY|HH:mm|km\/h|min|sec|%|\$|€/.test(val) && val.length < 25) {
+  if (/^\{.*\}$/.test(trimmed) || /YYYY|HH:mm|km\/h|min|sec|%|\$|€|https?:\/\//.test(val) && val.length < 50) {
     return '[FORMATO FECHA/HORA/NÚMERO]';
   }
-  if (val.length > 15 && val.includes(' ')) {
-    return '[FRASE UI SIN TRADUCIR]';
+  if (ALLOWLIST_TERMS.has(trimmed)) {
+    return '[TÉRMINO INTERNACIONAL PERMITIDO]';
   }
-  return '[OTRO]';
+  if (val.length > 15 && val.includes(' ')) {
+    return '[FRASE LARGA SIN TRADUCIR]';
+  }
+  return '[TÉRMINO BREVE SIN TRADUCIR]';
 }
 
 let reportMd = `# MÍSTER11 — Desglose Exhaustivo de Duplicación (PT, FR, ID vs EN)
@@ -70,8 +79,9 @@ for (const [code, dict] of Object.entries(targetLocales)) {
     '[NOMBRE PROPIO/MARCA]': [],
     '[FORMATO FECHA/HORA/NÚMERO]': [],
     '[ABREVIATURA PIZARRA]': [],
-    '[FRASE UI SIN TRADUCIR]': [],
-    '[OTRO]': []
+    '[TÉRMINO INTERNACIONAL PERMITIDO]': [],
+    '[FRASE LARGA SIN TRADUCIR]': [],
+    '[TÉRMINO BREVE SIN TRADUCIR]': []
   };
 
   const byNamespace = {};
@@ -95,10 +105,10 @@ for (const [code, dict] of Object.entries(targetLocales)) {
   reportMd += `| Categoría | Conteo | Porcentaje |\n`;
   reportMd += `|---|---|---|\n`;
   for (const [catName, list] of Object.entries(categories)) {
-    const pct = ((list.length / totalIdentical) * 100).toFixed(1);
+    const pct = totalIdentical > 0 ? ((list.length / totalIdentical) * 100).toFixed(1) : '0.0';
     reportMd += `| **${catName}** | ${list.length} | ${pct}% |\n`;
   }
-  reportMd += `\n`;
+  reportMd += `| **TOTAL SUMA** | **${totalIdentical}** | **100%** |\n\n`;
 
   reportMd += `### Claves por Namespace:\n\n`;
   for (const [ns, items] of Object.entries(byNamespace)) {

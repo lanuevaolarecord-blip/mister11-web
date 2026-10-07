@@ -136,6 +136,13 @@ for (const term of soccerTerms) {
 assert(failedTerms === 0, `Los ${soccerTerms.length} términos futbolísticos clave son 100% reconocidos sin errores`);
 
 // --------------------------------------------------------------------------
+// TEST 7: Sugerencias coherentes para erratas tipográficas comunes
+// --------------------------------------------------------------------------
+console.log('\n🔹 CASO 7: Sugerencias coherentes para erratas tipográficas ("estratejia" → "estrategia")');
+const typoEstratejia = getSpellingSuggestions('estratejia', 'es');
+assert(typoEstratejia.includes('estrategia'), '"estratejia" sugiere "estrategia"');
+
+// --------------------------------------------------------------------------
 // TEST 8: Casos reales de ficha técnica PDF solicitados en E6
 // --------------------------------------------------------------------------
 console.log('\n🔹 CASO 8: Texto real de ficha técnica PDF ("Obj etivo: realizar una trancision rápida tras perdida...")');

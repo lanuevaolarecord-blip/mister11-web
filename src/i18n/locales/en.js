@@ -2256,6 +2256,6 @@ export const en = {
   "exerciseCatalog.phases.fase2": "Phase 2: Strength, Plyometrics & Balance",
   "exerciseCatalog.phases.fase3": "Phase 3: High-Speed Running & Cutting Movements",
   "exerciseCatalog.sourceLabel": "Source",
-  "exerciseCatalog.clinicalFallbackNotice": "Clinical content shown in English"
+  "exerciseCatalog.clinicalFallbackNotice": "Official source under verification"
 };
 export default en;

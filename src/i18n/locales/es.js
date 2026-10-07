@@ -2256,6 +2256,6 @@ export const es = {
   "exerciseCatalog.phases.fase2": "Fase 2: Fuerza, Pliometría y Equilibrio",
   "exerciseCatalog.phases.fase3": "Fase 3: Carrera a Alta Velocidad y Cambios de Dirección",
   "exerciseCatalog.sourceLabel": "Fuente",
-  "exerciseCatalog.clinicalFallbackNotice": "Contenido clínico oficial en español"
+  "exerciseCatalog.clinicalFallbackNotice": "Fuente oficial en verificación"
 };
 export default es;

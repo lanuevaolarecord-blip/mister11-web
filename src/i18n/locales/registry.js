@@ -17,16 +17,17 @@ export const LOCALES_REGISTRY = {
     intl: 'es-ES',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'activo',
+    clinicalStatus: 'no_verificado',
     tier: 1,
     sourceDoc: {
-      oficial: true,
+      oficial: false,
       federacion: 'RFEF / FIFA Medical (F-MARC)',
       titulo: 'FIFA 11+ Manual del Programa de Prevención de Lesiones',
       url: 'https://www.fifa.com/technical/medical/injury-prevention',
       idiomaDetectado: 'es',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL externa en fifa.com devuelve 404. Manual histórico offline F-MARC reconocido en literatura pero URL no machine-readable en vivo.'
     }
   },
   'es-419': {
@@ -36,16 +37,17 @@ export const LOCALES_REGISTRY = {
     intl: 'es-419',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'activo',
+    clinicalStatus: 'no_verificado',
     tier: 1,
     sourceDoc: {
-      oficial: true,
+      oficial: false,
       federacion: 'CONMEBOL / FIFA Medical',
       titulo: 'FIFA 11+ Programa Completo de Calentamiento para Prevenir Lesiones',
       url: 'https://www.fifa.com/technical/medical/injury-prevention',
       idiomaDetectado: 'es',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL externa en fifa.com devuelve 404. Manual histórico offline F-MARC reconocido en literatura pero URL no machine-readable en vivo.'
     }
   },
   'en': {
@@ -55,16 +57,17 @@ export const LOCALES_REGISTRY = {
     intl: 'en-GB',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'activo',
+    clinicalStatus: 'no_verificado',
     tier: 1,
     sourceDoc: {
-      oficial: true,
+      oficial: false,
       federacion: 'The FA / FIFA Medical (F-MARC)',
       titulo: 'FIFA 11+ A Complete Warm-Up Programme to Prevent Injuries - Manual',
       url: 'https://www.thefa.com/learning/coaching-resources/fifa-11-plus',
       idiomaDetectado: 'en',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL devuelve 404 ("Sorry. Something\'s wrong with the pitch."). No contiene el manual 11+.'
     }
   },
   'pt': {
@@ -74,16 +77,17 @@ export const LOCALES_REGISTRY = {
     intl: 'pt-BR',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'activo',
+    clinicalStatus: 'no_verificado',
     tier: 1,
     sourceDoc: {
-      oficial: true,
+      oficial: false,
       federacion: 'CBF / FIFA Medical',
       titulo: 'FIFA 11+ Manual do Programa Completo de Aquecimento para Prevenção de Lesões',
       url: 'https://www.cbf.com.br/saude-e-performance/prevencao-de-lesoes-fifa-11',
       idiomaDetectado: 'pt',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL devuelve 404 (status code 404 al consultar cbf.com.br).'
     }
   },
   'fr': {
@@ -93,16 +97,17 @@ export const LOCALES_REGISTRY = {
     intl: 'fr-FR',
     dir: 'ltr',
     status: 'activo',
-    clinicalStatus: 'activo',
+    clinicalStatus: 'no_verificado',
     tier: 1,
     sourceDoc: {
-      oficial: true,
+      oficial: false,
       federacion: 'FFF / FIFA Medical',
       titulo: 'Le 11+ Manuel du Programme d\'échauffement complet pour la prévention des blessures (FFF ESVP)',
       url: 'https://www.fff.fr/articles/direction-technique-nationale/details-articles/1879-echauffement-structure-a-visee-preventive-esvp.html',
       idiomaDetectado: 'fr',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL devuelve artículo sobre futbolista Océane Hurtré (22 ans), no el manual 11+ ni protocolo preventivo.'
     }
   },
   'id': {
@@ -171,7 +176,7 @@ export const LOCALES_REGISTRY = {
     intl: 'nl-NL',
     dir: 'ltr',
     status: 'pending',
-    clinicalStatus: 'pendiente',
+    clinicalStatus: 'no_verificado',
     tier: 2,
     sourceDoc: {
       oficial: false,
@@ -179,8 +184,9 @@ export const LOCALES_REGISTRY = {
       titulo: 'Blessurepreventie en Voetbalmedische Richtlijnen',
       url: 'https://www.knvb.nl/assist/assist-trainers/gezondheid/blessurepreventie',
       idiomaDetectado: 'nl',
-      fechaConsulta: '2026-10-06',
-      machineReadable: true
+      fechaConsulta: '2026-10-07',
+      machineReadable: false,
+      notaAuditoria: 'URL KNVB devuelve error / modo mantenimiento ("Er is iets mis gegaan..."), no el documento de blessurepreventie.'
     }
   },
   'tr': {

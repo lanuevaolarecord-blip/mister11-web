@@ -2256,6 +2256,6 @@ export const id = {
   "exerciseCatalog.phases.fase2": "Fase 2: Kekuatan, Pliometrik & Keseimbangan",
   "exerciseCatalog.phases.fase3": "Fase 3: Lari Cepat & Gerakan Memotong",
   "exerciseCatalog.sourceLabel": "Sumber",
-  "exerciseCatalog.clinicalFallbackNotice": "Konten klinis ditampilkan dalam bahasa Spanyol (dokumen PSSI sedang ditranskripsi)"
+  "exerciseCatalog.clinicalFallbackNotice": "Sumber resmi dalam verifikasi"
 };
 export default id;

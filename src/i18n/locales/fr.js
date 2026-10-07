@@ -2256,6 +2256,6 @@ export const fr = {
   "exerciseCatalog.phases.fase2": "Phase 2 : Force, Pliométrie & Équilibre",
   "exerciseCatalog.phases.fase3": "Phase 3 : Course à Haute Vitesse & Changements de Direction",
   "exerciseCatalog.sourceLabel": "Source",
-  "exerciseCatalog.clinicalFallbackNotice": "Contenu clinique officiel en français (FFF ESVP / FIFA 11+)"
+  "exerciseCatalog.clinicalFallbackNotice": "Source officielle en cours de vérification"
 };
 export default fr;

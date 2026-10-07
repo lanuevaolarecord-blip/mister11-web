@@ -398,16 +398,31 @@ export const drawPdfHeader = (doc, title, subtitle, pageW = 210) => {
  * Renderiza el pie de página unificado Míster11.
  */
 export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, totalPages = 1) => {
+  let w = pageW;
+  let h = pageH;
+  let cur = currentPage;
+  let total = totalPages;
+
+  // Soporte polimórfico si el segundo argumento es un objeto de opciones
+  if (typeof pageW === 'object' && pageW !== null) {
+    w = doc?.internal?.pageSize?.getWidth?.() || 210;
+    h = doc?.internal?.pageSize?.getHeight?.() || 297;
+    cur = doc?.internal?.getNumberOfPages?.() || 1;
+    total = cur;
+  }
+
   doc.setDrawColor(...PDF_COLORS.border);
-  doc.line(14, pageH - 14, pageW - 14, pageH - 14);
+  doc.line(14, h - 14, w - 14, h - 14);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...PDF_COLORS.textMuted);
-  doc.text('Míster11 Platform • mister11.app', 14, pageH - 8);
+  // FRENTE F (PDF-Q): Usar '-' en lugar de '•' para que jsPDF/helvetica no rompa el kerning en 'mister11.a pp' -> 'mister11.app'
+  doc.text('Mister11 Platform - mister11.app', 14, h - 8);
 
-  const pageStr = `Página ${currentPage} de ${totalPages}`;
-  doc.text(pageStr, pageW - 14, pageH - 8, { align: 'right' });
+  // FRENTE F (PDF-Q): Usar 'Pagina' sin tilde para evitar que el diacrítico rompa el espaciado en helvetica 'Pá g ina' -> 'Pagina'
+  const pageStr = `Pagina ${cur} de ${total}`;
+  doc.text(pageStr, w - 14, h - 8, { align: 'right' });
 };
 
 /**

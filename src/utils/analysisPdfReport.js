@@ -475,12 +475,12 @@ export const exportMultiMatchAnalysisPDF = async ({
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.text(
-        isEn ? 'Míster 11 Club Engine · Tactical Intelligence & Analytics Module' : 'Míster 11 Club Engine · Módulo de Inteligencia y Análisis Táctico',
+        isEn ? 'Mister 11 Club Engine - Tactical Intelligence & Analytics Module' : 'Mister 11 Club Engine - Modulo de Inteligencia y Analisis Tactico',
         12,
         pageH - 3.5
       );
       doc.text(
-        isEn ? `Page ${p} of ${totalPages}` : `Página ${p} de ${totalPages}`,
+        isEn ? `Page ${p} of ${totalPages}` : `Pagina ${p} de ${totalPages}`,
         pageW - 12,
         pageH - 3.5,
         { align: 'right' }

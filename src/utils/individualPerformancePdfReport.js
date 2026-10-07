@@ -352,11 +352,11 @@ export const generateIndividualPerformancePdf = async ({
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...TEXT_MUTED);
-      doc.text(' • mister11.app • Rendimiento Individual Verificable', 45, pageH - 5.5);
+      doc.text(' - mister11.app - Rendimiento Individual Verificable', 45, pageH - 5.5);
 
       const pageStr = isEn
         ? `Page ${pageNumber} of ${totalPages}`
-        : `Página ${pageNumber} de ${totalPages}`;
+        : `Pagina ${pageNumber} de ${totalPages}`;
       doc.text(pageStr, pageW - 14, pageH - 5.5, { align: 'right' });
     }
   });

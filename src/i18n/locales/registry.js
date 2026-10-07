@@ -136,13 +136,13 @@ export const LOCALES_REGISTRY = {
     clinicalStatus: 'pendiente',
     tier: 2,
     sourceDoc: {
-      oficial: true,
+      oficial: 'pending_verification',
       federacion: 'FIGC / Settore Tecnico',
       titulo: 'Programma 11+ di Prevenzione degli Infortuni FIFA',
       url: 'https://www.figc.it/it/tecnici/commissioni-mediche/programma-11-plus/',
       idiomaDetectado: 'it',
       fechaConsulta: '2026-10-06',
-      machineReadable: true
+      machineReadable: false
     }
   },
   'de': {
@@ -155,13 +155,13 @@ export const LOCALES_REGISTRY = {
     clinicalStatus: 'pendiente',
     tier: 2,
     sourceDoc: {
-      oficial: true,
+      oficial: 'pending_verification',
       federacion: 'DFB / FIFA Medical',
       titulo: 'Die 11+ Ein komplettes Aufwärmprogramm zur Verletzungsprävention',
       url: 'https://www.dfb.de/medizin/verletzungspraevention/das-elf-plus-programm/',
       idiomaDetectado: 'de',
       fechaConsulta: '2026-10-06',
-      machineReadable: true
+      machineReadable: false
     }
   },
   'nl': {

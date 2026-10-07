@@ -155,23 +155,41 @@ async function runCheck() {
       }
     }
 
-    // G1 Amplificado: Detección estricta de frases UI sin traducir (idénticas a EN)
+    // G1 Amplificado (Oleada 1): Detección estricta con ALLOWLIST explícita
+    // Toda clave idéntica a EN es un offender SALVO que pertenezca a la allowlist explícita
+    const ALLOWLIST_G1 = new Set([
+      // Siglas y Acrónimos médicos, deportivos y técnicos
+      'RPE', 'GPS', 'ACWR', 'VAR', 'sRPE', 'HR', 'xG', 'PDF', 'CSV', 'JSON', 'PWA', 'DOMS', 'CMJ', 'SJ',
+      'ACSI-28', 'OK', 'ID', 'URL', 'Email', 'cm', 'kg', 'km/h', 'min', 'sec', '%', '$', '€',
+      // Pizarra táctica y posiciones
+      'MC', 'DEF', 'LTI', 'EXT', 'POR', 'f8', 'MP', 'XI', 'DOR',
+      // Nombres de planes y marcas
+      'Mister11', 'Míster11', 'MISTER 11', 'FIFA', 'UEFA', 'RFEF', 'CONMEBOL', 'CBF', 'FFF', 'PSSI',
+      'Google', 'Apple', 'Chrome', 'Android', 'Nordic', 'Copenhagen', 'Stroop', 'Illinois', 'Yo-Yo',
+      'Club Starter', 'Club PRO', 'Club Premium', 'Global XP', '📅 Google Cal', '📥 ICS', 'iOS (Safari):',
+      'https://mister11.com/join-staff?code=ABC123',
+      // Abreviaturas de meses universales (3 letras coincidentes)
+      'Nov', 'Mar', 'Jun', 'Jul', 'Sep', 'Oct', 'Feb',
+      // Términos técnicos y universales multilingües
+      'Admin', 'Club', 'General', 'GENERAL', 'Stats', 'Ranking', 'Zen', 'Sets', 'sets',
+      'Core / Pelvis', 'INDIVIDUAL', 'Individual', 'Manual', 'Auto', 'Error', 'Normal', 'Test'
+    ]);
+
     const enObj = translations['English (EN)'] || translations['en'];
     let untranslatedUiSentences = 0;
     if (loc.code !== 'en' && enObj) {
       for (const k of esKeys) {
         const valEn = getValueByPath(enObj, k);
         const valLoc = getValueByPath(dict, k);
-        if (
-          typeof valEn === 'string' &&
-          valEn.length > 15 &&
-          valEn.includes(' ') &&
-          valLoc === valEn
-        ) {
-          // Chequear si es una marca o formato permitido
-          const isAllowed = /Mister11|FIFA|Google|Apple|Chrome|Android|PWA|PDF|CSV|JSON/.test(valEn) && valEn.length < 35 && !valEn.includes('  ');
+        if (typeof valEn === 'string' && valEn.length > 0 && valLoc === valEn) {
+          const trimmed = valEn.trim();
+          const isAllowed = 
+            ALLOWLIST_G1.has(trimmed) ||
+            /^[A-Z0-9_\-\.\/]{1,6}$/.test(trimmed) ||
+            /^\{[a-zA-Z0-9_]+\}$/.test(trimmed);
+
           if (!isAllowed) {
-            console.error(`❌ [G1 Amplificado] Frase larga sin traducir en ${loc.code.toUpperCase()}: "${k}" = "${valLoc}" (idéntica a EN)`);
+            console.error(`❌ [G1 Gate] Clave sin traducir en ${loc.code.toUpperCase()}: "${k}" = "${valLoc}" (idéntica a EN y fuera de allowlist)`);
             untranslatedUiSentences++;
             hasErrors = true;
           }
@@ -179,7 +197,7 @@ async function runCheck() {
       }
     }
 
-    console.log(`   ✅ [${loc.code.toUpperCase()}] ${loc.label}: ${locKeys.length} claves | Paridad 100% | ${placeholderMismatches} advertencias | ${untranslatedUiSentences} frases sin traducir.`);
+    console.log(`   ✅ [${loc.code.toUpperCase()}] ${loc.label}: ${locKeys.length} claves | Paridad 100% | ${placeholderMismatches} advertencias | ${untranslatedUiSentences} términos fuera de allowlist.`);
   }
 
   // Comprobación de claves utilizadas en código

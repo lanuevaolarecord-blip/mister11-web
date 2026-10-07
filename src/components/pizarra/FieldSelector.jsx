@@ -26,12 +26,12 @@ const FieldSelector = ({ fieldType, setFieldType, className = "topbar-select" })
       aria-label={t('board.toolbar.fieldType', {}, 'Tipo de campo')}
     >
       <option value="full">{t('board.fields.full', {}, 'Campo Completo')}</option>
-      <option value="half-attack">{t('board.fields.halfAttack', {}, 'Medio Campo Ataque')}</option>
-      <option value="half-defense">{t('board.fields.halfDefense', {}, 'Medio Campo Defensa')}</option>
-      <option value="third_defense">{t('board.fields.thirdDefense', {}, 'Tercio Defensivo')}</option>
+      <option value="half_attack">{t('board.fields.halfAttack', {}, 'Medio Campo Ataque')}</option>
+      <option value="half_defense">{t('board.fields.halfDefense', {}, 'Medio Campo Defensa')}</option>
+      <option value="third_def">{t('board.fields.thirdDefense', {}, 'Tercio Defensivo')}</option>
       <option value="third_mid">{t('board.fields.thirdMid', {}, 'Tercio Medio')}</option>
-      <option value="third_attack">{t('board.fields.thirdAttack', {}, 'Tercio Ofensivo')}</option>
-      <option value="penalty_area">{t('board.fields.penaltyArea', {}, 'Área Penal')}</option>
+      <option value="third_off">{t('board.fields.thirdAttack', {}, 'Tercio Ofensivo')}</option>
+      <option value="penalty_zoom">{t('board.fields.penaltyArea', {}, 'Área Penal')}</option>
       <option value="f7">{t('board.fields.f7', {}, 'Fútbol 7')}</option>
       <option value="f8">{t('board.fields.f8', {}, 'Fútbol 8')}</option>
       <option value="futsal">{t('board.fields.futsal', {}, 'Fútbol Sala')}</option>

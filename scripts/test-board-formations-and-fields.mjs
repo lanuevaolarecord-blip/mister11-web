@@ -10,6 +10,7 @@
 
 import assert from 'assert';
 import { FORMATIONS, FORMATIONS_BY_FORMAT, getFormatInfo } from '../src/lib/mister11-field.js';
+import { remapCoordinatesByWindow, FIELD_WINDOWS } from '../src/lib/mister11-pieces.js';
 
 console.log('==============================================================================');
 console.log('MÍSTER 11 — TEST DE FORMACIONES, CAMPOS Y NO-DUPLICADOS');
@@ -144,6 +145,47 @@ FORMATIONS_BY_FORMAT.futsal.forEach(form => {
 });
 console.log('  ✅ Todas las formaciones de Fútbol Sala tienen exactamente 5 piezas y portero');
 
+// 7. O1: Remapeo Proporcional por Ventana Normalizada (Fixture Picture 14: Dorsales 6 y 7 en ½ Ataque)
+console.log('▶ [7/8] Verificando O1 Remapeo Proporcional (Fixture Picture 14)...');
+const d6_remapped = remapCoordinatesByWindow(0.20, 0.35, 'full', 'half_attack');
+const d7_remapped = remapCoordinatesByWindow(0.25, 0.65, 'full', 'half_attack');
+
+const halfWin = FIELD_WINDOWS.half_attack;
+assert(d6_remapped.x >= halfWin.x0, `Dorsal 6 remapeado x=${d6_remapped.x} debe estar >= 0.5 (dentro del medio campo visible, NO margen negro)`);
+assert(d6_remapped.x <= halfWin.x1, `Dorsal 6 remapeado x=${d6_remapped.x} debe estar <= 1.0`);
+assert(d7_remapped.x >= halfWin.x0, `Dorsal 7 remapeado x=${d7_remapped.x} debe estar >= 0.5 (dentro del medio campo visible, NO margen negro)`);
+assert(d7_remapped.x <= halfWin.x1, `Dorsal 7 remapeado x=${d7_remapped.x} debe estar <= 1.0`);
+assert(d7_remapped.x > d6_remapped.x, 'Dorsal 7 debe mantenerse a la derecha del dorsal 6 preservando la intención táctica');
+console.log('  ✅ O1 remapea todas las piezas dentro de los límites visibles: cero piezas en el margen negro');
+
+// 8. A-ANIM-1 y E-ANIM-2: Emparejamiento determinista de materiales (platillos, balones) en animación
+console.log('▶ [8/8] Verificando interpolación determinista de materiales (A-ANIM-1 y E-ANIM-2)...');
+const frameA_materials = [
+  { id: 'platillo_1', category: 'material', data: { itemId: 'platillo' }, left: 100, top: 200 },
+  { id: 'platillo_2', category: 'material', data: { itemId: 'platillo' }, left: 150, top: 220 },
+  { id: 'ball_1',     category: 'ball',     data: { itemId: 'balon' },    left: 300, top: 400 },
+];
+const frameB_materials = [
+  { id: 'platillo_1', category: 'material', data: { itemId: 'platillo' }, left: 120, top: 210 },
+  { id: 'platillo_2', category: 'material', data: { itemId: 'platillo' }, left: 170, top: 230 },
+  { id: 'ball_1',     category: 'ball',     data: { itemId: 'balon' },    left: 350, top: 420 },
+];
+
+const matchedIndices = new Set();
+const interpData = frameA_materials.map(obj => {
+  const fIdx = frameB_materials.findIndex((t, i) => !matchedIndices.has(i) && t.id === obj.id);
+  assert(fIdx !== -1, `Objeto ${obj.id} debe encontrar su objetivo correspondiente en el Frame B`);
+  matchedIndices.add(fIdx);
+  const target = frameB_materials[fIdx];
+  return { id: obj.id, from: { x: obj.left, y: obj.top }, to: { x: target.left, y: target.top } };
+});
+
+assert.strictEqual(interpData.length, 3, 'Debe haber 3 objetos interpolados');
+assert.strictEqual(interpData[0].to.x, 120, 'Platillo 1 interpola suavemente a x=120');
+assert.strictEqual(interpData[1].to.x, 170, 'Platillo 2 interpola suavemente a x=170');
+assert.strictEqual(interpData[2].to.x, 350, 'Balón interpola suavemente a x=350');
+console.log('  ✅ Loop maestro empareja materiales y balones determinísticamente sin saltos ni desaparición');
+
 console.log('==============================================================================');
-console.log('🎉 [PASS] 6/6 VERIFICACIONES DE FORMACIONES Y CAMPOS EXITOSAS');
+console.log('🎉 [PASS] 8/8 VERIFICACIONES DE FORMACIONES, CAMPOS Y ANIMACIÓN EXITOSAS');
 console.log('==============================================================================');

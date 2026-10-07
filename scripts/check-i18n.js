@@ -155,7 +155,31 @@ async function runCheck() {
       }
     }
 
-    console.log(`   ✅ [${loc.code.toUpperCase()}] ${loc.label}: ${locKeys.length} claves | Paridad 100% | ${placeholderMismatches} advertencias de placeholders.`);
+    // G1 Amplificado: Detección estricta de frases UI sin traducir (idénticas a EN)
+    const enObj = translations['English (EN)'] || translations['en'];
+    let untranslatedUiSentences = 0;
+    if (loc.code !== 'en' && enObj) {
+      for (const k of esKeys) {
+        const valEn = getValueByPath(enObj, k);
+        const valLoc = getValueByPath(dict, k);
+        if (
+          typeof valEn === 'string' &&
+          valEn.length > 15 &&
+          valEn.includes(' ') &&
+          valLoc === valEn
+        ) {
+          // Chequear si es una marca o formato permitido
+          const isAllowed = /Mister11|FIFA|Google|Apple|Chrome|Android|PWA|PDF|CSV|JSON/.test(valEn) && valEn.length < 35 && !valEn.includes('  ');
+          if (!isAllowed) {
+            console.error(`❌ [G1 Amplificado] Frase larga sin traducir en ${loc.code.toUpperCase()}: "${k}" = "${valLoc}" (idéntica a EN)`);
+            untranslatedUiSentences++;
+            hasErrors = true;
+          }
+        }
+      }
+    }
+
+    console.log(`   ✅ [${loc.code.toUpperCase()}] ${loc.label}: ${locKeys.length} claves | Paridad 100% | ${placeholderMismatches} advertencias | ${untranslatedUiSentences} frases sin traducir.`);
   }
 
   // Comprobación de claves utilizadas en código

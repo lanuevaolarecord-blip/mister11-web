@@ -132,6 +132,7 @@ export const ACCENTED_WORDS_MAP_ES = {
   'analisis': 'análisis',
   'estrategico': 'estratégico', 'estrategica': 'estratégica',
   'estadistica': 'estadística', 'estadisticas': 'estadísticas',
+  'perdida': 'pérdida', 'perdidas': 'pérdidas',
   'mister': 'míster',
   'futbol': 'fútbol',
   // Adjetivos y adverbios
@@ -306,7 +307,7 @@ const SPANISH_SUFFIXES = [
 // ── VOCABULARIO BASE MASIVO ESPAÑOL ──
 const SPANISH_BASE_WORDS = new Set([
   // ── ARTÍCULOS, DETERMINANTES Y PRONOMBRES ──
-  'el','la','los','las','lo','un','una','unos','unas',
+  'el','la','los','las','lo','un','una','unos','unas','del','al',
   'este','esta','estos','estas','ese','esa','esos','esas',
   'aquel','aquella','aquellos','aquellas',
   'mi','mis','tu','tus','su','sus','nuestro','nuestra','nuestros','nuestras',
@@ -321,6 +322,7 @@ const SPANISH_BASE_WORDS = new Set([
   'y','e','o','u','ni','pero','sino','aunque','porque','pues','si','ya',
   'cuando','donde','como','mientras','después','antes','hasta','desde',
   'que','si','no','sí','tan','tanto','tal','cual','donde',
+  'izquierda','izquierdo','derecha','derecho','izquierdas','derechas',
 
   // ── ADVERBIOS FRECUENTES ──
   'muy','más','menos','también','tampoco','además','sin','embargo','así',
@@ -478,6 +480,9 @@ const SPANISH_BASE_WORDS = new Set([
   'sustitución','sustituciones','cambio','cambios','minuto','minutos',
   'campo','campos','terreno','terrenos','césped','porterías','portería',
   'balón','balones','pelota','pelotas','estrategia','estrategias',
+  'control','controles','juego','juegos','pase','pases','movilidad',
+  'desplazamiento','desplazamientos','largo','largos','corta','cortos',
+  'superioridad','inferioridad','pivota','pivotar','pivoteando',
   'ejercicio','ejercicios','tarea','tareas','sesión','sesiones',
   'rondo','rondos','partidillo','partidillos','práctica','prácticas',
   'calentamiento','calentamientos','estiramiento','estiramientos',
@@ -843,32 +848,21 @@ export const checkTextSpelling = (text, lang = 'es') => {
     // 3. Existe en el diccionario oficial (normalizado)
     if (dictionary.has(lower)) continue;
 
-    // 4. Comprobar sin tilde si existe en diccionario con tilde (evita falsos positivos)
-    if (!isEn) {
-      const stripped = stripAccents(lower);
-      const hasAccentedVersion = Array.from(dictionary).some(w => stripAccents(w) === stripped);
-      if (hasAccentedVersion) continue; // La versión con tilde está en el diccionario → acepta la sin tilde como variante
-    }
-
-    // 5. Análisis morfológico: si la raíz existe, es válida
+    // 4. Análisis morfológico: si la raíz existe, es válida
     if (!isEn && isSpanishMorphologyValid(rawWord)) continue;
 
-    // 6. Nombre propio: omitir con alta probabilidad de ser nombre/apellido/lugar
+    // 5. Nombre propio: omitir con alta probabilidad de ser nombre/apellido/lugar
     if (looksLikeProperNoun(rawWord, start, text)) continue;
 
-    // 7. Solo reportar si hay sugerencias de calidad (evita falsos positivos de palabras técnicas o raras)
+    // 6. Reportar error (con sugerencias si existen)
     const suggestions = getSpellingSuggestions(rawWord, lang);
-    if (suggestions.length > 0) {
-      // Solo reportar si la sugerencia no es morfológicamente similar (para no alarmar con jerga técnica)
-      errors.push({
-        word: rawWord,
-        start,
-        end,
-        suggestions,
-        reason: 'misspelled',
-      });
-    }
-    // Si no hay sugerencias sólidas → no reportar (probablemente nombre técnico o jerga válida)
+    errors.push({
+      word: rawWord,
+      start,
+      end,
+      suggestions,
+      reason: 'misspelled',
+    });
   }
 
   return errors;

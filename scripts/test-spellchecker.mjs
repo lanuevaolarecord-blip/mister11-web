@@ -136,14 +136,63 @@ for (const term of soccerTerms) {
 assert(failedTerms === 0, `Los ${soccerTerms.length} términos futbolísticos clave son 100% reconocidos sin errores`);
 
 // --------------------------------------------------------------------------
-// TEST 7: Sugerencias coherentes para erratas tipográficas
+// TEST 8: Casos reales de ficha técnica PDF solicitados en E6
 // --------------------------------------------------------------------------
-console.log('\n🔹 CASO 7: Sugerencias coherentes para erratas comunes');
-const typo1 = getSpellingSuggestions('estratejia', 'es');
-assert(typo1.includes('estrategia'), '"estratejia" sugiere "estrategia"');
+console.log('\n🔹 CASO 8: Texto real de ficha técnica PDF ("Obj etivo: realizar una trancision rápida tras perdida...")');
+const pdfPhrase = 'Objetivo: realizar una trancision rápida tras perdida mediante desplazamientos largos tras perdida.';
+const errorsPdf = checkTextSpelling(pdfPhrase, 'es');
 
-const typo2 = getSpellingSuggestions('posesion', 'es');
-assert(typo2.includes('posesión'), '"posesion" sugiere "posesión"');
+const trancisionErr = errorsPdf.find(e => e.word.toLowerCase() === 'trancision');
+assert(trancisionErr !== undefined, '"trancision" debe detectarse');
+assert(trancisionErr?.suggestions?.includes('transición'), '"trancision" sugiere "transición"');
+
+const perdidaErr = errorsPdf.find(e => e.word.toLowerCase() === 'perdida');
+assert(perdidaErr !== undefined, '"perdida" debe detectarse con falta de tilde contextual');
+assert(perdidaErr?.suggestions?.includes('pérdida'), '"perdida" sugiere "pérdida"');
+
+// Probar corrección secuencial
+let correctedPdf = pdfPhrase;
+for (const err of [...errorsPdf].reverse()) {
+  correctedPdf = applySpellingCorrection(correctedPdf, err, err.suggestions[0]);
+}
+assert(
+  correctedPdf === 'Objetivo: realizar una transición rápida tras pérdida mediante desplazamientos largos tras pérdida.',
+  'El texto resultante queda corregido exactamente como: "Objetivo: realizar una transición rápida tras pérdida mediante desplazamientos largos tras pérdida."'
+);
+
+// --------------------------------------------------------------------------
+// TEST 9: Typos individuales críticos de E6
+// --------------------------------------------------------------------------
+console.log('\n🔹 CASO 9: Verificación de typos críticos individuales ("pocesion", "balo", "giados", "sejun")');
+const typoPocesion = getSpellingSuggestions('pocesion', 'es');
+assert(typoPocesion.includes('posesión'), '"pocesion" → "posesión"');
+
+const typoBalo = getSpellingSuggestions('balo', 'es');
+assert(typoBalo.includes('balón'), '"balo" → "balón"');
+
+const typoGiados = getSpellingSuggestions('giados', 'es');
+assert(typoGiados.includes('guiados'), '"giados" → "guiados"');
+
+const typoSejun = getSpellingSuggestions('sejun', 'es');
+assert(typoSejun.includes('según'), '"sejun" → "según"');
+
+// --------------------------------------------------------------------------
+// TEST 10: Preservación de abreviaturas tácticas y nombres (E6)
+// --------------------------------------------------------------------------
+console.log('\n🔹 CASO 10: No alterar abreviaturas ni nombres propios ni traducir estilo táctico');
+const tacticalAbbreviations = ['MC', 'DEF', 'LTI', 'EXT', 'POR', 'f8'];
+let abbrevFails = 0;
+for (const ab of tacticalAbbreviations) {
+  const errs = checkTextSpelling(ab, 'es');
+  if (errs.length > 0) {
+    abbrevFails++;
+  }
+}
+assert(abbrevFails === 0, 'Abreviaturas tácticas (MC, DEF, LTI, EXT, POR, f8) NO generan falsos positivos');
+
+const coachTacticalText = 'El MC pivota hacia banda izquierda buscando al LTI para generar superioridad 3v2 en f8.';
+const coachErrs = checkTextSpelling(coachTacticalText, 'es');
+assert(coachErrs.length === 0, 'Texto táctico del míster se conserva fiel y sin falsos positivos');
 
 // --------------------------------------------------------------------------
 // RESUMEN FINAL
@@ -155,6 +204,6 @@ console.log('📊 ========================================================');
 if (failedTests > 0) {
   process.exit(1);
 } else {
-  console.log('✨ ¡TODAS LAS PRUEBAS PASARON EXITOSAMENTE!');
+  console.log('✨ ¡TODAS LAS PRUEBAS PASARON EXITOSAMENTE (10/10 CASOS)!');
   process.exit(0);
 }

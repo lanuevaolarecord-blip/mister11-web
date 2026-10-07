@@ -391,19 +391,42 @@ html:not(.dark) .exercise-check-row {
 
 .theme-light .exercise-name-txt,
 html:not(.dark) .exercise-name-txt {
-  color: #0F172A !important;
+  color: var(--text-primary, #1B3A2D) !important;
 }
 
 .theme-light .guide-steps-list,
 html:not(.dark) .guide-steps-list,
 .theme-light .guide-tip-box p,
 html:not(.dark) .guide-tip-box p {
-  color: #1E293B !important;
+  color: var(--text-secondary, #2D5A43) !important;
 }
 
 .theme-light .exercise-digital-guide-panel,
 html:not(.dark) .exercise-digital-guide-panel {
   background: #F8FAFC !important;
 }
+
+.guide-verification-chip {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.35);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+  color: var(--accent-gold, #D4A843);
+  margin-top: 4px;
+}
+
+.guide-verification-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-gold, #D4A843);
+  flex-shrink: 0;
+}
+
 
 

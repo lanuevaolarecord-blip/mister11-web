@@ -455,20 +455,8 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                     <p>{details.preventionValue}</p>
                                   </div>
 
-                                  <div className="guide-verification-chip" style={{
-                                    gridColumn: '1 / -1',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    background: 'rgba(212, 168, 67, 0.12)',
-                                    border: '1px solid rgba(212, 168, 67, 0.35)',
-                                    borderRadius: '6px',
-                                    padding: '5px 9px',
-                                    fontSize: '11px',
-                                    color: '#D4A843',
-                                    marginTop: '4px'
-                                  }}>
-                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4A843', flexShrink: 0 }} />
+                                  <div className="guide-verification-chip">
+                                    <span className="guide-verification-dot" />
                                     <span>{t('exerciseCatalog.clinicalFallbackNotice')}</span>
                                   </div>
                                 </div>

@@ -23,6 +23,7 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /#0[Bb]1317/gi, name: 'Navy #0B1317' },
   { pattern: /#1[Ee]3[Aa]8[Aa]/gi, name: 'Azul #1E3A8A' },
   { pattern: /#3[Bb]82[Ff]6/gi, name: 'Azul Eléctrico #3B82F6' },
+  { pattern: /#2196[Ff]3/gi, name: 'Azul Material #2196F3' },
   { pattern: /#2563[Ee][Bb]/gi, name: 'Azul #2563EB' },
   { pattern: /#1[Dd]4[Ee][Dd]8/gi, name: 'Azul #1D4ED8' },
   { pattern: /#60[Aa]5[Ff][Aa]/gi, name: 'Azul Claro #60A5FA' },
@@ -32,6 +33,7 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /#141[Aa]17/gi, name: 'Variante no canónica #141A17 (usar solo #1B3A2D)' },
   { pattern: /rgba?\(\s*15\s*,\s*23\s*,\s*42/gi, name: 'Navy rgb(15, 23, 42)' },
   { pattern: /rgba?\(\s*59\s*,\s*130\s*,\s*246/gi, name: 'Azul Eléctrico rgb(59, 130, 246)' },
+  { pattern: /rgba?\(\s*33\s*,\s*150\s*,\s*243/gi, name: 'Azul Material rgb(33, 150, 243)' },
   { pattern: /rgba?\(\s*30\s*,\s*58\s*,\s*138/gi, name: 'Azul rgb(30, 58, 138)' },
   { pattern: /rgba?\(\s*13\s*,\s*148\s*,\s*136/gi, name: 'Teal rgb(13, 148, 136) [BLOQUEO-DUEÑO: A]' }
 ];
@@ -57,7 +59,8 @@ const TARGET_FILES = [
   'src/components/PlayerChipRow.css',
   'src/components/MatchStats/StatsFilters.jsx',
   'src/components/player/PlayerPlansPortalTab.jsx',
-  'src/components/player/PlayerPlansPortalTab.css'
+  'src/components/player/PlayerPlansPortalTab.css',
+  'src/pages/AdminPanel.jsx'
 ];
 
 console.log('==============================================================================');
@@ -156,5 +159,33 @@ if (totalViolations > 0) {
   process.exit(1);
 } else {
   console.log('✅ [PASS] 0 colores prohibidos, 0 emojis, y todos los --action-color son canónicos Tierra y Campo.');
-  console.log('==============================================================================\n');
 }
+
+// 3. Caso de prueba obligatorio (Oleada 6.2):
+// Meter azul #3B82F6 en el botón de APK / estilo inline -> el linter DEBE fallar.
+console.log('▶ [TEST OLEADA 6.2] Verificando que inyectar #3B82F6 en el botón APK hace fallar al linter...');
+const simulatedApkButtonWithBlue = `
+<button style={{
+  background: 'linear-gradient(135deg, #4CAF7D, #3B82F6)',
+  color: '#fff',
+  fontWeight: 700
+}}>
+  DESCARGAR APK
+</button>
+`;
+
+let simulatedFailCount = 0;
+for (const { pattern, name } of FORBIDDEN_PATTERNS) {
+  if (pattern.test(simulatedApkButtonWithBlue)) {
+    simulatedFailCount++;
+  }
+}
+
+if (simulatedFailCount === 0) {
+  console.error('❌ FALLO CRÍTICO DE CI: El linter NO detectó el azul #3B82F6 inyectado en el botón APK.');
+  process.exit(1);
+} else {
+  console.log(`✅ [PASS] El linter detectó el azul prohibido inyectado (${simulatedFailCount} coincidencia/s). Fallo garantizado si se mete azul.`);
+}
+
+console.log('==============================================================================\n');

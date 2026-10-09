@@ -1284,16 +1284,16 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Trophy size={20} color="#C9A84C" />
-                  <h3>{isEn ? 'Season & Differentiated XP Table' : 'Temporada y Tabla de XP Diferenciada'}</h3>
+                  <h3>{t('admin.xp.title', 'Temporada y Tabla de XP Diferenciada')}</h3>
                 </div>
                 <div className="settings-form">
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
-                    {isEn ? 'Configure XP points awarded per confirmed attendance status and team season goals.' : 'Configura los puntos de XP que suma cada jugador por estado de asistencia confirmado y los objetivos de temporada del equipo.'}
+                    {t('admin.xp.desc', 'Configura los puntos de XP que suma cada jugador por estado de asistencia confirmado y los objetivos de temporada del equipo.')}
                   </p>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '14px' }}>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 800 }}>✅ {isEn ? 'Present XP' : 'XP Presente'}</label>
+                      <label style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 800 }}>✅ {t('admin.xp.present', 'XP Presente')}</label>
                       <input 
                         type="number" 
                         min="0"
@@ -1303,7 +1303,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem', color: '#F59E0B', fontWeight: 800 }}>⚠️ {isEn ? 'Late XP' : 'XP Tarde'}</label>
+                      <label style={{ fontSize: '0.78rem', color: '#F59E0B', fontWeight: 800 }}>⚠️ {t('admin.xp.late', 'XP Tarde')}</label>
                       <input 
                         type="number" 
                         min="0"
@@ -1313,7 +1313,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem', color: '#3B82F6', fontWeight: 800 }}>📋 {isEn ? 'Excused XP' : 'XP Justificado'}</label>
+                      <label style={{ fontSize: '0.78rem', color: '#4CAF7D', fontWeight: 800 }}>📋 {t('admin.xp.excused', 'XP Justificado')}</label>
                       <input 
                         type="number" 
                         min="0"
@@ -1323,7 +1323,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem', color: '#EF4444', fontWeight: 800 }}>❌ {isEn ? 'Absent XP' : 'XP Ausente'}</label>
+                      <label style={{ fontSize: '0.78rem', color: '#C85A32', fontWeight: 800 }}>❌ {t('admin.xp.absent', 'XP Ausente')}</label>
                       <input 
                         type="number" 
                         min="0"
@@ -1336,7 +1336,7 @@ const AdminPanel = () => {
 
                   <div className="form-row-dual" style={{ marginBottom: '14px' }}>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem' }}>🎯 {isEn ? '% Veteran Matches' : '% Partidos Veterano'}</label>
+                      <label style={{ fontSize: '0.78rem' }}>🎯 {t('admin.xp.veteran', '% Partidos Veterano')}</label>
                       <input 
                         type="number" 
                         min="10"
@@ -1346,7 +1346,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontSize: '0.78rem' }}>⚽ {isEn ? 'Season Goals Target' : 'Objetivo Goles Temporada'}</label>
+                      <label style={{ fontSize: '0.78rem' }}>⚽ {t('admin.xp.goals', 'Objetivo Goles Temporada')}</label>
                       <input 
                         type="number" 
                         min="1"
@@ -1358,7 +1358,7 @@ const AdminPanel = () => {
                   </div>
 
                   <button className="btn-save-settings" onClick={handleSaveGamification}>
-                    {t('btn.save', settings.language)} {isEn ? 'XP Settings' : 'Configuración de XP'}
+                    {t('btn.save', settings.language)} {t('admin.xp.saveBtn', 'Configuración de XP')}
                   </button>
                 </div>
               </div>
@@ -1367,20 +1367,18 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Settings size={20} />
-                  <h3>{isEn ? 'Preferences' : 'Preferencias'}</h3>
+                  <h3>{t('admin.pref.title', 'Preferencias')}</h3>
                 </div>
                 <div className="settings-form">
                   <div className="toggle-group" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                      <span>{isEn ? 'Session Reminders' : 'Recordatorios de Sesión'}</span>
+                      <span>{t('admin.pref.reminders', 'Recordatorios de Sesión')}</span>
                       <div 
                         className={`toggle-switch ${prefData.notifications ? 'active' : ''}`}
                         onClick={async () => {
                           const newVal = !prefData.notifications;
                           toggleSetting('notifications');
-                          // Persistir en localStorage para el sistema de notificaciones locales
                           localStorage.setItem('mister11_notifications_enabled', String(newVal));
-                          // Solicitar permisos de notificación en Android al activar
                           if (newVal && Capacitor.isNativePlatform()) {
                             const granted = await requestNotificationPermission();
                             if (!granted) {
@@ -1394,19 +1392,19 @@ const AdminPanel = () => {
                     </div>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
                       {Capacitor.isNativePlatform()
-                        ? (isEn ? 'You will receive a notification 1 hour before each training session.' : 'Recibirás una notificación 1 hora antes de cada sesión de entrenamiento.')
-                        : (isEn ? 'Available on Android application (APK).' : 'Disponible en la aplicación Android (APK).')}
+                        ? t('admin.pref.remindersDescNative', 'Recibirás una notificación 1 hora antes de cada sesión de entrenamiento.')
+                        : t('admin.pref.remindersDescApk', 'Disponible en la aplicación Android (APK).')}
                     </p>
                   </div>
                   <div className="toggle-group theme-toggle-container">
-                    <span>{isEn ? 'Dark Mode' : 'Modo Oscuro'}</span>
+                    <span>{t('admin.pref.darkMode', 'Modo Oscuro')}</span>
                     <div 
                       className={`toggle-switch ${darkMode ? 'active' : ''}`}
                       onClick={toggleTheme}
                     ></div>
                   </div>
                   <div className="form-group" style={{marginTop: '15px'}}>
-                    <label>{isEn ? 'System Language' : 'Idioma del Sistema'}</label>
+                    <label>{t('admin.pref.systemLang', 'IDIOMA DEL SISTEMA')}</label>
                     <select 
                       className="admin-select-input"
                       value={prefData.language || currentGlobalLanguage}
@@ -1434,7 +1432,7 @@ const AdminPanel = () => {
                   {/* Actualización Manual */}
                   <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{isEn ? 'Current app version' : 'Versión actual de la app'}</span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{t('admin.pref.version', 'Versión actual de la app')}</span>
                       <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>v{APP_VERSION}</strong>
                     </div>
                     <button
@@ -1443,14 +1441,14 @@ const AdminPanel = () => {
                       disabled={checkingUpdate}
                       style={{ width: '100%', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: checkingUpdate ? 0.7 : 1 }}
                     >
-                      {checkingUpdate ? (isEn ? '⏳ Checking...' : '⏳ Comprobando...') : (isEn ? '🔍 Check for updates' : '🔍 Buscar actualizaciones')}
+                      {checkingUpdate ? ('⏳ ' + t('admin.pref.checking', 'Comprobando...')) : ('🔍 ' + t('admin.pref.checkUpdates', 'Buscar actualizaciones'))}
                     </button>
 
                     {/* ═══ BOTÓN DESCARGAR APK ═══ */}
                     <div style={{
                       marginTop: '16px',
                       padding: '16px',
-                      background: 'linear-gradient(135deg, rgba(76,175,125,0.12), rgba(33,150,243,0.08))',
+                      background: 'linear-gradient(135deg, rgba(76,175,125,0.12), rgba(27,58,45,0.08))',
                       borderRadius: '12px',
                       border: '1px solid rgba(76,175,125,0.25)',
                     }}>
@@ -1458,10 +1456,10 @@ const AdminPanel = () => {
                         <span style={{ fontSize: '24px' }}>📱</span>
                         <div>
                           <div style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                            {isEn ? 'Android Application (APK)' : 'Aplicación Android (APK)'}
+                            {t('admin.apk.title', 'Aplicación Android (APK)')}
                           </div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {isEn ? 'Install Mister 11 directly on your Android tablet' : 'Instala Mister 11 directamente en tu tablet Android'}
+                            {t('admin.apk.desc', 'Instala Mister11 directamente en tu tablet Android')}
                           </div>
                         </div>
                       </div>
@@ -1474,7 +1472,7 @@ const AdminPanel = () => {
                           gap: '8px',
                           width: '100%',
                           minHeight: '48px',
-                          background: 'linear-gradient(135deg, #4CAF7D, #2196F3)',
+                          background: 'linear-gradient(135deg, #4CAF7D, #1B3A2D)',
                           color: '#fff',
                           fontWeight: '700',
                           fontSize: '0.9rem',
@@ -1484,14 +1482,14 @@ const AdminPanel = () => {
                           border: 'none',
                           cursor: 'pointer',
                           padding: '0 16px',
-                          boxShadow: '0 4px 16px rgba(76,175,125,0.3)',
+                          boxShadow: '0 4px 16px rgba(76,175,125,0.25)',
                           transition: 'all 0.2s ease',
                         }}
                       >
-                        ⬇️ {isEn ? 'DOWNLOAD APK' : 'DESCARGAR APK'} v{remoteVersion}
+                        ⬇️ {t('admin.apk.downloadBtn', 'DESCARGAR APK')} v{remoteVersion}
                       </button>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: 0, textAlign: 'center' }}>
-                        {isEn ? 'Android only · Enable "Unknown sources" in system settings before installing' : 'Solo para Android · Habilita "Fuentes desconocidas" en Ajustes del sistema antes de instalar'}
+                        {t('admin.apk.instructions', 'Solo para Android · Habilita "Fuentes desconocidas" en Ajustes del sistema antes de instalar')}
                       </p>
                     </div>
                   </div>
@@ -1503,14 +1501,14 @@ const AdminPanel = () => {
                 <div className="settings-card">
                   <div className="card-header-icon">
                     <Sparkles size={20} />
-                    <h3>Configuración de IA (Groq)</h3>
+                    <h3>{t('admin.ai.title', 'Configuración de IA (Groq)')}</h3>
                   </div>
                   <div className="settings-form">
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                      Configura la clave API de Groq para que la IA Generadora funcione en todos los dispositivos (incluyendo el APK de la tablet sin necesidad de recompilar).
+                      {t('admin.ai.desc', 'Configura la clave API de Groq para que la IA Generadora funcione en todos los dispositivos (incluyendo el APK de la tablet sin necesidad de recompilar).')}
                     </p>
                     <div className="form-group">
-                      <label>{isEn ? "Groq API Key (gsk_...)" : "Clave API de Groq (gsk_...)"}</label>
+                      <label>{t('admin.ai.keyLabel', 'Clave API de Groq (gsk_...)')}</label>
                       <input 
                         type="password" 
                         placeholder={isEn ? "Paste your gsk_... key" : "Pega tu clave gsk_..."} 
@@ -1542,7 +1540,7 @@ const AdminPanel = () => {
                       }}
                       style={{ width: '100%', minHeight: '48px', fontWeight: 'bold' }}
                     >
-                      {isEn ? "Save Key" : "Guardar Clave"}
+                      {t('admin.ai.saveKey', 'GUARDAR CLAVE')}
                     </button>
                   </div>
                 </div>
@@ -1949,9 +1947,9 @@ const AdminPanel = () => {
                             fontSize: '0.82rem',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
-                            border: '1.5px solid #3B82F6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                            color: '#3B82F6',
+                            border: '1.5px solid #4CAF7D',
+                            backgroundColor: 'rgba(76, 175, 125, 0.12)',
+                            color: '#4CAF7D',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

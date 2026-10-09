@@ -32,6 +32,7 @@ import { doc, getDoc, collection, onSnapshot } from '../firebase/firestore-proxy
 import UpgradeModal from '../components/UpgradeModal';
 import { JoinStaffModal } from '../components/JoinStaffModal';
 import { createNotification } from '../firebase/db';
+import { getLocale } from '../i18n/index.js';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -428,11 +429,11 @@ const Dashboard = () => {
             }}
           >
             <UserPlus size={18} />
-            {isEn ? 'Join as Staff' : 'Unirse a un equipo como Staff'}
+            {t('dashboard.joinAsStaff', 'Unirse a un equipo como Staff')}
           </button>
           <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0, minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '8px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
-              {new Date().toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { month: 'long', year: 'numeric' })}
+              {new Date().toLocaleDateString(getLocale(settings.language), { month: 'long', year: 'numeric' })}
             </span>
             <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('dashboard.today', settings.language)}</strong>
           </div>
@@ -815,7 +816,7 @@ const Dashboard = () => {
                 const dateObj = new Date(s.date);
                 const formattedDate = isNaN(dateObj.getTime())
                   ? (s.date || '')
-                  : dateObj.toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                  : dateObj.toLocaleDateString(getLocale(settings.language), { weekday: 'short', day: 'numeric', month: 'short' });
 
                 return (
                   <div key={s.id || idx} className="card-base" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', boxShadow: 'none' }} onClick={() => navigate('/sesiones')}>

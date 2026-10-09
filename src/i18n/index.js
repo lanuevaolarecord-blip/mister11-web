@@ -3,6 +3,7 @@
 // Compatible con Node (scripts/tests) y Navegador (React/Capacitor)
 
 import { translations, getEffectiveLanguage, t as tFunction } from './translations.js';
+import { getLocaleMetadata } from './locales/registry.js';
 
 export const LOCALES = {
   es: { code: 'es', label: 'Español (ES)', intl: 'es-ES', dir: 'ltr', name: 'Spanish' },
@@ -31,9 +32,7 @@ export function getLanguage() {
  * Cambia el idioma en caliente (singleton sin hooks)
  */
 export function setLanguage(newLang) {
-  const valid = (newLang === 'English (EN)' || newLang === 'en' || newLang === 'en-GB' || newLang === 'en-US')
-    ? 'English (EN)'
-    : 'Español (ES)';
+  const valid = getEffectiveLanguage(newLang);
   currentLanguage = valid;
 
   try {
@@ -45,8 +44,9 @@ export function setLanguage(newLang) {
       window.dispatchEvent(new CustomEvent('m11-language-changed', { detail: valid }));
     }
     if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.lang = valid === 'English (EN)' ? 'en' : 'es';
-      document.documentElement.dir = 'ltr';
+      const meta = getLocaleMetadata(valid);
+      document.documentElement.lang = meta?.code || 'es';
+      document.documentElement.dir = meta?.dir || 'ltr';
     }
   } catch (_) {}
 
@@ -58,14 +58,16 @@ export function setLanguage(newLang) {
  */
 export function isEn(lang = null) {
   const eff = lang ? getEffectiveLanguage(lang) : getLanguage();
-  return eff === 'English (EN)';
+  return eff === 'English (EN)' || eff === 'en';
 }
 
 /**
- * Devuelve el tag locale BCP47 ('es-ES' o 'en-GB')
+ * Devuelve el tag locale BCP47 correspondiente a la lengua activa (es-ES, en-GB, pt-BR, fr-FR, etc.)
  */
 export function getLocale(lang = null) {
-  return isEn(lang) ? LOCALES.en.intl : LOCALES.es.intl;
+  const eff = lang ? getEffectiveLanguage(lang) : getLanguage();
+  const meta = getLocaleMetadata(eff);
+  return meta?.intl || (isEn(eff) ? 'en-GB' : 'es-ES');
 }
 
 /**

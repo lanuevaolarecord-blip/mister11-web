@@ -90,6 +90,13 @@ export const cleanPdfText = (text) => {
     str = str.split(emoji).join(replacement);
   }
 
+  // Transliteración y corrección de kerning/espacios partidos en el cuerpo (Objetivo / Mejorar)
+  str = str.replace(/\bObj\s+etivos\b/gi, (m) => m[0] === 'O' ? 'Objetivos' : 'objetivos');
+  str = str.replace(/\bObj\s+etivo\b/gi, (m) => m[0] === 'O' ? 'Objetivo' : 'objetivo');
+  str = str.replace(/\bMej\s+orar\b/gi, (m) => m[0] === 'M' ? 'Mejorar' : 'mejorar');
+  str = str.replace(/\bMej\s+ora\b/gi, (m) => m[0] === 'M' ? 'Mejora' : 'mejora');
+  str = str.replace(/\bM\s+ejorar\b/gi, (m) => m[0] === 'M' ? 'Mejorar' : 'mejorar');
+
   // Eliminar cualquier otro emoji o caracter suplementario no soportado por fuentes estándar de PDF (Helvetica/WinAnsiEncoding)
   str = str.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
   // Eliminar glifo corrupto '自' y caracteres CJK no soportados en informes estándar

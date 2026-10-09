@@ -161,6 +161,31 @@ check('drawPdfFooter con objeto polimórfico preserva totalPages si se provee y 
   assert.ok(output.includes('Pagina 1 de 4'), 'Debe soportar { currentPage: 1, totalPages: 4 } sin colapsar a 1 de 1');
 });
 
+// ── 5. AUDITORÍA DE TEXTO DEL CUERPO (OBJETIVO Y MEJORAR SIN HUECOS) ──────────
+console.log('\n▶ [5/5] Probando corrección de kerning y transliteración de cuerpo ("Objetivo" y "Mejorar")...');
+
+import { cleanPdfText } from '../src/utils/pdfTheme.js';
+
+check('cleanPdfText elimina espacios partidos en "Obj etivo" -> "Objetivo" y "Mej orar" -> "Mejorar"', () => {
+  const input = 'Obj etivo principal de la sesión: Mej orar la presión alta tras pérdida. Obj etivos secundarios.';
+  const cleaned = cleanPdfText(input);
+  assert.strictEqual(cleaned, 'Objetivo principal de la sesión: Mejorar la presión alta tras pérdida. Objetivos secundarios.');
+  assert.ok(!cleaned.includes('Obj etivo'), 'No debe contener "Obj etivo"');
+  assert.ok(!cleaned.includes('Mej orar'), 'No debe contener "Mej orar"');
+});
+
+check('jsPDF cuerpo no contiene huecos de kerning en Objetivo ni Mejorar al renderizar texto saneado', () => {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const textRaw = 'Obj etivo: Mej orar el repliegue defensivo.';
+  const textClean = cleanPdfText(textRaw);
+  doc.text(textClean, 14, 40);
+  const output = doc.output();
+  assert.ok(output.includes('Objetivo'), 'El PDF debe contener "Objetivo" continuo');
+  assert.ok(output.includes('Mejorar'), 'El PDF debe contener "Mejorar" continuo');
+  assert.ok(!output.includes('Obj etivo'), 'El PDF no debe contener "Obj etivo"');
+  assert.ok(!output.includes('Mej orar'), 'El PDF no debe contener "Mej orar"');
+});
+
 console.log(`\n==============================================================================`);
 console.log(`TODAS LAS PRUEBAS DE CALIDAD PDF (PDF-Q) PASARON EXITOSAMENTE (${passCount}/${passCount})`);
 console.log(`==============================================================================\n`);

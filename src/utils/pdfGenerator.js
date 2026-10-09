@@ -866,7 +866,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     // Objetivo
     if (session.objectives || session.objetivo) {
-      const objText = session.objectives || session.objetivo || '';
+      const objText = cleanPdfText(session.objectives || session.objetivo || '');
       doc.setFontSize(9);
       doc.setFont(undefined, 'italic');
       doc.setTextColor(60, 80, 70);
@@ -933,7 +933,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const imgBase64 = (b.resolvedBase64 && typeof b.resolvedBase64 === 'string' && b.resolvedBase64.startsWith('data:')) ? b.resolvedBase64 : null;
         const hasImg = Boolean(imgBase64);
 
-        const rawDesc = b.description || b.descripcion || 'Sin descripción';
+        const rawDesc = cleanPdfText(b.description || b.descripcion || 'Sin descripción');
         // Texto a todo el ancho (100% de la tarjeta)
         const textMaxW = pageW - 44;
         const descLines = doc.splitTextToSize(rawDesc, textMaxW);
@@ -970,10 +970,10 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setTextColor(...THEME_COLOR);
         doc.setFontSize(10.5);
         doc.setFont(undefined, 'bold');
-        doc.text(b.name || b.nombre || b.titulo || `Bloque ${bi + 1}`, 30, currentY + 8.5);
+        doc.text(cleanPdfText(b.name || b.nombre || b.titulo || `Bloque ${bi + 1}`), 30, currentY + 8.5);
 
         // Etiquetas (Tipo y Duración)
-        const typeTag = b.type || b.tipo || 'General';
+        const typeTag = cleanPdfText(b.type || b.tipo || 'General');
         const durTag = `${b.duration || b.duracion || b.tiempo || 0} min`;
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');

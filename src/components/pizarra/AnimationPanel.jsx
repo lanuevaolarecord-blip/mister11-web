@@ -205,7 +205,7 @@ const AnimationPanel = ({
           style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
           <Plus size={14} />
-          <span>Frame</span>
+          <span>{t('board.timeline.frameLabel')}</span>
         </button>
         <button
           type="button"

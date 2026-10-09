@@ -3494,7 +3494,7 @@ const PizarraTactica = () => {
                 setActiveWidth(v.value); 
                 setShowWidthPicker(false); 
               }}>
-              {v.label}
+              {t(`board.stroke.${k}`, {}, v.label)}
             </button>
           ))}
         </div>

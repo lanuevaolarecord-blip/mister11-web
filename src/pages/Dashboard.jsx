@@ -37,7 +37,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { darkMode } = useTheme();
-  const { t, isEn } = useTranslation();
+  const { t, isEn, locale } = useTranslation();
   const navigate = useNavigate();
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
@@ -200,10 +200,10 @@ const Dashboard = () => {
   const lastMatches = useMemo(() => matches.filter(m => m.status === 'Terminado').slice(-3), [matches]);
 
   const stats = [
-    { label: t('dashboard.stats.players', settings.language), value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },
-    { label: t('dashboard.stats.sessions', settings.language), value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
-    { label: t('dashboard.stats.rival', settings.language), value: nextMatch ? nextMatch.rival || t('dashboard.stats.noRival', settings.language) : t('dashboard.stats.noRival', settings.language), icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
-    { label: t('dashboard.stats.matches', settings.language), value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },
+    { label: t('dashboard.stats.players'), value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },
+    { label: t('dashboard.stats.sessions'), value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
+    { label: t('dashboard.stats.rival'), value: nextMatch ? nextMatch.rival || t('dashboard.stats.noRival') : t('dashboard.stats.noRival'), icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
+    { label: t('dashboard.stats.matches'), value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },
   ];
 
   const upcomingSessions = sessions
@@ -433,9 +433,9 @@ const Dashboard = () => {
           </button>
           <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0, minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '8px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
-              {new Date().toLocaleDateString(getLocale(settings.language), { month: 'long', year: 'numeric' })}
+              {new Date().toLocaleDateString(locale || getLocale(settings.language), { month: 'long', year: 'numeric' })}
             </span>
-            <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('dashboard.today', settings.language)}</strong>
+            <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('dashboard.today')}</strong>
           </div>
         </div>
       </header>
@@ -516,8 +516,8 @@ const Dashboard = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Shield size={28} strokeWidth={1.5} color="var(--accent-green)" />
             <div>
-              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{t('dashboard.devAccess', settings.language)}</h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{t('dashboard.devDesc', settings.language)}</p>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{t('dashboard.devAccess')}</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{t('dashboard.devDesc')}</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -539,7 +539,7 @@ const Dashboard = () => {
               {isPro ? t('dashboard.upgrade.tryFree') : t('dashboard.upgrade.activatePro')}
             </button>
             <div className="btn-outline-green" style={{ fontSize: '12px' }}>
-              {t('dashboard.devUnlimited', settings.language)}
+              {t('dashboard.devUnlimited')}
             </div>
           </div>
         </div>
@@ -742,7 +742,7 @@ const Dashboard = () => {
         <div className="card-base" style={{ gridColumn: 'span 2', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <h2 style={{ fontSize: '20px', margin: 0, fontFamily: 'var(--font-heading)' }}>{t('dashboard.estimatedWorkload', settings.language)}</h2>
+              <h2 style={{ fontSize: '20px', margin: 0, fontFamily: 'var(--font-heading)' }}>{t('dashboard.estimatedWorkload')}</h2>
               <div style={{ border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '4px 8px', background: 'var(--bg-card)' }}>
                 <svg viewBox="0 0 100 30" style={{ width: '80px', height: '24px' }} preserveAspectRatio="none">
                   <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinejoin="round" />
@@ -754,7 +754,7 @@ const Dashboard = () => {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('dashboard.teamWorkloadIndex', settings.language)}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('dashboard.teamWorkloadIndex')}</div>
               <div className="twi-number-v2">
                 {Math.round(workloadData.reduce((acc, curr) => acc + curr.val, 0) / Math.max(1, workloadData.length))}
               </div>
@@ -766,11 +766,11 @@ const Dashboard = () => {
               onChange={(e) => setWorkloadPeriod(e.target.value)}
               style={{ border: '1px solid var(--accent-gold)', background: 'var(--bg-card)', padding: '4px 12px', color: 'var(--text-primary)', fontWeight: 'bold' }}
             >
-              <option value="session">{t('dashboard.period.session', settings.language)}</option>
-              <option value="week">{t('dashboard.period.week', settings.language)}</option>
-              <option value="micro">{t('dashboard.period.micro', settings.language)}</option>
-              <option value="meso">{t('dashboard.period.meso', settings.language)}</option>
-              <option value="macro">{t('dashboard.period.macro', settings.language)}</option>
+              <option value="session">{t('dashboard.period.session')}</option>
+              <option value="week">{t('dashboard.period.week')}</option>
+              <option value="micro">{t('dashboard.period.micro')}</option>
+              <option value="meso">{t('dashboard.period.meso')}</option>
+              <option value="macro">{t('dashboard.period.macro')}</option>
             </select>
           </div>
           
@@ -801,22 +801,22 @@ const Dashboard = () => {
         {/* Upcoming Sessions */}
         <div className="card-base">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '18px', margin: 0, fontFamily: 'var(--font-heading)' }}>{t('dashboard.upcomingSessions', settings.language)}</h2>
-            <span style={{ fontSize: '12px', color: 'var(--accent-green)', cursor: 'pointer' }} onClick={() => navigate('/sesiones')}>{t('dashboard.viewAll', settings.language)}</span>
+            <h2 style={{ fontSize: '18px', margin: 0, fontFamily: 'var(--font-heading)' }}>{t('dashboard.upcomingSessions')}</h2>
+            <span style={{ fontSize: '12px', color: 'var(--accent-green)', cursor: 'pointer' }} onClick={() => navigate('/sesiones')}>{t('dashboard.viewAll')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {upcomingSessions.length === 0 ? (
-              <div style={{color: 'var(--text-secondary)'}}>{t('dashboard.noUpcomingSessions', settings.language)}</div>
+              <div style={{color: 'var(--text-secondary)'}}>{t('dashboard.noUpcomingSessions')}</div>
             ) : (
               upcomingSessions.map((s, idx) => {
                 if (!s) return null;
                 const time = s.time || s.hora || '--:--';
-                const title = s.title || s.titulo || t('session.untitled', settings.language);
+                const title = s.title || s.titulo || t('session.untitled');
                 
                 const dateObj = new Date(s.date);
                 const formattedDate = isNaN(dateObj.getTime())
                   ? (s.date || '')
-                  : dateObj.toLocaleDateString(getLocale(settings.language), { weekday: 'short', day: 'numeric', month: 'short' });
+                  : dateObj.toLocaleDateString(locale || getLocale(settings.language), { weekday: 'short', day: 'numeric', month: 'short' });
 
                 return (
                   <div key={s.id || idx} className="card-base" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', boxShadow: 'none' }} onClick={() => navigate('/sesiones')}>
@@ -840,15 +840,15 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="quick-actions-bar">
-        <h2 className="quick-actions-title">{t('dashboard.quickAccess', settings.language)}</h2>
+        <h2 className="quick-actions-title">{t('dashboard.quickAccess')}</h2>
         
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
-            { label: t('nav.pizarra', settings.language), icon: <Presentation size={24} />, route: '/pizarra' },
-            { label: t('nav.sesiones', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' },
-            { label: isEn ? 'SETTINGS' : 'AJUSTES', icon: <Settings size={24} />, route: '/admin', state: { activeTab: 'ajustes' } },
-            { label: t('nav.equipo', settings.language), icon: <Users size={24} />, route: '/equipo' },
-            { label: t('nav.ia', settings.language), icon: <Sparkles size={24} />, route: '/ia-generadora' }
+            { label: t('nav.pizarra'), icon: <Presentation size={24} />, route: '/pizarra' },
+            { label: t('nav.sesiones'), icon: <FilePlus size={24} />, route: '/sesiones' },
+            { label: t('nav.admin'), icon: <Settings size={24} />, route: '/admin', state: { activeTab: 'ajustes' } },
+            { label: t('nav.equipo'), icon: <Users size={24} />, route: '/equipo' },
+            { label: t('nav.ia'), icon: <Sparkles size={24} />, route: '/ia-generadora' }
           ].map((action, idx) => (
             <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route, action.state ? { state: action.state } : undefined)}>
               <div className="quick-access-ring-outer">

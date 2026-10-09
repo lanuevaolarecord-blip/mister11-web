@@ -966,8 +966,8 @@ const AdminPanel = () => {
         {activeTab === 'ajustes' && (
           <div className="admin-section">
             <header className="section-header">
-              <h2>{isEn ? 'System Settings' : 'Ajustes del Sistema'}</h2>
-              <p>{isEn ? 'Customize your experience and the visual identity of your club.' : 'Personaliza tu experiencia y la identidad visual de tu club.'}</p>
+              <h2>{tr('admin.settings.title')}</h2>
+              <p>{tr('admin.settings.subtitle')}</p>
             </header>
 
             <div className="settings-grid">
@@ -975,11 +975,11 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Shield size={20} />
-                  <h3>{isEn ? 'Legal & Consent Center' : 'Centro Legal y Consentimientos'}</h3>
+                  <h3>{tr('admin.settings.legalTitle')}</h3>
                 </div>
                 <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.4' }}>
-                    {isEn ? 'Download required legal templates and manage informed consent for the parents of minor players.' : 'Descarga plantillas legales obligatorias y gestiona el consentimiento informado para los padres de tus jugadores menores de edad.'}
+                    {tr('admin.settings.legalDesc')}
                   </p>
                   
                   <button
@@ -1004,7 +1004,7 @@ const AdminPanel = () => {
                       padding: '8px 16px'
                     }}
                   >
-                    {isEn ? '⬇️ Download Parental Consent (Printable)' : '⬇️ Descargar Consentimiento Parental (Imprimible)'}
+                    {tr('admin.settings.downloadConsentBtn')}
                   </button>
 
                   <button
@@ -1014,7 +1014,7 @@ const AdminPanel = () => {
                         return;
                       }
                       const baseUrl = window.location.origin;
-                      const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeam.id}&teamName=${encodeURIComponent(activeTeam.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}&lang=${isEn ? 'en' : 'es'}`;
+                      const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeam.id}&teamName=${encodeURIComponent(activeTeam.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}&lang=${currentGlobalLanguage || 'es'}`;
                       navigator.clipboard.writeText(consentLink);
                       showToast(isEn ? "Link copied to clipboard! Share it with parents." : "¡Enlace copiado al portapapeles! Envíalo por WhatsApp.", "success");
                     }}
@@ -1035,13 +1035,13 @@ const AdminPanel = () => {
                       padding: '8px 16px'
                     }}
                   >
-                    {isEn ? '🔗 Copy Digital Consent Link' : '🔗 Copiar Link de Consentimiento Digital'}
+                    {tr('admin.settings.copyConsentBtn')}
                   </button>
 
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                    <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{isEn ? 'Privacy' : 'Privacidad'}</a>
-                    <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{isEn ? 'Terms' : 'Términos'}</a>
-                    <a href="/legal/cookies.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{isEn ? 'Cookies' : 'Cookies'}</a>
+                    <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{tr('admin.settings.privacy')}</a>
+                    <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{tr('admin.settings.terms')}</a>
+                    <a href="/legal/cookies.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>{tr('admin.settings.cookies')}</a>
                   </div>
                 </div>
               </div>
@@ -1050,11 +1050,11 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Users size={20} />
-                  <h3>{isEn ? 'Coach Profile' : 'Perfil del Entrenador'}</h3>
+                  <h3>{tr('admin.settings.coachProfile')}</h3>
                 </div>
                 <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>{isEn ? 'Full Name' : 'Nombre Completo'}</label>
+                    <label>{tr('admin.settings.fullName')}</label>
                     <input 
                       type="text" 
                       placeholder={isEn ? 'Your name' : 'Tu nombre'} 
@@ -1063,22 +1063,22 @@ const AdminPanel = () => {
                     />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>{isEn ? 'Role / Specialty in Team' : 'Rol / Especialidad en el Equipo'}</label>
+                    <label>{tr('admin.settings.roleSpecialty')}</label>
                     <select 
                       className="admin-select-input"
                       value={profileData.specialty}
                       onChange={(e) => setProfileData({...profileData, specialty: e.target.value})}
                     >
-                      <option value="Primer Entrenador">{isEn ? '👑 Head Coach (Admin)' : '👑 Primer Entrenador (Admin)'}</option>
-                      <option value="Segundo Entrenador">{isEn ? '🟢 Assistant Coach' : '🟢 Segundo Entrenador'}</option>
-                      <option value="Preparador Físico">{isEn ? '🏋️‍♂️ Fitness Coach' : '🏋️‍♂️ Preparador Físico'}</option>
-                      <option value="Ayudante / 3er Entrenador">{isEn ? '🔵 Assistant / 3rd Coach' : '🔵 Ayudante / 3er Entrenador'}</option>
-                      <option value="Fisioterapeuta / Médico">{isEn ? '🔴 Physio / Doctor' : '🔴 Fisioterapeuta / Médico'}</option>
-                      <option value="Analista Táctico">{isEn ? '🟣 Tactical Analyst' : '🟣 Analista Táctico'}</option>
-                      <option value="Jugador">{isEn ? '⚪ Player' : '⚪ Jugador'}</option>
+                      <option value="Primer Entrenador">{tr('admin.settings.roleHeadCoach')}</option>
+                      <option value="Segundo Entrenador">{tr('admin.settings.roleAssistantCoach')}</option>
+                      <option value="Preparador Físico">{tr('admin.settings.roleFitnessCoach')}</option>
+                      <option value="Ayudante / 3er Entrenador">{tr('admin.settings.roleAssistant3')}</option>
+                      <option value="Fisioterapeuta / Médico">{tr('admin.settings.rolePhysio')}</option>
+                      <option value="Analista Táctico">{tr('admin.settings.roleAnalyst')}</option>
+                      <option value="Jugador">{tr('admin.settings.rolePlayer')}</option>
                     </select>
                   </div>
-                  <button className="btn-save-settings" onClick={handleSaveProfile}>{t('btn.save', settings.language)} {isEn ? 'Profile & Role' : 'Perfil y Rol'}</button>
+                  <button className="btn-save-settings" onClick={handleSaveProfile}>{tr('admin.settings.saveProfile')}</button>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
                     <button
@@ -1146,7 +1146,7 @@ const AdminPanel = () => {
                         padding: '6px 12px'
                       }}
                     >
-                      {isEn ? '🔗 Copy / Share Coach Invitation Link' : '🔗 Copiar / Compartir Link para Invitar Entrenadores'}
+                      {tr('admin.settings.inviteStaffBtn')}
                     </button>
 
                     <button
@@ -1168,7 +1168,7 @@ const AdminPanel = () => {
                         padding: '6px 12px'
                       }}
                     >
-                      {isEn ? '🛡️ View & Manage Full Coaching Staff' : '🛡️ Ver y Gestionar Todo el Cuerpo Técnico'}
+                      {tr('admin.settings.manageStaffBtn')}
                     </button>
 
                     {/* ZONA DE PELIGRO / ELIMINAR CUENTA (RGPD) */}
@@ -1190,7 +1190,7 @@ const AdminPanel = () => {
                         }}
                       >
                         <Trash2 size={14} color="#EF4444" />
-                        <span>{t('btn.deleteAccount', settings.language)}</span>
+                        <span>{tr('admin.settings.deleteAccountGdpr')}</span>
                       </button>
                     </div>
                   </div>
@@ -1201,14 +1201,14 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Layers size={20} />
-                  <h3>{t('settings.teamIdentity', settings.language)} ({activeTeam?.nombre || t('status.none', settings.language)})</h3>
+                  <h3>{tr('admin.settings.teamIdentity')} ({activeTeam?.nombre || tr('status.none')})</h3>
                 </div>
                 <div className="settings-form">
                   <div className="form-group">
-                    <label>{t('form.teamName', settings.language)}</label>
+                    <label>{tr('admin.settings.teamName')}</label>
                     <input 
                       type="text" 
-                      placeholder={t('placeholder.teamName', settings.language)} 
+                      placeholder={tr('admin.settings.teamName')} 
                       value={teamEditData.nombre} 
                       onChange={(e) => setTeamEditData({...teamEditData, nombre: e.target.value})}
                       onBlur={e => setTeamEditData(prev => ({...prev, nombre: normalizeText(e.target.value)}))}
@@ -1217,7 +1217,7 @@ const AdminPanel = () => {
                   </div>
                   <div className="form-row-dual">
                     <div className="form-group">
-                      <label>{isEn ? 'Category' : 'Categoría'}</label>
+                      <label>{tr('admin.settings.category')}</label>
                       <input 
                         type="text" 
                         value={teamEditData.categoria} 
@@ -1227,7 +1227,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <label>{isEn ? 'Season' : 'Temporada'}</label>
+                      <label>{tr('admin.settings.season')}</label>
                       <input 
                         type="text" 
                         value={teamEditData.temporada} 
@@ -1239,7 +1239,7 @@ const AdminPanel = () => {
                   </div>
                   <div className="form-row-dual">
                     <div className="form-group">
-                      <label>{isEn ? 'Primary Color' : 'Color Principal'}</label>
+                      <label>{tr('admin.settings.primaryColor')}</label>
                       <input 
                         type="color" 
                         value={teamEditData.colorLocal} 
@@ -1248,7 +1248,7 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <label>{isEn ? 'Secondary Color' : 'Color Secundario'}</label>
+                      <label>{tr('admin.settings.secondaryColor')}</label>
                       <input 
                         type="color" 
                         value={teamEditData.colorVisitante} 
@@ -1258,12 +1258,12 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>{isEn ? 'Team Crest / Badge' : 'Escudo del Equipo'}</label>
+                    <label>{tr('admin.settings.teamBadge')}</label>
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                       <EscudoEquipo src={activeTeam?.escudo} nombreEquipo={activeTeam?.nombre} size="60px" />
                       <div className="upload-placeholder" style={{flex: 1, position: 'relative'}}>
                         <Download size={20} />
-                        <span>{isUploadingShield ? (isEn ? 'Uploading & optimizing...' : 'Subiendo y optimizando...') : (isEn ? 'Upload Image' : 'Subir Imagen')}</span>
+                        <span>{isUploadingShield ? tr('common.loading') : tr('admin.settings.uploadImage')}</span>
                         <input 
                           type="file" 
                           accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .ico" 
@@ -1275,7 +1275,7 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   <button className="btn-save-settings" onClick={handleUpdateTeamInfo} disabled={!activeTeam}>
-                    {t('btn.save', settings.language)} {isEn ? 'Identity' : 'Identidad'}
+                    {tr('admin.settings.saveIdentity')}
                   </button>
                 </div>
               </div>
@@ -1358,7 +1358,7 @@ const AdminPanel = () => {
                   </div>
 
                   <button className="btn-save-settings" onClick={handleSaveGamification}>
-                    {t('btn.save', settings.language)} {t('admin.xp.saveBtn', 'Configuración de XP')}
+                    {tr('btn.save')} {tr('admin.xp.saveBtn', {}, 'Configuración de XP')}
                   </button>
                 </div>
               </div>

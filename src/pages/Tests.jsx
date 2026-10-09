@@ -2227,14 +2227,14 @@ const Tests = () => {
 
             {/* Sidebar recursos */}
             <div className="comp-sidebar-resources">
-              <div className="resources-title">{t('tests.resources.title', settings.language)}</div>
+              <div className="resources-title">{tr('tests.resources.title')}</div>
               {[
-                { icon: '📋', label: t('tests.resources.tacticalLibrary', settings.language), path: '/pizarra' },
-                { icon: '🗂️', label: t('tests.resources.drillDatabase', settings.language), path: '/admin', tab: 'ejercicios' },
-                { icon: '📊', label: t('tests.resources.tacticalTest', settings.language), action: () => setIsNewTestModalOpen(true) },
-                { icon: '🤖', label: t('tests.resources.teamChat', settings.language), path: '/ia-generadora' },
-                { icon: '🏆', label: t('tests.resources.seasonReport', settings.language), path: '/admin', tab: 'exportar' },
-                { icon: '🛡️', label: t('tests.resources.myTeam', settings.language), path: '/equipo' },
+                { icon: '📋', label: tr('tests.resources.tacticalLibrary'), path: '/pizarra' },
+                { icon: '🗂️', label: tr('tests.resources.drillDatabase'), path: '/admin', tab: 'ejercicios' },
+                { icon: '📊', label: tr('tests.resources.tacticalTest'), action: () => setIsNewTestModalOpen(true) },
+                { icon: '🤖', label: tr('tests.resources.teamChat'), path: '/ia-generadora' },
+                { icon: '🏆', label: tr('tests.resources.seasonReport'), path: '/admin', tab: 'exportar' },
+                { icon: '🛡️', label: tr('tests.resources.myTeam'), path: '/equipo' },
               ].map((r, i) => (
                 <div 
                   key={i} 

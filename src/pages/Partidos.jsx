@@ -172,7 +172,7 @@ const Partidos = () => {
   const { players, loading: loadingPlayers } = usePlayers(effectiveTeamId);
   const { settings } = useSettings(effectiveTeamId);
   const { darkMode } = useTheme();
-  const { language: currentGlobalLanguage, isEn: isGlobalEn } = useTranslation();
+  const { language: currentGlobalLanguage, isEn: isGlobalEn, t, locale } = useTranslation();
 
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [mainTab, setMainTab] = useState('LIST'); // 'LIST' or 'ANALISIS'
@@ -1645,7 +1645,7 @@ const Partidos = () => {
     <div className="partidos-page">
       <header className="partidos-header">
         <div className="header-top w-full flex flex-col items-center space-y-3 md:flex-row md:justify-between px-4">
-          <h1 className="whitespace-normal text-xl font-bold block text-center">{isGlobalEn ? 'MATCH MANAGEMENT' : 'GESTIÓN DE PARTIDOS'}</h1>
+          <h1 className="whitespace-normal text-xl font-bold block text-center">{t('match.management.title')}</h1>
           <div className="partidos-page-actions flex flex-row gap-2 w-full justify-center md:w-auto">
             {viewMode === 'LIST' ? (
               <>
@@ -1657,18 +1657,18 @@ const Partidos = () => {
                       style={{ minHeight: '40px', fontWeight: 'bold' }}
                       title={isGlobalEn ? "Export official season calendar to PDF" : "Exportar calendario oficial de la temporada a PDF"}
                     >
-                      📄 {isGlobalEn ? 'PDF CALENDAR' : 'CALENDARIO PDF'}
+                      📄 {t('match.btn.pdfCalendar')}
                     </button>
                     <button
                       className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
                       onClick={handleExportAllMatchesICS}
                       style={{ minHeight: '40px', fontWeight: 'bold' }}
                     >
-                      📥 {isGlobalEn ? 'EXPORT ICS' : 'EXPORTAR ICS'}
+                      📥 {t('match.btn.exportIcs')}
                     </button>
                   </>
                 )}
-                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>{isGlobalEn ? '+ NEW MATCH' : '+ NUEVO PARTIDO'}</button>
+                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>{t('match.btn.newMatch')}</button>
               </>
             ) : (
               <>
@@ -1715,14 +1715,14 @@ const Partidos = () => {
               onClick={() => setMainTab('LIST')}
               style={{ minHeight: '44px', fontWeight: 'bold' }}
             >
-              📋 {t('partidos.tab.lista', settings?.language)}
+              📋 {t('partidos.tab.lista')}
             </button>
             <button
               className={`filter-tab ${mainTab === 'ANALISIS' ? 'active' : ''}`}
               onClick={() => setMainTab('ANALISIS')}
               style={{ minHeight: '44px', fontWeight: 'bold' }}
             >
-              {t('partidos.tab.analisis', settings?.language)}
+              {t('partidos.tab.analisis')}
             </button>
           </div>
 
@@ -1737,49 +1737,49 @@ const Partidos = () => {
                 <>
                   <div className="list-toolbar">
                     <div className="list-filters">
-                      <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>{isGlobalEn ? 'All' : 'Todos'}</button>
-                      <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>{isGlobalEn ? 'Pending' : 'Pendientes'}</button>
-                      <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>{isGlobalEn ? 'Finished' : 'Terminados'}</button>
+                      <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>{t('match.filter.all')}</button>
+                      <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>{t('match.filter.pending')}</button>
+                      <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>{t('match.filter.finished')}</button>
                     </div>
 
                     <div className="list-sort-view-controls">
                       {/* Selector de orden */}
                       <div className="sort-control-group">
                         <label htmlFor="matches-sort-select" className="sort-label">
-                          ⇅ {t('match.sort.label', settings?.language) || (isGlobalEn ? 'Sort:' : 'Ordenar:')}
+                          ⇅ {t('match.sort.label')}
                         </label>
                         <select
                           id="matches-sort-select"
                           className="sort-select"
                           value={sortBy}
                           onChange={(e) => setSortBy(e.target.value)}
-                          aria-label={isGlobalEn ? 'Sort matches' : 'Ordenar partidos'}
+                          aria-label={t('match.sort.label')}
                         >
-                          <option value="cercania">📅 {t('match.sort.cercania', settings?.language) || 'Más cercanos a hoy'}</option>
-                          <option value="lejania">⏳ {t('match.sort.lejania', settings?.language) || 'Más lejanos a hoy'}</option>
-                          <option value="fecha_asc">⬆️ {t('match.sort.fecha_asc', settings?.language) || 'Fecha (Próximos)'}</option>
-                          <option value="fecha_desc">⬇️ {t('match.sort.fecha_desc', settings?.language) || 'Fecha (Recientes)'}</option>
-                          <option value="estado">⚡ {t('match.sort.estado', settings?.language) || 'Por Estado / Prioridad'}</option>
+                          <option value="cercania">📅 {t('match.sort.cercania')}</option>
+                          <option value="lejania">⏳ {t('match.sort.lejania')}</option>
+                          <option value="fecha_asc">⬆️ {t('match.sort.fecha_asc')}</option>
+                          <option value="fecha_desc">⬇️ {t('match.sort.fecha_desc')}</option>
+                          <option value="estado">⚡ {t('match.sort.estado')}</option>
                         </select>
                       </div>
 
                       {/* Selector de modo de vista */}
-                      <div className="view-mode-toggle" role="group" aria-label={isGlobalEn ? 'View mode' : 'Modo de visualización'}>
+                      <div className="view-mode-toggle" role="group" aria-label={t('match.view.cards')}>
                         <button
                           type="button"
                           className={`view-btn ${cardViewMode === 'compact' ? 'active' : ''}`}
                           onClick={() => setCardViewMode('compact')}
-                          title={isGlobalEn ? 'Cards view' : 'Vista en tarjetas'}
+                          title={t('match.view.cards')}
                         >
-                          ▦ {t('match.view.cards', settings?.language) || (isGlobalEn ? 'Cards' : 'Tarjetas')}
+                          ▦ {t('match.view.cards')}
                         </button>
                         <button
                           type="button"
                           className={`view-btn ${cardViewMode === 'detailed' ? 'active' : ''}`}
                           onClick={() => setCardViewMode('detailed')}
-                          title={isGlobalEn ? 'Detailed view' : 'Vista detallada'}
+                          title={t('match.view.detailed')}
                         >
-                          ☰ {t('match.view.detailed', settings?.language) || (isGlobalEn ? 'Detailed' : 'Detallado')}
+                          ☰ {t('match.view.detailed')}
                         </button>
                       </div>
                     </div>
@@ -1826,7 +1826,7 @@ const Partidos = () => {
                             <div className="mc-body">
                               <div className="team-local">
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
-                                <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')) : (m.rival || (isGlobalEn ? 'Opponent' : 'Rival'))}</span>
+                                <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || t('match.defaultMyTeam')) : (m.rival || t('match.defaultRival'))}</span>
                               </div>
                               <div className="mc-score">
                                 {isFinishedCard ? (
@@ -1836,7 +1836,7 @@ const Partidos = () => {
                                 )}
                               </div>
                               <div className="team-visit">
-                                <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')) : (m.rival || (isGlobalEn ? 'Opponent' : 'Rival'))}</span>
+                                <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || t('match.defaultMyTeam')) : (m.rival || t('match.defaultRival'))}</span>
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
                               </div>
                             </div>
@@ -1877,8 +1877,8 @@ const Partidos = () => {
                             )}
 
                             <div className="mc-footer">
-                              <span>📍 {m.location || (isGlobalEn ? 'No venue' : 'Sin ubicación')}</span>
-                              <span>🛡️ {isGlobalEn ? 'Formation: ' : 'Formación: '}{m.lineup || '4-3-3'}</span>
+                              <span>📍 {m.location || t('match.noVenue')}</span>
+                              <span>🛡️ {t('match.formationLabel')}{m.lineup || '4-3-3'}</span>
                             </div>
                           </div>
                         );

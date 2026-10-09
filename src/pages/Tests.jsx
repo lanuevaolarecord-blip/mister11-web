@@ -304,43 +304,44 @@ const Tests = () => {
   const { activeTeam } = useTeams();
   const { isPro, isProActive } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
-  const { t: tr, isEn } = useTranslation();
+  const { t: tr, isEn, locale } = useTranslation();
   const { matches } = usePlayerSeasonStats(activeTeamId);
 
   const getCategoryLabel = useCallback((cat) => {
     if (!cat) return '';
-    if (!isEn) return cat;
+    const l = (locale || (isEn ? 'en' : 'es')).toLowerCase();
     const cleanCat = String(cat).trim().toLowerCase();
     const map = {
-      'resistencia': 'Endurance',
-      'velocidad': 'Speed',
-      'agilidad': 'Agility',
-      'fuerza': 'Strength',
-      'técnica': 'Technique',
-      'tecnica': 'Technique',
-      'afrontamiento': 'Coping',
-      'fortaleza mental': 'Mental Toughness',
-      'metas': 'Goals',
-      'liderazgo': 'Leadership',
-      'cohesión': 'Cohesion',
-      'cohesion': 'Cohesion',
-      'bienestar': 'Wellness',
-      'autoconciencia': 'Self-Awareness',
-      'empatía': 'Empathy',
-      'empatia': 'Empathy',
-      'conflictos': 'Conflicts',
-      'evaluación': 'Evaluation',
-      'evaluacion': 'Evaluation',
-      'psicología': 'Psychology',
-      'psicologia': 'Psychology',
-      'sociología': 'Sociology',
-      'sociologia': 'Sociology',
-      'convivencia': 'Coexistence',
-      'trabajo en equipo': 'Teamwork',
-      'resiliencia': 'Resilience'
+      'resistencia': { en: 'Endurance', fr: 'Endurance', pt: 'Resistência', id: 'Daya Tahan', es: 'Resistencia' },
+      'velocidad': { en: 'Speed', fr: 'Vitesse', pt: 'Velocidade', id: 'Kecepatan', es: 'Velocidad' },
+      'agilidad': { en: 'Agility', fr: 'Agilité', pt: 'Agilidade', id: 'Kelincahan', es: 'Agilidad' },
+      'fuerza': { en: 'Strength', fr: 'Force', pt: 'Força', id: 'Kekuatan', es: 'Fuerza' },
+      'técnica': { en: 'Technique', fr: 'Technique', pt: 'Técnica', id: 'Teknik', es: 'Técnica' },
+      'tecnica': { en: 'Technique', fr: 'Technique', pt: 'Técnica', id: 'Teknik', es: 'Técnica' },
+      'afrontamiento': { en: 'Coping', fr: 'Adaptation', pt: 'Enfrentamento', id: 'Koping', es: 'Afrontamiento' },
+      'fortaleza mental': { en: 'Mental Toughness', fr: 'Force Mentale', pt: 'Força Mental', id: 'Ketangguhan Mental', es: 'Fortaleza Mental' },
+      'metas': { en: 'Goals', fr: 'Objectifs', pt: 'Metas', id: 'Tujuan', es: 'Metas' },
+      'liderazgo': { en: 'Leadership', fr: 'Leadership', pt: 'Liderança', id: 'Kepemimpinan', es: 'Liderazgo' },
+      'cohesión': { en: 'Cohesion', fr: 'Cohésion', pt: 'Coesão', id: 'Kohesi', es: 'Cohesión' },
+      'cohesion': { en: 'Cohesion', fr: 'Cohésion', pt: 'Coesão', id: 'Kohesi', es: 'Cohesión' },
+      'bienestar': { en: 'Wellness', fr: 'Bien-être', pt: 'Bem-estar', id: 'Kesejahteraan', es: 'Bienestar' },
+      'autoconciencia': { en: 'Self-Awareness', fr: 'Conscience de Soi', pt: 'Autoconsciência', id: 'Kesadaran Diri', es: 'Autoconciencia' },
+      'empatía': { en: 'Empathy', fr: 'Empathie', pt: 'Empatia', id: 'Empati', es: 'Empatía' },
+      'empatia': { en: 'Empathy', fr: 'Empathie', pt: 'Empatia', id: 'Empati', es: 'Empatía' },
+      'conflictos': { en: 'Conflicts', fr: 'Conflits', pt: 'Conflitos', id: 'Konflik', es: 'Conflictos' },
+      'evaluación': { en: 'Evaluation', fr: 'Évaluation', pt: 'Avaliação', id: 'Evaluasi', es: 'Evaluación' },
+      'evaluacion': { en: 'Evaluation', fr: 'Évaluation', pt: 'Avaliação', id: 'Evaluasi', es: 'Evaluación' },
+      'psicología': { en: 'Psychology', fr: 'Psychologie', pt: 'Psicologia', id: 'Psikologi', es: 'Psicología' },
+      'psicologia': { en: 'Psychology', fr: 'Psychologie', pt: 'Psicologia', id: 'Psikologi', es: 'Psicología' },
+      'sociología': { en: 'Sociology', fr: 'Sociologie', pt: 'Sociologia', id: 'Sosiologi', es: 'Sociología' },
+      'sociologia': { en: 'Sociology', fr: 'Sociologie', pt: 'Sociologia', id: 'Sosiologi', es: 'Sociología' },
+      'convivencia': { en: 'Coexistence', fr: 'Convivialité', pt: 'Convivência', id: 'Kebersamaan', es: 'Convivencia' },
+      'trabajo en equipo': { en: 'Teamwork', fr: 'Travail d\'Équipe', pt: 'Trabalho em Equipe', id: 'Kerja Sama Tim', es: 'Trabajo en Equipo' },
+      'resiliencia': { en: 'Resilience', fr: 'Résilience', pt: 'Resiliência', id: 'Ketahanan', es: 'Resiliencia' }
     };
-    return map[cleanCat] || cat;
-  }, [isEn]);
+    const langKey = l.startsWith('fr') ? 'fr' : (l.startsWith('pt') ? 'pt' : (l.startsWith('id') ? 'id' : (l.startsWith('en') ? 'en' : 'es')));
+    return map[cleanCat]?.[langKey] || cat;
+  }, [locale, isEn]);
 
   const getTestDisplayName = useCallback((t) => {
     if (!t) return '';
@@ -1346,7 +1347,7 @@ const Tests = () => {
 
       <header className="tests-header">
         <div className="header-top">
-          <h1>{isEn ? 'EVALUATION & TESTS' : 'EVALUACIÓN Y TESTS'}</h1>
+          <h1>{tr('tests.title')}</h1>
           <div className="tests-page-actions">
             <button
               className="btn-outline"
@@ -1364,17 +1365,17 @@ const Tests = () => {
               }}
               onClick={handleResetSeasonData}
               disabled={loading}
-              title={isEn ? 'Deletes all player evaluation data to start a new season' : 'Elimina todos los datos de evaluaciones de los jugadores para iniciar una nueva temporada'}
+              title={tr('tests.resetSeasonTooltip')}
             >
-              {isEn ? '🗑️ Reset Season' : '🗑️ Reiniciar Temporada'}
+              {tr('tests.resetSeason')}
             </button>
             <button
               className="btn-outline"
               onClick={seedDemoEvaluations}
               disabled={loading}
-              title={isEn ? 'Inserts mock evaluations to preview chart functionality' : 'Inserta evaluaciones ficticias para ver cómo funcionan las gráficas'}
+              title={tr('tests.demoDataTooltip')}
             >
-              {isEn ? '🎯 Demo Data' : '🎯 Datos Demo'}
+              {tr('tests.demoData')}
             </button>
             <button 
               className="btn-outline" 
@@ -1386,25 +1387,25 @@ const Tests = () => {
                 generateTestsReport(tests, players, historyData, activeTeam);
               }}
             >
-              {isEn ? 'Export Report' : 'Exportar Informe'}
+              {tr('tests.exportReport')}
             </button>
           </div>
         </div>
 
         <div className="tests-tabs">
           {[
-            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos',      fallback: isEn ? 'Physical Tests' : 'Tests Físicos' },
-            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales', fallback: isEn ? 'Psychosocial' : 'Psicosociales' },
-            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion',    fallback: isEn ? 'Prevention & Health' : 'Prevención y Salud' },
-            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial',     fallback: isEn ? 'History' : 'Historial' },
-            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa',   fallback: isEn ? 'Comparison' : 'Comparativa' },
+            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos' },
+            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales' },
+            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion' },
+            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial' },
+            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa' },
           ].map(tab => (
             <button 
               key={tab.key} 
               className={`tests-tab ${activeTab === tab.key ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.key)}
             >
-              {tr(tab.labelKey, {}, tab.fallback)}
+              {tr(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -1415,7 +1416,7 @@ const Tests = () => {
         {['FÍSICOS', 'PSICOSOCIALES'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
-              <h3>{isEn ? `Test Catalog: ${activeTab === 'FÍSICOS' ? 'PHYSICAL' : 'PSYCHOSOCIAL'}` : `Catálogo de Pruebas: ${activeTab}`}</h3>
+              <h3>{activeTab === 'FÍSICOS' ? tr('tests.catalogPhysical') : tr('tests.catalogPsychosocial')}</h3>
               <button className="btn-primary" onClick={() => setIsNewTestModalOpen(true)}>{tr('tests.createTest')}</button>
             </div>
             
@@ -1462,7 +1463,7 @@ const Tests = () => {
 
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
                       <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{getCategoryLabel(t.category)}</span>
-                      <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>{isEn ? 'Metric: ' : 'Medida: '}{t.unit}</span>
+                      <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>{tr('tests.metricUnit')}{t.unit}</span>
                     </div>
                   </div>
                   
@@ -1485,7 +1486,7 @@ const Tests = () => {
                           }
                         }}
                       >
-                        {isEn ? 'RECORD' : 'REGISTRAR'}
+                        {tr('tests.record')}
                       </button>
                       <button 
                         className="btn-outline" 
@@ -1495,7 +1496,7 @@ const Tests = () => {
                           descargarPlantilla(t, players);
                         }}
                       >
-                        📥 {isEn ? 'TEMPLATE' : 'PLANTILLA'}
+                        📥 {tr('tests.template')}
                       </button>
                     </div>
                   </div>

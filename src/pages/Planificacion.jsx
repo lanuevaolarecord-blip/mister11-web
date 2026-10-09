@@ -133,9 +133,14 @@ const Planificacion = () => {
     const mKey = `month.${m}`;
     return t(mKey) || m;
   };
-  const localizedDays = useMemo(() => isEn 
-    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
-    : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], [isEn]);
+  const localizedDays = useMemo(() => {
+    const l = (locale || (isEn ? 'en' : 'es')).toLowerCase();
+    if (l.startsWith('fr')) return ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    if (l.startsWith('pt')) return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    if (l.startsWith('id')) return ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    if (l.startsWith('en')) return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  }, [locale, isEn]);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   // Colores adaptativos de contraste dorado/verde según el modo de tema
@@ -800,20 +805,20 @@ const Planificacion = () => {
 
   const computedMetrics = useMemo(() => {
     let activeMicros = [];
-    let title = isEn ? "MACROCYCLE" : "MACRO-CICLO";
+    let title = t('plan.metrics.macrocycle');
     
     if (activeTab === 'macrociclo') {
       activeMicros = microcycles;
-      title = isEn ? "MACROCYCLE" : "MACRO-CICLO";
+      title = t('plan.metrics.macrocycle');
     } else if (activeTab === 'mesociclo') {
       if (selectedMesoItem) {
         const meso = mesocycles.find(m => m.month === selectedMesoItem);
         activeMicros = meso?.micros || [];
         const monthLabel = getMonthI18n(selectedMesoItem);
-        title = isEn ? `MESOCYCLE: ${monthLabel.toUpperCase()}` : `MESO-CICLO: ${monthLabel.toUpperCase()}`;
+        title = `${t('plan.metrics.mesocycle')}: ${monthLabel.toUpperCase()}`;
       } else {
         activeMicros = microcycles;
-        title = isEn ? "MESOCYCLES (OVERVIEW)" : "MESO-CICLOS (VISTA GENERAL)";
+        title = t('plan.metrics.mesocyclesOverview');
       }
     }
     
@@ -1003,7 +1008,7 @@ const Planificacion = () => {
             className="plan-cat-input"
             value={macroInfo.category}
             onChange={e => setMacroInfo(p => ({ ...p, category: e.target.value }))}
-            placeholder={isEn ? "e.g.: Under-14 A" : "Ej: Infantil A"}
+            placeholder={t('plan.categoryPlaceholder')}
           />
           <div className="plan-trainer-row">
             <span className="plan-trainer-label">
@@ -1018,7 +1023,7 @@ const Planificacion = () => {
               className="plan-trainer-input"
               value={macroInfo.trainer}
               onChange={e => setMacroInfo(p => ({ ...p, trainer: e.target.value }))}
-              placeholder={isEn ? "Coach name" : "Nombre entrenador"}
+              placeholder={t('plan.coachPlaceholder')}
             />
           </div>
         </div>
@@ -1029,10 +1034,10 @@ const Planificacion = () => {
             <span className="plan-icon">⌛</span> {t('plan.seasonVolume')}
           </div>
           <div className="plan-volumen-body">
-            <CircularGauge value={weeklyVolume} max={600} size={96} color="#4CAF7D" bgColor="#e0ede6" label={isEn ? "min/wk" : "min/sem"} />
+            <CircularGauge value={weeklyVolume} max={600} size={96} color="#4CAF7D" bgColor="#e0ede6" label={t('plan.volumeUnit')} />
             <div className="plan-volumen-text">
               <div className="plan-volumen-big">{weeklyVolume} <span className="plan-volumen-unit">min</span></div>
-              <div className="plan-volumen-sub">{totalHours}h {remainingMins}min ({totalMinutes} {isEn ? 'total minutes' : 'minutos totales'})</div>
+              <div className="plan-volumen-sub">{totalHours}h {remainingMins}min ({totalMinutes} {t('plan.totalMinutesLabel')})</div>
               <div className="plan-session-dur-row">
                 <label className="plan-session-label">{t('plan.sessionDuration')}</label>
                 <input type="number" value={macroInfo.sessionDuration} min={30} max={180}
@@ -1069,9 +1074,9 @@ const Planificacion = () => {
           <span className="plan-macro-title-icon">⟳</span>
           <span className="plan-macro-title">{computedMetrics.title}</span>
           <div className="plan-macro-legend">
-            <span className="plan-legend-chip chip-sesiones">{isEn ? 'Sessions' : 'Sesiones'} {computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
-            <span className="plan-legend-chip chip-trabajo">🏋 {isEn ? 'Work' : 'Trabajo'} {computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
-            <span className="plan-legend-chip chip-compet">● {isEn ? 'Compet.' : 'Compet.'} {computedMetrics.compet}/{computedMetrics.competMax}</span>
+            <span className="plan-legend-chip chip-sesiones">{t('plan.chip.sessions')} {computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
+            <span className="plan-legend-chip chip-trabajo">🏋 {t('plan.chip.work')} {computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
+            <span className="plan-legend-chip chip-compet">● {t('plan.chip.compet')} {computedMetrics.compet}/{computedMetrics.competMax}</span>
           </div>
         </div>
 
@@ -1088,7 +1093,7 @@ const Planificacion = () => {
             <div className="plan-metric-group">
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">📅</span>
-                <span className="plan-metric-name">{isEn ? 'SESSIONS' : 'SESIONES'}</span>
+                <span className="plan-metric-name">{t('plan.metricSessions')}</span>
                 <span className="plan-metric-count" style={{ color: sesionesColor }}>{computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
@@ -1108,7 +1113,7 @@ const Planificacion = () => {
             <div className="plan-metric-group">
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏋</span>
-                <span className="plan-metric-name">{isEn ? 'WORK' : 'TRABAJO'}</span>
+                <span className="plan-metric-name">{t('plan.chip.work').toUpperCase()}</span>
                 <span className="plan-metric-badge">Tektips</span>
                 <span className="plan-metric-count" style={{ color: trabajoColor }}>{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
               </div>
@@ -1129,8 +1134,8 @@ const Planificacion = () => {
             <div className="plan-metric-group">
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏆</span>
-                <span className="plan-metric-name">COMPET.</span>
-                <span className="plan-metric-badge chip-compet-badge">{isEn ? 'Competition' : 'Competencia'}</span>
+                <span className="plan-metric-name">{t('plan.chip.compet').toUpperCase()}</span>
+                <span className="plan-metric-badge chip-compet-badge">{t('plan.chip.compet')}</span>
                 <span className="plan-metric-count" style={{ color: competColor }}>{computedMetrics.compet}/{computedMetrics.competMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>

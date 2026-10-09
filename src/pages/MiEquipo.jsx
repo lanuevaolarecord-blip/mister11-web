@@ -34,21 +34,40 @@ import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
 
-const formatPosition = (pos, isEn) => {
+const formatPosition = (pos, localeOrIsEn) => {
   if (!pos) return '';
-  if (pos === 'TODOS') return isEn ? 'ALL' : 'TODOS';
+  let lang = 'es';
+  if (typeof localeOrIsEn === 'boolean') {
+    lang = localeOrIsEn ? 'en' : 'es';
+  } else if (typeof localeOrIsEn === 'string') {
+    const l = localeOrIsEn.toLowerCase();
+    if (l.startsWith('fr')) lang = 'fr';
+    else if (l.startsWith('pt')) lang = 'pt';
+    else if (l.startsWith('id')) lang = 'id';
+    else if (l.startsWith('en')) lang = 'en';
+    else lang = 'es';
+  }
+
+  if (pos === 'TODOS') {
+    if (lang === 'fr') return 'TOUS';
+    if (lang === 'en') return 'ALL';
+    if (lang === 'id') return 'SEMUA';
+    return 'TODOS';
+  }
+
   const map = {
-    'POR': isEn ? 'GK' : 'POR',
-    'DEF': isEn ? 'DEF' : 'DEF',
-    'LTD': isEn ? 'RB' : 'LTD',
-    'LTI': isEn ? 'LB' : 'LTI',
-    'MCD': isEn ? 'CDM' : 'MCD',
-    'MC':  isEn ? 'CM' : 'MC',
-    'MCO': isEn ? 'CAM' : 'MCO',
-    'EXT': isEn ? 'W' : 'EXT',
-    'DEL': isEn ? 'ST' : 'DEL',
+    'POR': { en: 'GK',  fr: 'GAR', pt: 'GOL', id: 'GK',    es: 'POR' },
+    'DEF': { en: 'DEF', fr: 'DEF', pt: 'DEF', id: 'BEK',   es: 'DEF' },
+    'LTD': { en: 'RB',  fr: 'DD',  pt: 'LD',  id: 'RB',    es: 'LTD' },
+    'LTI': { en: 'LB',  fr: 'DG',  pt: 'LE',  id: 'LB',    es: 'LTI' },
+    'MCD': { en: 'CDM', fr: 'MDC', pt: 'VOL', id: 'CDM',   es: 'MCD' },
+    'MC':  { en: 'CM',  fr: 'MC',  pt: 'MC',  id: 'CM',    es: 'MC'  },
+    'MCO': { en: 'CAM', fr: 'MOC', pt: 'MEI', id: 'CAM',   es: 'MCO' },
+    'EXT': { en: 'W',   fr: 'AIL', pt: 'PON', id: 'SAYAP', es: 'EXT' },
+    'DEL': { en: 'ST',  fr: 'ATT', pt: 'ATA', id: 'ST',    es: 'DEL' },
   };
-  return map[pos] || pos;
+
+  return map[pos]?.[lang] || pos;
 };
 
 const stringToColor = (str) => {
@@ -84,7 +103,7 @@ const MiEquipo = () => {
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const { matches, allPlayersStats } = usePlayerSeasonStats(activeTeamId);
-  const { t, isEn, fmtPlural } = useTranslation();
+  const { t, isEn, fmtPlural, locale } = useTranslation();
   const [mainTeamTab, setMainTeamTab] = useState('squad'); // 'squad' | 'attendance'
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -715,7 +734,7 @@ const MiEquipo = () => {
                 className={`chip ${filter === pos ? 'active' : ''}`}
                 onClick={() => setFilter(pos)}
               >
-                {formatPosition(pos, isEn)}
+                {formatPosition(pos, locale || isEn)}
               </button>
             ))}
           </div>
@@ -751,7 +770,7 @@ const MiEquipo = () => {
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
                   {pStats.goals > 0 && (
                     <span style={{ background: 'rgba(76, 175, 125, 0.15)', color: '#4CAF7D', border: '1px solid rgba(76, 175, 125, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
-                      {pStats.goals} GOL
+                      {pStats.goals} {t('player.goalAbbr') || (isEn ? 'GOAL' : 'GOL')}
                     </span>
                   )}
                   {pStats.matchesPlayed > 0 && (
@@ -764,14 +783,14 @@ const MiEquipo = () => {
                 <div style={{ background: 'var(--bg-app)', margin: '0 12px 6px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
-                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{formatPosition(player.position, isEn)}</strong>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{formatPosition(player.position, locale || isEn)}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{t('player.age')}</span>
-                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age, isEn).text}</strong>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age, locale || isEn).text}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{isEn ? 'Ht' : 'Alt'}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{t('player.heightAbbr')}</span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
                   </div>
                 </div>
@@ -799,7 +818,7 @@ const MiEquipo = () => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    {player.email || player.requesterEmail || (isEn ? 'No linked account' : 'Sin cuenta vinculada')}
+                    {player.email || player.requesterEmail || t('player.noLinkedAccount')}
                   </span>
                 </div>
 

@@ -9,8 +9,40 @@
  * @param {boolean} isEn - Indica si el resultado textual debe estar en inglés
  * @returns {{ text: string, years: number, age: number, cat: string }} - Texto de edad y categoría formativa
  */
-export const calcularEdad = (fechaNacimiento, isEn = false) => {
-  const noAgeText = isEn ? 'No age' : 'Sin edad';
+export const calcularEdad = (fechaNacimiento, localeOrIsEn = false) => {
+  let lang = 'es';
+  if (typeof localeOrIsEn === 'boolean') {
+    lang = localeOrIsEn ? 'en' : 'es';
+  } else if (typeof localeOrIsEn === 'string') {
+    const l = localeOrIsEn.toLowerCase();
+    if (l.startsWith('en')) lang = 'en';
+    else if (l.startsWith('fr')) lang = 'fr';
+    else if (l.startsWith('pt')) lang = 'pt';
+    else if (l.startsWith('id')) lang = 'id';
+    else lang = 'es';
+  }
+
+  const formatNoAge = () => {
+    switch (lang) {
+      case 'en': return 'No age';
+      case 'fr': return 'Sans âge';
+      case 'pt': return 'Sem idade';
+      case 'id': return 'Tanpa usia';
+      default:   return 'Sin edad';
+    }
+  };
+
+  const formatYears = (n) => {
+    switch (lang) {
+      case 'en': return `${n} ${n === 1 ? 'year old' : 'years old'}`;
+      case 'fr': return `${n} ${n === 1 ? 'an' : 'ans'}`;
+      case 'pt': return `${n} ${n === 1 ? 'ano' : 'anos'}`;
+      case 'id': return `${n} tahun`;
+      default:   return `${n} años`;
+    }
+  };
+
+  const noAgeText = formatNoAge();
   if (!fechaNacimiento) return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
 
   // Caso especial: edad directa en años como número o string numérico
@@ -24,8 +56,7 @@ export const calcularEdad = (fechaNacimiento, isEn = false) => {
     else if (valNum <= 13) cat = 'Infantil';
     else if (valNum <= 15) cat = 'Cadete';
     else if (valNum <= 18) cat = 'Juvenil';
-    const ageText = isEn ? `${valNum} ${valNum === 1 ? 'year old' : 'years old'}` : `${valNum} años`;
-    return { text: ageText, years: valNum, age: valNum, cat };
+    return { text: formatYears(valNum), years: valNum, age: valNum, cat };
   }
 
   let fecha;
@@ -90,7 +121,6 @@ export const calcularEdad = (fechaNacimiento, isEn = false) => {
   else if (edad <= 15) cat = 'Cadete';
   else if (edad <= 18) cat = 'Juvenil';
 
-  const ageText = isEn ? `${edad} ${edad === 1 ? 'year old' : 'years old'}` : `${edad} años`;
-  return { text: ageText, years: edad, age: edad, cat };
+  return { text: formatYears(edad), years: edad, age: edad, cat };
 };
 

@@ -405,10 +405,10 @@ export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, to
 
   // Soporte polimórfico si el segundo argumento es un objeto de opciones
   if (typeof pageW === 'object' && pageW !== null) {
-    w = doc?.internal?.pageSize?.getWidth?.() || 210;
-    h = doc?.internal?.pageSize?.getHeight?.() || 297;
-    cur = doc?.internal?.getNumberOfPages?.() || 1;
-    total = cur;
+    w = pageW.pageW || pageW.width || doc?.internal?.pageSize?.getWidth?.() || 210;
+    h = pageW.pageH || pageW.height || doc?.internal?.pageSize?.getHeight?.() || 297;
+    cur = pageW.currentPage || pageW.cur || doc?.internal?.getCurrentPageInfo?.()?.pageNumber || doc?.internal?.getNumberOfPages?.() || 1;
+    total = pageW.totalPages || pageW.total || doc?.internal?.getNumberOfPages?.() || cur;
   }
 
   doc.setDrawColor(...PDF_COLORS.border);

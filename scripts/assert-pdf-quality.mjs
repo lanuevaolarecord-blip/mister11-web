@@ -131,6 +131,36 @@ check('drawPdfFooter dibuja en jsPDF y genera texto continuo sin romper "mister1
   assert.ok(!output.includes('Pá g ina'), 'El PDF NO debe contener "Pá g ina"');
 });
 
+check('drawPdfFooter pagina correctamente en un documento de 4 páginas (Pagina 1 de 4 ... 4 de 4)', () => {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  for (let i = 2; i <= 4; i++) {
+    doc.addPage();
+  }
+  const totalPages = doc.internal.getNumberOfPages();
+  assert.strictEqual(totalPages, 4, 'El documento debe tener 4 páginas');
+
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    // Probamos llamada estándar
+    drawPdfFooter(doc, 210, 297, i, totalPages);
+  }
+
+  const output = doc.output();
+  assert.ok(output.includes('Pagina 1 de 4'), 'Debe contener Pagina 1 de 4');
+  assert.ok(output.includes('Pagina 2 de 4'), 'Debe contener Pagina 2 de 4');
+  assert.ok(output.includes('Pagina 3 de 4'), 'Debe contener Pagina 3 de 4');
+  assert.ok(output.includes('Pagina 4 de 4'), 'Debe contener Pagina 4 de 4');
+});
+
+check('drawPdfFooter con objeto polimórfico preserva totalPages si se provee y no colapsa a total = cur', () => {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  doc.addPage();
+  doc.setPage(1);
+  drawPdfFooter(doc, { currentPage: 1, totalPages: 4 });
+  const output = doc.output();
+  assert.ok(output.includes('Pagina 1 de 4'), 'Debe soportar { currentPage: 1, totalPages: 4 } sin colapsar a 1 de 1');
+});
+
 console.log(`\n==============================================================================`);
 console.log(`TODAS LAS PRUEBAS DE CALIDAD PDF (PDF-Q) PASARON EXITOSAMENTE (${passCount}/${passCount})`);
 console.log(`==============================================================================\n`);

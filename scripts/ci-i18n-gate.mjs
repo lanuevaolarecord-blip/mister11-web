@@ -35,7 +35,7 @@ try {
 }
 
 // ── PASO 2: Integridad Lingüística y CLDR PluralRules (qa-language.js) ────────
-console.log('\n▶ [Paso 2/6] Verificando integridad lingüística, enums y reglas CLDR PluralRules...');
+console.log('\n▶ [Paso 2/7] Verificando integridad lingüística, enums y reglas CLDR PluralRules...');
 try {
   const out = execSync('node scripts/qa-language.js', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ Integridad lingüística, enums deportivos y plurales CLDR válidos.');
@@ -44,8 +44,18 @@ try {
   process.exit(1);
 }
 
-// ── PASO 3: Auditoría de Literales Estáticos (audit-literals.mjs) ─────────────
-console.log('\n▶ [Paso 3/6] Auditando ausencia total de literales estáticos UI...');
+// ── PASO 3: Detector por Cadena — Mezcla, Tokens Cruzados & Copia sin Traducir (P1) ─
+console.log('\n▶ [Paso 3/7] Ejecutando detector por cadena (igualdad cualquier lengua + mezclas + tokens cruzados)...');
+try {
+  const out = execSync('node scripts/detect-string-cross-leakage.mjs', { cwd: rootDir, encoding: 'utf-8' });
+  console.log('   ✅ Detector por cadena completado (0 mezclas rotas, inventario generado).');
+} catch (err) {
+  console.error('   ❌ Error en detector por cadena:\n', err.stdout || err.message);
+  process.exit(1);
+}
+
+// ── PASO 4: Auditoría de Literales Estáticos (audit-literals.mjs) ─────────────
+console.log('\n▶ [Paso 4/7] Auditando ausencia total de literales estáticos UI...');
 try {
   const out = execSync('node scripts/audit-literals.mjs --fail-on-found', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ Cero literales estáticos detectados (0 offenders).');
@@ -54,8 +64,8 @@ try {
   process.exit(1);
 }
 
-// ── PASO 4: Auditoría de Interpolación (check-interpolation.mjs) ───────────────
-console.log('\n▶ [Paso 4/6] Verificando interpolación correcta de variables y placeholders...');
+// ── PASO 5: Auditoría de Interpolación (check-interpolation.mjs) ───────────────
+console.log('\n▶ [Paso 5/7] Verificando interpolación correcta de variables y placeholders...');
 try {
   const out = execSync('node scripts/check-interpolation.mjs', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ 100% de placeholders interpolados correctamente.');
@@ -64,8 +74,8 @@ try {
   process.exit(1);
 }
 
-// ── PASO 5: Verificación del Registro de Locales y Selector (G5) ───────────────
-console.log('\n▶ [Paso 5/6] Verificando aislamiento de lenguas pendientes vs activas (G5)...');
+// ── PASO 6: Verificación del Registro de Locales y Selector (G5) ───────────────
+console.log('\n▶ [Paso 6/7] Verificando aislamiento de lenguas pendientes vs activas (G5)...');
 try {
   const regPath = resolve(rootDir, 'src/i18n/locales/registry.js');
   const { LOCALES_REGISTRY, getActiveLocales } = await import('file:///' + regPath.replace(/\\/g, '/'));
@@ -88,8 +98,8 @@ try {
   process.exit(1);
 }
 
-// ── PASO 6: Breakage Resilience Test ──────────────────────────────────────────
-console.log('\n▶ [Paso 6/6] Ejecutando Breakage Test (Prueba de rotura simulada)...');
+// ── PASO 7: Breakage Resilience Test ──────────────────────────────────────────
+console.log('\n▶ [Paso 7/7] Ejecutando Breakage Test (Prueba de rotura simulada)...');
 const esPath = resolve(rootDir, 'src/i18n/locales/es.js');
 const enPath = resolve(rootDir, 'src/i18n/locales/en.js');
 const originalEs = readFileSync(esPath, 'utf-8');
@@ -142,6 +152,6 @@ try {
 }
 
 console.log('\n══════════════════════════════════════════════════════════════════════');
-console.log('🎉 [CI-I18N-GATE] ¡TODOS LOS GATES MULTI-LENGUA APROBADOS CON ÉXITO! (6/6)');
+console.log('🎉 [CI-I18N-GATE] ¡TODOS LOS GATES MULTI-LENGUA APROBADOS CON ÉXITO! (7/7)');
 console.log('══════════════════════════════════════════════════════════════════════\n');
 process.exit(0);

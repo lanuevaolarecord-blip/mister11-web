@@ -681,6 +681,71 @@ export const MATERIALS_LIBRARY = {
     fabricConfig: (x, y, color = '#7FFF00') => ({ left: x, top: y }),
   },
 
+  valla_baja: {
+    id: 'valla_baja',
+    label: 'Valla Baja',
+    category: 'coordinacion',
+    defaultSize: 30,
+    defaultColor: '#FF6600',
+    canRotate: true,
+    canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect x="6" y="26" width="36" height="5" fill="#FF6600" rx="2" stroke="#CC4400" stroke-width="0.5"/><rect x="8" y="31" width="4" height="11" fill="#FF6600" rx="1"/><rect x="36" y="31" width="4" height="11" fill="#FF6600" rx="1"/><rect x="4" y="41" width="12" height="3" fill="#666" rx="1"/><rect x="32" y="41" width="12" height="3" fill="#666" rx="1"/></svg>`,
+    colors: ['#FF6600', '#FFCC00', '#0066FF', '#4CAF7D'],
+    fabricConfig: (x, y) => ({ left: x, top: y, width: 36, height: 20 }),
+  },
+
+  cono_ranurado: {
+    id: 'cono_ranurado',
+    label: 'Cono Ranurado',
+    category: 'señalizacion',
+    defaultSize: 22,
+    defaultColor: '#FFD700',
+    canRotate: false,
+    canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><polygon points="24,6 8,42 40,42" fill="#FFD700" stroke="#CCA800" stroke-width="1"/><rect x="22" y="6" width="4" height="8" fill="#1B3A2D"/><ellipse cx="24" cy="42" rx="16" ry="4" fill="#CCA800" opacity="0.3"/></svg>`,
+    colors: ['#FFD700', '#FF6600', '#EF4444', '#0066FF'],
+    fabricConfig: (x, y, color = '#FFD700') => ({ type: 'triangle', left: x, top: y, width: 22, height: 24, fill: color, stroke: '#CCA800', strokeWidth: 1, originX: 'center', originY: 'center' }),
+  },
+
+  pica_suelo: {
+    id: 'pica_suelo',
+    label: 'Pica de Suelo',
+    category: 'señalizacion',
+    defaultSize: 45,
+    defaultColor: '#EAB308',
+    canRotate: true,
+    canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect x="4" y="21" width="40" height="6" fill="#EAB308" rx="2" stroke="#CA8A04" stroke-width="0.8"/><circle cx="8" cy="24" r="2.5" fill="#111"/><circle cx="40" cy="24" r="2.5" fill="#111"/></svg>`,
+    colors: ['#EAB308', '#EF4444', '#3B82F6', '#10B981'],
+    fabricConfig: (x, y, color = '#EAB308') => ({ type: 'rect', left: x, top: y, width: 45, height: 6, fill: color, stroke: '#CA8A04', strokeWidth: 1, rx: 2, ry: 2, originX: 'center', originY: 'center' }),
+  },
+
+  mini_balon: {
+    id: 'mini_balon',
+    label: 'Mini Balón Talla 1-2',
+    category: 'balon',
+    defaultSize: 20,
+    defaultColor: '#FFFFFF',
+    canRotate: false,
+    canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" fill="#FFFFFF" stroke="#333333" stroke-width="1.8"/><polygon points="24,14 27,20 24,23 21,20" fill="#222"/><text x="24" y="34" font-size="7" font-weight="bold" fill="#3B82F6" text-anchor="middle">MINI</text></svg>`,
+    colors: ['#FFFFFF', '#FFCC00', '#FF6600'],
+    fabricConfig: (x, y) => ({ type: 'circle', left: x, top: y, radius: 10, fill: '#FFFFFF', stroke: '#333333', strokeWidth: 1.5, originX: 'center', originY: 'center' }),
+  },
+
+  goma_elastica: {
+    id: 'goma_elastica',
+    label: 'Banda Elástica',
+    category: 'material',
+    defaultSize: 32,
+    defaultColor: '#3B82F6',
+    canRotate: true,
+    canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect x="8" y="16" width="32" height="16" rx="8" fill="none" stroke="#3B82F6" stroke-width="4"/><rect x="10" y="18" width="28" height="12" rx="6" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.7"/></svg>`,
+    colors: ['#3B82F6', '#EF4444', '#10B981', '#111827'],
+    fabricConfig: (x, y, color = '#3B82F6') => ({ type: 'rect', left: x, top: y, width: 32, height: 16, rx: 8, ry: 8, fill: 'transparent', stroke: color, strokeWidth: 3.5, originX: 'center', originY: 'center' }),
+  },
+
 };
 
 // ─────────────────────────────────────────
@@ -695,7 +760,7 @@ export const MATERIALS_BY_CATEGORY = {
   señalizacion: {
     label: 'Señalización',
     icon: '🔴',
-    items: ['cono', 'cono_amarillo', 'cono_rojo', 'cono_negro', 'mini_cono', 'grupo_conos', 'grupo_conos_linea', 'grupo_conos_arco', 'platillo', 'banderin', 'pica', 'poste'],
+    items: ['cono', 'cono_amarillo', 'cono_rojo', 'cono_negro', 'cono_ranurado', 'mini_cono', 'grupo_conos', 'grupo_conos_linea', 'grupo_conos_arco', 'platillo', 'banderin', 'pica', 'pica_suelo', 'poste'],
   },
   porteria: {
     label: 'Portería',
@@ -705,12 +770,12 @@ export const MATERIALS_BY_CATEGORY = {
   balon: {
     label: 'Balón',
     icon: '⚽',
-    items: ['balon', 'balon_negro', 'balon_movimiento', 'grupo_balones'],
+    items: ['balon', 'balon_negro', 'balon_movimiento', 'grupo_balones', 'mini_balon'],
   },
   coordinacion: {
     label: 'Coordinación',
     icon: '🔵',
-    items: ['aro', 'valla', 'escalera', 'pared_rebote'],
+    items: ['aro', 'valla', 'valla_baja', 'escalera', 'pared_rebote'],
   },
   medidas: {
     label: 'Medidas',
@@ -725,7 +790,7 @@ export const MATERIALS_BY_CATEGORY = {
   material: {
     label: 'Material',
     icon: '👕',
-    items: ['peto'],
+    items: ['peto', 'goma_elastica'],
   },
 };
 

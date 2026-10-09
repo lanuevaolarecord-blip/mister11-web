@@ -16,11 +16,31 @@ import {
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine.js';
 import { getEffectiveLanguage } from '../i18n/translations.js';
 
-const isEnglish = () => {
+export const getPdfLocale = () => {
   const l = getEffectiveLanguage();
-  return l === 'English (EN)' || l === 'en' || (typeof l === 'string' && l.toLowerCase().startsWith('en'));
+  if (l === 'English (EN)' || l === 'en' || (typeof l === 'string' && l.toLowerCase().startsWith('en'))) return 'en';
+  if (l === 'Français (FR)' || l === 'fr' || (typeof l === 'string' && l.toLowerCase().startsWith('fr'))) return 'fr';
+  if (l === 'Português (Brasil)' || l === 'pt-BR' || l === 'pt' || (typeof l === 'string' && l.toLowerCase().startsWith('pt'))) return 'pt';
+  if (l === 'Bahasa Indonesia (ID)' || l === 'id-ID' || l === 'id' || (typeof l === 'string' && l.toLowerCase().startsWith('id'))) return 'id';
+  if (l === 'Español (Latinoamérica)' || l === 'es-419') return 'es-419';
+  return 'es';
 };
-const getLocale = () => (isEnglish() ? 'en-US' : 'es-ES');
+
+export const pdfTr = (dict) => {
+  if (!dict || typeof dict !== 'object') return String(dict || '');
+  const loc = getPdfLocale();
+  return dict[loc] || dict['es'] || dict['en'] || Object.values(dict)[0] || '';
+};
+
+const isEnglish = () => getPdfLocale() === 'en';
+const getLocale = () => {
+  const loc = getPdfLocale();
+  if (loc === 'en') return 'en-US';
+  if (loc === 'fr') return 'fr-FR';
+  if (loc === 'pt') return 'pt-BR';
+  if (loc === 'id') return 'id-ID';
+  return 'es-ES';
+};
 const formatCurrentDate = () => new Date().toLocaleDateString(getLocale());
 
 const getJsPDF = async () => {
@@ -157,7 +177,12 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
     const seasonEnd = cleanPdfText(safeMacro.endDate || '');
     const trainer = cleanPdfText(safeMacro.trainer || activeTeam?.entrenador || 'Cuerpo Técnico');
 
-    await addHeader(doc, 'PLANIFICACIÓN ESTRATÉGICA', `Categoría: ${teamCategory} · Temporada ${seasonStart} — ${seasonEnd}`, activeTeam);
+    await addHeader(
+      doc, 
+      pdfTr({ es: 'PLANIFICACIÓN ESTRATÉGICA', en: 'STRATEGIC PLANNING', fr: 'PLANIFICATION STRATÉGIQUE', pt: 'PLANEJAMENTO ESTRATÉGICO', id: 'PERENCANAAN STRATEGIS' }), 
+      `${pdfTr({ es: 'Categoría', en: 'Category', fr: 'Catégorie', pt: 'Categoria', id: 'Kategori' })}: ${teamCategory} · ${pdfTr({ es: 'Temporada', en: 'Season', fr: 'Saison', pt: 'Temporada', id: 'Musim' })} ${seasonStart} — ${seasonEnd}`, 
+      activeTeam
+    );
 
     let currentY = 46;
 
@@ -168,7 +193,7 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
       doc.setTextColor(...ACCENT_COLOR);
       doc.setFontSize(9);
       doc.setFont(undefined, 'bold');
-      doc.text('OBJETIVOS DE LA TEMPORADA', 14, currentY + 5);
+      doc.text(pdfTr({ es: 'OBJETIVOS DE LA TEMPORADA', en: 'SEASON OBJECTIVES', fr: 'OBJECTIFS DE LA SAISON', pt: 'OBJETIVOS DA TEMPORADA', id: 'TUJUAN MUSIM' }), 14, currentY + 5);
       
       currentY += 10;
       doc.setFont(undefined, 'normal');
@@ -181,7 +206,17 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
     }
 
     // ── TABLA MACROCICLO ───────────────────────────────────────────────────
-    const head = [['Mes', 'Periodo', 'Etapa', 'N Meso', 'N Micro', 'Tipo Micro', 'N Ses.', 'Vol.(min)', '% Fis.', '% Tec.', '% Tac.']];
+    const head = [[
+      pdfTr({ es: 'Mes', en: 'Month', fr: 'Mois', pt: 'Mês', id: 'Bulan' }),
+      pdfTr({ es: 'Periodo', en: 'Period', fr: 'Période', pt: 'Período', id: 'Periode' }),
+      pdfTr({ es: 'Etapa', en: 'Stage', fr: 'Étape', pt: 'Etapa', id: 'Tahap' }),
+      pdfTr({ es: 'N Meso', en: 'Meso #', fr: 'Méso #', pt: 'N Meso', id: 'Meso #' }),
+      pdfTr({ es: 'N Micro', en: 'Micro #', fr: 'Micro #', pt: 'N Micro', id: 'Mikro #' }),
+      pdfTr({ es: 'Tipo Micro', en: 'Micro Type', fr: 'Type Micro', pt: 'Tipo Micro', id: 'Tipe Mikro' }),
+      pdfTr({ es: 'N Ses.', en: 'Sessions #', fr: 'Séances #', pt: 'N Sess.', id: 'Jml Sesi' }),
+      pdfTr({ es: 'Vol.(min)', en: 'Vol.(min)', fr: 'Vol.(min)', pt: 'Vol.(min)', id: 'Vol.(menit)' }),
+      '% Fis.', '% Tec.', '% Tac.'
+    ]];
     const body = safeMicro.map(m => [
       cleanPdfText(m?.month || '-'),
       cleanPdfText(m?.period || '-'),
@@ -1241,33 +1276,38 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
   const jsPDF = await getJsPDF();
   const doc = new jsPDF();
   const matchName = match.rival ? `Partido vs ${match.rival}` : (match.nombre || match.title || 'Partido Oficial');
-  await addHeader(doc, 'HOJA DE CONVOCATORIA', matchName, activeTeam);
+  await addHeader(
+    doc, 
+    pdfTr({ es: 'HOJA DE CONVOCATORIA', en: 'MATCH CALL-UP SHEET', fr: 'FEUILLE DE CONVOCATION DU MATCH', pt: 'LISTA DE CONVOCAÇÃO PARA A PARTIDA', id: 'LEMBAR PANGGILAN PERTANDINGAN' }), 
+    matchName, 
+    activeTeam
+  );
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);
   const tituloPartido = (match.nombre || match.title || 'Partido Oficial');
-  doc.text(`Partido: ${tituloPartido.length > 25 ? tituloPartido.substring(0, 25) + '...' : tituloPartido}`, 15, 50);
+  doc.text(`${pdfTr({ es: 'Partido:', en: 'Match:', fr: 'Match :', pt: 'Partida:', id: 'Pertandingan:' })} ${tituloPartido.length > 25 ? tituloPartido.substring(0, 25) + '...' : tituloPartido}`, 15, 50);
   const rivalText = match.rival || '-';
-  doc.text(`Rival: ${rivalText.length > 20 ? rivalText.substring(0, 20) + '...' : rivalText}`, 95, 50);
-  doc.text(`Fecha: ${match.date || match.fecha || '-'}`, 155, 50);
-  doc.text(`Hora: ${match.time || match.hora || '--:--'}`, 15, 58);
-  doc.text(`Lugar: ${match.location || match.lugar || 'Por determinar'}`, 95, 58);
-  if (match.lineup || match.formacion) doc.text(`Formación: ${match.lineup || match.formacion}`, 155, 58);
+  doc.text(`${pdfTr({ es: 'Rival:', en: 'Opponent:', fr: 'Adversaire :', pt: 'Rival:', id: 'Lawan:' })} ${rivalText.length > 20 ? rivalText.substring(0, 20) + '...' : rivalText}`, 95, 50);
+  doc.text(`${pdfTr({ es: 'Fecha:', en: 'Date:', fr: 'Date :', pt: 'Data:', id: 'Tanggal:' })} ${match.date || match.fecha || '-'}`, 155, 50);
+  doc.text(`${pdfTr({ es: 'Hora:', en: 'Time:', fr: 'Heure :', pt: 'Hora:', id: 'Waktu:' })} ${match.time || match.hora || '--:--'}`, 15, 58);
+  doc.text(`${pdfTr({ es: 'Lugar:', en: 'Venue:', fr: 'Lieu :', pt: 'Local:', id: 'Lokasi:' })} ${match.location || match.lugar || 'Por determinar'}`, 95, 58);
+  if (match.lineup || match.formacion) doc.text(`${pdfTr({ es: 'Formación:', en: 'Formation:', fr: 'Formation :', pt: 'Formação:', id: 'Formasi:' })} ${match.lineup || match.formacion}`, 155, 58);
 
   const convocados = players.filter(p => match.convocados?.includes(p.id));
 
   doc.setFontSize(13);
   doc.setTextColor(...THEME_COLOR);
   doc.setFont(undefined, 'bold');
-  doc.text(`Convocados (${convocados.length})`, 15, 70);
+  doc.text(`${pdfTr({ es: 'Convocados', en: 'Call-up', fr: 'Convoqués', pt: 'Convocados', id: 'Pemain Dipanggil' })} (${convocados.length})`, 15, 70);
   doc.setFont(undefined, 'normal');
 
   autoTable(doc, {
     startY: 74,
-    head: [['#', 'Nombre del Jugador', 'Posición']],
+    head: [['#', pdfTr({ es: 'Nombre del Jugador', en: 'Player Name', fr: 'Nom du Joueur', pt: 'Nome do Jogador', id: 'Nama Pemain' }), pdfTr({ es: 'Posición', en: 'Position', fr: 'Position', pt: 'Posição', id: 'Posisi' })]],
     body: convocados.length > 0
       ? convocados.map((p, i) => [p.number || p.dorsal || i+1, p.name || p.nombre || '-', p.position || p.posicion || '-'])
-      : [['', 'No hay convocados registrados para este partido.', '']],
+      : [['', pdfTr({ es: 'No hay convocados registrados para este partido.', en: 'No called-up players recorded for this match.', fr: 'Aucun joueur convoqué enregistré pour ce match.', pt: 'Não há convocados registrados para esta partida.', id: 'Tidak ada pemain dipanggil yang tercatat untuk pertandingan ini.' }), '']],
     headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold' },
     bodyStyles: { textColor: [45,45,45], fontSize: 10 },
     alternateRowStyles: { fillColor: [245,240,232] },
@@ -1298,9 +1338,14 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
 
     const teamName = cleanPdfText(activeTeam?.nombre || 'Mi Equipo');
     const category = cleanPdfText(activeTeam?.categoria || 'General');
-    const subtitle = `Temporada Oficial · ${teamName} · Categoría: ${category}`;
+    const subtitle = `${pdfTr({ es: 'Temporada Oficial', en: 'Official Season', fr: 'Saison Officielle', pt: 'Temporada Oficial', id: 'Musim Resmi' })} · ${teamName} · ${pdfTr({ es: 'Categoría', en: 'Category', fr: 'Catégorie', pt: 'Categoria', id: 'Kategori' })}: ${category}`;
 
-    await addHeader(doc, 'CALENDARIO OFICIAL DE PARTIDOS', subtitle, activeTeam);
+    await addHeader(
+      doc, 
+      pdfTr({ es: 'CALENDARIO OFICIAL DE PARTIDOS', en: 'OFFICIAL MATCH CALENDAR', fr: 'CALENDRIER OFFICIEL DES MATCHS', pt: 'CALENDÁRIO OFICIAL DE PARTIDAS', id: 'KALENDER RESMI PERTANDINGAN' }), 
+      subtitle, 
+      activeTeam
+    );
 
     // Calcular estadísticas globales
     const sortedMatches = [...matches].sort((a, b) => {
@@ -1337,14 +1382,14 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
     doc.roundedRect(14, currentY, pageW - 28, 22, 3, 3, 'S');
 
     const kpis = [
-      { label: 'PARTIDOS', val: `${totalMatches}` },
-      { label: 'JUGADOS', val: `${played}` },
-      { label: 'VICTORIAS', val: `${wins}` },
-      { label: 'EMPATES', val: `${draws}` },
-      { label: 'DERROTAS', val: `${losses}` },
-      { label: 'GF / GC', val: `${gf} - ${gc}` },
-      { label: 'DIF.', val: difStr },
-      { label: 'EFECTIVIDAD', val: `${winRate}%` },
+      { label: pdfTr({ es: 'PARTIDOS', en: 'MATCHES', fr: 'MATCHS', pt: 'PARTIDAS', id: 'PERTANDINGAN' }), val: `${totalMatches}` },
+      { label: pdfTr({ es: 'JUGADOS', en: 'PLAYED', fr: 'JOUÉS', pt: 'JOGADOS', id: 'DIMAINKAN' }), val: `${played}` },
+      { label: pdfTr({ es: 'VICTORIAS', en: 'WINS', fr: 'VICTOIRES', pt: 'VITÓRIAS', id: 'MENANG' }), val: `${wins}` },
+      { label: pdfTr({ es: 'EMPATES', en: 'DRAWS', fr: 'NULS', pt: 'EMPATES', id: 'SERI' }), val: `${draws}` },
+      { label: pdfTr({ es: 'DERROTAS', en: 'LOSSES', fr: 'DÉFAITES', pt: 'DERROTAS', id: 'KALAH' }), val: `${losses}` },
+      { label: pdfTr({ es: 'GF / GC', en: 'GF / GA', fr: 'BM / BE', pt: 'GP / GC', id: 'GM / GK' }), val: `${gf} - ${gc}` },
+      { label: pdfTr({ es: 'DIF.', en: 'DIFF.', fr: 'DIFF.', pt: 'SALDO', id: 'SEL.' }), val: difStr },
+      { label: pdfTr({ es: 'EFECTIVIDAD', en: 'WIN RATE', fr: 'EFFICACITÉ', pt: 'APROVEIT.', id: 'EFEKTIVITAS' }), val: `${winRate}%` },
     ];
 
     const colW = (pageW - 28) / kpis.length;
@@ -1371,14 +1416,14 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
       const jornada = cleanPdfText(m.jornada ? `Jornada ${m.jornada}` : (m.type || 'Oficial'));
       const condition = cleanPdfText(m.condition || m.condicion || (m.type === 'Visitante' ? 'Visitante' : 'Local'));
       
-      let resStr = 'Programado';
+      let resStr = pdfTr({ es: 'Programado', en: 'Scheduled', fr: 'Programmé', pt: 'Programado', id: 'Terjadwal' });
       if (m.status === 'Terminado' || m.played) {
         const myG = m.goalsFor ?? m.golesFavor ?? 0;
         const rivG = m.goalsAgainst ?? m.golesContra ?? 0;
-        const outcome = myG > rivG ? '[Victoria]' : (myG === rivG ? '[Empate]' : '[Derrota]');
+        const outcome = myG > rivG ? `[${pdfTr({ es: 'Victoria', en: 'Win', fr: 'Victoire', pt: 'Vitória', id: 'Menang' })}]` : (myG === rivG ? `[${pdfTr({ es: 'Empate', en: 'Draw', fr: 'Nul', pt: 'Empate', id: 'Seri' })}]` : `[${pdfTr({ es: 'Derrota', en: 'Loss', fr: 'Défaite', pt: 'Derrota', id: 'Kalah' })}]`);
         resStr = `${myG} - ${rivG} ${outcome}`;
       } else if (m.status === 'En Juego') {
-        resStr = 'En Directo';
+        resStr = pdfTr({ es: 'En Directo', en: 'Live', fr: 'En Direct', pt: 'Ao Vivo', id: 'Langsung' });
       }
 
       const location = cleanPdfText(m.location || m.lugar || m.campo || 'Por determinar');
@@ -1396,7 +1441,15 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
 
     autoTable(doc, {
       startY: currentY,
-      head: [['#', 'Fecha / Hora', 'Jornada / Comp.', 'Rival', 'Condición', 'Resultado / Estado', 'Campo / Instalación']],
+      head: [[
+        '#', 
+        pdfTr({ es: 'Fecha / Hora', en: 'Date / Time', fr: 'Date / Heure', pt: 'Data / Hora', id: 'Tanggal / Waktu' }), 
+        pdfTr({ es: 'Jornada / Comp.', en: 'Round / Comp.', fr: 'Journée / Comp.', pt: 'Rodada / Comp.', id: 'Pekan / Kompetisi' }), 
+        pdfTr({ es: 'Rival', en: 'Opponent', fr: 'Adversaire', pt: 'Rival', id: 'Lawan' }), 
+        pdfTr({ es: 'Condición', en: 'Venue', fr: 'Condition', pt: 'Condição', id: 'Status' }), 
+        pdfTr({ es: 'Resultado / Estado', en: 'Score / Status', fr: 'Score / Statut', pt: 'Resultado / Status', id: 'Skor / Status' }), 
+        pdfTr({ es: 'Campo / Instalación', en: 'Pitch / Venue', fr: 'Terrain / Lieu', pt: 'Campo / Local', id: 'Lapangan / Lokasi' })
+      ]],
       body: tableRows,
       theme: 'grid',
       headStyles: {
@@ -1461,7 +1514,12 @@ export const generateExpediente = async (player, activeTeam = null) => {
     // ══════════════════════════════════════════════════════════════════════════
     // PÁGINA 1: FICHA DE IDENTIDAD, CONTACTO/TUTOR, SALUD/IMC Y RADAR 360°
     // ══════════════════════════════════════════════════════════════════════════
-    await addHeader(doc, 'EXPEDIENTE DEPORTIVO OFICIAL', `${playerName} · #${dorsal} · ${teamName}`, activeTeam);
+    await addHeader(
+      doc, 
+      pdfTr({ es: 'EXPEDIENTE DEPORTIVO OFICIAL', en: 'OFFICIAL ATHLETIC DOSSIER', fr: 'DOSSIER SPORTIF OFFICIEL', pt: 'DOSSIÊ ESPORTIVO OFICIAL', id: 'BERKAS RESMI ATLET' }), 
+      `${playerName} · #${dorsal} · ${teamName}`, 
+      activeTeam
+    );
 
     let y = 46;
 
@@ -1482,20 +1540,20 @@ export const generateExpediente = async (player, activeTeam = null) => {
     doc.setTextColor(...TEXT_DARK);
     doc.setFontSize(10.5);
     doc.setFont(undefined, 'bold');
-    doc.text('DATOS DE IDENTIDAD Y PERFIL DEPORTIVO', 14, y + 5);
+    doc.text(pdfTr({ es: 'DATOS DE IDENTIDAD Y PERFIL DEPORTIVO', en: 'IDENTITY & ATHLETIC PROFILE', fr: "DONNÉES D'IDENTITÉ ET PROFIL SPORTIF", pt: 'DADOS DE IDENTIDADE E PERFIL ESPORTIVO', id: 'DATA IDENTITAS & PROFIL ATLET' }), 14, y + 5);
 
     doc.setFont(undefined, 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
 
-    const edadStr = player.age || player.edad ? `${player.age || player.edad} años` : (cleanPdfText(player.birthDate || player.fechaNacimiento || '-'));
+    const edadStr = player.age || player.edad ? `${player.age || player.edad} ${pdfTr({ es: 'años', en: 'years old', fr: 'ans', pt: 'anos', id: 'tahun' })}` : (cleanPdfText(player.birthDate || player.fechaNacimiento || '-'));
     const dniStr = cleanPdfText(player.dni || player.nie || player.documento || '-');
     const nacStr = cleanPdfText(player.nationality || player.nacionalidad || 'Espanola');
     
-    doc.text(`Nombre Completo: ${playerName}`, 14, y + 13);
-    doc.text(`Dorsal: #${dorsal}   |   Posición: ${cleanPdfText(player.position || player.posicion || '-')}   |   Pierna: ${cleanPdfText(player.foot || player.pierna || '-')}`, 14, y + 19);
-    doc.text(`Categoría: ${category}   |   DNI/Documento: ${dniStr}   |   Nacionalidad: ${nacStr}`, 14, y + 25);
-    doc.text(`Edad / Fecha de Nacimiento: ${edadStr}`, 14, y + 31);
+    doc.text(`${pdfTr({ es: 'Nombre Completo:', en: 'Full Name:', fr: 'Nom Complet :', pt: 'Nome Completo:', id: 'Nama Lengkap:' })} ${playerName}`, 14, y + 13);
+    doc.text(`${pdfTr({ es: 'Dorsal:', en: 'Number:', fr: 'Numéro :', pt: 'Número:', id: 'Nomor:' })} #${dorsal}   |   ${pdfTr({ es: 'Posición:', en: 'Position:', fr: 'Position :', pt: 'Posição:', id: 'Posisi:' })} ${cleanPdfText(player.position || player.posicion || '-')}   |   ${pdfTr({ es: 'Pierna:', en: 'Preferred Foot:', fr: 'Pied Fort :', pt: 'Perna:', id: 'Kaki Utama:' })} ${cleanPdfText(player.foot || player.pierna || '-')}`, 14, y + 19);
+    doc.text(`${pdfTr({ es: 'Categoría:', en: 'Category:', fr: 'Catégorie :', pt: 'Categoria:', id: 'Kategori:' })} ${category}   |   ${pdfTr({ es: 'DNI/Documento:', en: 'ID/Document:', fr: 'Pièce d’Identité :', pt: 'Documento:', id: 'Nomor Identitas:' })} ${dniStr}   |   ${pdfTr({ es: 'Nacionalidad:', en: 'Nationality:', fr: 'Nationalité :', pt: 'Nacionalidade:', id: 'Kewarganegaraan:' })} ${nacStr}`, 14, y + 25);
+    doc.text(`${pdfTr({ es: 'Edad / Fecha de Nacimiento:', en: 'Age / Date of Birth:', fr: 'Âge / Date de Naissance :', pt: 'Idade / Data de Nascimento:', id: 'Usia / Tanggal Lahir:' })} ${edadStr}`, 14, y + 31);
 
     y += 37;
 
@@ -1508,7 +1566,7 @@ export const generateExpediente = async (player, activeTeam = null) => {
     doc.setTextColor(...THEME_COLOR);
     doc.setFont(undefined, 'bold');
     doc.setFontSize(9);
-    doc.text('CONTACTO, TUTORES LEGALES & CONSENTIMIENTO RGPD', 20, y + 6);
+    doc.text(pdfTr({ es: 'CONTACTO, TUTORES LEGALES & CONSENTIMIENTO RGPD', en: 'CONTACT, GUARDIANS & GDPR CONSENT', fr: 'CONTACT, TUTEURS LÉGAUX ET CONSENTEMENT RGPD', pt: 'CONTATO, RESPONSÁVEIS E CONSENTIMENTO LGPD', id: 'KONTAK, WALI & PERSETUJUAN RGPD' }), 20, y + 6);
 
     doc.setFont(undefined, 'normal');
     doc.setFontSize(8);

@@ -21,19 +21,19 @@ import { db } from '../firebaseConfig';
 import { Save, Loader2, Check, Lock, FileText } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  present:   { label: 'Presente',   labelEn: 'Present',   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: '#22C55E', icon: '✅' },
-  absent:    { label: 'Ausente',    labelEn: 'Absent',    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', border: '#EF4444', icon: '❌' },
-  justified: { label: 'Justificada',labelEn: 'Justified', color: '#EAB308', bg: 'rgba(234, 179, 8, 0.12)', border: '#EAB308', icon: '📝' },
-  late:      { label: 'Tarde',      labelEn: 'Late',      color: '#F97316', bg: 'rgba(249, 115, 22, 0.12)', border: '#F97316', icon: '⏱️' },
-  injured:   { label: 'Lesionado',  labelEn: 'Injured',   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', border: '#3B82F6', icon: '🚑' },
+  present:   { key: 'attendance.status.present',   label: 'Presente',   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: '#22C55E', icon: '✅' },
+  absent:    { key: 'attendance.status.absent',    label: 'Ausente',    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', border: '#EF4444', icon: '❌' },
+  justified: { key: 'attendance.status.justified', label: 'Justificada',color: '#EAB308', bg: 'rgba(234, 179, 8, 0.12)', border: '#EAB308', icon: '📝' },
+  late:      { key: 'attendance.status.late',      label: 'Tarde',      color: '#F97316', bg: 'rgba(249, 115, 22, 0.12)', border: '#F97316', icon: '⏱️' },
+  injured:   { key: 'attendance.status.injured',   label: 'Lesionado',  color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', border: '#3B82F6', icon: '🚑' },
 };
 
 // ── RSVP Config (respuesta del jugador en su portal) ──────────────────────────
 const RSVP_CONFIG = {
-  going:      { label: 'Irá',         labelEn: 'Will come', color: '#10B981', icon: '✅' },
-  not_going:  { label: 'No irá',      labelEn: 'Won\'t come', color: '#EF4444', icon: '❌' },
-  late:       { label: 'Llegará tarde',labelEn: 'Coming late', color: '#F59E0B', icon: '🟡' },
-  justified:  { label: 'Justificado', labelEn: 'Justified',  color: '#3B82F6', icon: '📄' },
+  going:      { key: 'attendance.rsvp.going',      label: 'Irá',         color: '#10B981', icon: '✅' },
+  not_going:  { key: 'attendance.rsvp.not_going',  label: 'No irá',      color: '#EF4444', icon: '❌' },
+  late:       { key: 'attendance.rsvp.late',       label: 'Llegará tarde',color: '#F59E0B', icon: '🟡' },
+  justified:  { key: 'attendance.rsvp.justified',  label: 'Justificado', color: '#3B82F6', icon: '📄' },
 };
 
 // Mapa RSVP → estado del míster sugerido
@@ -45,7 +45,7 @@ const RSVP_TO_STATUS = {
 };
 
 /** Badge compacto de la respuesta del jugador */
-const RsvpBadge = ({ rsvpKey, isEn }) => {
+const RsvpBadge = ({ rsvpKey, t }) => {
   const actualKey = typeof rsvpKey === 'object' ? rsvpKey?.status : rsvpKey;
   if (!actualKey) {
     return (
@@ -55,7 +55,7 @@ const RsvpBadge = ({ rsvpKey, isEn }) => {
         background: 'rgba(148,163,184,0.12)', border: '1px solid rgba(148,163,184,0.25)',
         fontSize: '10px', fontWeight: '700', color: '#94A3B8', whiteSpace: 'nowrap'
       }}>
-        ⚪ {isEn ? 'No reply' : 'Sin respuesta'}
+        ⚪ {t ? t('attendance.rsvp.none') : 'Sin respuesta'}
       </span>
     );
   }
@@ -68,7 +68,7 @@ const RsvpBadge = ({ rsvpKey, isEn }) => {
       background: `${cfg.color}18`, border: `1px solid ${cfg.color}40`,
       fontSize: '10px', fontWeight: '700', color: cfg.color, whiteSpace: 'nowrap'
     }}>
-      {cfg.icon} {isEn ? cfg.labelEn : cfg.label}
+      {cfg.icon} {t ? t(cfg.key) : cfg.label}
     </span>
   );
 };
@@ -319,7 +319,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     if (eventId === 'custom_new') {
       const newId = `custom_${Date.now()}`;
       setSelectedSessionId(newId);
-      setSelectedSessionTitle(isEn ? 'Extra Session' : 'Sesión Extra');
+      setSelectedSessionTitle(t('attendance.register.extraSession', {}, 'Sesión Extra'));
       setSelectedSessionDate(new Date().toISOString().split('T')[0]);
       setSelectedSessionType('custom');
       setIsCurrentSessionSuspended(false);
@@ -372,12 +372,12 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       newMap[p.id] = { status: 'present', source: 'staff', by: user?.uid || 'staff', lateMinutes: 0 };
     });
     setRecordsMap(newMap);
-    showToast(isEn ? 'All marked as present (Official)' : 'Todos marcados como presentes (Oficial)', 'info');
+    showToast(t('attendance.toast.allMarkedPresent', {}, 'Todos marcados como presentes (Oficial)'), 'info');
   };
 
   const handleSaveCurrentAttendance = async () => {
     if (!selectedSessionId) {
-      showToast(isEn ? 'Select a session or match first' : 'Selecciona primero una sesión o partido', 'warning');
+      showToast(t('attendance.toast.selectFirst', {}, 'Selecciona primero una sesión o partido'), 'warning');
       return;
     }
 
@@ -415,13 +415,13 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
       showToast(
         isCurrentSessionSuspended
-          ? (isEn ? 'Session marked as suspended and saved' : 'Sesión marcada como suspendida y guardada')
-          : (isEn ? 'Attendance saved successfully' : 'Asistencia guardada con éxito'),
+          ? t('attendance.toast.suspendedSaved', {}, 'Sesión marcada como suspendida y guardada')
+          : t('attendance.toast.savedSuccess', {}, 'Asistencia guardada con éxito'),
         'success'
       );
     } catch (err) {
       console.error('Error guardando asistencia:', err);
-      showToast(isEn ? 'Error saving attendance' : 'Error al guardar la asistencia', 'error');
+      showToast(t('attendance.toast.errorSaving', {}, 'Error al guardar la asistencia'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -475,7 +475,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         records: recordsMap
       });
 
-      showToast(isEn ? 'Match sheet closed and minutes calculated' : 'Acta oficial cerrada y minutos calculados', 'success');
+      showToast(t('attendance.toast.sheetClosed', {}, 'Acta oficial cerrada y minutos calculados'), 'success');
 
       // ── REC-8: Sincronizar notaMedia en la ficha de cada jugador ──
       (players || []).forEach((p) => {
@@ -489,7 +489,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       });
     } catch (err) {
       console.error('Error cerrando acta oficial:', err);
-      showToast(isEn ? 'Error closing match sheet' : 'Error al cerrar el acta oficial', 'error');
+      showToast(t('attendance.toast.errorClosing', {}, 'Error al cerrar el acta oficial'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -504,10 +504,10 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         'actaOficial.closed': false,
         'actaOficial.reopenedAt': serverTimestamp()
       });
-      showToast(isEn ? 'Match sheet reopened for editing' : 'Acta reabierta para edición', 'info');
+      showToast(t('attendance.toast.sheetReopened', {}, 'Acta reabierta para edición'), 'info');
     } catch (err) {
       console.error('Error reabriendo acta:', err);
-      showToast(isEn ? 'Error reopening match sheet' : 'Error al reabrir el acta', 'error');
+      showToast(t('attendance.toast.errorReopening', {}, 'Error al reabrir el acta'), 'error');
     }
   };
 
@@ -636,7 +636,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   // Prellenar desde RSVP: sugiere estados sin pisar ediciones manuales del míster
   const handlePrefillFromRsvp = () => {
     if (!hasAnyRsvp) {
-      showToast(isEn ? 'No player responses yet' : 'Ningún jugador ha respondido aún', 'warning');
+      showToast(t('attendance.toast.noResponses', {}, 'Ningún jugador ha respondido aún'), 'warning');
       return;
     }
     let filled = 0;
@@ -685,14 +685,15 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             <span style={{ fontSize: '24px' }}>⚠️</span>
             <div>
               <strong style={{ color: '#F59E0B', fontSize: '13.5px', display: 'block' }}>
-                {isEn
-                  ? `You have ${unclosedEvents.pendingSessions.length} unrecorded session${unclosedEvents.pendingSessions.length !== 1 ? 's' : ''} and ${unclosedEvents.openMatches.length} match${unclosedEvents.openMatches.length !== 1 ? 'es' : ''} with open match sheet.`
-                  : `Tienes ${unclosedEvents.pendingSessions.length} sesión${unclosedEvents.pendingSessions.length !== 1 ? 'es' : ''} sin registrar y ${unclosedEvents.openMatches.length} partido${unclosedEvents.openMatches.length !== 1 ? 's' : ''} con acta abierta.`}
+                {t('attendance.banner.unclosedEvents', {
+                  sessions: unclosedEvents.pendingSessions.length,
+                  sPlural: unclosedEvents.pendingSessions.length !== 1 ? 's' : '',
+                  matches: unclosedEvents.openMatches.length,
+                  mPlural: unclosedEvents.openMatches.length !== 1 ? 's' : ''
+                })}
               </strong>
               <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                {isEn
-                  ? 'Complete attendance and close match sheets to finalize official attendance % and player minutes.'
-                  : 'Completa y cierra para oficializar los % de asistencia y los minutos de los jugadores.'}
+                {t('attendance.banner.unclosedSubtitle')}
               </span>
             </div>
           </div>
@@ -716,7 +717,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   cursor: 'pointer'
                 }}
               >
-                📋 {isEn ? 'Complete Session' : 'Completar Sesión'}
+                {t('attendance.banner.completeSession')}
               </button>
             )}
             {unclosedEvents.openMatches.length > 0 && (
@@ -742,7 +743,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 }}
               >
                 <FileText size={14} color="#D4A843" />
-                <span>{isEn ? 'Close Match Sheet' : 'Cerrar Acta Partido'}</span>
+                <span>{t('attendance.banner.closeMatchSheet')}</span>
               </button>
             )}
           </div>
@@ -766,7 +767,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               color: activeSubView === 'register' ? '#FFFFFF' : 'var(--text-secondary)'
             }}
           >
-            📋 {isEn ? 'Register Session' : 'Registro por Sesión'}
+            {t('attendance.tab.register')}
           </button>
           <button
             type="button"
@@ -782,7 +783,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               color: activeSubView === 'callup' ? '#FFFFFF' : 'var(--text-secondary)'
             }}
           >
-            🎯 {isEn ? 'Call-up Assistant' : 'Asistente de Convocatoria'}
+            {t('attendance.tab.callup')}
           </button>
           <button
             type="button"
@@ -798,7 +799,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               color: activeSubView === 'summary' ? '#FFFFFF' : 'var(--text-secondary)'
             }}
           >
-            📊 {isEn ? 'Squad Summary' : 'Resumen de Plantilla'}
+            {t('attendance.tab.summary')}
           </button>
           <button
             type="button"
@@ -814,7 +815,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               color: activeSubView === 'chart' ? '#FFFFFF' : 'var(--text-secondary)'
             }}
           >
-            📈 {isEn ? 'Attendance Trend' : 'Evolución / Gráfica'}
+            {t('attendance.tab.trend')}
           </button>
         </div>
 
@@ -837,7 +838,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               gap: '6px'
             }}
           >
-            📄 {isEn ? 'Export PDF' : 'Exportar PDF'}
+            {t('attendance.btn.exportPdf')}
           </button>
         </div>
       </div>
@@ -849,7 +850,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ flex: '1', minWidth: '260px' }}>
               <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                {isEn ? 'Select Training Session or Match:' : 'Selecciona Sesión de Entrenamiento o Partido:'}
+                {t('attendance.register.selectEvent')}
               </label>
               <select
                 value={selectedSessionId}
@@ -865,21 +866,21 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   fontWeight: '700'
                 }}
               >
-                <optgroup label={isEn ? 'Sessions and Matches' : 'Sesiones y Partidos'}>
+                <optgroup label={t('attendance.register.sessionsAndMatches', {}, 'Sesiones y Partidos')}>
                   {availableEvents.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.title} ({e.date}) {e.isSuspended ? (isEn ? '🌧️ [Suspended]' : '🌧️ [Suspendida]') : ''}
+                      {e.title} ({e.date}) {e.isSuspended ? `🌧️ [${t('attendance.register.suspendedActive')}]` : ''}
                     </option>
                   ))}
                 </optgroup>
-                <option value="custom_new">+ {isEn ? 'New Custom Attendance Date' : 'Nueva Fecha de Asistencia Personalizada'}</option>
+                <option value="custom_new">+ {t('attendance.register.customNew')}</option>
               </select>
             </div>
 
             {selectedSessionType === 'custom' && (
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Título</label>
+                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('attendance.register.title')}</label>
                   <input
                     type="text"
                     value={selectedSessionTitle}
@@ -888,7 +889,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Fecha</label>
+                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{t('attendance.register.date')}</label>
                   <input
                     type="date"
                     value={selectedSessionDate}
@@ -904,11 +905,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
                   {isMatchActaClosed ? (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800', fontSize: '12px' }}>
-                      📋 {isEn ? 'Official Match Sheet Closed' : 'Acta Oficial Cerrada'}
+                      {t('attendance.register.matchSheetClosed')}
                     </span>
                   ) : (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800', fontSize: '12px' }}>
-                      ⏳ {isEn ? 'Match Sheet Open' : 'Acta Abierta'}
+                      {t('attendance.register.matchSheetOpen')}
                     </span>
                   )}
                 </div>
@@ -916,19 +917,19 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
                   {isCurrentSessionSuspended ? (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(148, 163, 184, 0.2)', color: '#94A3B8', fontWeight: '800', fontSize: '12px' }}>
-                      🌧️ {isEn ? 'Suspended Session' : 'Sesión Suspendida'}
+                      {t('attendance.register.suspendedSession')}
                     </span>
                   ) : isSessionFuture ? (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(76, 175, 125, 0.15)', color: '#4CAF7D', fontWeight: '800', fontSize: '12px' }}>
-                      🕐 {isEn ? 'Future session' : 'Sesión futura'}
+                      {t('attendance.register.futureSession')}
                     </span>
                   ) : hasStaffRecord ? (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800', fontSize: '12px' }}>
-                      ✅ {isEn ? 'Official record saved' : 'Registro oficial guardado'}
+                      {t('attendance.register.officialSaved')}
                     </span>
                   ) : (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800', fontSize: '12px' }}>
-                      ⏳ {isEn ? 'Pending registration' : 'Pendiente de registro'}
+                      {t('attendance.register.pendingRegistration')}
                     </span>
                   )}
                 </div>
@@ -950,9 +951,9 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     fontSize: '12px',
                     cursor: 'pointer'
                   }}
-                  title={isEn ? 'Excludes this session from attendance calculation for the entire squad' : 'Excluye esta sesión del cómputo de asistencia de toda la plantilla'}
+                  title={t('attendance.register.excludeTitle')}
                 >
-                  🌧️ {isCurrentSessionSuspended ? (isEn ? 'Suspended (Active)' : 'Suspendida (Activo)') : (isEn ? 'Mark Suspended' : 'Marcar Suspendida')}
+                  🌧️ {isCurrentSessionSuspended ? t('attendance.register.suspendedActive') : t('attendance.register.markSuspended')}
                 </button>
               )}
 
@@ -961,7 +962,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 <button
                   type="button"
                   onClick={handlePrefillFromRsvp}
-                  title={isEn ? 'Pre-fill from player RSVP responses (manual edits preserved)' : 'Prellenar desde respuestas del jugador sin pisar ediciones manuales'}
+                  title={t('attendance.register.prefillTooltip')}
                   style={{
                     minHeight: '44px',
                     padding: '0 14px',
@@ -977,7 +978,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     gap: '5px'
                   }}
                 >
-                  ⚡ {isEn ? 'Pre-fill from RSVP' : 'Prellenar desde RSVP'}
+                  {t('attendance.register.prefillRsvp')}
                 </button>
               )}
 
@@ -1000,7 +1001,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 }}
               >
                 <Check size={15} />
-                <span>{isEn ? 'Mark All Present' : 'Marcar Todos Presentes'}</span>
+                <span>{t('attendance.register.markAllPresent')}</span>
               </button>
 
               <button
@@ -1024,7 +1025,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 }}
               >
                 {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                <span>{isSaving ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Save Attendance' : 'Guardar Asistencia')}</span>
+                <span>{isSaving ? (t('common.saving') || (isEn ? 'Saving...' : 'Guardando...')) : t('attendance.register.saveAttendance')}</span>
               </button>
 
               {selectedSessionType === 'match' && (
@@ -1050,7 +1051,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     }}
                   >
                     {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} color="#D4A843" />}
-                    <span>{isSaving ? (isEn ? 'Closing Sheet...' : 'Cerrando Acta...') : (isEn ? 'Save & Close Match Sheet' : 'Guardar y Cerrar Acta')}</span>
+                    <span>{isSaving ? (t('attendance.register.closingSheet') || (isEn ? 'Closing Sheet...' : 'Cerrando Acta...')) : t('attendance.register.saveAndCloseSheet')}</span>
                   </button>
                 ) : (
                   <button
@@ -1068,7 +1069,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       cursor: 'pointer'
                     }}
                   >
-                    🔓 {isEn ? 'Reopen Match Sheet' : 'Reabrir Acta'}
+                    {t('attendance.register.reopenSheet')}
                   </button>
                 )
               )}
@@ -1077,7 +1078,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             {selectedSessionType !== 'match' && (
               <div style={{ width: '100%', textAlign: 'right', marginTop: '4px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                  ℹ️ {isEn ? 'You can update attendance anytime; updates instantly' : 'Puedes corregir el pase de lista; se refleja al instante'}
+                  {t('attendance.register.updateNotice')}
                 </span>
               </div>
             )}
@@ -1097,37 +1098,38 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               border: '1.5px solid rgba(139, 92, 246, 0.2)'
             }}>
               <span style={{ fontSize: '11px', fontWeight: '800', color: '#8B5CF6', width: '100%', marginBottom: '4px' }}>
-                📲 {isEn ? 'Player RSVP Responses & Planning (live)' : 'Respuestas RSVP del Jugador y Planificación (en vivo)'}
+                {t('attendance.register.rsvpLiveTitle')}
               </span>
               {rsvpCounters.going > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#10B981', background: 'rgba(16,185,129,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
-                  ✅ {rsvpCounters.going} {isEn ? 'Will come' : 'Irá'}
+                  ✅ {rsvpCounters.going} {t('attendance.rsvp.going')}
                 </span>
               )}
               {rsvpCounters.not_going > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#EF4444', background: 'rgba(239,68,68,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
-                  ❌ {rsvpCounters.not_going} {isEn ? "Won't come" : 'No irá'}
+                  ❌ {rsvpCounters.not_going} {t('attendance.rsvp.not_going')}
                 </span>
               )}
               {rsvpCounters.late > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
-                  🟡 {rsvpCounters.late} {isEn ? 'Coming late' : 'Llegará tarde'}
+                  🟡 {rsvpCounters.late} {t('attendance.rsvp.late')}
                 </span>
               )}
               {rsvpCounters.justified > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#D4A843', background: 'rgba(212,168,67,0.15)', padding: '3px 10px', borderRadius: '6px' }}>
-                  📄 {rsvpCounters.justified} {isEn ? 'Justified' : 'Justificado'}
+                  📄 {rsvpCounters.justified} {t('attendance.rsvp.justified')}
                 </span>
               )}
               {rsvpCounters.none > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', background: 'rgba(148,163,184,0.1)', padding: '3px 10px', borderRadius: '6px' }}>
-                  ⚪ {rsvpCounters.none} {isEn ? 'No reply' : 'Sin respuesta'}
+                  ⚪ {rsvpCounters.none} {t('attendance.rsvp.none')}
                 </span>
               )}
               <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#10B981', background: 'rgba(16,185,129,0.16)', padding: '4px 12px', borderRadius: '8px', marginLeft: 'auto' }}>
-                ⚽ {isEn 
-                  ? `Expected: ${(players || []).filter(p => recordsMap[p.id]?.status === 'present' || recordsMap[p.id]?.status === 'late').length} / ${players.length}`
-                  : `Se esperan: ${(players || []).filter(p => recordsMap[p.id]?.status === 'present' || recordsMap[p.id]?.status === 'late').length} de ${players.length}`}
+                {t('attendance.register.expected', {
+                  attended: (players || []).filter(p => recordsMap[p.id]?.status === 'present' || recordsMap[p.id]?.status === 'late').length,
+                  total: players.length
+                })}
               </span>
             </div>
           )}
@@ -1192,18 +1194,17 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                         {/* ⚠️ Discrepancia: dijo que vendría pero el míster lo marca diferente */}
                         {hasDiscrepancy && (
                           <span
-                            title={isEn
-                              ? `Player said "${RSVP_CONFIG[playerRsvp]?.labelEn}" but marked as "${STATUS_CONFIG[currentStatus]?.labelEn}"`
-                              : `Dijo "${RSVP_CONFIG[playerRsvp]?.label}" pero se marcó "${STATUS_CONFIG[currentStatus]?.label}"`
+                            title={
+                              `RSVP: ${t(RSVP_CONFIG[playerRsvp]?.key) || RSVP_CONFIG[playerRsvp]?.label} ➔ ${t(STATUS_CONFIG[currentStatus]?.key) || STATUS_CONFIG[currentStatus]?.label}`
                             }
                             style={{ fontSize: '13px', cursor: 'help' }}
                           >⚠️</span>
                         )}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
-                        <span>{p.position || (isEn ? 'Player' : 'Jugador')}</span>
+                        <span>{p.position || t('common.player', {}, 'Jugador')}</span>
                         {/* Badge RSVP en vivo del jugador */}
-                        <RsvpBadge rsvpKey={playerRsvp} isEn={isEn} />
+                        <RsvpBadge rsvpKey={playerRsvp} t={t} />
                       </div>
                     </div>
                   </div>
@@ -1221,8 +1222,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                             type="button"
                             onClick={() => handleStatusChange(p.id, statusKey)}
                             title={isSelectedProvisional 
-                              ? (isEn ? 'Provisional status per player response. Tap to confirm as official.' : 'Estado provisional derivado de la respuesta del jugador. Toca para confirmarlo como oficial.')
-                              : (isSelected ? (isEn ? 'Official status confirmed by staff' : 'Estado oficial confirmado por el cuerpo técnico') : '')}
+                              ? t('attendance.register.provisionalNote')
+                              : (isSelected ? t('attendance.register.officialNote') : '')}
                             style={{
                               minHeight: '44px',
                               minWidth: '44px',
@@ -1247,7 +1248,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                             }}
                           >
                             <span>{cfg.icon}</span>
-                            <span>{isEn ? cfg.labelEn : cfg.label}</span>
+                            <span>{t(cfg.key) || cfg.label}</span>
                             {isSelectedProvisional && <span style={{ fontSize: '10px' }}>⏳</span>}
                           </button>
                         );
@@ -1264,7 +1265,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           border: '1px dashed rgba(148,163,184,0.3)',
                           whiteSpace: 'nowrap'
                         }}>
-                          — {isEn ? 'Unmarked' : 'Sin registrar'}
+                          — {t('attendance.status.unmarked')}
                         </span>
                       )}
 
@@ -1295,13 +1296,13 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     {/* Notas explicativas del estado */}
                     {isProvisional && currentStatus && currentStatus !== 'unmarked' && (
                       <span style={{ fontSize: '10.5px', fontWeight: '700', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        ⏳ {isEn ? 'Provisional · per player response (tap to confirm)' : 'Provisional · según respuesta del jugador (toca para confirmar)'}
+                        {t('attendance.register.provisionalNote')}
                       </span>
                     )}
 
                     {currentRec.source === 'staff' && currentStatus && currentStatus !== 'unmarked' && (
                       <span style={{ fontSize: '10px', fontWeight: '700', color: '#10B981', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        ✅ {isEn ? 'Official · confirmed by staff' : 'Oficial · confirmado por el míster'}
+                        {t('attendance.register.officialNote')}
                       </span>
                     )}
                   </div>
@@ -1319,12 +1320,10 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div>
               <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🎯 {isEn ? 'Call-up Attendance Assistant' : 'Asistente de Convocatoria por Asistencia'}
+                {t('attendance.callup.title')}
               </h3>
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
-                {isEn 
-                  ? 'Real attendance metrics over scheduled sessions to guide your next match roster.'
-                  : 'Métricas de asistencia real sobre sesiones programadas para orientar tu próxima convocatoria.'}
+                {t('attendance.callup.subtitle')}
               </p>
             </div>
 
@@ -1344,7 +1343,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   color: callupWindow === 'microcycle' ? '#FFFFFF' : 'var(--text-secondary)'
                 }}
               >
-                {isEn ? 'Microcycle' : 'Microciclo'}
+                {t('attendance.callup.window.microcycle')}
               </button>
               <button
                 type="button"
@@ -1360,7 +1359,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   color: callupWindow === 'week' ? '#FFFFFF' : 'var(--text-secondary)'
                 }}
               >
-                {isEn ? 'Current Week' : 'Semana'}
+                {t('attendance.callup.window.week')}
               </button>
               <button
                 type="button"
@@ -1376,7 +1375,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   color: callupWindow === 'biweekly' ? '#FFFFFF' : 'var(--text-secondary)'
                 }}
               >
-                {isEn ? 'Last 14 Days' : 'Quincena'}
+                {t('attendance.callup.window.biweekly')}
               </button>
               <button
                 type="button"
@@ -1392,7 +1391,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   color: callupWindow === 'season' ? '#FFFFFF' : 'var(--text-secondary)'
                 }}
               >
-                {isEn ? 'Season' : 'Temporada'}
+                {t('attendance.callup.window.season')}
               </button>
             </div>
           </div>
@@ -1412,28 +1411,28 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
           }}>
             <div>
               <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--accent-gold)', textTransform: 'uppercase', display: 'block' }}>
-                {isEn ? 'Active Evaluation Window' : 'Ventana de Evaluación Activa'}
+                {t('attendance.callup.activeWindow')}
               </span>
               <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                 {callupWindow === 'microcycle' 
                   ? (isEn ? microcycleInfo.titleEn : microcycleInfo.title)
                   : callupWindow === 'week'
-                  ? (isEn ? `This Week (${callupDateRange?.startDate} to ${callupDateRange?.endDate})` : `Esta Semana (${callupDateRange?.startDate} al ${callupDateRange?.endDate})`)
+                  ? `${t('attendance.callup.window.week')} (${callupDateRange?.startDate} - ${callupDateRange?.endDate})`
                   : callupWindow === 'biweekly'
-                  ? (isEn ? `Last 14 Days (${callupDateRange?.startDate} to ${callupDateRange?.endDate})` : `Últimos 14 Días (${callupDateRange?.startDate} al ${callupDateRange?.endDate})`)
-                  : (isEn ? 'Full Season Attendance' : 'Asistencia de Toda la Temporada')}
+                  ? `${t('attendance.callup.window.biweekly')} (${callupDateRange?.startDate} - ${callupDateRange?.endDate})`
+                  : t('attendance.callup.window.season')}
               </strong>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '11px' }}>
               <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800' }}>
-                ≥80% {isEn ? 'Recommended' : 'Recomendado'}
+                ≥80% {t('attendance.callup.recommended')}
               </span>
               <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800' }}>
-                50-79% {isEn ? 'Consider' : 'Valorar'}
+                50-79% {t('attendance.callup.consider')}
               </span>
               <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', fontWeight: '800' }}>
-                &lt;50% {isEn ? 'Not recommended' : 'No recomendado'}
+                &lt;50% {t('attendance.callup.notRecommended')}
               </span>
             </div>
           </div>
@@ -1443,11 +1442,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-app)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                  <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Jugador</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>% Ventana</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-secondary)' }}>Desglose (P / T / J / A / SR)</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--accent-gold)' }}>🔥 Racha</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>Orientación</th>
+                  <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>{t('attendance.callup.thPlayer')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>{t('attendance.callup.thPct')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-secondary)' }}>{t('attendance.callup.thBreakdown')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--accent-gold)' }}>{t('attendance.callup.thStreak')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>{t('attendance.callup.thGuidance')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1506,18 +1505,18 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                             background: guidance.bg,
                             border: `1px solid ${guidance.border}`
                           }}>
-                            {item.justified > 0 && (item.attended === 0 || !item.attended) ? (isEn ? 'Justified' : 'Justificado') : '—'}
+                            {item.justified > 0 && (item.attended === 0 || !item.attended) ? t('attendance.status.justified') : '—'}
                           </span>
                         )}
                       </td>
 
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '11px', fontWeight: '700' }}>
-                          <span style={{ color: '#22C55E' }} title={isEn ? 'Present' : 'Presente'}>{item.present ?? 0}P</span>
-                          <span style={{ color: '#F97316' }} title={isEn ? 'Late' : 'Tarde'}>{item.late ?? 0}T</span>
-                          <span style={{ color: '#EAB308' }} title={isEn ? 'Justified' : 'Justificado'}>{item.justified ?? 0}J</span>
-                          <span style={{ color: '#EF4444' }} title={isEn ? 'Absent' : 'Ausente'}>{item.absent ?? 0}A</span>
-                          <span style={{ color: (item.noRecord ?? 0) > 0 ? '#94A3B8' : 'var(--text-secondary)', opacity: (item.noRecord ?? 0) > 0 ? 1 : 0.6 }} title={isEn ? 'No staff record' : 'Sin registro del staff'}>{item.noRecord ?? 0}SR</span>
+                          <span style={{ color: '#22C55E' }} title={t('attendance.status.present')}>{item.present ?? 0}P</span>
+                          <span style={{ color: '#F97316' }} title={t('attendance.status.late')}>{item.late ?? 0}T</span>
+                          <span style={{ color: '#EAB308' }} title={t('attendance.status.justified')}>{item.justified ?? 0}J</span>
+                          <span style={{ color: '#EF4444' }} title={t('attendance.status.absent')}>{item.absent ?? 0}A</span>
+                          <span style={{ color: (item.noRecord ?? 0) > 0 ? '#94A3B8' : 'var(--text-secondary)', opacity: (item.noRecord ?? 0) > 0 ? 1 : 0.6 }} title={t('attendance.status.unmarked')}>{item.noRecord ?? 0}SR</span>
                         </div>
                       </td>
 
@@ -1539,7 +1538,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           gap: '4px'
                         }}>
                           <span>{guidance.badge}</span>
-                          <span>{isEn ? guidance.labelEn : guidance.label}</span>
+                          <span>{
+                            guidance.type === 'rec' ? t('attendance.callup.recommended') :
+                            guidance.type === 'con' ? t('attendance.callup.consider') :
+                            t('attendance.callup.notRecommended')
+                          }</span>
                         </span>
                       </td>
                     </tr>
@@ -1567,12 +1570,12 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
           {/* Header de la vista resumen */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
-              👥 {isEn ? 'Squad Attendance Summary' : 'Resumen de Asistencia de la Plantilla'} ({players.length} {isEn ? 'players' : 'jugadores'})
+              {t('attendance.summary.title', { count: players.length })}
             </div>
 
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginRight: '6px' }}>{isEn ? 'Alert Threshold:' : 'Umbral Alerta:'}</label>
+                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginRight: '6px' }}>{t('attendance.summary.threshold')}</label>
                 <select
                   value={threshold}
                   onChange={(e) => setThreshold(Number(e.target.value))}
@@ -1587,16 +1590,16 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginRight: '6px' }}>{isEn ? 'Sort by:' : 'Ordenar por:'}</label>
+                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', marginRight: '6px' }}>{t('attendance.summary.sortBy')}</label>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
                   style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: '700' }}
                 >
-                  <option value="pct-desc">% Asistencia (Mayor a Menor)</option>
-                  <option value="pct-asc">% Asistencia (Menor a Mayor)</option>
-                  <option value="number">Dorsal</option>
-                  <option value="name">Nombre</option>
+                  <option value="pct-desc">{t('attendance.summary.sortPctDesc')}</option>
+                  <option value="pct-asc">{t('attendance.summary.sortPctAsc')}</option>
+                  <option value="number">{t('attendance.summary.sortNumber')}</option>
+                  <option value="name">{t('attendance.summary.sortName')}</option>
                 </select>
               </div>
             </div>
@@ -1607,15 +1610,15 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-app)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                  <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Jugador</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#22C55E' }}>Presente</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#EF4444' }}>Ausente</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#EAB308' }}>Justif.</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#F97316' }}>Tarde</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#3B82F6' }}>Lesion.</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: '#94A3B8' }} title={isEn ? 'Scheduled past events without staff record' : 'Eventos programados pasados sin registro del staff'}>SR</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>% Asistencia</th>
-                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>Estado</th>
+                  <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>{t('attendance.callup.thPlayer')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#22C55E' }}>{t('attendance.summary.thPresent')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#EF4444' }}>{t('attendance.summary.thAbsent')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#EAB308' }}>{t('attendance.summary.thJustified')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#F97316' }}>{t('attendance.summary.thLate')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#3B82F6' }}>{t('attendance.summary.thInjured')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#94A3B8' }} title={t('attendance.summary.thNoRecord')}>SR</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>{t('attendance.summary.thAttendance')}</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>{t('attendance.summary.thStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1648,7 +1651,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.justified ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.late ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.injured ?? 0}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700', color: (item.noRecord || 0) > 0 ? '#94A3B8' : 'inherit' }} title={isEn ? 'Scheduled without staff record' : 'Programados sin registro del staff'}>{item.noRecord ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700', color: (item.noRecord || 0) > 0 ? '#94A3B8' : 'inherit' }} title={t('attendance.status.unmarked')}>{item.noRecord ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         {hasData ? (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -1664,15 +1667,15 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         {!hasData ? (
                           <span style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94A3B8', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
-                            ⚪ {isEn ? 'No data' : 'Sin datos'}
+                            {t('attendance.summary.noData')}
                           </span>
                         ) : isBelowThreshold ? (
                           <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
-                            ⚠️ {isEn ? 'Risk' : 'Riesgo'}
+                            {t('attendance.summary.risk')}
                           </span>
                         ) : (
                           <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
-                            ✓ {isEn ? 'Optimal' : 'Óptimo'}
+                            {t('attendance.summary.optimal')}
                           </span>
                         )}
                       </td>
@@ -1740,23 +1743,23 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             }}>
               <div style={{ fontSize: '13px', fontWeight: '800', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>📖</span>
-                <span>{isEn ? 'Guide for Coaches (Simple Terms)' : 'Guía de Interpretación para el Cuerpo Técnico'}</span>
+                <span>{t('attendance.chart.guideCoach')}</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
                 <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
-                  <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>📌 {isEn ? '1. Timeline & Events' : '1. Puntos y Cronología'}</strong>
+                  <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>📌 {t('attendance.chart.guideStep1')}</strong>
                   <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step1') || 'Cada punto es un entreno o partido: ordenados cronológicamente.'}</span>
                 </div>
                 <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
-                  <strong style={{ color: '#22C55E', display: 'block', marginBottom: '2px' }}>🟢 {isEn ? '2. Green Line' : '2. Línea Verde'}</strong>
+                  <strong style={{ color: '#22C55E', display: 'block', marginBottom: '2px' }}>🟢 {t('attendance.chart.guideStep2')}</strong>
                   <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step2') || 'La línea verde es tu asistencia: por encima del 70% vas bien.'}</span>
                 </div>
                 <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
-                  <strong style={{ color: '#EF4444', display: 'block', marginBottom: '2px' }}>⚠️ {isEn ? '3. Warning Cross' : '3. Cruce de Alerta'}</strong>
+                  <strong style={{ color: '#EF4444', display: 'block', marginBottom: '2px' }}>⚠️ {t('attendance.chart.guideStep3')}</strong>
                   <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step3') || 'Si la roja sube mientras la verde baja: problema de compromiso a corregir.'}</span>
                 </div>
                 <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
-                  <strong style={{ color: 'var(--accent-gold)', display: 'block', marginBottom: '2px' }}>👆 {isEn ? '4. Interactive Detail' : '4. Toca para Detalle'}</strong>
+                  <strong style={{ color: 'var(--accent-gold)', display: 'block', marginBottom: '2px' }}>👆 {t('attendance.chart.guideStep4')}</strong>
                   <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step4') || 'Toca cualquier punto para ver el desglose y abrir su registro.'}</span>
                 </div>
               </div>
@@ -1778,7 +1781,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             border: '1px solid var(--border-color)'
           }}>
             <div style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {isEn ? 'Series Filters & Explanations (Click to Show/Hide)' : 'Series de la Gráfica y Explicación (Pulsa para Mostrar/Ocultar)'}
+              {t('attendance.chart.filtersTitle')}
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
@@ -2085,8 +2088,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           color: activePoint.isProvisional ? '#F59E0B' : '#22C55E'
                         }}>
                           {activePoint.isProvisional
-                            ? (isEn ? '⏳ Provisional (Open)' : '⏳ Provisional (Acta / Registro abierto)')
-                            : (isEn ? '✅ Official (Closed)' : '✅ Oficial (Cerrado)')}
+                            ? t('attendance.register.matchSheetOpen')
+                            : t('attendance.register.matchSheetClosed')}
                         </span>
                       </div>
 
@@ -2145,22 +2148,22 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     {/* Desglose Completo de Estados (P / T / J / A / L / SR) */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '11.5px', fontWeight: '700', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
-                        🟢 {isEn ? 'Present' : 'Presentes'}: <strong>{b.present ?? 0}</strong>
+                        🟢 {t('attendance.summary.thPresent')}: <strong>{b.present ?? 0}</strong>
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
-                        🟡 {isEn ? 'Late' : 'Tardes'}: <strong>{b.late ?? 0}</strong>
+                        🟡 {t('attendance.summary.thLate')}: <strong>{b.late ?? 0}</strong>
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-                        🔵 {isEn ? 'Justified' : 'Justificados'}: <strong>{b.justified ?? 0}</strong>
+                        🔵 {t('attendance.summary.thJustified')}: <strong>{b.justified ?? 0}</strong>
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>
-                        🔴 {isEn ? 'Absent' : 'Ausentes'}: <strong>{b.absent ?? 0}</strong>
+                        🔴 {t('attendance.summary.thAbsent')}: <strong>{b.absent ?? 0}</strong>
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.1)', color: '#A855F7' }}>
-                        🟣 {isEn ? 'Injured' : 'Lesionados'}: <strong>{b.injured ?? 0}</strong>
+                        🟣 {t('attendance.summary.thInjured')}: <strong>{b.injured ?? 0}</strong>
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)' }}>
-                        ⚪ {isEn ? 'No Record' : 'Sin Registro'}: <strong>{b.noRecord ?? 0}</strong>
+                        ⚪ {t('attendance.status.unmarked')}: <strong>{b.noRecord ?? 0}</strong>
                       </span>
                     </div>
                   </div>

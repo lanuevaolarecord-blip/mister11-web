@@ -403,11 +403,19 @@ export const generateAttendancePdfReport = async ({
   isEn: isEnProp = false
 }) => {
   const effLang = getEffectiveLanguage(language);
-  const isEn = isEnProp || effLang === 'English (EN)';
+  let loc = 'es';
+  if (isEnProp || effLang === 'English (EN)' || effLang === 'en') loc = 'en';
+  else if (effLang === 'Français (FR)' || effLang === 'fr') loc = 'fr';
+  else if (effLang === 'Português (Brasil)' || effLang === 'pt-BR' || effLang === 'pt') loc = 'pt';
+  else if (effLang === 'Bahasa Indonesia (ID)' || effLang === 'id-ID' || effLang === 'id') loc = 'id';
+  else if (effLang === 'Español (Latinoamérica)' || effLang === 'es-419') loc = 'es-419';
+
+  const locTr = (dict) => dict[loc] || dict['es'] || dict['en'] || Object.values(dict)[0] || '';
+  const isEn = loc === 'en';
 
   window.dispatchEvent(
     new CustomEvent('m11-loading', {
-      detail: { show: true, message: isEn ? 'Generating Attendance PDF Report...' : 'Generando Informe de Asistencia...' }
+      detail: { show: true, message: locTr({ es: 'Generando Informe de Asistencia...', en: 'Generating Attendance PDF Report...', fr: 'Génération du Rapport des Présences...', pt: 'Gerando Relatório de Presença...', id: 'Membuat Laporan Kehadiran...' }) }
     })
   );
   await new Promise((r) => setTimeout(r, 120));
@@ -421,7 +429,13 @@ export const generateAttendancePdfReport = async ({
     const colorPrimary = PDF_COLORS.primary; // [23, 45, 33]
     const colorAccent = PDF_COLORS.accent;   // [212, 168, 67]
 
-    const titleText = isEn ? 'TEAM ATTENDANCE CONTROL REPORT' : 'INFORME OFICIAL DE CONTROL DE ASISTENCIA';
+    const titleText = locTr({ 
+      es: 'INFORME OFICIAL DE CONTROL DE ASISTENCIA', 
+      en: 'TEAM ATTENDANCE CONTROL REPORT', 
+      fr: 'RAPPORT OFFICIEL DE CONTRÔLE DES PRÉSENCES', 
+      pt: 'RELATÓRIO OFICIAL DE CONTROLE DE PRESENÇA', 
+      id: 'LAPORAN RESMI KONTROL KEHADIRAN TIM' 
+    });
 
     // ── 1. ENCABEZADO INSTITUCIONAL SEGURO (SIN COLISIONES) ────────────────
     doc.setFillColor(...colorPrimary);
@@ -453,10 +467,11 @@ export const generateAttendancePdfReport = async ({
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(226, 232, 240);
-    const fechaStr = new Date().toLocaleDateString(isEn ? 'en-US' : 'es-ES');
+    const dateLocale = loc === 'en' ? 'en-US' : (loc === 'fr' ? 'fr-FR' : (loc === 'pt' ? 'pt-BR' : (loc === 'id' ? 'id-ID' : 'es-ES')));
+    const fechaStr = new Date().toLocaleDateString(dateLocale);
     const displayTeamName = cleanPdfText(activeTeam?.nombre || activeTeam?.name || teamName);
     doc.text(
-      `${isEn ? 'Date' : 'Fecha'}: ${fechaStr}   |   ${isEn ? 'Team' : 'Equipo'}: ${displayTeamName}   |   ${isEn ? 'Alert Threshold' : 'Umbral Alerta'}: ${threshold}%`,
+      `${locTr({ es: 'Fecha', en: 'Date', fr: 'Date', pt: 'Data', id: 'Tanggal' })}: ${fechaStr}   |   ${locTr({ es: 'Equipo', en: 'Team', fr: 'Équipe', pt: 'Equipe', id: 'Tim' })}: ${displayTeamName}   |   ${locTr({ es: 'Umbral Alerta', en: 'Alert Threshold', fr: 'Seuil d\'Alerte', pt: 'Limite de Alerta', id: 'Ambang Batas Peringatan' })}: ${threshold}%`,
       pageW / 2,
       22,
       { align: 'center' }
@@ -466,7 +481,13 @@ export const generateAttendancePdfReport = async ({
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      isEn ? 'OFFICIAL PLATFORM TRACKING & AUDIT SYSTEM · MÍSTER 11' : 'SISTEMA OFICIAL DE REGISTRO Y CONTROL DE ASISTENCIA · MÍSTER 11',
+      locTr({ 
+        es: 'SISTEMA OFICIAL DE REGISTRO Y CONTROL DE ASISTENCIA · MÍSTER 11', 
+        en: 'OFFICIAL PLATFORM TRACKING & AUDIT SYSTEM · MÍSTER 11', 
+        fr: 'SYSTÈME OFFICIEL DE SUIVI ET DE CONTRÔLE DES PRÉSENCES · MÍSTER 11', 
+        pt: 'SISTEMA OFICIAL DE REGISTRO E CONTROLE DE PRESENÇA · MÍSTER 11', 
+        id: 'SISTEM RESMI PENCATATAN & KONTROL KEHADIRAN · MÍSTER 11' 
+      }),
       pageW / 2,
       29,
       { align: 'center' }
@@ -507,23 +528,23 @@ export const generateAttendancePdfReport = async ({
     const cardW = (pageW - 28 - 9) / 4;
     const kpiCards = [
       {
-        label: isEn ? 'AVERAGE ATTENDANCE' : 'MEDIA ASISTENCIA',
+        label: locTr({ es: 'MEDIA ASISTENCIA', en: 'AVERAGE ATTENDANCE', fr: 'PRÉSENCE MOYENNE', pt: 'MÉDIA DE PRESENÇA', id: 'RATA-RATA KEHADIRAN' }),
         val: `${avgPct}%`,
         color: avgPct >= threshold ? [34, 197, 94] : [220, 38, 38]
       },
       {
-        label: isEn ? 'TOTAL PRESENT' : 'ASISTENCIAS',
+        label: locTr({ es: 'ASISTENCIAS', en: 'TOTAL PRESENT', fr: 'PRÉSENCES TOTALES', pt: 'TOTAL DE PRESENÇAS', id: 'TOTAL HADIR' }),
         val: totalPresent,
         color: colorPrimary
       },
       {
-        label: isEn ? 'ABSENT / LATE' : 'FALTAS / RETRASOS',
+        label: locTr({ es: 'FALTAS / RETRASOS', en: 'ABSENT / LATE', fr: 'ABSENTS / RETARDS', pt: 'FALTAS / ATRASOS', id: 'ABSEN / TERLAMBAT' }),
         val: `${totalAbsent} / ${totalLate}`,
         color: totalAbsent > 0 ? [220, 38, 38] : colorPrimary
       },
       {
-        label: isEn ? 'AT RISK' : 'EN RIESGO',
-        val: `${countRiesgo} jug.`,
+        label: locTr({ es: 'EN RIESGO', en: 'AT RISK', fr: 'EN RISQUE', pt: 'EM RISCO', id: 'BERISIKO' }),
+        val: `${countRiesgo} ${locTr({ es: 'jug.', en: 'pl.', fr: 'jou.', pt: 'jog.', id: 'pem.' })}`,
         color: countRiesgo > 0 ? [220, 38, 38] : [34, 197, 94]
       }
     ];
@@ -590,7 +611,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...colorPrimary);
     doc.text(
-      isEn ? 'SQUAD ATTENDANCE TIERS' : 'DISTRIBUCIÓN DE LA PLANTILLA',
+      locTr({ es: 'DISTRIBUCIÓN DE LA PLANTILLA', en: 'SQUAD ATTENDANCE TIERS', fr: "RÉPARTITION DE L'EFFECTIF", pt: 'DISTRIBUIÇÃO DO ELENCO', id: 'DISTRIBUSI SKUAD' }),
       rightX + 6,
       y + 8
     );
@@ -631,19 +652,19 @@ export const generateAttendancePdfReport = async ({
     let itemY = y + 26;
     const tiers = [
       {
-        label: isEn ? 'Optimal (>=85%)' : 'Óptimo (>=85%)',
+        label: locTr({ es: 'Óptimo (>=85%)', en: 'Optimal (>=85%)', fr: 'Optimal (>=85%)', pt: 'Ótimo (>=85%)', id: 'Optimal (>=85%)' }),
         count: countOptimo,
         pct: Math.round(pctOptimo * 100),
         color: [34, 197, 94]
       },
       {
-        label: isEn ? `Acceptable (${threshold}-84%)` : `Aceptable (${threshold}-84%)`,
+        label: `${locTr({ es: 'Aceptable', en: 'Acceptable', fr: 'Acceptable', pt: 'Aceitável', id: 'Dapat Diterima' })} (${threshold}-84%)`,
         count: countAceptable,
         pct: Math.round(pctAceptable * 100),
         color: [212, 168, 67]
       },
       {
-        label: isEn ? `At Risk (<${threshold}%)` : `Bajo Umbral (<${threshold}%)`,
+        label: `${locTr({ es: 'Bajo Umbral', en: 'At Risk', fr: 'Sous Seuil', pt: 'Abaixo do Limite', id: 'Di Bawah Ambang' })} (<${threshold}%)`,
         count: countRiesgo,
         pct: Math.round(pctRiesgo * 100),
         color: [220, 38, 38]
@@ -679,7 +700,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     doc.text(
-      isEn ? 'MÍSTER 11 · SQUAD ATTENDANCE AUDIT & BREAKDOWN' : 'MÍSTER 11 · AUDITORÍA INDIVIDUAL Y CONTROL DE ASISTENCIA',
+      locTr({ es: 'MÍSTER 11 · AUDITORÍA INDIVIDUAL Y CONTROL DE ASISTENCIA', en: 'MÍSTER 11 · SQUAD ATTENDANCE AUDIT & BREAKDOWN', fr: 'MÍSTER 11 · AUDIT INDIVIDUEL ET CONTRÔLE DES PRÉSENCES', pt: 'MÍSTER 11 · AUDITORIA INDIVIDUAL E CONTROLE DE PRESENÇA', id: 'MÍSTER 11 · AUDIT INDIVIDU & KONTROL KEHADIRAN' }),
       14,
       10
     );
@@ -688,9 +709,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(203, 213, 225);
     doc.text(
-      isEn
-        ? `Official Individual Breakdown · ${displayTeamName} · Threshold: ${threshold}%`
-        : `Desglose Individual Oficial · ${displayTeamName} · Umbral de Convocatoria: ${threshold}%`,
+      `${locTr({ es: 'Desglose Individual Oficial', en: 'Official Individual Breakdown', fr: 'Détail Individuel Officiel', pt: 'Detalhamento Individual Oficial', id: 'Rincian Individu Resmi' })} · ${displayTeamName} · ${locTr({ es: 'Umbral', en: 'Threshold', fr: 'Seuil', pt: 'Limite', id: 'Ambang' })}: ${threshold}%`,
       14,
       16
     );
@@ -698,9 +717,18 @@ export const generateAttendancePdfReport = async ({
     let p2Y = 26;
 
     // Tabla Completa de la Plantilla
-    const tableHead = isEn
-      ? [['#', 'Player Name', 'Pos', 'Present', 'Absent', 'Justif.', 'Late', 'Injured', '% Att.', 'Status']]
-      : [['#', 'Jugador', 'Pos', 'Presente', 'Ausente', 'Justif.', 'Tarde', 'Lesión', '% Asist.', 'Estado']];
+    const tableHead = [[
+      '#',
+      locTr({ es: 'Jugador', en: 'Player Name', fr: 'Nom Joueur', pt: 'Nome Jogador', id: 'Nama Pemain' }),
+      'Pos',
+      locTr({ es: 'Presente', en: 'Present', fr: 'Présent', pt: 'Presente', id: 'Hadir' }),
+      locTr({ es: 'Ausente', en: 'Absent', fr: 'Absent', pt: 'Ausente', id: 'Absen' }),
+      locTr({ es: 'Justif.', en: 'Justif.', fr: 'Justif.', pt: 'Justif.', id: 'Izin' }),
+      locTr({ es: 'Tarde', en: 'Late', fr: 'Retard', pt: 'Atraso', id: 'Terlambat' }),
+      locTr({ es: 'Lesión', en: 'Injured', fr: 'Blessé', pt: 'Lesão', id: 'Cedera' }),
+      '% ' + locTr({ es: 'Asist.', en: 'Att.', fr: 'Prés.', pt: 'Pres.', id: 'Hadir' }),
+      locTr({ es: 'Estado', en: 'Status', fr: 'Statut', pt: 'Status', id: 'Status' })
+    ]];
 
     const sortedStats = [...squadStats].sort((a, b) => {
       if (!a.hasData && !b.hasData) return 0;
@@ -713,9 +741,9 @@ export const generateAttendancePdfReport = async ({
       const hasPct = s.hasData && typeof s.pct === 'number';
       let statusTag = '-';
       if (hasPct) {
-        if (s.pct >= 85) statusTag = isEn ? 'OPTIMAL' : 'ÓPTIMO';
-        else if (s.pct >= threshold) statusTag = isEn ? 'REGULAR' : 'ACEPTABLE';
-        else statusTag = isEn ? 'AT RISK' : 'BAJO UMBRAL';
+        if (s.pct >= 85) statusTag = locTr({ es: 'ÓPTIMO', en: 'OPTIMAL', fr: 'OPTIMAL', pt: 'ÓTIMO', id: 'OPTIMAL' });
+        else if (s.pct >= threshold) statusTag = locTr({ es: 'ACEPTABLE', en: 'REGULAR', fr: 'ACCEPTABLE', pt: 'REGULAR', id: 'DAPAT DITERIMA' });
+        else statusTag = locTr({ es: 'BAJO UMBRAL', en: 'AT RISK', fr: 'SOUS SEUIL', pt: 'ABAIXO DO LIMITE', id: 'DI BAWAH AMBANG' });
       }
 
       return [
@@ -727,7 +755,7 @@ export const generateAttendancePdfReport = async ({
         s.justified || 0,
         s.late || 0,
         s.injured || 0,
-        hasPct ? `${s.pct}%` : (isEn ? 'No data' : 'Sin datos'),
+        hasPct ? `${s.pct}%` : locTr({ es: 'Sin datos', en: 'No data', fr: 'Sans données', pt: 'Sem dados', id: 'Tidak ada data' }),
         statusTag
       ];
     });
@@ -827,7 +855,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105);
     doc.text(
-      isEn ? 'Staff / Head Coach Signature' : 'Firma del Cuerpo Técnico / Club',
+      locTr({ es: 'Firma del Cuerpo Técnico / Club', en: 'Staff / Head Coach Signature', fr: 'Signature du Staff / Entraîneur', pt: 'Assinatura da Comissão Técnica / Clube', id: 'Tanda Tangan Staf Pelatih / Klub' }),
       sigX + sigBoxW / 2,
       p2Y + 22,
       { align: 'center' }
@@ -837,7 +865,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
     doc.text(
-      isEn ? 'Document certified by Míster11' : 'Certificado oficial generado por Míster11',
+      locTr({ es: 'Certificado oficial generado por Míster11', en: 'Document certified by Míster11', fr: 'Document certifié généré par Míster11', pt: 'Certificado oficial gerado pelo Míster11', id: 'Sertifikat resmi diterbitkan oleh Míster11' }),
       sigX + sigBoxW / 2,
       p2Y + 26,
       { align: 'center' }

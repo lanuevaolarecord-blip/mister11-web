@@ -984,6 +984,478 @@ const TRANSLATIONS = {
     pt: 'Não há avisos recentes do treinador.',
     fr: "Aucune annonce récente de l'entraîneur.",
     id: 'Tidak ada pengumuman terbaru dari pelatih.'
+  },
+  'attendance.register.excludeTitle': {
+    es: 'Excluye esta sesión del cómputo de asistencia de toda la plantilla',
+    'es-419': 'Excluye esta sesión del cómputo de asistencia de todo el plantel',
+    en: 'Excludes this session from attendance calculation for the entire squad',
+    pt: 'Exclui esta sessão do cálculo de presença de todo o elenco',
+    fr: "Exclut cette séance du calcul des présences de tout l'effectif",
+    id: 'Mengecualikan sesi ini dari perhitungan kehadiran seluruh skuad'
+  },
+  'attendance.register.prefillTooltip': {
+    es: 'Prellenar desde respuestas del jugador sin pisar ediciones manuales',
+    'es-419': 'Prellenar desde respuestas del jugador sin sobreescribir ediciones manuales',
+    en: 'Pre-fill from player RSVP responses (manual edits preserved)',
+    pt: 'Preencher a partir das respostas do jogador sem sobrescrever edições manuais',
+    fr: 'Pré-remplir à partir des réponses des joueurs sans écraser les modifications manuelles',
+    id: 'Isi otomatis dari tanggapan RSVP pemain tanpa menimpa perubahan manual'
+  },
+  'attendance.chart.guideCoach': {
+    es: 'Guía de Interpretación para el Cuerpo Técnico',
+    'es-419': 'Guía de Interpretación para el Cuerpo Técnico',
+    en: 'Guide for Coaches (Simple Terms)',
+    pt: 'Guia de Interpretação para a Comissão Técnica',
+    fr: "Guide d'interprétation pour le staff technique",
+    id: 'Panduan Interpretasi untuk Staf Pelatih'
+  },
+  'attendance.chart.guideStep1': {
+    es: '1. Puntos y Cronología',
+    'es-419': '1. Puntos y Cronología',
+    en: '1. Timeline & Events',
+    pt: '1. Pontos e Cronologia',
+    fr: '1. Points et Chronologie',
+    id: '1. Garis Waktu & Peristiwa'
+  },
+  'attendance.chart.guideStep2': {
+    es: '2. Línea Verde',
+    'es-419': '2. Línea Verde',
+    en: '2. Green Line',
+    pt: '2. Linha Verde',
+    fr: '2. Ligne Verte',
+    id: '2. Garis Hijau'
+  },
+  'attendance.chart.guideStep3': {
+    es: '3. Cruce de Alerta',
+    'es-419': '3. Cruce de Alerta',
+    en: '3. Warning Cross',
+    pt: '3. Cruzamento de Alerta',
+    fr: "3. Croisement d'Alerte",
+    id: '3. Persilangan Peringatan'
+  },
+  'attendance.chart.guideStep4': {
+    es: '4. Toca para Detalle',
+    'es-419': '4. Toca para Detalle',
+    en: '4. Interactive Detail',
+    pt: '4. Toque para Detalhes',
+    fr: '4. Touchez pour le détail',
+    id: '4. Ketuk untuk Rincian'
+  },
+  'attendance.chart.filtersTitle': {
+    es: 'Series de la Gráfica y Explicación (Pulsa para Mostrar/Ocultar)',
+    'es-419': 'Series de la Gráfica y Explicación (Pulsa para Mostrar/Ocultar)',
+    en: 'Series Filters & Explanations (Click to Show/Hide)',
+    pt: 'Séries do Gráfico e Explicação (Clique para Mostrar/Ocultar)',
+    fr: 'Séries du Graphique et Explication (Cliquer pour Afficher/Masquer)',
+    id: 'Seri Grafik & Penjelasan (Klik untuk Tampilkan/Sembunyikan)'
+  },
+  'attendance.register.extraSession': {
+    es: 'Sesión Extra',
+    'es-419': 'Sesión Extra',
+    en: 'Extra Session',
+    pt: 'Sessão Extra',
+    fr: 'Séance Supplémentaire',
+    id: 'Sesi Tambahan'
+  },
+  'attendance.toast.allMarkedPresent': {
+    es: 'Todos marcados como presentes (Oficial)',
+    'es-419': 'Todos marcados como presentes (Oficial)',
+    en: 'All marked as present (Official)',
+    pt: 'Todos marcados como presentes (Oficial)',
+    fr: 'Tous marqués comme présents (Officiel)',
+    id: 'Semua ditandai hadir (Resmi)'
+  },
+  'attendance.toast.selectFirst': {
+    es: 'Selecciona primero una sesión o partido',
+    'es-419': 'Selecciona primero una sesión o partido',
+    en: 'Select a session or match first',
+    pt: 'Selecione primeiro uma sessão ou partida',
+    fr: "Sélectionnez d'abord une séance ou un match",
+    id: 'Pilih sesi atau pertandingan terlebih dahulu'
+  },
+  'attendance.toast.suspendedSaved': {
+    es: 'Sesión marcada como suspendida y guardada',
+    'es-419': 'Sesión marcada como suspendida y guardada',
+    en: 'Session marked as suspended and saved',
+    pt: 'Sessão marcada como suspensa e salva',
+    fr: 'Séance marquée comme suspendue et enregistrée',
+    id: 'Sesi ditandai ditangguhkan dan disimpan'
+  },
+  'attendance.toast.savedSuccess': {
+    es: 'Asistencia guardada con éxito',
+    'es-419': 'Asistencia guardada con éxito',
+    en: 'Attendance saved successfully',
+    pt: 'Presença salva com sucesso',
+    fr: 'Présences enregistrées avec succès',
+    id: 'Kehadiran berhasil disimpan'
+  },
+  'attendance.toast.errorSaving': {
+    es: 'Error al guardar la asistencia',
+    'es-419': 'Error al guardar la asistencia',
+    en: 'Error saving attendance',
+    pt: 'Erro ao salvar a presença',
+    fr: "Erreur lors de l'enregistrement des présences",
+    id: 'Kesalahan saat menyimpan kehadiran'
+  },
+  'attendance.toast.sheetClosed': {
+    es: 'Acta oficial cerrada y minutos calculados',
+    'es-419': 'Acta oficial cerrada y minutos calculados',
+    en: 'Match sheet closed and minutes calculated',
+    pt: 'Súmula oficial fechada e minutos calculados',
+    fr: 'Feuille de match officielle clôturée et minutes calculées',
+    id: 'Laporan resmi ditutup dan menit dihitung'
+  },
+  'attendance.toast.errorClosing': {
+    es: 'Error al cerrar el acta oficial',
+    'es-419': 'Error al cerrar el acta oficial',
+    en: 'Error closing match sheet',
+    pt: 'Erro ao fechar a súmula oficial',
+    fr: 'Erreur lors de la clôture de la feuille de match',
+    id: 'Kesalahan saat menutup laporan resmi'
+  },
+  'attendance.toast.sheetReopened': {
+    es: 'Acta reabierta para edición',
+    'es-419': 'Acta reabierta para edición',
+    en: 'Match sheet reopened for editing',
+    pt: 'Súmula reaberta para edição',
+    fr: 'Feuille de match rouverte pour modification',
+    id: 'Laporan pertandingan dibuka kembali untuk diedit'
+  },
+  'attendance.toast.errorReopening': {
+    es: 'Error al reabrir el acta',
+    'es-419': 'Error al reabrir el acta',
+    en: 'Error reopening match sheet',
+    pt: 'Erro ao reabrir a súmula',
+    fr: 'Erreur lors de la réouverture de la feuille de match',
+    id: 'Kesalahan saat membuka kembali laporan'
+  },
+  'attendance.toast.noResponses': {
+    es: 'Ningún jugador ha respondido aún',
+    'es-419': 'Ningún jugador ha respondido aún',
+    en: 'No player responses yet',
+    pt: 'Nenhum jogador respondeu ainda',
+    fr: "Aucun joueur n'a encore répondu",
+    id: 'Belum ada tanggapan pemain'
+  },
+  'attendance.register.sessionsAndMatches': {
+    es: 'Sesiones y Partidos',
+    'es-419': 'Sesiones y Partidos',
+    en: 'Sessions and Matches',
+    pt: 'Sessões e Partidas',
+    fr: 'Séances et Matchs',
+    id: 'Sesi dan Pertandingan'
+  },
+  'exports.report.title': {
+    es: 'INFORME OFICIAL POST-PARTIDO',
+    'es-419': 'INFORME OFICIAL POST-PARTIDO',
+    en: 'OFFICIAL POST-MATCH REPORT',
+    pt: 'RELATÓRIO OFICIAL PÓS-JOGO',
+    fr: "RAPPORT OFFICIEL D'APRÈS-MATCH",
+    id: 'LAPORAN RESMI PASCA PERTANDINGAN'
+  },
+  'exports.report.match_info': {
+    es: 'Ficha del Partido',
+    'es-419': 'Ficha del Partido',
+    en: 'Match Sheet',
+    pt: 'Ficha do Jogo',
+    fr: 'Fiche du Match',
+    id: 'Lembar Pertandingan'
+  },
+  'exports.report.page': {
+    es: 'Página',
+    'es-419': 'Página',
+    en: 'Page',
+    pt: 'Página',
+    fr: 'Page',
+    id: 'Halaman'
+  },
+  'exports.report.sec1_lineup': {
+    es: '1. Alineación Táctica con Fotografías',
+    'es-419': '1. Alineación Táctica con Fotografías',
+    en: '1. Tactical Lineup with Photos',
+    pt: '1. Escalação Tática com Fotografias',
+    fr: '1. Composition Tactique avec Photos',
+    id: '1. Susunan Taktis dengan Foto'
+  },
+  'exports.report.sec2_timeline': {
+    es: '2. Marcador y Cronología de Eventos',
+    'es-419': '2. Marcador y Cronología de Eventos',
+    en: '2. Scoreboard & Event Timeline',
+    pt: '2. Placar e Linha do Tempo de Eventos',
+    fr: "2. Tableau d'Affichage et Chronologie des Événements",
+    id: '2. Papan Skor & Kronologi Pertandingan'
+  },
+  'exports.report.sec3_momentum': {
+    es: "3. Momentum y Posesión por Bloques 15'",
+    'es-419': "3. Momentum y Posesión por Bloques 15'",
+    en: "3. Momentum & 15-Minute Possession Blocks",
+    pt: "3. Momentum e Posse por Blocos de 15'",
+    fr: "3. Momentum et Possession par Tranches de 15'",
+    id: "3. Momentum & Penguasaan Bola per Blok 15 Menit"
+  },
+  'exports.report.sec4_bars': {
+    es: '4. Barras Comparativas (10 Métricas)',
+    'es-419': '4. Barras Comparativas (10 Métricas)',
+    en: '4. Comparative Bars (10 Metrics)',
+    pt: '4. Barras Comparativas (10 Métricas)',
+    fr: '4. Barres Comparatives (10 Métriques)',
+    id: '4. Batang Komparatif (10 Metrik)'
+  },
+  'exports.report.sec5_radar': {
+    es: '5. Radar Comparativo Propio vs Rival',
+    'es-419': '5. Radar Comparativo Propio vs Rival',
+    en: '5. Comparative Radar (Own vs Opponent)',
+    pt: '5. Radar Comparativo (Próprio vs Rival)',
+    fr: '5. Radar Comparatif (Équipe vs Adversaire)',
+    id: '5. Radar Komparatif (Tim Sendiri vs Lawan)'
+  },
+  'exports.report.sec6_top5': {
+    es: '6. Métricas Top-5 Diferenciales',
+    'es-419': '6. Métricas Top-5 Diferenciales',
+    en: '6. Top-5 Differential Metrics',
+    pt: '6. Top 5 Métricas Diferenciais',
+    fr: '6. Top 5 Métriques Différencielles',
+    id: '6. 5 Metrik Pembeda Teratas'
+  },
+  'exports.report.sec7_shots': {
+    es: '7. Mapas de Tiros y Modelo xG-Lite',
+    'es-419': '7. Mapas de Tiros y Modelo xG-Lite',
+    en: '7. Shot Maps & xG-Lite Model',
+    pt: '7. Mapas de Finalizações e Modelo xG-Lite',
+    fr: '7. Cartes des Tirs et Modèle xG-Lite',
+    id: '7. Peta Tembakan & Model xG-Lite'
+  },
+  'exports.report.sec8_tactics': {
+    es: '8. Campo y Táctica (Pasillos, ABP y Territorio)',
+    'es-419': '8. Campo y Táctica (Pasillos, ABP y Territorio)',
+    en: '8. Pitch & Tactics (Corridors, Set Pieces & Territory)',
+    pt: '8. Campo e Tática (Corredores, Bolas Paradas e Território)',
+    fr: '8. Terrain et Tactique (Couloirs, Coups de Pied Arrêtés et Territoire)',
+    id: '8. Lapangan & Taktik (Koridor, Bola Mati & Teritori)'
+  },
+  'exports.report.sec9_gk': {
+    es: '9. Exigencia y Rendimiento de Portería',
+    'es-419': '9. Exigencia y Rendimiento de Portería',
+    en: '9. Goalkeeping Exertion & Performance',
+    pt: '9. Exigência e Desempenho dos Goleiros',
+    fr: '9. Exigence et Performance des Gardiens',
+    id: '9. Beban Kerja & Kinerja Penjaga Gawang'
+  },
+  'exports.report.sec10_players': {
+    es: '10. Rendimiento Individual y Plantilla',
+    'es-419': '10. Rendimiento Individual y Plantilla',
+    en: '10. Individual Player Stats & Squad Performance',
+    pt: '10. Desempenho Individual e do Elenco',
+    fr: "10. Performance Individuelle et de l'Effectif",
+    id: '10. Kinerja Individu Pemain & Skuad'
+  },
+  'exports.report.sec11_swot': {
+    es: '11. Análisis DAFO Táctico y Recomendaciones',
+    'es-419': '11. Análisis DAFO Táctico y Recomendaciones',
+    en: '11. Tactical SWOT Analysis & Recommendations',
+    pt: '11. Análise SWOT Tática e Recomendações',
+    fr: '11. Analyse SWOT Tactique et Recommandations',
+    id: '11. Analisis SWOT Taktis & Rekomendasi'
+  },
+  'exports.report.sec_photos': {
+    es: 'Fotografías y Capturas del Encuentro',
+    'es-419': 'Fotografías y Capturas del Encuentro',
+    en: 'Match Photos & Evidence',
+    pt: 'Fotos e Registros da Partida',
+    fr: 'Photos et Captures du Match',
+    id: 'Foto & Bukti Pertandingan'
+  },
+  'exports.report.tactical_analysis': {
+    es: 'Análisis Táctico',
+    'es-419': 'Análisis Táctico',
+    en: 'Tactical Analysis',
+    pt: 'Análise Tática',
+    fr: 'Analyse Tactique',
+    id: 'Analisis Taktis'
+  },
+  'exports.test.title': {
+    es: 'INFORME DE EVALUACIÓN Y TESTS',
+    'es-419': 'INFORME DE EVALUACIÓN Y TESTS',
+    en: 'EVALUATION & TESTS REPORT',
+    pt: 'RELATÓRIO DE AVALIAÇÃO E TESTES',
+    fr: "RAPPORT D'ÉVALUATION ET DE TESTS",
+    id: 'LAPORAN EVALUASI & TES'
+  },
+  'exports.test.physical': {
+    es: 'Test Físico',
+    'es-419': 'Test Físico',
+    en: 'Physical Test',
+    pt: 'Teste Físico',
+    fr: 'Test Physique',
+    id: 'Tes Fisik'
+  },
+  'exports.test.technical': {
+    es: 'Test Técnico',
+    'es-419': 'Test Técnico',
+    en: 'Technical Test',
+    pt: 'Teste Técnico',
+    fr: 'Test Technique',
+    id: 'Tes Teknis'
+  },
+  'exports.test.tactical': {
+    es: 'Test Táctico',
+    'es-419': 'Test Táctico',
+    en: 'Tactical Test',
+    pt: 'Teste Tático',
+    fr: 'Test Tactique',
+    id: 'Tes Taktis'
+  },
+  'exports.test.mental': {
+    es: 'Test Mental / Psicosocial',
+    'es-419': 'Test Mental / Psicosocial',
+    en: 'Mental / Psychosocial Test',
+    pt: 'Teste Mental / Psicossocial',
+    fr: 'Test Mental / Psychosocial',
+    id: 'Tes Mental / Psikososial'
+  },
+  'exports.test.attendance': {
+    es: 'Asistencia',
+    'es-419': 'Asistencia',
+    en: 'Attendance',
+    pt: 'Presença',
+    fr: 'Présence',
+    id: 'Kehadiran'
+  },
+  'exports.test.radar_title': {
+    es: 'Perfil Integral de Rendimiento',
+    'es-419': 'Perfil Integral de Rendimiento',
+    en: 'Comprehensive Performance Profile',
+    pt: 'Perfil Integral de Desempenho',
+    fr: 'Profil Global de Performance',
+    id: 'Profil Kinerja Komprehensif'
+  },
+  'exports.test.recommendation_title': {
+    es: 'Recomendaciones Individuales',
+    'es-419': 'Recomendaciones Individuales',
+    en: 'Individual Recommendations',
+    pt: 'Recomendações Individuais',
+    fr: 'Recommandations Individuelles',
+    id: 'Rekomendasi Individu'
+  },
+  'exports.test.table_test': {
+    es: 'Test',
+    'es-419': 'Test',
+    en: 'Test',
+    pt: 'Teste',
+    fr: 'Test',
+    id: 'Tes'
+  },
+  'exports.test.table_score': {
+    es: 'Puntuación',
+    'es-419': 'Puntuación',
+    en: 'Score',
+    pt: 'Pontuação',
+    fr: 'Score',
+    id: 'Skor'
+  },
+  'exports.test.table_interp': {
+    es: 'Interpretación',
+    'es-419': 'Interpretación',
+    en: 'Interpretation',
+    pt: 'Interpretação',
+    fr: 'Interprétation',
+    id: 'Interpretasi'
+  },
+  'exports.gk.title': {
+    es: 'RENDIMIENTO DE PORTERÍA',
+    'es-419': 'RENDIMIENTO DE PORTERÍA',
+    en: 'GOALKEEPING PERFORMANCE',
+    pt: 'DESEMPENHO DO GOLEIRO',
+    fr: 'PERFORMANCE DU GARDIEN',
+    id: 'KINERJA PENJAGA GAWANG'
+  },
+  'exports.gk.goalkeeper': {
+    es: 'Portero',
+    'es-419': 'Portero',
+    en: 'Goalkeeper',
+    pt: 'Goleiro',
+    fr: 'Gardien',
+    id: 'Kiper'
+  },
+  'exports.gk.saves': {
+    es: 'Paradas',
+    'es-419': 'Paradas',
+    en: 'Saves',
+    pt: 'Defesas',
+    fr: 'Arrêts',
+    id: 'Penyelamatan'
+  },
+  'exports.gk.conceded': {
+    es: 'Encajados',
+    'es-419': 'Encajados',
+    en: 'Goals Conceded',
+    pt: 'Gols Sofridos',
+    fr: 'Buts Encaissés',
+    id: 'Kebobolan'
+  },
+  'exports.gk.cleanSheets': {
+    es: 'Porterías a Cero',
+    'es-419': 'Porterías a Cero',
+    en: 'Clean Sheets',
+    pt: 'Jogos sem Sofrer Gols',
+    fr: 'Clean Sheets',
+    id: 'Clean Sheet'
+  },
+  'exports.gk.savePct': {
+    es: '% Eficacia',
+    'es-419': '% Eficacia',
+    en: '% Save Efficiency',
+    pt: '% Eficácia',
+    fr: '% Efficacité',
+    id: '% Efisiensi'
+  },
+  'exports.gk.penaltySaves': {
+    es: 'Pen. Parados',
+    'es-419': 'Pen. Parados',
+    en: 'Penalties Saved',
+    pt: 'Pênaltis Defendidos',
+    fr: 'Penaltys Arrêtés',
+    id: 'Penalti Diselamatkan'
+  },
+  'exports.gk.claims': {
+    es: 'Salidas / Rechaces',
+    'es-419': 'Salidas / Rechaces',
+    en: 'Claims / Punches',
+    pt: 'Saídas / Rebatidas',
+    fr: 'Sorties / Dégagements',
+    id: 'Tangkap / Tinju Bola'
+  },
+  'exports.gk.errors': {
+    es: 'Errores',
+    'es-419': 'Errores',
+    en: 'Errors',
+    pt: 'Erros',
+    fr: 'Erreurs',
+    id: 'Kesalahan'
+  },
+  'exports.gk.rating': {
+    es: 'Nota GK',
+    'es-419': 'Nota GK',
+    en: 'GK Rating',
+    pt: 'Nota Goleiro',
+    fr: 'Note Gardien',
+    id: 'Nilai Kiper'
+  },
+  'attendance.register.closingSheet': {
+    es: 'Cerrando Acta...',
+    'es-419': 'Cerrando Acta...',
+    en: 'Closing Sheet...',
+    pt: 'Fechando Súmula...',
+    fr: 'Clôture de la Feuille...',
+    id: 'Menutup Laporan...'
+  },
+  'common.player': {
+    es: 'Jugador',
+    'es-419': 'Jugador',
+    en: 'Player',
+    pt: 'Jogador',
+    fr: 'Joueur',
+    id: 'Pemain'
   }
 };
 

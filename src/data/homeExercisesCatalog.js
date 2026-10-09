@@ -1,2539 +1,7227 @@
 /**
  * homeExercisesCatalog.js
- * Míster11 — Catálogo Canónico de 107 Ejercicios de Entrenamiento en Casa / Tecnificación
+ * Míster11 — Catálogo Canónico de Ejercicios de Entrenamiento en Casa / Tecnificación
  *
- * Estructurado en 5 fases metodológicas:
- * 1. Calentamiento y activación dinámica (22 ejercicios: hex-001 .. hex-022)
- * 2. Técnica individual y control (25 ejercicios: hex-023 .. hex-047)
- * 3. Coordinación y agilidad (20 ejercicios: hex-048 .. hex-067)
- * 4. Fuerza preventiva y core (25 ejercicios: hex-068 .. hex-092)
- * 5. Vuelta a la calma y movilidad (15 ejercicios: hex-093 .. hex-107)
- *
- * Cumple:
- * - Total exacto: 107 ejercicios
- * - Niveles gamificados: 'basico', 'intermedio', 'avanzado'
- * - Sin fotografías (100% datos estructurados, iconos e instrucciones limpias)
- * - Bilingüe estricto (ES / EN)
+ * Oleada 6.1:
+ * - Esquema clínico con material_preferido, alternativa_casa, contexto
+ * - Umbrales duros de edad (edad_minima_segura, requiere_supervision_presencial, safety_notes)
+ * - Fuentes clínicas de lista blanca (FIFA 11+, Petersen, Thorborg, ACSM, Lloyd LTAD, etc.)
+ * - Cero source: 'system'
+ * - Categorías con iconos Lucide y paleta Tierra y Campo
  */
+
+export const DEFAULT_USER_INVENTORY = [
+  'peso_corporal',
+  'toalla',
+  'botella',
+  'mochila_lastre',
+  'escalon',
+  'silla_estable',
+  'cojin',
+  'colchoneta',
+  'marco_puerta',
+  'pared',
+  'suelo',
+  'pelota'
+];
 
 export const HOME_EXERCISES_CATEGORIES = {
   calentamiento: {
     id: 'calentamiento',
     nameEs: 'Calentamiento y Activación Dinámica',
     nameEn: 'Warm-up & Dynamic Activation',
-    icon: '🔥',
-    color: '#F97316'
+    icon: 'Flame',
+    color: '#C85A32' // --terracota
   },
   tecnica: {
     id: 'tecnica',
     nameEs: 'Técnica Individual y Control',
     nameEn: 'Individual Technique & Control',
-    icon: '⚽',
-    color: '#0284C7'
+    icon: 'Target',
+    color: '#D4A843' // --oro
   },
   coordinacion_agilidad: {
     id: 'coordinacion_agilidad',
     nameEs: 'Coordinación y Agilidad',
     nameEn: 'Coordination & Agility',
-    icon: '⚡',
-    color: '#8B5CF6'
+    icon: 'Zap',
+    color: '#9C6A3B' // --ocre
   },
   fuerza_preventiva: {
     id: 'fuerza_preventiva',
     nameEs: 'Fuerza Preventiva y Core',
     nameEn: 'Preventive Strength & Core',
-    icon: '🛡️',
-    color: '#10B981'
+    icon: 'ShieldCheck',
+    color: '#1B3A2D' // --verde-selva
   },
   vuelta_calma: {
     id: 'vuelta_calma',
     nameEs: 'Vuelta a la Calma y Movilidad',
     nameEn: 'Cool-down & Mobility',
-    icon: '🧘',
-    color: '#059669'
+    icon: 'Wind',
+    color: '#4CAF7D' // --verde-campo
   }
 };
 
 export const HOME_EXERCISES_107 = [
-  // ══════════════════════════════════════════════════════════════════════════════
-  // FASE 1: CALENTAMIENTO Y ACTIVACIÓN DINÁMICA (22 ejercicios: hex-001 a hex-022)
-  // ══════════════════════════════════════════════════════════════════════════════
-  {
-    id: 'hex-001',
-    name: 'Movilidad de Tobillo Dinámica',
-    nameEs: 'Movilidad de Tobillo Dinámica',
-    nameEn: 'Dynamic Ankle Mobility',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'De rodillas frente a una pared, avanzar la rodilla hacia adelante sin despegar el talón del suelo.',
-    descriptionEs: 'De rodillas frente a una pared, avanzar la rodilla hacia adelante sin despegar el talón del suelo.',
-    descriptionEn: 'Half-kneeling facing a wall, drive knee forward past toes without lifting the heel.',
-    coachingPoints: ['Talón siempre pegado al suelo', 'Movimiento lento y controlado'],
-    coachingPointsEs: ['Talón siempre pegado al suelo', 'Movimiento lento y controlado'],
-    coachingPointsEn: ['Heel firmly on floor', 'Slow and controlled movement'],
-    targetZones: ['tobillo', 'gemelo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-002',
-    name: 'Balanceo de Pierna Frontal',
-    nameEs: 'Balanceo de Pierna Frontal',
-    nameEn: 'Front Leg Swings',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Apoyado con una mano en pared, balancear la pierna libre de adelante hacia atrás con amplitud progresiva.',
-    descriptionEs: 'Apoyado con una mano en pared, balancear la pierna libre de adelante hacia atrás con amplitud progresiva.',
-    descriptionEn: 'Holding onto a wall for balance, swing free leg forward and back with increasing range.',
-    coachingPoints: ['Tronco vertical sin arquear la espalda', 'Aumentar la amplitud con cada balanceo'],
-    coachingPointsEs: ['Tronco vertical sin arquear la espalda', 'Aumentar la amplitud con cada balanceo'],
-    coachingPointsEn: ['Keep torso upright without arching lower back', 'Increase range gradually with each swing'],
-    targetZones: ['isquiosurales', 'flexores_cadera'],
-    source: 'system'
-  },
-  {
-    id: 'hex-003',
-    name: 'Balanceo de Pierna Lateral',
-    nameEs: 'Balanceo de Pierna Lateral',
-    nameEn: 'Lateral Leg Swings',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'De cara a la pared, balancear la pierna cruzando por delante del cuerpo y abriendo hacia el lateral.',
-    descriptionEs: 'De cara a la pared, balancear la pierna cruzando por delante del cuerpo y abriendo hacia el lateral.',
-    descriptionEn: 'Facing the wall, swing the leg across the body and then outward laterally.',
-    coachingPoints: ['Pelvis alineada', 'Controlar el rebote excéntrico'],
-    coachingPointsEs: ['Pelvis alineada', 'Controlar el rebote excéntrico'],
-    coachingPointsEn: ['Keep pelvis level', 'Control eccentric bounce'],
-    targetZones: ['aductores', 'abductores'],
-    source: 'system'
-  },
-  {
-    id: 'hex-004',
-    name: 'Círculos Articulares de Cadera',
-    nameEs: 'Círculos Articulares de Cadera',
-    nameEn: 'Hip Controlled Articular Rotations',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 2,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'En cuadrupedia, realizar círculos completos y amplios con una rodilla manteniendo el tronco inmóvil.',
-    descriptionEs: 'En cuadrupedia, realizar círculos completos y amplios con una rodilla manteniendo el tronco inmóvil.',
-    descriptionEn: 'On all fours, perform full circular rotations with one knee while stabilizing the torso.',
-    coachingPoints: ['Evitar rotar la zona lumbar', 'Respiración constante'],
-    coachingPointsEs: ['Evitar rotar la zona lumbar', 'Respiración constante'],
-    coachingPointsEn: ['Avoid twisting lumbar spine', 'Breathe steadily'],
-    targetZones: ['cadera', 'gluteo_medio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-005',
-    name: 'Gato-Camello Dinámico',
-    nameEs: 'Gato-Camello Dinámico',
-    nameEn: 'Dynamic Cat-Cow',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 2,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En cuadrupedia, alternar suavemente entre flexión y extensión total de la columna vertebral.',
-    descriptionEs: 'En cuadrupedia, alternar suavemente entre flexión y extensión total de la columna vertebral.',
-    descriptionEn: 'On all fours, alternate smoothly between spinal flexion and full spinal extension.',
-    coachingPoints: ['Movimiento segmentario vértebra a vértebra', 'Sincronizar con inhalación y exhalación'],
-    coachingPointsEs: ['Movimiento segmentario vértebra a vértebra', 'Sincronizar con inhalación y exhalación'],
-    coachingPointsEn: ['Move vertebra by vertebra', 'Coordinate with breathing'],
-    targetZones: ['columna', 'espalda'],
-    source: 'system'
-  },
-  {
-    id: 'hex-006',
-    name: 'El Mejor Estiramiento del Mundo (World Greatest)',
-    nameEs: 'El Mejor Estiramiento del Mundo (World Greatest)',
-    nameEn: 'World Greatest Stretch',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Paso largo en zancada profunda, apoyar codo al empeine y rotar brazo hacia el techo abriendo el pecho.',
-    descriptionEs: 'Paso largo en zancada profunda, apoyar codo al empeine y rotar brazo hacia el techo abriendo el pecho.',
-    descriptionEn: 'Deep lunge step, drop inside elbow toward instep, then rotate arm up toward ceiling opening chest.',
-    coachingPoints: ['Rodilla trasera extendida activa', 'Seguir la mano con la mirada'],
-    coachingPointsEs: ['Rodilla trasera extendida activa', 'Seguir la mano con la mirada'],
-    coachingPointsEn: ['Keep rear knee extended and active', 'Track hand with eyes'],
-    targetZones: ['cadera', 'torax', 'isquiosurales'],
-    source: 'system'
-  },
-  {
-    id: 'hex-007',
-    name: 'Zancada Inversa con Rotación Torácica',
-    nameEs: 'Zancada Inversa con Rotación Torácica',
-    nameEn: 'Reverse Lunge with Thoracic Twist',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Dar paso hacia atrás en zancada y rotar el tronco hacia el lado de la pierna adelantada.',
-    descriptionEs: 'Dar paso hacia atrás en zancada y rotar el tronco hacia el lado de la pierna adelantada.',
-    descriptionEn: 'Step back into a lunge and rotate the torso toward the forward leg side.',
-    coachingPoints: ['Rodilla delantera estable sobre el tobillo', 'Giro desde la caja torácica'],
-    coachingPointsEs: ['Rodilla delantera estable sobre el tobillo', 'Giro desde la caja torácica'],
-    coachingPointsEn: ['Front knee stable over ankle', 'Rotate through thoracic spine'],
-    targetZones: ['cuadriceps', 'gluteo', 'core'],
-    source: 'system'
-  },
-  {
-    id: 'hex-008',
-    name: 'Zancada Lateral Dinámica (Cossack Parcial)',
-    nameEs: 'Zancada Lateral Dinámica (Cossack Parcial)',
-    nameEn: 'Dynamic Lateral Lunge',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Pies separados más del ancho de hombros, flexionar una rodilla cargando cadera atrás y manteniendo la otra pierna recta.',
-    descriptionEs: 'Pies separados más del ancho de hombros, flexionar una rodilla cargando cadera atrás y manteniendo la otra pierna recta.',
-    descriptionEn: 'Wide stance, bend one knee shifting hip back while keeping the opposite leg straight.',
-    coachingPoints: ['Pecho erguido', 'Planta del pie de apoyo completamente apoyada'],
-    coachingPointsEs: ['Pecho erguido', 'Planta del pie de apoyo completamente apoyada'],
-    coachingPointsEn: ['Keep chest up', 'Working foot stays flat on ground'],
-    targetZones: ['aductores', 'gluteo', 'rodilla'],
-    source: 'system'
-  },
-  {
-    id: 'hex-009',
-    name: 'Gusano (Inchworm) con Toque de Puntera',
-    nameEs: 'Gusano (Inchworm) con Toque de Puntera',
-    nameEn: 'Inchworm with Toe Tap',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'De pie, doblar tronco y avanzar con las manos hasta posición de plancha, tocar punta de pie contraria y retroceder.',
-    descriptionEs: 'De pie, doblar tronco y avanzar con las manos hasta posición de plancha, tocar punta de pie contraria y retroceder.',
-    descriptionEn: 'Hinge at hips, walk hands out to a high plank, tap opposite toe in pike, and walk back.',
-    coachingPoints: ['Piernas lo más rectas posible sin forzar', 'Abdomen firme en plancha'],
-    coachingPointsEs: ['Piernas lo más rectas posible sin forzar', 'Abdomen firme en plancha'],
-    coachingPointsEn: ['Keep legs relatively straight', 'Brace core at plank peak'],
-    targetZones: ['isquiosurales', 'hombros', 'core'],
-    source: 'system'
-  },
-  {
-    id: 'hex-010',
-    name: 'Carioca Dinámica en el Sitio',
-    nameEs: 'Carioca Dinámica en el Sitio',
-    nameEn: 'In-Place Carioca Drill',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Paso cruzado alterno por delante y por detrás girando la cadera con agilidad y pies rápidos.',
-    descriptionEs: 'Paso cruzado alterno por delante y por detrás girando la cadera con agilidad y pies rápidos.',
-    descriptionEn: 'Cross step in front and behind alternately with rapid hip rotation and quick feet.',
-    coachingPoints: ['Disociar cadera de hombros', 'Apoyos en metatarsos'],
-    coachingPointsEs: ['Disociar cadera de hombros', 'Apoyos en metatarsos'],
-    coachingPointsEn: ['Dissociate hips from shoulders', 'Stay on balls of feet'],
-    targetZones: ['cadera', 'coordinacion', 'tobillos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-011',
-    name: 'Skipping Bajo con Apoyos Rápidos',
-    nameEs: 'Skipping Bajo con Apoyos Rápidos',
-    nameEn: 'Low High-Frequency Skipping',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Carrera estática a máxima frecuencia elevando rodillas apenas 10-15 cm con braceo activo.',
-    descriptionEs: 'Carrera estática a máxima frecuencia elevando rodillas apenas 10-15 cm con braceo activo.',
-    descriptionEn: 'High frequency in-place run lifting knees 10-15 cm with active arm drive.',
-    coachingPoints: ['Codo a 90 grados', 'Contacto mínimo con el suelo'],
-    coachingPointsEs: ['Codo a 90 grados', 'Contacto mínimo con el suelo'],
-    coachingPointsEn: ['Elbow at 90 degrees', 'Minimize ground contact time'],
-    targetZones: ['cardio', 'gemelos', 'coordinacion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-012',
-    name: 'Skipping Alto Técnico (A-Skip)',
-    nameEs: 'Skipping Alto Técnico (A-Skip)',
-    nameEn: 'Technical A-Skip',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Salto rítmico elevando rodilla a 90 grados y pie en dorsiflexión con caída enérgica.',
-    descriptionEs: 'Salto rítmico elevando rodilla a 90 grados y pie en dorsiflexión con caída enérgica.',
-    descriptionEn: 'Rhythmic skip driving knee up to 90 degrees with dorsiflexed foot and crisp ground strike.',
-    coachingPoints: ['Puntera hacia arriba en vuelo', 'Postura alta y orgullosa'],
-    coachingPointsEs: ['Puntera hacia arriba en vuelo', 'Postura alta y orgullosa'],
-    coachingPointsEn: ['Toe up in air phase', 'Tall upright posture'],
-    targetZones: ['flexores_cadera', 'propiocepcion', 'gemelo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-013',
-    name: 'Talones al Glúteo con Braceo (B-Skip)',
-    nameEs: 'Talones al Glúteo con Braceo (B-Skip)',
-    nameEn: 'Heel-Flicks with Arm Drive',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Carrera estática flexionando la rodilla para llevar el talón con rapidez hacia la base del glúteo.',
-    descriptionEs: 'Carrera estática flexionando la rodilla para llevar el talón con rapidez hacia la base del glúteo.',
-    descriptionEn: 'Stationary run snapping heel quickly up toward bottom of glute.',
-    coachingPoints: ['Rodilla apunta al suelo', 'Tronco erguido sin inclinarse hacia delante'],
-    coachingPointsEs: ['Rodilla apunta al suelo', 'Tronco erguido sin inclinarse hacia delante'],
-    coachingPointsEn: ['Knees pointing down', 'Torso upright without leaning forward'],
-    targetZones: ['isquiosurales', 'cuadriceps'],
-    source: 'system'
-  },
-  {
-    id: 'hex-014',
-    name: 'Jumping Jacks Rítmicos',
-    nameEs: 'Jumping Jacks Rítmicos',
-    nameEn: 'Rhythmic Jumping Jacks',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Saltos coordinados abriendo piernas y juntando brazos arriba en ritmo sostenido.',
-    descriptionEs: 'Saltos coordinados abriendo piernas y juntando brazos arriba en ritmo sostenido.',
-    descriptionEn: 'Coordinated jumps opening feet while bringing hands overhead in sustained rhythm.',
-    coachingPoints: ['Amortiguar con rodillas suaves', 'Respiración acompasada'],
-    coachingPointsEs: ['Amortiguar con rodillas suaves', 'Respiración acompasada'],
-    coachingPointsEn: ['Soft knee landings', 'Keep steady breathing cadence'],
-    targetZones: ['cardio', 'hombros', 'pantorrilla'],
-    source: 'system'
-  },
-  {
-    id: 'hex-015',
-    name: 'Paso Ruso (Marcha con Patada Recta)',
-    nameEs: 'Paso Ruso (Marcha con Patada Recta)',
-    nameEn: 'Straight Leg Russian Kicks',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Marcha activa levantando pierna extendida hacia adelante para tocar la mano contraria.',
-    descriptionEs: 'Marcha activa levantando pierna extendida hacia adelante para tocar la mano contraria.',
-    descriptionEn: 'Active march kicking straight leg forward to touch opposite outstretched hand.',
-    coachingPoints: ['No encorvar la espalda', 'Mantener rodilla bloqueada suave'],
-    coachingPointsEs: ['No encorvar la espalda', 'Mantener rodilla bloqueada suave'],
-    coachingPointsEn: ['Do not round lower back', 'Keep knee softly locked'],
-    targetZones: ['isquiosurales', 'core'],
-    source: 'system'
-  },
-  {
-    id: 'hex-016',
-    name: 'Aperturas y Cierres de Valla Imaginaria',
-    nameEs: 'Aperturas y Cierres de Valla Imaginaria',
-    nameEn: 'Hurdle Step Over & Under Drill',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Simular pasar la pierna por encima de una valla alta hacia afuera y luego hacia adentro alternando.',
-    descriptionEs: 'Simular pasar la pierna por encima de una valla alta hacia afuera y luego hacia adentro alternando.',
-    descriptionEn: 'Simulate stepping over a high hurdle outward and inward alternately with each leg.',
-    coachingPoints: ['Elevar rodilla a la altura del ombligo', 'Pie de apoyo firme'],
-    coachingPointsEs: ['Elevar rodilla a la altura del ombligo', 'Pie de apoyo firme'],
-    coachingPointsEn: ['Lift knee to navel height', 'Support leg stays solid'],
-    targetZones: ['cadera', 'aductores', 'psoas'],
-    source: 'system'
-  },
-  {
-    id: 'hex-017',
-    name: 'Desplazamiento Lateral con Toco Suelo',
-    nameEs: 'Desplazamiento Lateral con Toco Suelo',
-    nameEn: 'Lateral Shuffle & Floor Touch',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 25,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Dos pasos laterales rápidos a la derecha, flexionar rodillas para tocar el suelo con la mano, repetir a la izquierda.',
-    descriptionEs: 'Dos pasos laterales rápidos a la derecha, flexionar rodillas para tocar el suelo con la mano, repetir a la izquierda.',
-    descriptionEn: 'Two fast shuffle steps right, bend knees to touch floor with hand, repeat to left.',
-    coachingPoints: ['Bajar con flexión de cadera y rodillas, no doblando la espalda', 'Mirada al frente'],
-    coachingPointsEs: ['Bajar con flexión de cadera y rodillas, no doblando la espalda', 'Mirada al frente'],
-    coachingPointsEn: ['Hinge at hips and knees, do not hunch back', 'Eyes forward'],
-    targetZones: ['cuadriceps', 'aductores', 'cardio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-018',
-    name: 'Molino de Viento Dinámico (Windmill)',
-    nameEs: 'Molino de Viento Dinámico (Windmill)',
-    nameEn: 'Dynamic Standing Windmill',
-    category: 'calentamiento',
-    level: 'basico',
-    series: 2,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Pies muy separados, brazos en cruz, inclinar el tronco para tocar el pie contrario alternativamente.',
-    descriptionEs: 'Pies muy separados, brazos en cruz, inclinar el tronco para tocar el pie contrario alternativamente.',
-    descriptionEn: 'Wide stance, arms spread, hinge to touch opposite toes alternately with rotational control.',
-    coachingPoints: ['Girar desde la cintura escapular', 'Piernas extendidas'],
-    coachingPointsEs: ['Girar desde la cintura escapular', 'Piernas extendidas'],
-    coachingPointsEn: ['Rotate through shoulder girdle', 'Keep legs straight'],
-    targetZones: ['isquiosurales', 'oblicuos', 'espalda'],
-    source: 'system'
-  },
-  {
-    id: 'hex-019',
-    name: 'Sentadilla Profunda con Extensión Torácica',
-    nameEs: 'Sentadilla Profunda con Extensión Torácica',
-    nameEn: 'Deep Squat with Thoracic Reach',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Bajar a sentadilla profunda, sujetar punteras y elevar un brazo hacia el techo rotando el tronco.',
-    descriptionEs: 'Bajar a sentadilla profunda, sujetar punteras y elevar un brazo hacia el techo rotando el tronco.',
-    descriptionEn: 'Descend to deep squat, hold toes, then extend one arm to ceiling rotating upper back.',
-    coachingPoints: ['Talones clavados en el suelo', 'Pecho abierto'],
-    coachingPointsEs: ['Talones clavados en el suelo', 'Pecho abierto'],
-    coachingPointsEn: ['Heels pinned to floor', 'Open chest wide'],
-    targetZones: ['tobillos', 'caderas', 'columna_toracica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-020',
-    name: 'Saltitos de Tobillo Reactivos (Pogo Jumps)',
-    nameEs: 'Saltitos de Tobillo Reactivos (Pogo Jumps)',
-    nameEn: 'Ankle Stiffness Pogo Jumps',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 15,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Saltos verticales muy rápidos y cortos rebotando exclusivamente desde los tobillos con rodillas casi fijas.',
-    descriptionEs: 'Saltos verticales muy rápidos y cortos rebotando exclusivamente desde los tobillos con rodillas casi fijas.',
-    descriptionEn: 'Rapid short vertical hops rebounding solely from ankles with knees stiffened.',
-    coachingPoints: ['Sensación de muelle en el tendón de Aquiles', 'Punteras activas hacia arriba'],
-    coachingPointsEs: ['Sensación de muelle en el tendón de Aquiles', 'Punteras activas hacia arriba'],
-    coachingPointsEn: ['Feel spring elasticity in Achilles tendon', 'Keep toes pulled up in flight'],
-    targetZones: ['tendon_aquiles', 'gemelos', 'rigidez_reactiva'],
-    source: 'system'
-  },
-  {
-    id: 'hex-021',
-    name: 'Activación de Glúteo en Puente Unipodal Dinámico',
-    nameEs: 'Activación de Glúteo en Puente Unipodal Dinámico',
-    nameEn: 'Dynamic Single-Leg Glute Activation',
-    category: 'calentamiento',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Boca arriba con una pierna flexionada y la otra en el aire, elevar pelvis contrayendo glúteo 1 segundo arriba.',
-    descriptionEs: 'Boca arriba con una pierna flexionada y la otra en el aire, elevar pelvis contrayendo glúteo 1 segundo arriba.',
-    descriptionEn: 'Supine with one knee bent and opposite leg raised, drive hips up squeezing glute for 1s at top.',
-    coachingPoints: ['Empujar desde el talón', 'Cero dolor lumbar'],
-    coachingPointsEs: ['Empujar desde el talón', 'Cero dolor lumbar'],
-    coachingPointsEn: ['Drive through heel', 'No lower back hyperextension'],
-    targetZones: ['gluteo_mayor', 'isquiosurales', 'pelvis'],
-    source: 'system'
-  },
-  {
-    id: 'hex-022',
-    name: 'FIFA 11+ Aceleración y Desaceleración Corta',
-    nameEs: 'FIFA 11+ Aceleración y Desaceleración Corta',
-    nameEn: 'FIFA 11+ Short Deceleration Shuttle',
-    category: 'calentamiento',
-    level: 'avanzado',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['conos_o_botellas'],
-    materialsEs: ['conos o botellas'],
-    materialsEn: ['cones or bottles'],
-    description: 'Acelerar 3 metros hacia cono frontal, frenar en 2 apoyos bajando centro de gravedad y retroceder de espaldas.',
-    descriptionEs: 'Acelerar 3 metros hacia cono frontal, frenar en 2 apoyos bajando centro de gravedad y retroceder de espaldas.',
-    descriptionEn: 'Sprint 3 meters forward to cone, brake in 2 steps dropping center of gravity, then backpedal.',
-    coachingPoints: ['Rodilla alineada con puntera en frenada', 'Tronco inclinado al acelerar'],
-    coachingPointsEs: ['Rodilla alineada con puntera en frenada', 'Tronco inclinado al acelerar'],
-    coachingPointsEn: ['Knee aligned with toe during brake', 'Forward torso lean when accelerating'],
-    targetZones: ['frenada_excentrica', 'lca', 'cardio'],
-    source: 'system'
-  },
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // FASE 2: TÉCNICA INDIVIDUAL Y CONTROL (25 ejercicios: hex-023 a hex-047)
-  // ══════════════════════════════════════════════════════════════════════════════
-  {
-    id: 'hex-023',
-    name: 'Campanita (Toques Interior-Interior)',
-    nameEs: 'Campanita (Toques Interior-Interior)',
-    nameEn: 'Bell Taps (Inside-Inside Touches)',
-    category: 'tecnica',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pasar el balón rápidamente de interior a interior entre ambos pies en el sitio.',
-    descriptionEs: 'Pasar el balón rápidamente de interior a interior entre ambos pies en el sitio.',
-    descriptionEn: 'Pass the ball quickly between inside of both feet in place with light rhythm.',
-    coachingPoints: ['Rodillas semiflexionadas', 'Mirar al frente en intervalos'],
-    coachingPointsEs: ['Rodillas semiflexionadas', 'Mirar al frente en intervalos'],
-    coachingPointsEn: ['Knees slightly bent', 'Lift eyes periodically off the ball'],
-    targetZones: ['control_pie', 'coordinacion_tecnica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-024',
-    name: 'Pisas Alternas (Sole Taps)',
-    nameEs: 'Pisas Alternas (Sole Taps)',
-    nameEn: 'Sole Taps on Top of Ball',
-    category: 'tecnica',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Tocar la parte superior del balón con la suela de cada pie alternando con saltitos reactivos.',
-    descriptionEs: 'Tocar la parte superior del balón con la suela de cada pie alternando con saltitos reactivos.',
-    descriptionEn: 'Tap top of ball alternately with sole of each foot using bouncy rhythmic hops.',
-    coachingPoints: ['No apoyar el peso sobre el balón', 'Brazos coordinados'],
-    coachingPointsEs: ['No apoyar el peso sobre el balón', 'Brazos coordinados'],
-    coachingPointsEn: ['Do not rest body weight on ball', 'Coordinate arm swing'],
-    targetZones: ['sensibilidad_planta', 'ritmo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-025',
-    name: 'Arrastre con Suela y Toque de Interior (V-Pull Inside)',
-    nameEs: 'Arrastre con Suela y Toque de Interior (V-Pull Inside)',
-    nameEn: 'V-Pull Inside (Sole Drag & Push)',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Arrastrar el balón hacia atrás con la suela y empujarlo en diagonal hacia adelante con el interior del mismo pie formando una V.',
-    descriptionEs: 'Arrastrar el balón hacia atrás con la suela y empujarlo en diagonal hacia adelante con el interior del mismo pie formando una V.',
-    descriptionEn: 'Drag ball back with sole, then push diagonally forward with inside of same foot in a V-pattern.',
-    coachingPoints: ['Cambio de peso ágil en el pie de apoyo', 'Dibujar una V limpia'],
-    coachingPointsEs: ['Cambio de peso ágil en el pie de apoyo', 'Dibujar una V limpia'],
-    coachingPointsEn: ['Smooth weight shift on standing foot', 'Shape a clean V trajectory'],
-    targetZones: ['regate_corto', 'pie_dominante_y_no_dominante'],
-    source: 'system'
-  },
-  {
-    id: 'hex-026',
-    name: 'Arrastre con Suela y Salida de Exterior (V-Pull Outside)',
-    nameEs: 'Arrastre con Suela y Salida de Exterior (V-Pull Outside)',
-    nameEn: 'V-Pull Outside (Sole Drag & Exterior Push)',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pisar y arrastrar hacia atrás, salir con el empeine exterior hacia el lateral abriendo el ángulo.',
-    descriptionEs: 'Pisar y arrastrar hacia atrás, salir con el empeine exterior hacia el lateral abriendo el ángulo.',
-    descriptionEn: 'Drag back with sole, accelerate outward with outside of foot opening the passing line.',
-    coachingPoints: ['Giro de cadera explosivo', 'Toque de salida con la distancia justa'],
-    coachingPointsEs: ['Giro de cadera explosivo', 'Toque de salida con la distancia justa'],
-    coachingPointsEn: ['Explosive hip turn', 'Calibrated exit touch distance'],
-    targetZones: ['cambio_direccion', 'proteccion_balon'],
-    source: 'system'
-  },
-  {
-    id: 'hex-027',
-    name: 'Triángulo Técnico con Suela e Interior',
-    nameEs: 'Triángulo Técnico con Suela e Interior',
-    nameEn: 'Technical Triangle with Sole & Inside',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 15,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pisar atrás con derecha, pasar con interior a izquierda, empujar con izquierda al frente. Repetir en triángulo invertido.',
-    descriptionEs: 'Pisar atrás con derecha, pasar con interior a izquierda, empujar con izquierda al frente. Repetir en triángulo invertido.',
-    descriptionEn: 'Sole drag back right, pass inside to left foot, push forward with left. Complete geometric triangle.',
-    coachingPoints: ['Fluidez continua sin frenar el balón', 'Pies ligeros'],
-    coachingPointsEs: ['Fluidez continua sin frenar el balón', 'Pies ligeros'],
-    coachingPointsEn: ['Continuous flow without stopping ball', 'Light fast feet'],
-    targetZones: ['vision_espacial', 'ambidextrismo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-028',
-    name: 'La Croqueta de Iniesta en Espacio Reducido',
-    nameEs: 'La Croqueta de Iniesta en Espacio Reducido',
-    nameEn: 'In-Place Iniesta Croqueta',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Desplazar el balón con interior de pie derecho directamente hacia interior de pie izquierdo y salir hacia delante.',
-    descriptionEs: 'Desplazar el balón con interior de pie derecho directamente hacia interior de pie izquierdo y salir hacia delante.',
-    descriptionEn: 'Slide ball with inside of right foot directly into inside of left foot and accelerate forward.',
-    coachingPoints: ['Movimiento en un solo tiempo continuo', 'Fintar con el tronco antes del contacto'],
-    coachingPointsEs: ['Movimiento en un solo tiempo continuo', 'Fintar con el tronco antes del contacto'],
-    coachingPointsEn: ['Single fluid tempo', 'Feint with upper body before contact'],
-    targetZones: ['regate_desborde', 'coordinacion_bimanual_pies'],
-    source: 'system'
-  },
-  {
-    id: 'hex-029',
-    name: 'Bicicleta Simple (Step Over Outward)',
-    nameEs: 'Bicicleta Simple (Step Over Outward)',
-    nameEn: 'Single Step-Over Outward',
-    category: 'tecnica',
-    level: 'basico',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pasar el pie por delante del balón de adentro hacia afuera sin tocarlo, apoyando para fintar y salir con el otro pie.',
-    descriptionEs: 'Pasar el pie por delante del balón de adentro hacia afuera sin tocarlo, apoyando para fintar y salir con el otro pie.',
-    descriptionEn: 'Circle foot over ball from inside to out without touching, plant to fake and exit opposite way.',
-    coachingPoints: ['Bajar el hombro para engañar', 'No golpear el balón con el talón'],
-    coachingPointsEs: ['Bajar el hombro para engañar', 'No golpear el balón con el talón'],
-    coachingPointsEn: ['Drop shoulder to sell the feint', 'Avoid clipping ball with heel'],
-    targetZones: ['finta', 'engano_corporal'],
-    source: 'system'
-  },
-  {
-    id: 'hex-030',
-    name: 'Doble Bicicleta con Salida de Exterior',
-    nameEs: 'Doble Bicicleta con Salida de Exterior',
-    nameEn: 'Double Step-Over with Exterior Exit',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Bicicleta con pierna derecha, inmediata bicicleta con pierna izquierda y toque explosivo con exterior derecho.',
-    descriptionEs: 'Bicicleta con pierna derecha, inmediata bicicleta con pierna izquierda y toque explosivo con exterior derecho.',
-    descriptionEn: 'Right foot step-over immediately followed by left foot step-over, then explosive right exterior push.',
-    coachingPoints: ['Velocidad de ejecución sin perder equilibrio', 'Aceleración en el cambio de ritmo'],
-    coachingPointsEs: ['Velocidad de ejecución sin perder equilibrio', 'Aceleración en el cambio de ritmo'],
-    coachingPointsEn: ['Execution speed without balance loss', 'Sharp acceleration on exit'],
-    targetZones: ['regate_avanzado', 'cambio_de_ritmo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-031',
-    name: 'Bicicleta Inversa (Scissors Inward)',
-    nameEs: 'Bicicleta Inversa (Scissors Inward)',
-    nameEn: 'Inward Scissors Feint',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pasar el pie por encima del balón de afuera hacia adentro rodeándolo, amortiguar y salir en dirección contraria.',
-    descriptionEs: 'Pasar el pie por encima del balón de afuera hacia adentro rodeándolo, amortiguar y salir en dirección contraria.',
-    descriptionEn: 'Wrap foot over ball from outside to in, plant and push away in opposite direction.',
-    coachingPoints: ['Movimiento circular limpio', 'Cadera baja'],
-    coachingPointsEs: ['Movimiento circular limpio', 'Cadera baja'],
-    coachingPointsEn: ['Clean circular orbit', 'Low center of gravity'],
-    targetZones: ['finta_inversa', 'agilidad'],
-    source: 'system'
-  },
-  {
-    id: 'hex-032',
-    name: 'El Recorte de Cruyff Clásico',
-    nameEs: 'El Recorte de Cruyff Clásico',
-    nameEn: 'Cruyff Turn Drill',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Fintar pase o tiro, pisar con pie de apoyo al lado del balón y recortar hacia atrás por detrás de la pierna de apoyo con el interior.',
-    descriptionEs: 'Fintar pase o tiro, pisar con pie de apoyo al lado del balón y recortar hacia atrás por detrás de la pierna de apoyo con el interior.',
-    descriptionEn: 'Fake a strike, plant support foot next to ball and chop ball back behind support leg with inside of foot.',
-    coachingPoints: ['Engaño total con el tronco superior', 'Giro de 180 grados veloz'],
-    coachingPointsEs: ['Engaño total con el tronco superior', 'Giro de 180 grados veloz'],
-    coachingPointsEn: ['Total conviction in shooting fake', 'Fast 180-degree pivot'],
-    targetZones: ['recorte', 'frenada', '180_giro'],
-    source: 'system'
-  },
-  {
-    id: 'hex-033',
-    name: 'Ruleta de Marsella (Zidane Turn)',
-    nameEs: 'Ruleta de Marsella (Zidane Turn)',
-    nameEn: 'Marseille Roulette (Zidane Turn)',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Pisar balón con derecha girando espalda al rival, saltar sobre pie derecho y arrastrar con suela izquierda hacia adelante.',
-    descriptionEs: 'Pisar balón con derecha girando espalda al rival, saltar sobre pie derecho y arrastrar con suela izquierda hacia adelante.',
-    descriptionEn: 'Drag ball with right sole pivoting back to defender, switch feet and drag forward with left sole.',
-    coachingPoints: ['Interponer el cuerpo entre balón y contrario', 'Giro fluido de 360 grados'],
-    coachingPointsEs: ['Interponer el cuerpo entre balón y contrario', 'Giro fluido de 360 grados'],
-    coachingPointsEn: ['Shield ball with body during pivot', 'Fluid 360 rotation'],
-    targetZones: ['regate_protegido', 'coordinacion_alta'],
-    source: 'system'
-  },
-  {
-    id: 'hex-034',
-    name: 'Elástico de Ronaldinho en Corto',
-    nameEs: 'Elástico de Ronaldinho en Corto',
-    nameEn: 'Short Elastic Flip-Flap Drill',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 4,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Toque exterior hacia afuera y en el mismo movimiento de tobillo enganche interior hacia adentro.',
-    descriptionEs: 'Toque exterior hacia afuera y en el mismo movimiento de tobillo enganche interior hacia adentro.',
-    descriptionEn: 'Flick ball outward with outside of laces and snap it inward with inside of foot in one wrist-like motion.',
-    coachingPoints: ['Flexibilidad y reactividad de tobillo', 'El balón no debe despegarse del pie'],
-    coachingPointsEs: ['Flexibilidad y reactividad de tobillo', 'El balón no debe despegarse del pie'],
-    coachingPointsEn: ['Ankle flexibility and quick snap', 'Ball stays glued to boot'],
-    targetZones: ['regate_explosivo', 'movilidad_tobillo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-035',
-    name: 'Pases Rasos de Precisión contra Pared (Pie Dominante)',
-    nameEs: 'Pases Rasos de Precisión contra Pared (Pie Dominante)',
-    nameEn: 'Wall Push Passes (Dominant Foot)',
-    category: 'tecnica',
-    level: 'basico',
-    series: 3,
-    reps: 25,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Pases tensos y rasos con el interior del pie dominante a 2 metros de una pared firme.',
-    descriptionEs: 'Pases tensos y rasos con el interior del pie dominante a 2 metros de una pared firme.',
-    descriptionEn: 'Firm ground passes with inside of dominant foot 2 meters from a solid wall.',
-    coachingPoints: ['Tobillo rígido y bloqueado', 'Impactar el centro del balón'],
-    coachingPointsEs: ['Tobillo rígido y bloqueado', 'Impactar el centro del balón'],
-    coachingPointsEn: ['Locked ankle at contact', 'Strike dead center of ball'],
-    targetZones: ['pase_corto', 'pie_dominante'],
-    source: 'system'
-  },
-  {
-    id: 'hex-036',
-    name: 'Pases Rasos de Precisión contra Pared (Pie No Dominante)',
-    nameEs: 'Pases Rasos de Precisión contra Pared (Pie No Dominante)',
-    nameEn: 'Wall Push Passes (Non-Dominant Foot)',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 25,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Pases tensos continuos con el pie débil buscando idéntica precisión y firmeza que con el dominante.',
-    descriptionEs: 'Pases tensos continuos con el pie débil buscando idéntica precisión y firmeza que con el dominante.',
-    descriptionEn: 'Continuous firm passes with weak foot matching the accuracy and crispness of dominant foot.',
-    coachingPoints: ['Pie de apoyo apuntando hacia el objetivo', 'Acompañar la pierna tras el golpeo'],
-    coachingPointsEs: ['Pie de apoyo apuntando hacia el objetivo', 'Acompañar la pierna tras el golpeo'],
-    coachingPointsEn: ['Support foot aimed squarely at target', 'Follow through cleanly'],
-    targetZones: ['pie_debil', 'equilibrio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-037',
-    name: 'Pared Alternada a Dos Toques (Control + Pase)',
-    nameEs: 'Pared Alternada a Dos Toques (Control + Pase)',
-    nameEn: 'Alternating Wall Rebound (Control + Pass)',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 30,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Pase con derecha, controlar orientado con interior izquierda, pase con izquierda, controlar con derecha.',
-    descriptionEs: 'Pase con derecha, controlar orientado con interior izquierda, pase con izquierda, controlar con derecha.',
-    descriptionEn: 'Pass right, directional control with inside of left, pass left, directional control with right.',
-    coachingPoints: ['Primer toque siempre en diagonal hacia el otro pie', 'Cuerpo perfilado'],
-    coachingPointsEs: ['Primer toque siempre en diagonal hacia el otro pie', 'Cuerpo perfilado'],
-    coachingPointsEn: ['First touch angled toward opposite foot', 'Keep body open to receiving'],
-    targetZones: ['control_orientado', 'ritmo_dos_toques'],
-    source: 'system'
-  },
-  {
-    id: 'hex-038',
-    name: 'Pared al Primer Toque (One-Touch Alterno)',
-    nameEs: 'Pared al Primer Toque (One-Touch Alterno)',
-    nameEn: 'One-Touch Wall Rally',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 35,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Pases ininterrumpidos de primera alternando pie izquierdo y pie derecho a máxima velocidad.',
-    descriptionEs: 'Pases ininterrumpidos de primera alternando pie izquierdo y pie derecho a máxima velocidad.',
-    descriptionEn: 'Unbroken one-touch ground passes alternating left and right feet at high tempo.',
-    coachingPoints: ['Ajuste de pasos constantes antes de impactar', 'Brazos equilibrando el cuerpo'],
-    coachingPointsEs: ['Ajuste de pasos constantes antes de impactar', 'Brazos equilibrando el cuerpo'],
-    coachingPointsEn: ['Micro-adjust steps before contact', 'Arms out for balance'],
-    targetZones: ['primer_toque', 'tiempo_reaccion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-039',
-    name: 'Control Orientado con Exterior y Pase Cruzado',
-    nameEs: 'Control Orientado con Exterior y Pase Cruzado',
-    nameEn: 'Outside Cushion Touch & Cross Pass',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Recibir rebote de pared, amortiguar con exterior hacia el lateral alejándolo del rival imaginario y pasar.',
-    descriptionEs: 'Recibir rebote de pared, amortiguar con exterior hacia el lateral alejándolo del rival imaginario y pasar.',
-    descriptionEn: 'Receive wall rebound, cushion laterally with outside of foot away from imaginary pressure, then pass.',
-    coachingPoints: ['Amortiguar relajando el tobillo al contacto', 'Orientar la carrera de salida'],
-    coachingPointsEs: ['Amortiguar relajando el tobillo al contacto', 'Orientar la carrera de salida'],
-    coachingPointsEn: ['Soft relaxed ankle on cushion', 'Turn hips into exit lane'],
-    targetZones: ['control_exterior', 'desmarque'],
-    source: 'system'
-  },
-  {
-    id: 'hex-040',
-    name: 'Control Aéreo Amortiguado con Empeine (Drop & Catch)',
-    nameEs: 'Control Aéreo Amortiguado con Empeine (Drop & Catch)',
-    nameEn: 'Aerial Cushion Catch with Laces',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 15,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Lanzar balón a la altura del pecho y amortiguarlo con el empeine bajando el pie como un colchón sin que bote.',
-    descriptionEs: 'Lanzar balón a la altura del pecho y amortiguarlo con el empeine bajando el pie como un colchón sin que bote.',
-    descriptionEn: 'Drop ball from chest height and cushion dead on laces by dropping foot like a velvet cushion.',
-    coachingPoints: ['Acompañar la caída del balón hacia abajo', 'Silencio al contacto'],
-    coachingPointsEs: ['Acompañar la caída del balón hacia abajo', 'Silencio al contacto'],
-    coachingPointsEn: ['Ride descent of ball downward', 'Silent contact'],
-    targetZones: ['sensibilidad_empeine', 'control_aereo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-041',
-    name: 'Dominadas Básicas Alternas (Juggling Empeine)',
-    nameEs: 'Dominadas Básicas Alternas (Juggling Empeine)',
-    nameEn: 'Alternating Laces Juggling',
-    category: 'tecnica',
-    level: 'basico',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Toques de empeine continuos alternando pie derecho y pie izquierdo sin que el balón toque el suelo.',
-    descriptionEs: 'Toques de empeine continuos alternando pie derecho y pie izquierdo sin que el balón toque el suelo.',
-    descriptionEn: 'Keepy-uppies with laces alternating right and left foot continuously without ground bounce.',
-    coachingPoints: ['Balón con efecto de rotación hacia el cuerpo', 'Toque no más alto que la cintura'],
-    coachingPointsEs: ['Balón con efecto de rotación hacia el cuerpo', 'Toque no más alto que la cintura'],
-    coachingPointsEn: ['Backspin rotation towards body', 'Keep ball below waist height'],
-    targetZones: ['tacto_balon', 'propiocepcion_pie'],
-    source: 'system'
-  },
-  {
-    id: 'hex-042',
-    name: 'Dominadas con Muslo y Empeine Combinadas',
-    nameEs: 'Dominadas con Muslo y Empeine Combinadas',
-    nameEn: 'Thigh to Laces Juggling Ladder',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon'],
-    materialsEs: ['balón'],
-    materialsEn: ['ball'],
-    description: 'Secuencia: muslo derecho -> empeine derecho -> muslo izquierdo -> empeine izquierdo ininterrumpidamente.',
-    descriptionEs: 'Secuencia: muslo derecho -> empeine derecho -> muslo izquierdo -> empeine izquierdo ininterrumpidamente.',
-    descriptionEn: 'Sequence: right thigh -> right laces -> left thigh -> left laces without missing a beat.',
-    coachingPoints: ['Muslo a 90 grados al recibir', 'Pequeño salto en pie de apoyo'],
-    coachingPointsEs: ['Muslo a 90 grados al recibir', 'Pequeño salto en pie de apoyo'],
-    coachingPointsEn: ['Thigh at 90 degrees to receive', 'Micro-hop on base leg'],
-    targetZones: ['coordinacion_segmentaria', 'control_aereo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-043',
-    name: 'Circuito Slalom en Conos en Espacio Reducido',
-    nameEs: 'Circuito Slalom en Conos en Espacio Reducido',
-    nameEn: 'Tight Cone Slalom Dribble',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 4,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon', 'conos_o_botellas'],
-    materialsEs: ['balón', 'conos o botellas'],
-    materialsEn: ['ball', 'cones or bottles'],
-    description: 'Sortear 4 conos separados por 60 cm usando interior y exterior del mismo pie, luego cambiar de pie.',
-    descriptionEs: 'Sortear 4 conos separados por 60 cm usando interior y exterior del mismo pie, luego cambiar de pie.',
-    descriptionEn: 'Slalom through 4 cones spaced 60cm apart using inside and outside of same foot, then switch feet.',
-    coachingPoints: ['Toques cortos cada paso', 'Brazos abiertos para balancear'],
-    coachingPointsEs: ['Toques cortos cada paso', 'Brazos abiertos para balancear'],
-    coachingPointsEn: ['Touch ball with every stride', 'Arms spread for balance'],
-    targetZones: ['conduccion_corta', 'frecuencia_apoyos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-044',
-    name: 'Slalom con Doble Suela (Roll-Over Cones)',
-    nameEs: 'Slalom con Doble Suela (Roll-Over Cones)',
-    nameEn: 'Sole Roll-Over Cone Weave',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon', 'conos_o_botellas'],
-    materialsEs: ['balón', 'conos o botellas'],
-    materialsEn: ['ball', 'cones or bottles'],
-    description: 'Atravesar conos pisando y rodando el balón de lado a lado con la suela de un pie al otro.',
-    descriptionEs: 'Atravesar conos pisando y rodando el balón de lado a lado con la suela de un pie al otro.',
-    descriptionEn: 'Navigate cones rolling ball laterally across the body with sole from one foot to the other.',
-    coachingPoints: ['El balón cruza el eje central del cuerpo', 'Mirada arriba al rodar'],
-    coachingPointsEs: ['El balón cruza el eje central del cuerpo', 'Mirada arriba al rodar'],
-    coachingPointsEn: ['Ball crosses body midline', 'Keep vision up during rolls'],
-    targetZones: ['futsal_skills', 'dominio_planta'],
-    source: 'system'
-  },
-  {
-    id: 'hex-045',
-    name: 'Pase aéreo picado contra pared y control de pecho',
-    nameEs: 'Pase aéreo picado contra pared y control de pecho',
-    nameEn: 'Lofted Wall Rebound to Chest Control',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['balon', 'pared'],
-    materialsEs: ['balón', 'pared'],
-    materialsEn: ['ball', 'wall'],
-    description: 'Picar el balón por debajo contra la pared a media altura, recibir de pecho amortiguando hacia el suelo y rematar a un toque.',
-    descriptionEs: 'Picar el balón por debajo contra la pared a media altura, recibir de pecho amortiguando hacia el suelo y rematar a un toque.',
-    descriptionEn: 'Chip ball against wall at chest height, cushion with chest downward to feet and finish one-touch.',
-    coachingPoints: ['Sacar el pecho y retraer en el impacto', 'No doblar la espalda hacia atrás en exceso'],
-    coachingPointsEs: ['Sacar el pecho y retraer en el impacto', 'No doblar la espalda hacia atrás en exceso'],
-    coachingPointsEn: ['Puff chest out then retract on impact', 'Avoid hyperextending spine'],
-    targetZones: ['control_pecho', 'vision_aerea'],
-    source: 'system'
-  },
-  {
-    id: 'hex-046',
-    name: 'Control Orientado con Giros de 90 Grados (Cuadrado)',
-    nameEs: 'Control Orientado con Giros de 90 Grados (Cuadrado)',
-    nameEn: 'Square 90-Degree Directional Touches',
-    category: 'tecnica',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'conos_o_botellas'],
-    materialsEs: ['balón', 'conos o botellas'],
-    materialsEn: ['ball', 'cones or bottles'],
-    description: 'En un cuadrado de 2x2 metros, pasar el balón de esquina a esquina realizando controles de 90 grados en cada vértice.',
-    descriptionEs: 'En un cuadrado de 2x2 metros, pasar el balón de esquina a esquina realizando controles de 90 grados en cada vértice.',
-    descriptionEn: 'Within a 2x2m grid, push ball corner to corner making sharp 90-degree directional touches at each vertex.',
-    coachingPoints: ['Abrir el pie perpendicular a la trayectoria', 'Acelerar tras el giro'],
-    coachingPointsEs: ['Abrir el pie perpendicular a la trayectoria', 'Acelerar tras el giro'],
-    coachingPointsEn: ['Open foot perpendicular to ball line', 'Accelerate immediately after turning'],
-    targetZones: ['perfilacion', 'cambio_sentido'],
-    source: 'system'
-  },
-  {
-    id: 'hex-047',
-    name: 'Reto de Precisión al Cono (Target Striking)',
-    nameEs: 'Reto de Precisión al Cono (Target Striking)',
-    nameEn: 'Target Cone Precision Striking',
-    category: 'tecnica',
-    level: 'avanzado',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['balon', 'conos_o_botellas'],
-    materialsEs: ['balón', 'conos o botellas'],
-    materialsEn: ['ball', 'cones or bottles'],
-    description: 'Colocar un cono o botella a 4 metros y golpearlo con pase raso con interior buscando derribarlo o tocarlo.',
-    descriptionEs: 'Colocar un cono o botella a 4 metros y golpearlo con pase raso con interior buscando derribarlo o tocarlo.',
-    descriptionEn: 'Set a cone or bottle 4m away and hit it with a crisp inside-foot pass aiming for a direct strike.',
-    coachingPoints: ['Fijar la vista en el objetivo antes del armado', 'Pierna de golpeo sigue una línea recta'],
-    coachingPointsEs: ['Fijar la vista en el objetivo antes del armado', 'Pierna de golpeo sigue una línea recta'],
-    coachingPointsEn: ['Lock eyes on target before backswing', 'Striking leg follows a straight laser line'],
-    targetZones: ['punteria_pase', 'concentracion'],
-    source: 'system'
-  },
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // FASE 3: COORDINACIÓN Y AGILIDAD (20 ejercicios: hex-048 a hex-067)
-  // ══════════════════════════════════════════════════════════════════════════════
-  {
-    id: 'hex-048',
-    name: 'Salto a la Cuerda con Pies Juntos (Rope Double Bounce)',
-    nameEs: 'Salto a la Cuerda con Pies Juntos (Rope Double Bounce)',
-    nameEn: 'Jump Rope Basic Bounce',
-    category: 'coordinacion_agilidad',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['cuerda'],
-    materialsEs: ['cuerda'],
-    materialsEn: ['jump rope'],
-    description: 'Saltar la comba con pies juntos manteniendo ritmo estable, muñecas relajadas y apoyos de metatarso.',
-    descriptionEs: 'Saltar la comba con pies juntos manteniendo ritmo estable, muñecas relajadas y apoyos de metatarso.',
-    descriptionEn: 'Jump rope with both feet together maintaining steady rhythm, loose wrists, and forefoot bounces.',
-    coachingPoints: ['Girar la cuerda desde las muñecas, no desde los hombros', 'Saltar solo lo necesario para que pase'],
-    coachingPointsEs: ['Girar la cuerda desde las muñecas, no desde los hombros', 'Saltar solo lo necesario para que pase'],
-    coachingPointsEn: ['Turn rope from wrists, not whole arms', 'Jump just high enough for rope clearance'],
-    targetZones: ['resistencia_gemelos', 'coordinacion_manos_pies'],
-    source: 'system'
-  },
-  {
-    id: 'hex-049',
-    name: 'Salto a la Cuerda con Paso de Boxeador (Boxer Skip)',
-    nameEs: 'Salto a la Cuerda con Paso de Boxeador (Boxer Skip)',
-    nameEn: 'Boxer Skip Jump Rope',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['cuerda'],
-    materialsEs: ['cuerda'],
-    materialsEn: ['jump rope'],
-    description: 'Alternar el peso de un pie al otro con doble rebote sutil simulando el juego de pies de un púgil.',
-    descriptionEs: 'Alternar el peso de un pie al otro con doble rebote sutil simulando el juego de pies de un púgil.',
-    descriptionEn: 'Shift weight from one foot to the other with subtle double taps mimicking a boxer shuffle.',
-    coachingPoints: ['Cambio de peso fluido', 'Torso relajado'],
-    coachingPointsEs: ['Cambio de peso fluido', 'Torso relajado'],
-    coachingPointsEn: ['Fluid weight distribution', 'Relaxed upper body'],
-    targetZones: ['transferencia_peso', 'ritmo_motor'],
-    source: 'system'
-  },
-  {
-    id: 'hex-050',
-    name: 'Salto a la Cuerda a Pata Coja Alternada',
-    nameEs: 'Salto a la Cuerda a Pata Coja Alternada',
-    nameEn: 'Single-Leg Alternating Jump Rope',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['cuerda'],
-    materialsEs: ['cuerda'],
-    materialsEn: ['jump rope'],
-    description: '3 saltos continuos sobre pie derecho seguidos de 3 saltos sobre pie izquierdo sin detener la cuerda.',
-    descriptionEs: '3 saltos continuos sobre pie derecho seguidos de 3 saltos sobre pie izquierdo sin detener la cuerda.',
-    descriptionEn: '3 continuous hops on right foot followed by 3 hops on left foot without breaking rope swing.',
-    coachingPoints: ['Estabilidad rotuliana', 'Evitar que la rodilla colapse hacia adentro'],
-    coachingPointsEs: ['Estabilidad rotuliana', 'Evitar que la rodilla colapse hacia adentro'],
-    coachingPointsEn: ['Knee stability on landing', 'Prevent knee valgus collapse'],
-    targetZones: ['fuerza_elastica', 'tobillo_unipodal'],
-    source: 'system'
-  },
-  {
-    id: 'hex-051',
-    name: 'Escalera de Agilidad: 1 Pie por Hueco Rápido',
-    nameEs: 'Escalera de Agilidad: 1 Pie por Hueco Rápido',
-    nameEn: 'Agility Ladder One Foot Per Hole',
-    category: 'coordinacion_agilidad',
-    level: 'basico',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['escalera_o_cinta_suelo'],
-    materialsEs: ['escalera o cinta en el suelo'],
-    materialsEn: ['agility ladder or floor tape'],
-    description: 'Correr a través de 6 peldaños en el suelo apoyando exactamente un pie en cada hueco a máxima frecuencia.',
-    descriptionEs: 'Correr a través de 6 peldaños en el suelo apoyando exactamente un pie en cada hueco a máxima frecuencia.',
-    descriptionEn: 'Run through 6 rungs on floor planting exactly one foot per space at maximum foot speed.',
-    coachingPoints: ['Braceo coordinado con las piernas', 'No pisar las líneas'],
-    coachingPointsEs: ['Braceo coordinado con las piernas', 'No pisar las líneas'],
-    coachingPointsEn: ['Sync arms with leg turnover', 'Never step on the rungs'],
-    targetZones: ['frecuencia_zancada', 'velocidad_apoyos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-052',
-    name: 'Escalera de Agilidad: 2 Pies por Hueco (Two-In)',
-    nameEs: 'Escalera de Agilidad: 2 Pies por Hueco (Two-In)',
-    nameEn: 'Agility Ladder Two Feet Per Hole',
-    category: 'coordinacion_agilidad',
-    level: 'basico',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['escalera_o_cinta_suelo'],
-    materialsEs: ['escalera o cinta en el suelo'],
-    materialsEn: ['agility ladder or floor tape'],
-    description: 'Entrar con pie derecho y luego izquierdo en el mismo hueco antes de avanzar al siguiente.',
-    descriptionEs: 'Entrar con pie derecho y luego izquierdo en el mismo hueco antes de avanzar al siguiente.',
-    descriptionEn: 'Step right then left foot into same rung box before advancing to the next.',
-    coachingPoints: ['Ritmo 1-2, 1-2 continuo', 'Caderas bajas'],
-    coachingPointsEs: ['Ritmo 1-2, 1-2 continuo', 'Caderas bajas'],
-    coachingPointsEn: ['Steady 1-2, 1-2 cadence', 'Low athletic hips'],
-    targetZones: ['coordinacion_fina', 'metatarsos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-053',
-    name: 'Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)',
-    nameEs: 'Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)',
-    nameEn: 'Icky Shuffle (In-In-Out Pattern)',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['escalera_o_cinta_suelo'],
-    materialsEs: ['escalera o cinta en el suelo'],
-    materialsEn: ['agility ladder or floor tape'],
-    description: 'Patrón lateral: pie derecho dentro, pie izquierdo dentro, pie derecho fuera al lateral y avanzar en diagonal.',
-    descriptionEs: 'Patrón lateral: pie derecho dentro, pie izquierdo dentro, pie derecho fuera al lateral y avanzar en diagonal.',
-    descriptionEn: 'Lateral drill: right foot in, left foot in, right foot out laterally and advance diagonally.',
-    coachingPoints: ['Paso de apoyo exterior explosivo', 'Mirada arriba'],
-    coachingPointsEs: ['Paso de apoyo exterior explosivo', 'Mirada arriba'],
-    coachingPointsEn: ['Explosive outside plant foot', 'Eyes scanning up'],
-    targetZones: ['cambio_apoyo_lateral', 'frenada_corta'],
-    source: 'system'
-  },
-  {
-    id: 'hex-054',
-    name: 'Escalera de Agilidad: Pasos Ali (Ali Shuffle)',
-    nameEs: 'Escalera de Agilidad: Pasos Ali (Ali Shuffle)',
-    nameEn: 'Ali Shuffle Footwork Drill',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['escalera_o_cinta_suelo'],
-    materialsEs: ['escalera o cinta en el suelo'],
-    materialsEn: ['agility ladder or floor tape'],
-    description: 'De perfil a la escalera, alternar un pie dentro y otro fuera en tijera rápida mientras se avanza lateralmente.',
-    descriptionEs: 'De perfil a la escalera, alternar un pie dentro y otro fuera en tijera rápida mientras se avanza lateralmente.',
-    descriptionEn: 'Facing perpendicular, scissor one foot inside and one foot outside while shifting sideways down the ladder.',
-    coachingPoints: ['Giro de cadera rápido', 'Postura atlética compacta'],
-    coachingPointsEs: ['Giro de cadera rápido', 'Postura atlética compacta'],
-    coachingPointsEn: ['Fast hip snap', 'Compact athletic posture'],
-    targetZones: ['disociacion_tren_inferior', 'velocidad_reaccion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-055',
-    name: 'Cruces Dentro-Fuera en Línea Recta (In & Out)',
-    nameEs: 'Cruces Dentro-Fuera en Línea Recta (In & Out)',
-    nameEn: 'In & Out Fast Lateral Line Steps',
-    category: 'coordinacion_agilidad',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Abrir ambos pies por fuera de una línea imaginaria y volver a cerrarlos al centro a máxima frecuencia.',
-    descriptionEs: 'Abrir ambos pies por fuera de una línea imaginaria y volver a cerrarlos al centro a máxima frecuencia.',
-    descriptionEn: 'Step both feet wide across an imaginary line and quickly snap them back to center at top cadence.',
-    coachingPoints: ['Pies como si el suelo quemara', 'Rodillas elásticas'],
-    coachingPointsEs: ['Pies como si el suelo quemara', 'Rodillas elásticas'],
-    coachingPointsEn: ['Feet off floor like hot coals', 'Springy responsive knees'],
-    targetZones: ['agilidad_pies', 'cardio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-056',
-    name: 'Saltos en Cruz Multidireccionales a Pies Juntos',
-    nameEs: 'Saltos en Cruz Multidireccionales a Pies Juntos',
-    nameEn: 'Four-Square Cross Hops',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Saltar en forma de cruz: centro -> adelante -> centro -> atrás -> centro -> derecha -> centro -> izquierda.',
-    descriptionEs: 'Saltar en forma de cruz: centro -> adelante -> centro -> atrás -> centro -> derecha -> centro -> izquierda.',
-    descriptionEn: 'Four-way cross jump: center -> forward -> center -> back -> center -> right -> center -> left.',
-    coachingPoints: ['Tiempos de contacto mínimos', 'Tronco erguido y estable'],
-    coachingPointsEs: ['Tiempos de contacto mínimos', 'Tronco erguido y estable'],
-    coachingPointsEn: ['Minimal ground contact time', 'Stable upright torso'],
-    targetZones: ['reactividad_multidireccional', 'propiocepcion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-057',
-    name: 'Saltos en Cruz a Pata Coja (Unipodal Cross Hops)',
-    nameEs: 'Saltos en Cruz a Pata Coja (Unipodal Cross Hops)',
-    nameEn: 'Single-Leg Cross Hops',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Realizar el circuito en cruz apoyando un solo pie y controlando cada caída sin apoyar el pie libre.',
-    descriptionEs: 'Realizar el circuito en cruz apoyando un solo pie y controlando cada caída sin apoyar el pie libre.',
-    descriptionEn: 'Execute cross pattern on a single leg sticking and controlling each landing without touching down free foot.',
-    coachingPoints: ['Rodilla amortigua con flexión controlada', 'Tobillo firme sin inclinación'],
-    coachingPointsEs: ['Rodilla amortigua con flexión controlada', 'Tobillo firme sin inclinación'],
-    coachingPointsEn: ['Knee absorbs with slight bend', 'Solid ankle with no tilt'],
-    targetZones: ['estabilidad_tobillo', 'lca_prevencion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-058',
-    name: 'Paso de Patinador con Frenada (Skater Jumps & Stick)',
-    nameEs: 'Paso de Patinador con Frenada (Skater Jumps & Stick)',
-    nameEn: 'Skater Jumps with 2-Second Hold',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Salto lateral amplio sobre una pierna, clavar la caída congelando la postura 2 segundos antes de saltar al otro lado.',
-    descriptionEs: 'Salto lateral amplio sobre una pierna, clavar la caída congelando la postura 2 segundos antes de saltar al otro lado.',
-    descriptionEn: 'Wide lateral leap onto one leg, stick and freeze landing for 2 seconds before bounding back.',
-    coachingPoints: ['Glúteo activo absorbiendo el impacto', 'Pecho no se cae hacia adelante'],
-    coachingPointsEs: ['Glúteo activo absorbiendo el impacto', 'Pecho no se cae hacia adelante'],
-    coachingPointsEn: ['Glute engages to absorb force', 'Chest remains proud and upright'],
-    targetZones: ['frenada_lateral', 'gluteo_medio', 'rodilla'],
-    source: 'system'
-  },
-  {
-    id: 'hex-059',
-    name: 'Patinador Continuo Reactivo (Speed Skaters)',
-    nameEs: 'Patinador Continuo Reactivo (Speed Skaters)',
-    nameEn: 'Continuous Reactive Speed Skaters',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Saltos laterales continuos sin pausa con rebote explosivo y braceo potente simulando un patinador de velocidad.',
-    descriptionEs: 'Saltos laterales continuos sin pausa con rebote explosivo y braceo potente simulando un patinador de velocidad.',
-    descriptionEn: 'Continuous side-to-side bounds without pause using explosive rebound and speed-skater arm pump.',
-    coachingPoints: ['Potencia horizontal máxima', 'Transición rápida en metatarsos'],
-    coachingPointsEs: ['Potencia horizontal máxima', 'Transición rápida en metatarsos'],
-    coachingPointsEn: ['Maximum horizontal power', 'Fast forefoot turnarounds'],
-    targetZones: ['potencia_lateral', 'cardio_anaerobico'],
-    source: 'system'
-  },
-  {
-    id: 'hex-060',
-    name: 'T-Test de Agilidad en Salón (3x3 Metros)',
-    nameEs: 'T-Test de Agilidad en Salón (3x3 Metros)',
-    nameEn: 'Living Room 3x3m T-Test',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 4,
-    reps: 4,
-    durationSeconds: 0,
-    restSeconds: 40,
-    materials: ['conos_o_botellas'],
-    materialsEs: ['conos o botellas'],
-    materialsEn: ['cones or bottles'],
-    description: 'Sprint 3m adelante -> paso lateral 1.5m a la izquierda -> 3m lateral a la derecha -> 1.5m lateral al centro -> retroceso de espaldas.',
-    descriptionEs: 'Sprint 3m adelante -> paso lateral 1.5m a la izquierda -> 3m lateral a la derecha -> 1.5m lateral al centro -> retroceso de espaldas.',
-    descriptionEn: 'Sprint 3m forward -> lateral shuffle 1.5m left -> 3m right -> 1.5m back to center -> backpedal to start.',
-    coachingPoints: ['Nunca cruzar las piernas en desplazamientos laterales', 'Tocar la base de los conos'],
-    coachingPointsEs: ['Nunca cruzar las piernas en desplazamientos laterales', 'Tocar la base de los conos'],
-    coachingPointsEn: ['Never cross feet during shuffles', 'Touch cone bases with fingers'],
-    targetZones: ['agilidad_cod', 'frenada', 'perfil_defensivo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-061',
-    name: 'Equilibrio Unipodal en Pata Coja con Ojos Cerrados',
-    nameEs: 'Equilibrio Unipodal en Pata Coja con Ojos Cerrados',
-    nameEn: 'Eyes-Closed Single-Leg Balance',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 25,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Sostenerse sobre un solo pie, rodilla ligeramente desbloqueada, cerrar ojos y mantener estabilidad sin apoyar el otro.',
-    descriptionEs: 'Sostenerse sobre un solo pie, rodilla ligeramente desbloqueada, cerrar ojos y mantener estabilidad sin apoyar el otro.',
-    descriptionEn: 'Stand on one foot with soft knee bend, close eyes, and hold motionless balance.',
-    coachingPoints: ['Hacer microajustes desde el tobillo', 'Cerca de pared por seguridad'],
-    coachingPointsEs: ['Hacer microajustes desde el tobillo', 'Cerca de pared por seguridad'],
-    coachingPointsEn: ['Micro-adjust from ankle tendons', 'Stay near wall for safety'],
-    targetZones: ['propiocepcion_tobillo', 'sistema_vestibular'],
-    source: 'system'
-  },
-  {
-    id: 'hex-062',
-    name: 'Equilibrio Unipodal sobre Cojín o Superficie Blanda',
-    nameEs: 'Equilibrio Unipodal sobre Cojín o Superficie Blanda',
-    nameEn: 'Unstable Cushion Single-Leg Stance',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['cojin_o_toalla'],
-    materialsEs: ['cojín o toalla doblada'],
-    materialsEn: ['cushion or folded towel'],
-    description: 'Colocar un cojín en el suelo, subirse con un solo pie y resistir las microoscilaciones manteniendo la pelvis nivelada.',
-    descriptionEs: 'Colocar un cojín en el suelo, subirse con un solo pie y resistir las microoscilaciones manteniendo la pelvis nivelada.',
-    descriptionEn: 'Place cushion on floor, stand on one foot, and resist micro-wobbles keeping pelvis level.',
-    coachingPoints: ['Mirar a un punto fijo al frente', 'Contraer glúteo del pie de apoyo'],
-    coachingPointsEs: ['Mirar a un punto fijo al frente', 'Contraer glúteo del pie de apoyo'],
-    coachingPointsEn: ['Fix gaze on steady point ahead', 'Brace support glute'],
-    targetZones: ['propiocepcion_profunda', 'ligamentos_tobillo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-063',
-    name: 'Toques de Reloj Unipodales (Clock Reach)',
-    nameEs: 'Toques de Reloj Unipodales (Clock Reach)',
-    nameEn: 'Single-Leg Clock Cone Reaches',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Sobre una pierna, flexionar ligeramente y tocar el suelo con la punta del pie libre a las 12, las 3, las 6 y las 9.',
-    descriptionEs: 'Sobre una pierna, flexionar ligeramente y tocar el suelo con la punta del pie libre a las 12, las 3, las 6 y las 9.',
-    descriptionEn: 'On one leg, dip slightly and reach free toe to tap imaginary clock points at 12, 3, 6, and 9 o clock.',
-    coachingPoints: ['El peso nunca se transfiere al pie que toca', 'Rodilla alineada'],
-    coachingPointsEs: ['El peso nunca se transfiere al pie que toca', 'Rodilla alineada'],
-    coachingPointsEn: ['Never transfer weight onto tapping toe', 'Maintain knee tracking'],
-    targetZones: ['control_motor', 'estabilidad_lumbopelvica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-064',
-    name: 'Caída desde Salto y Clavado (Drop Jump Stick)',
-    nameEs: 'Caída desde Salto y Clavado (Drop Jump Stick)',
-    nameEn: 'Drop Jump & Two-Foot Stick',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['escalon_bajo'],
-    materialsEs: ['escalón bajo o bordillo'],
-    materialsEn: ['low step or curb'],
-    description: 'Dejarse caer desde un escalón bajo de 15-20 cm y clavar la caída en dos pies simultáneos absorbiendo en sentadilla parcial.',
-    descriptionEs: 'Dejarse caer desde un escalón bajo de 15-20 cm y clavar la caída en dos pies simultáneos absorbiendo en sentadilla parcial.',
-    descriptionEn: 'Step off low 15-20cm step and stick landing on both feet simultaneously absorbing into partial squat.',
-    coachingPoints: ['Caída silenciosa como un gato', 'Rodillas jamás colapsan hacia adentro (valgo)'],
-    coachingPointsEs: ['Caída silenciosa como un gato', 'Rodillas jamás colapsan hacia adentro (valgo)'],
-    coachingPointsEn: ['Silent landing like a cat', 'No inward knee valgus collapse'],
-    targetZones: ['prevencion_lca', 'absorcion_impactos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-065',
-    name: 'Salto Vertical con Caída a Una Pierna (Single-Leg Land)',
-    nameEs: 'Salto Vertical con Caída a Una Pierna (Single-Leg Land)',
-    nameEn: 'Vertical Hop with Single-Leg Stick',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 3,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Salto vertical moderado con ambos pies y caer amortiguando sobre una sola pierna congelando la postura.',
-    descriptionEs: 'Salto vertical moderado con ambos pies y caer amortiguando sobre una sola pierna congelando la postura.',
-    descriptionEn: 'Moderate two-foot vertical jump and land sticking on a single leg freezing posture instantly.',
-    coachingPoints: ['Flexión de cadera y rodilla simétrica', 'Mantener 3 segundos inmóvil'],
-    coachingPointsEs: ['Flexión de cadera y rodilla simétrica', 'Mantener 3 segundos inmóvil'],
-    coachingPointsEn: ['Symmetric hip and knee flexion', 'Hold motionless for 3 seconds'],
-    targetZones: ['lca_control_excentrico', 'propiocepcion_rodilla'],
-    source: 'system'
-  },
-  {
-    id: 'hex-066',
-    name: 'Arrancadas Explosivas de Reacción Auditiva',
-    nameEs: 'Arrancadas Explosivas de Reacción Auditiva',
-    nameEn: 'Audio Reaction Explosive Starts',
-    category: 'coordinacion_agilidad',
-    level: 'intermedio',
-    series: 4,
-    reps: 5,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Trotar suave en el sitio; al sonar un aplauso o pitido digital, arrancar a sprint máximo de 2 metros y frenar.',
-    descriptionEs: 'Trotar suave en el sitio; al sonar un aplauso o pitido digital, arrancar a sprint máximo de 2 metros y frenar.',
-    descriptionEn: 'Jog lightly in place; upon clap or audio cue, explode into a 2m sprint and brake sharply.',
-    coachingPoints: ['Primer paso agresivo hacia adelante', 'Centro de gravedad bajo al salir'],
-    coachingPointsEs: ['Primer paso agresivo hacia adelante', 'Centro de gravedad bajo al salir'],
-    coachingPointsEn: ['Aggressive first forward step', 'Low center of gravity at launch'],
-    targetZones: ['tiempo_reaccion', 'aceleracion_corta'],
-    source: 'system'
-  },
-  {
-    id: 'hex-067',
-    name: 'Giro de 180 Grados y Sprint de Espaldas a Frontal',
-    nameEs: 'Giro de 180 Grados y Sprint de Espaldas a Frontal',
-    nameEn: '180-Degree Pivot & Accelerate',
-    category: 'coordinacion_agilidad',
-    level: 'avanzado',
-    series: 4,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Espaldas a la dirección; pivotar 180 grados girando sobre un pie y acelerar 3 metros de cara de forma reactiva.',
-    descriptionEs: 'Espaldas a la dirección; pivotar 180 grados girando sobre un pie y acelerar 3 metros de cara de forma reactiva.',
-    descriptionEn: 'Back to run lane; pivot 180 degrees over single foot and sprint 3 meters forward reactively.',
-    coachingPoints: ['Girar cabeza primero para identificar espacio', 'Empuje enérgico de piernas'],
-    coachingPointsEs: ['Girar cabeza primero para identificar espacio', 'Empuje enérgico de piernas'],
-    coachingPointsEn: ['Turn head first to scan space', 'Powerful leg drive'],
-    targetZones: ['giro_pivot', 'aceleracion_post_transicion'],
-    source: 'system'
-  },
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // FASE 4: FUERZA PREVENTIVA Y CORE (25 ejercicios: hex-068 a hex-092)
-  // ══════════════════════════════════════════════════════════════════════════════
-  {
-    id: 'hex-068',
-    name: 'Plancha Frontal Clásica (Isometric Plank)',
-    nameEs: 'Plancha Frontal Clásica (Isometric Plank)',
-    nameEn: 'Classic Forearm Plank',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Apoyo sobre antebrazos y puntas de los pies. Mantener cuerpo en línea recta activando abdomen y glúteos.',
-    descriptionEs: 'Apoyo sobre antebrazos y puntas de los pies. Mantener cuerpo en línea recta activando abdomen y glúteos.',
-    descriptionEn: 'Forearm plank on toes. Keep body in a straight line engaging core and glutes.',
-    coachingPoints: ['No dejar caer la pelvis ni arquear zona lumbar', 'Cuello neutro alineado'],
-    coachingPointsEs: ['No dejar caer la pelvis ni arquear zona lumbar', 'Cuello neutro alineado'],
-    coachingPointsEn: ['Do not drop pelvis or sag lower back', 'Keep neck in neutral alignment'],
-    targetZones: ['core', 'transverso_abdomen', 'lumbar'],
-    source: 'system'
-  },
-  {
-    id: 'hex-069',
-    name: 'Plancha Lateral con Apoyo de Codo',
-    nameEs: 'Plancha Lateral con Apoyo de Codo',
-    nameEn: 'Elbow Side Plank',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 25,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Apoyado sobre un codo y lateral de los pies, elevar cadera hasta alinear tobillo, pelvis y hombro.',
-    descriptionEs: 'Apoyado sobre un codo y lateral de los pies, elevar cadera hasta alinear tobillo, pelvis y hombro.',
-    descriptionEn: 'Rest on one elbow and edge of feet, lift hips until ankle, hip, and shoulder form a straight line.',
-    coachingPoints: ['Codo justo debajo del hombro', 'Cadera empujando arriba'],
-    coachingPointsEs: ['Codo justo debajo del hombro', 'Cadera empujando arriba'],
-    coachingPointsEn: ['Elbow directly under shoulder', 'Keep hips pressed high'],
-    targetZones: ['oblicuos', 'cuadrado_lumbar', 'gluteo_medio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-070',
-    name: 'Plancha Lateral con Elevación de Pierna (Star Plank)',
-    nameEs: 'Plancha Lateral con Elevación de Pierna (Star Plank)',
-    nameEn: 'Side Plank with Leg Abduction',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En plancha lateral, elevar y descender la pierna superior con control sin perder la altura de la cadera.',
-    descriptionEs: 'En plancha lateral, elevar y descender la pierna superior con control sin perder la altura de la cadera.',
-    descriptionEn: 'From side plank, lift and lower the top leg smoothly without dropping hip height.',
-    coachingPoints: ['Puntera de pierna levantada mirando al frente', 'Glúteo medio en fuego'],
-    coachingPointsEs: ['Puntera de pierna levantada mirando al frente', 'Glúteo medio en fuego'],
-    coachingPointsEn: ['Top toe pointing forward', 'Engage abductor glute'],
-    targetZones: ['gluteo_medio', 'oblicuos', 'estabilidad_pelvica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-071',
-    name: 'Plancha Frontal con Toques de Hombro (Shoulder Taps)',
-    nameEs: 'Plancha Frontal con Toques de Hombro (Shoulder Taps)',
-    nameEn: 'Plank Shoulder Taps',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En plancha alta sobre palmas, tocar el hombro opuesto con una mano alternando sin balancear la cadera.',
-    descriptionEs: 'En plancha alta sobre palmas, tocar el hombro opuesto con una mano alternando sin balancear la cadera.',
-    descriptionEn: 'High plank on hands, tap opposite shoulder alternately while locking hips still.',
-    coachingPoints: ['Pies algo más anchos para mayor base', 'Cero balanceo pélvico'],
-    coachingPointsEs: ['Pies algo más anchos para mayor base', 'Cero balanceo pélvico'],
-    coachingPointsEn: ['Wider stance for base support', 'Zero hip wobble'],
-    targetZones: ['anti_rotacion', 'estabilidad_escapular', 'core'],
-    source: 'system'
-  },
-  {
-    id: 'hex-072',
-    name: 'Pájaro-Perro (Bird-Dog Contralateral)',
-    nameEs: 'Pájaro-Perro (Bird-Dog Contralateral)',
-    nameEn: 'Contralateral Bird-Dog',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En cuadrupedia, extender simultáneamente brazo derecho y pierna izquierda paralelos al suelo y sostener 2 segundos.',
-    descriptionEs: 'En cuadrupedia, extender simultáneamente brazo derecho y pierna izquierda paralelos al suelo y sostener 2 segundos.',
-    descriptionEn: 'On all fours, extend right arm and left leg parallel to floor simultaneously, hold for 2 seconds.',
-    coachingPoints: ['Apretar glúteo al extender pierna', 'Espalda plana como una mesa'],
-    coachingPointsEs: ['Apretar glúteo al extender pierna', 'Espalda plana como una mesa'],
-    coachingPointsEn: ['Squeeze glute at full leg reach', 'Tabletop flat back'],
-    targetZones: ['erectores_espinales', 'gluteo_mayor', 'core'],
-    source: 'system'
-  },
-  {
-    id: 'hex-073',
-    name: 'Bicho Muerto (Dead Bug Contralateral)',
-    nameEs: 'Bicho Muerto (Dead Bug Contralateral)',
-    nameEn: 'Contralateral Dead Bug',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 14,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Boca arriba con brazos al techo y rodillas a 90 grados, descender brazo derecho y pierna izquierda rozando el suelo.',
-    descriptionEs: 'Boca arriba con brazos al techo y rodillas a 90 grados, descender brazo derecho y pierna izquierda rozando el suelo.',
-    descriptionEn: 'Supine with arms up and knees at 90 degrees, lower right arm and left heel toward floor keeping back pinned.',
-    coachingPoints: ['Zona lumbar permanentemente aplastando la colchoneta', 'Exhalar al extender'],
-    coachingPointsEs: ['Zona lumbar permanentemente aplastando la colchoneta', 'Exhalar al extender'],
-    coachingPointsEn: ['Lower back glued flat against mat', 'Exhale during limb extension'],
-    targetZones: ['anti_extension_lumbar', 'coordinacion_cruzada'],
-    source: 'system'
-  },
-  {
-    id: 'hex-074',
-    name: 'Puente de Glúteo Bipodal con Pausa Isométrica',
-    nameEs: 'Puente de Glúteo Bipodal con Pausa Isométrica',
-    nameEn: 'Glute Bridge with Isometric Pause',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 15,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Tumbado boca arriba, flexionar rodillas a 90 grados y elevar cadera apretando glúteos 2 segundos en la cima.',
-    descriptionEs: 'Tumbado boca arriba, flexionar rodillas a 90 grados y elevar cadera apretando glúteos 2 segundos en la cima.',
-    descriptionEn: 'Lie on back, bend knees at 90 degrees and bridge hips up squeezing glutes for 2 seconds at top.',
-    coachingPoints: ['Empujar desde los talones', 'No arquear la columna lumbar al subir'],
-    coachingPointsEs: ['Empujar desde los talones', 'No arquear la columna lumbar al subir'],
-    coachingPointsEn: ['Drive through heels', 'Do not hyperextend lower back'],
-    targetZones: ['gluteo_mayor', 'isquiosurales', 'pelvis'],
-    source: 'system'
-  },
-  {
-    id: 'hex-075',
-    name: 'Puente de Glúteo Unipodal con Pierna Extendida',
-    nameEs: 'Puente de Glúteo Unipodal con Pierna Extendida',
-    nameEn: 'Single-Leg Glute Bridge',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Con una pierna en el aire alineada con el muslo de apoyo, elevar la pelvis utilizando la fuerza exclusiva del glúteo de apoyo.',
-    descriptionEs: 'Con una pierna en el aire alineada con el muslo de apoyo, elevar la pelvis utilizando la fuerza exclusiva del glúteo de apoyo.',
-    descriptionEn: 'With one leg extended in line with working thigh, elevate pelvis purely through single supporting glute.',
-    coachingPoints: ['Pelvis nivelada sin inclinación hacia el lado libre', 'Contracción firme'],
-    coachingPointsEs: ['Pelvis nivelada sin inclinación hacia el lado libre', 'Contracción firme'],
-    coachingPointsEn: ['Pelvis stays square with no hip drop', 'Solid glute peak contraction'],
-    targetZones: ['gluteo_aislado', 'cadena_posterior'],
-    source: 'system'
-  },
-  {
-    id: 'hex-076',
-    name: 'Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)',
-    nameEs: 'Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)',
-    nameEn: 'Copenhagen Adductor Plank (Bench Support)',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 35,
-    materials: ['sofa_o_silla'],
-    materialsEs: ['sofá o silla baja'],
-    materialsEn: ['sofa or low bench'],
-    description: 'Plancha lateral con la pierna superior apoyada en el sofá o silla, elevando pelvis y suspendiendo pierna inferior.',
-    descriptionEs: 'Plancha lateral con la pierna superior apoyada en el sofá o silla, elevando pelvis y suspendiendo pierna inferior.',
-    descriptionEn: 'Side plank with top foot resting on couch/bench, raising hips and holding bottom leg hovering.',
-    coachingPoints: ['Cuerpo recto como una tabla', 'Fundamental para prevenir pubalgias'],
-    coachingPointsEs: ['Cuerpo recto como una tabla', 'Fundamental para prevenir pubalgias'],
-    coachingPointsEn: ['Body straight as an arrow', 'Crucial groin/pubalgia prevention'],
-    targetZones: ['aductores', 'pubalgia_prevencion', 'core_lateral'],
-    source: 'system'
-  },
-  {
-    id: 'hex-077',
-    name: 'Copenhague Modificado en Suelo con Rodilla Apoyada',
-    nameEs: 'Copenhague Modificado en Suelo con Rodilla Apoyada',
-    nameEn: 'Floor Knee-Supported Copenhagen Plank',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Plancha lateral apoyando la cara interna de la rodilla superior en el suelo y elevando cadera de forma progresiva.',
-    descriptionEs: 'Plancha lateral apoyando la cara interna de la rodilla superior en el suelo y elevando cadera de forma progresiva.',
-    descriptionEn: 'Side plank supporting on inner knee on floor, bridging hips up progressively with reduced lever arm.',
-    coachingPoints: ['Brazo de palanca más corto y seguro', 'Activación del aductor mayor'],
-    coachingPointsEs: ['Brazo de palanca más corto y seguro', 'Activación del aductor mayor'],
-    coachingPointsEn: ['Shorter safer lever arm', 'Target adductor magnus'],
-    targetZones: ['aductor_medio', 'pubis'],
-    source: 'system'
-  },
-  {
-    id: 'hex-078',
-    name: 'Nordic Hamstring Curl Casero Asistido con Puerta o Sofá',
-    nameEs: 'Nordic Hamstring Curl Casero Asistido con Puerta o Sofá',
-    nameEn: 'Assisted Home Nordic Hamstring Curl',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    reps: 6,
-    durationSeconds: 0,
-    restSeconds: 40,
-    materials: ['sofa_pesado_o_tope_puerta'],
-    materialsEs: ['sofá pesado o tope de puerta'],
-    materialsEn: ['heavy sofa or door strap'],
-    description: 'De rodillas con tobillos anclados bajo el sofá, dejarse caer lentamente hacia adelante frenando con los isquiosurales.',
-    descriptionEs: 'De rodillas con tobillos anclados bajo el sofá, dejarse caer lentamente hacia adelante frenando con los isquiosurales.',
-    descriptionEn: 'Kneeling with heels anchored under heavy couch, lean forward lowering slowly resisting with hamstrings.',
-    coachingPoints: ['Caderas extendidas sin doblar cintura', 'Frenar la caída hasta el último instante'],
-    coachingPointsEs: ['Caderas extendidas sin doblar cintura', 'Frenar la caída hasta el último instante'],
-    coachingPointsEn: ['Hips fully extended without bending waist', 'Brake descent as far as possible'],
-    targetZones: ['isquiosurales_excentrico', 'prevencion_roturas'],
-    source: 'system'
-  },
-  {
-    id: 'hex-079',
-    name: 'Slide Hamstring Curl con Toalla en Suelo Liso',
-    nameEs: 'Slide Hamstring Curl con Toalla en Suelo Liso',
-    nameEn: 'Towel Floor Hamstring Slide Curl',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['toalla'],
-    materialsEs: ['toalla en suelo de baldosa o parquet'],
-    materialsEn: ['towel on tile/wood floor'],
-    description: 'Boca arriba en puente glúteo con talones sobre una toalla, deslizar piernas extendiéndolas y recoger flexionando rodillas.',
-    descriptionEs: 'Boca arriba en puente glúteo con talones sobre una toalla, deslizar piernas extendiéndolas y recoger flexionando rodillas.',
-    descriptionEn: 'Supine in glute bridge with heels on towel, slide feet out into extension and curl back pulling heels to hips.',
-    coachingPoints: ['Pelvis levantada durante toda la extensión', 'Control concéntrico y excéntrico'],
-    coachingPointsEs: ['Pelvis levantada durante toda la extensión', 'Control concéntrico y excéntrico'],
-    coachingPointsEn: ['Keep hips high during entire slide', 'Both concentric and eccentric control'],
-    targetZones: ['isquiosurales', 'gluteos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-080',
-    name: 'Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)',
-    nameEs: 'Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)',
-    nameEn: 'Bodyweight Bulgarian Split Squat',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['silla_o_sofa'],
-    materialsEs: ['silla o sofá'],
-    materialsEn: ['chair or sofa'],
-    description: 'Un pie apoyado atrás sobre la silla, descender flexionando pierna delantera hasta que el muslo quede paralelo al suelo.',
-    descriptionEs: 'Un pie apoyado atrás sobre la silla, descender flexionando pierna delantera hasta que el muslo quede paralelo al suelo.',
-    descriptionEn: 'Rear foot elevated on chair, descend with front leg until thigh is parallel to floor keeping knee aligned.',
-    coachingPoints: ['Rodilla delantera nunca colapsa hacia adentro', 'Tronco con ligera inclinación natural'],
-    coachingPointsEs: ['Rodilla delantera nunca colapsa hacia adentro', 'Tronco con ligera inclinación natural'],
-    coachingPointsEn: ['Front knee tracks straight over second toe', 'Slight natural forward torso lean'],
-    targetZones: ['cuadriceps', 'gluteo_mayor', 'estabilidad_rodilla'],
-    source: 'system'
-  },
-  {
-    id: 'hex-081',
-    name: 'Peso Muerto Rumano a Una Pierna (Single-Leg RDL)',
-    nameEs: 'Peso Muerto Rumano a Una Pierna (Single-Leg RDL)',
-    nameEn: 'Single-Leg Romanian Deadlift (RDL)',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 10,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'De pie sobre una pierna con rodilla ligeramente flexionada, bascular cadera atrás bajando tronco recto y elevando pierna trasera.',
-    descriptionEs: 'De pie sobre una pierna con rodilla ligeramente flexionada, bascular cadera atrás bajando tronco recto y elevando pierna trasera.',
-    descriptionEn: 'Stand on one leg with soft knee, hinge at hip reaching torso forward and rear leg back like a see-saw.',
-    coachingPoints: ['Espalda completamente neutra', 'Caderas paralelas al suelo'],
-    coachingPointsEs: ['Espalda completamente neutra', 'Caderas paralelas al suelo'],
-    coachingPointsEn: ['Flat neutral spine throughout', 'Hips squared to floor'],
-    targetZones: ['isquiosurales', 'gluteo_medio', 'tobillo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-082',
-    name: 'Sentadilla Pistol Asistida a Silla (Box Pistol Squat)',
-    nameEs: 'Sentadilla Pistol Asistida a Silla (Box Pistol Squat)',
-    nameEn: 'Assisted Box Pistol Squat',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['silla'],
-    materialsEs: ['silla'],
-    materialsEn: ['chair'],
-    description: 'Sobre una sola pierna con la otra al frente, descender de forma controlada hasta sentarse en la silla y ponerse de pie.',
-    descriptionEs: 'Sobre una sola pierna con la otra al frente, descender de forma controlada hasta sentarse en la silla y ponerse de pie.',
-    descriptionEn: 'On one leg with opposite leg extended in front, squat down under control to touch chair and stand back up.',
-    coachingPoints: ['Sin dejarse caer al asiento', 'Presionar firme desde el talón'],
-    coachingPointsEs: ['Sin dejarse caer al asiento', 'Presionar firme desde el talón'],
-    coachingPointsEn: ['Do not plop onto seat', 'Drive up smoothly through heel'],
-    targetZones: ['fuerza_unipodal', 'cuadriceps', 'tobillo_dorsiflexion'],
-    source: 'system'
-  },
-  {
-    id: 'hex-083',
-    name: 'Elevación de Gemelos en Escalón con Fase Excéntrica Lenta',
-    nameEs: 'Elevación de Gemelos en Escalón con Fase Excéntrica Lenta',
-    nameEn: 'Calf Raises with 3-Second Eccentric',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 15,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['escalon'],
-    materialsEs: ['escalón'],
-    materialsEn: ['step'],
-    description: 'En el borde de un escalón, subir con ambos pies y descender los talones por debajo del nivel del borde en 3 segundos.',
-    descriptionEs: 'En el borde de un escalón, subir con ambos pies y descender los talones por debajo del nivel del borde en 3 segundos.',
-    descriptionEn: 'On edge of step, rise on toes and lower heels below step level taking 3 seconds on eccentric descent.',
-    coachingPoints: ['Rango de movimiento completo', 'Pausa en máxima extensión'],
-    coachingPointsEs: ['Rango de movimiento completo', 'Pausa en máxima extensión'],
-    coachingPointsEn: ['Full range of motion', 'Brief peak hold'],
-    targetZones: ['gemelos', 'tendon_aquiles', 'soleo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-084',
-    name: 'Elevación de Sóleo Unipodal con Rodilla Semiflexionada',
-    nameEs: 'Elevación de Sóleo Unipodal con Rodilla Semiflexionada',
-    nameEn: 'Bent-Knee Single-Leg Soleus Raise',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Apoyado en pared con rodilla flexionada 30 grados, elevar talón manteniendo el ángulo de flexión para aislar el sóleo.',
-    descriptionEs: 'Apoyado en pared con rodilla flexionada 30 grados, elevar talón manteniendo el ángulo de flexión para aislar el sóleo.',
-    descriptionEn: 'Leaning on wall with knee bent 30 degrees, elevate heel keeping knee angle fixed to isolate soleus.',
-    coachingPoints: ['La rodilla no se extiende durante la subida', 'Crucial para deceleraciones'],
-    coachingPointsEs: ['La rodilla no se extiende durante la subida', 'Crucial para deceleraciones'],
-    coachingPointsEn: ['Knee stays flexed through rep', 'Vital for deceleration capacity'],
-    targetZones: ['soleo', 'prevencion_aquiles'],
-    source: 'system'
-  },
-  {
-    id: 'hex-085',
-    name: 'Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)',
-    nameEs: 'Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)',
-    nameEn: 'Wall Tibialis Anterior Raises',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 20,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Espalda apoyada en pared con pies adelantados 40 cm, levantar las puntas de los pies hacia las espinillas con fuerza.',
-    descriptionEs: 'Espalda apoyada en pared con pies adelantados 40 cm, levantar las puntas de los pies hacia las espinillas con fuerza.',
-    descriptionEn: 'Back resting on wall with heels 40cm out, lift toes toward shins aggressively holding at peak.',
-    coachingPoints: ['Rodillas rectas', 'Previene periostitis tibial y esguinces'],
-    coachingPointsEs: ['Rodillas rectas', 'Previene periostitis tibial y esguinces'],
-    coachingPointsEn: ['Knees straight', 'Prevents shin splints and sprains'],
-    targetZones: ['tibial_anterior', 'espinillas'],
-    source: 'system'
-  },
-  {
-    id: 'hex-086',
-    name: 'La Almeja para Glúteo Medio (Clamshell con Pausa)',
-    nameEs: 'La Almeja para Glúteo Medio (Clamshell con Pausa)',
-    nameEn: 'Side-Lying Clamshell with 2s Hold',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 15,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Tumbado de lado con rodillas flexionadas a 90 grados y talones juntos, abrir la rodilla superior sin rotar la pelvis atrás.',
-    descriptionEs: 'Tumbado de lado con rodillas flexionadas a 90 grados y talones juntos, abrir la rodilla superior sin rotar la pelvis atrás.',
-    descriptionEn: 'Side lying with knees at 90 degrees and heels together, open top knee like a clam shell without rolling pelvis back.',
-    coachingPoints: ['Pelvis perpendicular al suelo', 'Contracción pura de glúteo medio'],
-    coachingPointsEs: ['Pelvis perpendicular al suelo', 'Contracción pura de glúteo medio'],
-    coachingPointsEn: ['Pelvis remains perpendicular to floor', 'Pure gluteus medius recruitment'],
-    targetZones: ['gluteo_medio', 'estabilizacion_cadera'],
-    source: 'system'
-  },
-  {
-    id: 'hex-087',
-    name: 'Paseo de Monstruo con Banda o Isométrico (Monster Walk)',
-    nameEs: 'Paseo de Monstruo con Banda o Isométrico (Monster Walk)',
-    nameEn: 'Athletic Stance Lateral Monster Walk',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    reps: 16,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['banda_elastica_o_sin_material'],
-    materialsEs: ['banda elástica o peso corporal'],
-    materialsEn: ['resistance band or bodyweight'],
-    description: 'En media sentadilla con pies al ancho de hombros, dar pasos diagonales hacia adelante manteniendo tensión constante.',
-    descriptionEs: 'En media sentadilla con pies al ancho de hombros, dar pasos diagonales hacia adelante manteniendo tensión constante.',
-    descriptionEn: 'In quarter squat with feet shoulder-width, take diagonal steps forward maintaining constant hip tension.',
-    coachingPoints: ['Pies siempre separados', 'Rodillas empujan hacia afuera'],
-    coachingPointsEs: ['Pies siempre separados', 'Rodillas empujan hacia afuera'],
-    coachingPointsEn: ['Feet stay wide', 'Knees tracking outwards'],
-    targetZones: ['abductores', 'gluteo_medio'],
-    source: 'system'
-  },
-  {
-    id: 'hex-088',
-    name: 'Silla Isométrica en Pared (Wall Sit)',
-    nameEs: 'Silla Isométrica en Pared (Wall Sit)',
-    nameEn: 'Wall Sit Isometric Hold',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 35,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Espalda pegada a la pared, flexionar rodillas a 90 grados como sentado en una silla imaginaria y aguantar la posición.',
-    descriptionEs: 'Espalda pegada a la pared, flexionar rodillas a 90 grados como sentado en una silla imaginaria y aguantar la posición.',
-    descriptionEn: 'Back flat against wall, slide down until knees reach 90 degrees and hold position like a chair.',
-    coachingPoints: ['Rodillas sobre tobillos', 'Presión firme a través de los pies'],
-    coachingPointsEs: ['Rodillas sobre tobillos', 'Presión firme a través de los pies'],
-    coachingPointsEn: ['Knees stacked above ankles', 'Firm pressure through full foot'],
-    targetZones: ['cuadriceps', 'tendon_rotuliano', 'fuerza_estatica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-089',
-    name: 'Silla Isométrica Unipodal en Pared',
-    nameEs: 'Silla Isométrica Unipodal en Pared',
-    nameEn: 'Single-Leg Wall Sit Hold',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 35,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Desde posición de silla a 90 grados en pared, levantar una pierna extendida al frente soportando el peso con una sola pierna.',
-    descriptionEs: 'Desde posición de silla a 90 grados en pared, levantar una pierna extendida al frente soportando el peso con una sola pierna.',
-    descriptionEn: 'From 90-degree wall sit, extend one leg out in front holding full body tension on single leg.',
-    coachingPoints: ['Caderas no caen de lado', 'Respirar profundamente sin contener aire'],
-    coachingPointsEs: ['Caderas no caen de lado', 'Respirar profundamente sin contener aire'],
-    coachingPointsEn: ['Keep hips level on wall', 'Breathe steadily without breath-holding'],
-    targetZones: ['cuadriceps_aislado', 'tendinopatia_rotuliana'],
-    source: 'system'
-  },
-  {
-    id: 'hex-090',
-    name: 'Flexiones de Brazos con Control Escapular (Scapular Push-Up)',
-    nameEs: 'Flexiones de Brazos con Control Escapular (Scapular Push-Up)',
-    nameEn: 'Push-Up with Scapular Protraction',
-    category: 'fuerza_preventiva',
-    level: 'basico',
-    series: 3,
-    reps: 12,
-    durationSeconds: 0,
-    restSeconds: 30,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En posición de plancha alta, juntar escápulas bajando el pecho 5 cm y empujar el suelo redondeando la parte alta de la espalda.',
-    descriptionEs: 'En posición de plancha alta, juntar escápulas bajando el pecho 5 cm y empujar el suelo redondeando la parte alta de la espalda.',
-    descriptionEn: 'In high plank, pinch shoulder blades together dropping chest 5cm, then press ground away protracting upper back.',
-    coachingPoints: ['Brazos rectos en todo momento', 'Activación del serrato anterior'],
-    coachingPointsEs: ['Brazos rectos en todo momento', 'Activación del serrato anterior'],
-    coachingPointsEn: ['Arms straight throughout', 'Serratus anterior activation'],
-    targetZones: ['serrato_anterior', 'estabilidad_hombro'],
-    source: 'system'
-  },
-  {
-    id: 'hex-091',
-    name: 'El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)',
-    nameEs: 'El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)',
-    nameEn: 'Isometric Towel Pallof Press',
-    category: 'fuerza_preventiva',
-    level: 'intermedio',
-    series: 3,
-    durationSeconds: 20,
-    reps: 0,
-    restSeconds: 30,
-    materials: ['toalla', 'poste_o_pomo_puerta'],
-    materialsEs: ['toalla anclada a pomo o barandilla'],
-    materialsEn: ['towel anchored to door/railing'],
-    description: 'De pie de perfil a la puerta, sujetar la toalla anclada y empujar hacia delante resistiendo la fuerza de rotación.',
-    descriptionEs: 'De pie de perfil a la puerta, sujetar la toalla anclada y empujar hacia delante resistiendo la fuerza de rotación.',
-    descriptionEn: 'Standing sideways to anchor, hold towel with both hands and press straight out resisting lateral pull.',
-    coachingPoints: ['Tronco inmóvil como una columna de granito', 'Pelvis cuadrada'],
-    coachingPointsEs: ['Tronco inmóvil como una columna de granito', 'Pelvis cuadrada'],
-    coachingPointsEn: ['Torso solid like granite', 'Square hips forward'],
-    targetZones: ['anti_rotacion_core', 'oblicuos'],
-    source: 'system'
-  },
-  {
-    id: 'hex-092',
-    name: 'Sentadilla Profunda con Salto Vertical y Aterrizaje Blando',
-    nameEs: 'Sentadilla Profunda con Salto Vertical y Aterrizaje Blando',
-    nameEn: 'Squat Jump with Soft Deceleration',
-    category: 'fuerza_preventiva',
-    level: 'avanzado',
-    series: 3,
-    reps: 8,
-    durationSeconds: 0,
-    restSeconds: 35,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Descender a media sentadilla, saltar con máxima explosividad vertical y aterrizar absorbiendo suavemente en 2 tiempos.',
-    descriptionEs: 'Descender a media sentadilla, saltar con máxima explosividad vertical y aterrizar absorbiendo suavemente en 2 tiempos.',
-    descriptionEn: 'Drop to quarter squat, jump with maximum vertical power and cushion landing into deep squat deceleration.',
-    coachingPoints: ['Cero impacto seco', 'Cadera absorbe la fuerza hacia atrás'],
-    coachingPointsEs: ['Cero impacto seco', 'Cadera absorbe la fuerza hacia atrás'],
-    coachingPointsEn: ['Zero loud thud on impact', 'Hips absorb force backward'],
-    targetZones: ['potencia_tren_inferior', 'fuerza_reactiva'],
-    source: 'system'
-  },
-
-  // ══════════════════════════════════════════════════════════════════════════════
-  // FASE 5: VUELTA A LA CALMA Y MOVILIDAD (15 ejercicios: hex-093 a hex-107)
-  // ══════════════════════════════════════════════════════════════════════════════
-  {
-    id: 'hex-093',
-    name: 'Estiramiento Pasivo de Isquiosurales con Toalla',
-    nameEs: 'Estiramiento Pasivo de Isquiosurales con Toalla',
-    nameEn: 'Towel Hamstring Supine Stretch',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['toalla', 'esterilla'],
-    materialsEs: ['toalla', 'esterilla'],
-    materialsEn: ['towel', 'mat'],
-    description: 'Tumbado boca arriba, pasar una toalla por la planta del pie y elevar la pierna recta hacia el techo con tracción suave.',
-    descriptionEs: 'Tumbado boca arriba, pasar una toalla por la planta del pie y elevar la pierna recta hacia el techo con tracción suave.',
-    descriptionEn: 'Lie supine, loop towel around foot sole, and gently pull straight leg toward ceiling until mild stretch.',
-    coachingPoints: ['Pierna contraria apoyada y relajada', 'Respiración diafragmática profunda'],
-    coachingPointsEs: ['Pierna contraria apoyada y relajada', 'Respiración diafragmática profunda'],
-    coachingPointsEn: ['Opposite leg flat and relaxed', 'Deep diaphragmatic breathing'],
-    targetZones: ['isquiosurales', 'hueco_popliteo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-094',
-    name: 'Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)',
-    nameEs: 'Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)',
-    nameEn: 'Couch Stretch (Quad & Hip Flexor)',
-    category: 'vuelta_calma',
-    level: 'intermedio',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['sofa_o_pared'],
-    materialsEs: ['sofá o pared'],
-    materialsEn: ['couch or wall'],
-    description: 'Una rodilla en el suelo pegada a la pared con espinilla vertical, dar paso adelante con la otra pierna y erguir el tronco.',
-    descriptionEs: 'Una rodilla en el suelo pegada a la pared con espinilla vertical, dar paso adelante con la otra pierna y erguir el tronco.',
-    descriptionEn: 'Rear knee on floor against couch with shin vertical, step forward with other foot and raise torso tall.',
-    coachingPoints: ['Apretar glúteo trasero para abrir cadera', 'Cero arqueo lumbar'],
-    coachingPointsEs: ['Apretar glúteo trasero para abrir cadera', 'Cero arqueo lumbar'],
-    coachingPointsEn: ['Squeeze back glute to open hip', 'Zero lumbar arch'],
-    targetZones: ['psoas_iliaco', 'recto_anterior_cuadriceps'],
-    source: 'system'
-  },
-  {
-    id: 'hex-095',
-    name: 'Estiramiento de Glúteo en Figura 4 (Supine Figure Four)',
-    nameEs: 'Estiramiento de Glúteo en Figura 4 (Supine Figure Four)',
-    nameEn: 'Supine Figure-4 Piriformis Stretch',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Boca arriba, cruzar tobillo derecho sobre rodilla izquierda y abrazar el muslo izquierdo hacia el pecho.',
-    descriptionEs: 'Boca arriba, cruzar tobillo derecho sobre rodilla izquierda y abrazar el muslo izquierdo hacia el pecho.',
-    descriptionEn: 'Lie supine, cross right ankle over left knee, and thread hands to pull left thigh gently toward chest.',
-    coachingPoints: ['Hombros y cuello relajados en el suelo', 'Sostener sin rebotes'],
-    coachingPointsEs: ['Hombros y cuello relajados en el suelo', 'Sostener sin rebotes'],
-    coachingPointsEn: ['Keep shoulders and neck relaxed on floor', 'Steady hold without bouncing'],
-    targetZones: ['piramidal', 'gluteo_profundo'],
-    source: 'system'
-  },
-  {
-    id: 'hex-096',
-    name: 'La Rana para Aductores (Frog Stretch)',
-    nameEs: 'La Rana para Aductores (Frog Stretch)',
-    nameEn: 'Frog Pose Adductor Stretch',
-    category: 'vuelta_calma',
-    level: 'intermedio',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En cuadrupedia, abrir rodillas ampliamente hacia los lados con pies orientados hacia afuera y descender pelvis hacia atrás.',
-    descriptionEs: 'En cuadrupedia, abrir rodillas ampliamente hacia los lados con pies orientados hacia afuera y descender pelvis hacia atrás.',
-    descriptionEn: 'On all fours, spread knees wide apart with feet turned out and sink hips back toward heels.',
-    coachingPoints: ['Apoyo sobre antebrazos', 'Respirar hacia la zona pélvica'],
-    coachingPointsEs: ['Apoyo sobre antebrazos', 'Respirar hacia la zona pélvica'],
-    coachingPointsEn: ['Rest on forearms', 'Breathe into pelvic area'],
-    targetZones: ['aductores_profundos', 'cadera_movilidad'],
-    source: 'system'
-  },
-  {
-    id: 'hex-097',
-    name: 'Postura de Paloma Modificada (Pigeon Pose)',
-    nameEs: 'Postura de Paloma Modificada (Pigeon Pose)',
-    nameEn: 'Modified Pigeon Pose Stretch',
-    category: 'vuelta_calma',
-    level: 'intermedio',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Pierna delantera flexionada con rodilla abierta hacia afuera, pierna trasera extendida atrás, apoyar pecho hacia adelante.',
-    descriptionEs: 'Pierna delantera flexionada con rodilla abierta hacia afuera, pierna trasera extendida atrás, apoyar pecho hacia adelante.',
-    descriptionEn: 'Front leg bent with knee pointing out, back leg extended straight behind, fold chest forward over front shin.',
-    coachingPoints: ['Caderas cuadradas al suelo', 'Dejar caer el peso suavemente'],
-    coachingPointsEs: ['Caderas cuadradas al suelo', 'Dejar caer el peso suavemente'],
-    coachingPointsEn: ['Square hips to floor', 'Sink weight down gently with gravity'],
-    targetZones: ['gluteo_medio', 'rotadores_externos_cadera'],
-    source: 'system'
-  },
-  {
-    id: 'hex-098',
-    name: 'Estiramiento de Gemelo y Sóleo contra Pared',
-    nameEs: 'Estiramiento de Gemelo y Sóleo contra Pared',
-    nameEn: 'Wall Gastrocnemius & Soleus Stretch',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['pared'],
-    materialsEs: ['pared'],
-    materialsEn: ['wall'],
-    description: 'Manos en la pared, dar paso atrás con una pierna manteniendo rodilla extendida y talón pegado al suelo.',
-    descriptionEs: 'Manos en la pared, dar paso atrás con una pierna manteniendo rodilla extendida y talón pegado al suelo.',
-    descriptionEn: 'Hands on wall, step one leg back keeping knee straight and heel flat on floor for calf stretch.',
-    coachingPoints: ['Puntera trasera apuntando al frente', 'Flexionar luego ligeramente la rodilla para tocar sóleo'],
-    coachingPointsEs: ['Puntera trasera apuntando al frente', 'Flexionar luego ligeramente la rodilla para tocar sóleo'],
-    coachingPointsEn: ['Rear toe pointed dead ahead', 'Softly bend rear knee to shift to soleus'],
-    targetZones: ['gemelos', 'soleo', 'tendon_aquiles'],
-    source: 'system'
-  },
-  {
-    id: 'hex-099',
-    name: 'Postura del Niño con Descarga de Hombros (Child Pose)',
-    nameEs: 'Postura del Niño con Descarga de Hombros (Child Pose)',
-    nameEn: 'Child Pose with Shoulder Extension',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 45,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'De rodillas, sentarse sobre los talones, estirar brazos al frente en el suelo y relajar la frente en la esterilla.',
-    descriptionEs: 'De rodillas, sentarse sobre los talones, estirar brazos al frente en el suelo y relajar la frente en la esterilla.',
-    descriptionEn: 'Kneeling, sit back onto heels, reach arms far forward on floor and rest forehead on mat.',
-    coachingPoints: ['Descomprimir zona lumbar', 'Respiración abdominal lenta'],
-    coachingPointsEs: ['Descomprimir zona lumbar', 'Respiración abdominal lenta'],
-    coachingPointsEn: ['Decompress lumbar spine', 'Slow abdominal belly breaths'],
-    targetZones: ['dorsales', 'lumbar', 'relajacion_global'],
-    source: 'system'
-  },
-  {
-    id: 'hex-100',
-    name: 'Torsión Espinal Tumbado (Supine Spinal Twist)',
-    nameEs: 'Torsión Espinal Tumbado (Supine Spinal Twist)',
-    nameEn: 'Supine Gentle Spinal Twist',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Boca arriba con brazos en cruz, doblar una rodilla y cruzarla suavemente sobre el cuerpo hacia el lado contrario.',
-    descriptionEs: 'Boca arriba con brazos en cruz, doblar una rodilla y cruzarla suavemente sobre el cuerpo hacia el lado contrario.',
-    descriptionEn: 'Lie supine with arms out in T, bring one knee to 90 degrees and gently roll it across body to opposite floor.',
-    coachingPoints: ['Ambos hombros permanecen pegados al suelo', 'Mirar hacia la mano opuesta'],
-    coachingPointsEs: ['Ambos hombros permanecen pegados al suelo', 'Mirar hacia la mano opuesta'],
-    coachingPointsEn: ['Both shoulder blades stay pinned to floor', 'Look toward opposite hand'],
-    targetZones: ['movilidad_toracica', 'gluteo', 'columna'],
-    source: 'system'
-  },
-  {
-    id: 'hex-101',
-    name: 'Enhebrar la Aguja para Espalda Alta (Thread the Needle)',
-    nameEs: 'Enhebrar la Aguja para Espalda Alta (Thread the Needle)',
-    nameEn: 'Thread the Needle Thoracic Stretch',
-    category: 'vuelta_calma',
-    level: 'intermedio',
-    series: 2,
-    durationSeconds: 35,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En cuadrupedia, deslizar un brazo por debajo del torso apoyando hombro y mejilla en el suelo.',
-    descriptionEs: 'En cuadrupedia, deslizar un brazo por debajo del torso apoyando hombro y mejilla en el suelo.',
-    descriptionEn: 'On all fours, thread one arm beneath torso resting shoulder and cheek on floor for upper back release.',
-    coachingPoints: ['Sentir apertura en la escápula', 'Liberar tensiones cervicales'],
-    coachingPointsEs: ['Sentir apertura en la escápula', 'Liberar tensiones cervicales'],
-    coachingPointsEn: ['Feel opening across scapula', 'Release neck tension'],
-    targetZones: ['romboides', 'deltoides_posterior', 'torax'],
-    source: 'system'
-  },
-  {
-    id: 'hex-102',
-    name: 'Apertura Pectoral en Marco de Puerta',
-    nameEs: 'Apertura Pectoral en Marco de Puerta',
-    nameEn: 'Doorway Chest & Biceps Stretch',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['marco_puerta'],
-    materialsEs: ['marco de una puerta'],
-    materialsEn: ['door frame'],
-    description: 'Apoyar antebrazo a 90 grados en el marco de la puerta y dar un paso adelante rotando ligeramente el tronco hacia afuera.',
-    descriptionEs: 'Apoyar antebrazo a 90 grados en el marco de la puerta y dar un paso adelante rotando ligeramente el tronco hacia afuera.',
-    descriptionEn: 'Place forearm at 90 degrees against doorframe, step forward and rotate torso slightly away to stretch chest.',
-    coachingPoints: ['Hombro relajado abajo', 'No forzar la articulación'],
-    coachingPointsEs: ['Hombro relajado abajo', 'No forzar la articulación'],
-    coachingPointsEn: ['Shoulder relaxed away from ear', 'Never crank joint aggressively'],
-    targetZones: ['pectoral_mayor', 'hombro_anterior'],
-    source: 'system'
-  },
-  {
-    id: 'hex-103',
-    name: 'Estiramiento de la Cobra Suave para Cadena Anterior',
-    nameEs: 'Estiramiento de la Cobra Suave para Cadena Anterior',
-    nameEn: 'Gentle Sphinx / Cobra Pose',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 30,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Tumbado boca abajo, apoyar antebrazos en el suelo y elevar suavemente el pecho alargando el cuello hacia el techo.',
-    descriptionEs: 'Tumbado boca abajo, apoyar antebrazos en el suelo y elevar suavemente el pecho alargando el cuello hacia el techo.',
-    descriptionEn: 'Lie prone, support on forearms and gently press chest up elongating neck without compressing lumbar spine.',
-    coachingPoints: ['Alargar la columna sin pellizcar la zona lumbar', 'Hombros lejos de orejas'],
-    coachingPointsEs: ['Alargar la columna sin pellizcar la zona lumbar', 'Hombros lejos de orejas'],
-    coachingPointsEn: ['Lengthen spine without pinching lower back', 'Shoulders down and back'],
-    targetZones: ['recto_abdominal', 'extension_columna'],
-    source: 'system'
-  },
-  {
-    id: 'hex-104',
-    name: 'Perro Boca Abajo con Pedaleo de Talones (Downward Dog)',
-    nameEs: 'Perro Boca Abajo con Pedaleo de Talones (Downward Dog)',
-    nameEn: 'Downward Dog with Heel Pedals',
-    category: 'vuelta_calma',
-    level: 'intermedio',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'En forma de V invertida, empujar el suelo con las palmas y alternar la presión de talones estirando gemelos e isquios.',
-    descriptionEs: 'En forma de V invertida, empujar el suelo con las palmas y alternar la presión de talones estirando gemelos e isquios.',
-    descriptionEn: 'Inverted V pose, push floor through palms and alternate heel presses down to stretch calves and hamstrings.',
-    coachingPoints: ['Cadera apunta alta al techo', 'Cabeza relajada entre los brazos'],
-    coachingPointsEs: ['Cadera apunta alta al techo', 'Cabeza relajada entre los brazos'],
-    coachingPointsEn: ['Hips driving high to ceiling', 'Head relaxed between biceps'],
-    targetZones: ['cadena_posterior_completa', 'gemelos', 'hombros'],
-    source: 'system'
-  },
-  {
-    id: 'hex-105',
-    name: 'Descompresión Lumbar en Pelota o Rodillas al Pecho',
-    nameEs: 'Descompresión Lumbar en Pelota o Rodillas al Pecho',
-    nameEn: 'Supine Double Knees-to-Chest Hug',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 2,
-    durationSeconds: 40,
-    reps: 0,
-    restSeconds: 20,
-    materials: ['esterilla'],
-    materialsEs: ['esterilla'],
-    materialsEn: ['mat'],
-    description: 'Boca arriba, abrazar ambas rodillas hacia el pecho con las manos y realizar un balanceo sutil a los lados.',
-    descriptionEs: 'Boca arriba, abrazar ambas rodillas hacia el pecho con las manos y realizar un balanceo sutil a los lados.',
-    descriptionEn: 'Lie supine, hug both knees into chest with hands and perform gentle side-to-side rocking massage.',
-    coachingPoints: ['Masajear el sacro contra la colchoneta', 'Soltar tensión'],
-    coachingPointsEs: ['Masajear el sacro contra la colchoneta', 'Soltar tensión'],
-    coachingPointsEn: ['Massage sacrum against mat', 'Release residual tension'],
-    targetZones: ['lumbar_descarga', 'sacro'],
-    source: 'system'
-  },
-  {
-    id: 'hex-106',
-    name: 'Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)',
-    nameEs: 'Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)',
-    nameEn: 'Legs-Up-The-Wall Restorative Posture',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 1,
-    durationSeconds: 90,
-    reps: 0,
-    restSeconds: 0,
-    materials: ['pared', 'esterilla'],
-    materialsEs: ['pared', 'esterilla'],
-    materialsEn: ['wall', 'mat'],
-    description: 'Tumbado en el suelo con los glúteos pegados a la pared y piernas extendidas verticales hacia arriba descansando.',
-    descriptionEs: 'Tumbado en el suelo con los glúteos pegados a la pared y piernas extendidas verticales hacia arriba descansando.',
-    descriptionEn: 'Lie supine with hips flush to wall and legs extended vertically up the wall resting completely.',
-    coachingPoints: ['Acelera la recuperación del lactato', 'Favorece el drenaje venoso'],
-    coachingPointsEs: ['Acelera la recuperación del lactato', 'Favorece el drenaje venoso'],
-    coachingPointsEn: ['Aids metabolic recovery', 'Promotes venous and lymphatic drainage'],
-    targetZones: ['retorno_venoso', 'piernas_cansadas', 'recuperacion_parasimpatica'],
-    source: 'system'
-  },
-  {
-    id: 'hex-107',
-    name: 'Respiración Diafragmática Box Breathing (4-4-4-4)',
-    nameEs: 'Respiración Diafragmática Box Breathing (4-4-4-4)',
-    nameEn: 'Box Breathing Cadence (4-4-4-4)',
-    category: 'vuelta_calma',
-    level: 'basico',
-    series: 1,
-    durationSeconds: 90,
-    reps: 0,
-    restSeconds: 0,
-    materials: ['sin_material'],
-    materialsEs: ['sin material'],
-    materialsEn: ['no equipment'],
-    description: 'Tumbado boca arriba con manos en el abdomen: 4s inhalar, 4s retener con pulmón lleno, 4s exhalar, 4s retener vacío.',
-    descriptionEs: 'Tumbado boca arriba con manos en el abdomen: 4s inhalar, 4s retener con pulmón lleno, 4s exhalar, 4s retener vacío.',
-    descriptionEn: 'Supine with hands on belly: inhale 4s, hold full 4s, exhale 4s, hold empty 4s to switch into parasympathetic recovery.',
-    coachingPoints: ['Expandir el diafragma, no el pecho', 'Bajar pulsaciones de forma consciente'],
-    coachingPointsEs: ['Expandir el diafragma, no el pecho', 'Bajar pulsaciones de forma consciente'],
-    coachingPointsEn: ['Expand belly not chest', 'Consciously bring heart rate down'],
-    targetZones: ['sistema_nervioso_parasimpatico', 'frecuencia_cardiaca'],
-    source: 'system'
+  {
+    "id": "hex-001",
+    "name": "Movilidad de Tobillo Dinámica",
+    "nameEs": "Movilidad de Tobillo Dinámica",
+    "nameEn": "Dynamic Ankle Mobility",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "De rodillas frente a una pared, avanzar la rodilla hacia adelante sin despegar el talón del suelo.",
+    "descriptionEs": "De rodillas frente a una pared, avanzar la rodilla hacia adelante sin despegar el talón del suelo.",
+    "descriptionEn": "Half-kneeling facing a wall, drive knee forward past toes without lifting the heel.",
+    "coachingPoints": [
+      "Talón siempre pegado al suelo",
+      "Movimiento lento y controlado"
+    ],
+    "coachingPointsEs": [
+      "Talón siempre pegado al suelo",
+      "Movimiento lento y controlado"
+    ],
+    "coachingPointsEn": [
+      "Heel firmly on floor",
+      "Slow and controlled movement"
+    ],
+    "targetZones": [
+      "tobillo",
+      "gemelo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-002",
+    "name": "Balanceo de Pierna Frontal",
+    "nameEs": "Balanceo de Pierna Frontal",
+    "nameEn": "Front Leg Swings",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Apoyado con una mano en pared, balancear la pierna libre de adelante hacia atrás con amplitud progresiva.",
+    "descriptionEs": "Apoyado con una mano en pared, balancear la pierna libre de adelante hacia atrás con amplitud progresiva.",
+    "descriptionEn": "Holding onto a wall for balance, swing free leg forward and back with increasing range.",
+    "coachingPoints": [
+      "Tronco vertical sin arquear la espalda",
+      "Aumentar la amplitud con cada balanceo"
+    ],
+    "coachingPointsEs": [
+      "Tronco vertical sin arquear la espalda",
+      "Aumentar la amplitud con cada balanceo"
+    ],
+    "coachingPointsEn": [
+      "Keep torso upright without arching lower back",
+      "Increase range gradually with each swing"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "flexores_cadera"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-003",
+    "name": "Balanceo de Pierna Lateral",
+    "nameEs": "Balanceo de Pierna Lateral",
+    "nameEn": "Lateral Leg Swings",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "De cara a la pared, balancear la pierna cruzando por delante del cuerpo y abriendo hacia el lateral.",
+    "descriptionEs": "De cara a la pared, balancear la pierna cruzando por delante del cuerpo y abriendo hacia el lateral.",
+    "descriptionEn": "Facing the wall, swing the leg across the body and then outward laterally.",
+    "coachingPoints": [
+      "Pelvis alineada",
+      "Controlar el rebote excéntrico"
+    ],
+    "coachingPointsEs": [
+      "Pelvis alineada",
+      "Controlar el rebote excéntrico"
+    ],
+    "coachingPointsEn": [
+      "Keep pelvis level",
+      "Control eccentric bounce"
+    ],
+    "targetZones": [
+      "aductores",
+      "abductores"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-004",
+    "name": "Círculos Articulares de Cadera",
+    "nameEs": "Círculos Articulares de Cadera",
+    "nameEn": "Hip Controlled Articular Rotations",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 2,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "En cuadrupedia, realizar círculos completos y amplios con una rodilla manteniendo el tronco inmóvil.",
+    "descriptionEs": "En cuadrupedia, realizar círculos completos y amplios con una rodilla manteniendo el tronco inmóvil.",
+    "descriptionEn": "On all fours, perform full circular rotations with one knee while stabilizing the torso.",
+    "coachingPoints": [
+      "Evitar rotar la zona lumbar",
+      "Respiración constante"
+    ],
+    "coachingPointsEs": [
+      "Evitar rotar la zona lumbar",
+      "Respiración constante"
+    ],
+    "coachingPointsEn": [
+      "Avoid twisting lumbar spine",
+      "Breathe steadily"
+    ],
+    "targetZones": [
+      "cadera",
+      "gluteo_medio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-005",
+    "name": "Gato-Camello Dinámico",
+    "nameEs": "Gato-Camello Dinámico",
+    "nameEn": "Dynamic Cat-Cow",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 2,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En cuadrupedia, alternar suavemente entre flexión y extensión total de la columna vertebral.",
+    "descriptionEs": "En cuadrupedia, alternar suavemente entre flexión y extensión total de la columna vertebral.",
+    "descriptionEn": "On all fours, alternate smoothly between spinal flexion and full spinal extension.",
+    "coachingPoints": [
+      "Movimiento segmentario vértebra a vértebra",
+      "Sincronizar con inhalación y exhalación"
+    ],
+    "coachingPointsEs": [
+      "Movimiento segmentario vértebra a vértebra",
+      "Sincronizar con inhalación y exhalación"
+    ],
+    "coachingPointsEn": [
+      "Move vertebra by vertebra",
+      "Coordinate with breathing"
+    ],
+    "targetZones": [
+      "columna",
+      "espalda"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-006",
+    "name": "El Mejor Estiramiento del Mundo (World Greatest)",
+    "nameEs": "El Mejor Estiramiento del Mundo (World Greatest)",
+    "nameEn": "World Greatest Stretch",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Paso largo en zancada profunda, apoyar codo al empeine y rotar brazo hacia el techo abriendo el pecho.",
+    "descriptionEs": "Paso largo en zancada profunda, apoyar codo al empeine y rotar brazo hacia el techo abriendo el pecho.",
+    "descriptionEn": "Deep lunge step, drop inside elbow toward instep, then rotate arm up toward ceiling opening chest.",
+    "coachingPoints": [
+      "Rodilla trasera extendida activa",
+      "Seguir la mano con la mirada"
+    ],
+    "coachingPointsEs": [
+      "Rodilla trasera extendida activa",
+      "Seguir la mano con la mirada"
+    ],
+    "coachingPointsEn": [
+      "Keep rear knee extended and active",
+      "Track hand with eyes"
+    ],
+    "targetZones": [
+      "cadera",
+      "torax",
+      "isquiosurales"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-007",
+    "name": "Zancada Inversa con Rotación Torácica",
+    "nameEs": "Zancada Inversa con Rotación Torácica",
+    "nameEn": "Reverse Lunge with Thoracic Twist",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Dar paso hacia atrás en zancada y rotar el tronco hacia el lado de la pierna adelantada.",
+    "descriptionEs": "Dar paso hacia atrás en zancada y rotar el tronco hacia el lado de la pierna adelantada.",
+    "descriptionEn": "Step back into a lunge and rotate the torso toward the forward leg side.",
+    "coachingPoints": [
+      "Rodilla delantera estable sobre el tobillo",
+      "Giro desde la caja torácica"
+    ],
+    "coachingPointsEs": [
+      "Rodilla delantera estable sobre el tobillo",
+      "Giro desde la caja torácica"
+    ],
+    "coachingPointsEn": [
+      "Front knee stable over ankle",
+      "Rotate through thoracic spine"
+    ],
+    "targetZones": [
+      "cuadriceps",
+      "gluteo",
+      "core"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-008",
+    "name": "Zancada Lateral Dinámica (Cossack Parcial)",
+    "nameEs": "Zancada Lateral Dinámica (Cossack Parcial)",
+    "nameEn": "Dynamic Lateral Lunge",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Pies separados más del ancho de hombros, flexionar una rodilla cargando cadera atrás y manteniendo la otra pierna recta.",
+    "descriptionEs": "Pies separados más del ancho de hombros, flexionar una rodilla cargando cadera atrás y manteniendo la otra pierna recta.",
+    "descriptionEn": "Wide stance, bend one knee shifting hip back while keeping the opposite leg straight.",
+    "coachingPoints": [
+      "Pecho erguido",
+      "Planta del pie de apoyo completamente apoyada"
+    ],
+    "coachingPointsEs": [
+      "Pecho erguido",
+      "Planta del pie de apoyo completamente apoyada"
+    ],
+    "coachingPointsEn": [
+      "Keep chest up",
+      "Working foot stays flat on ground"
+    ],
+    "targetZones": [
+      "aductores",
+      "gluteo",
+      "rodilla"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-009",
+    "name": "Gusano (Inchworm) con Toque de Puntera",
+    "nameEs": "Gusano (Inchworm) con Toque de Puntera",
+    "nameEn": "Inchworm with Toe Tap",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "De pie, doblar tronco y avanzar con las manos hasta posición de plancha, tocar punta de pie contraria y retroceder.",
+    "descriptionEs": "De pie, doblar tronco y avanzar con las manos hasta posición de plancha, tocar punta de pie contraria y retroceder.",
+    "descriptionEn": "Hinge at hips, walk hands out to a high plank, tap opposite toe in pike, and walk back.",
+    "coachingPoints": [
+      "Piernas lo más rectas posible sin forzar",
+      "Abdomen firme en plancha"
+    ],
+    "coachingPointsEs": [
+      "Piernas lo más rectas posible sin forzar",
+      "Abdomen firme en plancha"
+    ],
+    "coachingPointsEn": [
+      "Keep legs relatively straight",
+      "Brace core at plank peak"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "hombros",
+      "core"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-010",
+    "name": "Carioca Dinámica en el Sitio",
+    "nameEs": "Carioca Dinámica en el Sitio",
+    "nameEn": "In-Place Carioca Drill",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Paso cruzado alterno por delante y por detrás girando la cadera con agilidad y pies rápidos.",
+    "descriptionEs": "Paso cruzado alterno por delante y por detrás girando la cadera con agilidad y pies rápidos.",
+    "descriptionEn": "Cross step in front and behind alternately with rapid hip rotation and quick feet.",
+    "coachingPoints": [
+      "Disociar cadera de hombros",
+      "Apoyos en metatarsos"
+    ],
+    "coachingPointsEs": [
+      "Disociar cadera de hombros",
+      "Apoyos en metatarsos"
+    ],
+    "coachingPointsEn": [
+      "Dissociate hips from shoulders",
+      "Stay on balls of feet"
+    ],
+    "targetZones": [
+      "cadera",
+      "coordinacion",
+      "tobillos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-011",
+    "name": "Skipping Bajo con Apoyos Rápidos",
+    "nameEs": "Skipping Bajo con Apoyos Rápidos",
+    "nameEn": "Low High-Frequency Skipping",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Carrera estática a máxima frecuencia elevando rodillas apenas 10-15 cm con braceo activo.",
+    "descriptionEs": "Carrera estática a máxima frecuencia elevando rodillas apenas 10-15 cm con braceo activo.",
+    "descriptionEn": "High frequency in-place run lifting knees 10-15 cm with active arm drive.",
+    "coachingPoints": [
+      "Codo a 90 grados",
+      "Contacto mínimo con el suelo"
+    ],
+    "coachingPointsEs": [
+      "Codo a 90 grados",
+      "Contacto mínimo con el suelo"
+    ],
+    "coachingPointsEn": [
+      "Elbow at 90 degrees",
+      "Minimize ground contact time"
+    ],
+    "targetZones": [
+      "cardio",
+      "gemelos",
+      "coordinacion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-012",
+    "name": "Skipping Alto Técnico (A-Skip)",
+    "nameEs": "Skipping Alto Técnico (A-Skip)",
+    "nameEn": "Technical A-Skip",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Salto rítmico elevando rodilla a 90 grados y pie en dorsiflexión con caída enérgica.",
+    "descriptionEs": "Salto rítmico elevando rodilla a 90 grados y pie en dorsiflexión con caída enérgica.",
+    "descriptionEn": "Rhythmic skip driving knee up to 90 degrees with dorsiflexed foot and crisp ground strike.",
+    "coachingPoints": [
+      "Puntera hacia arriba en vuelo",
+      "Postura alta y orgullosa"
+    ],
+    "coachingPointsEs": [
+      "Puntera hacia arriba en vuelo",
+      "Postura alta y orgullosa"
+    ],
+    "coachingPointsEn": [
+      "Toe up in air phase",
+      "Tall upright posture"
+    ],
+    "targetZones": [
+      "flexores_cadera",
+      "propiocepcion",
+      "gemelo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-013",
+    "name": "Talones al Glúteo con Braceo (B-Skip)",
+    "nameEs": "Talones al Glúteo con Braceo (B-Skip)",
+    "nameEn": "Heel-Flicks with Arm Drive",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Carrera estática flexionando la rodilla para llevar el talón con rapidez hacia la base del glúteo.",
+    "descriptionEs": "Carrera estática flexionando la rodilla para llevar el talón con rapidez hacia la base del glúteo.",
+    "descriptionEn": "Stationary run snapping heel quickly up toward bottom of glute.",
+    "coachingPoints": [
+      "Rodilla apunta al suelo",
+      "Tronco erguido sin inclinarse hacia delante"
+    ],
+    "coachingPointsEs": [
+      "Rodilla apunta al suelo",
+      "Tronco erguido sin inclinarse hacia delante"
+    ],
+    "coachingPointsEn": [
+      "Knees pointing down",
+      "Torso upright without leaning forward"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "cuadriceps"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-014",
+    "name": "Jumping Jacks Rítmicos",
+    "nameEs": "Jumping Jacks Rítmicos",
+    "nameEn": "Rhythmic Jumping Jacks",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Saltos coordinados abriendo piernas y juntando brazos arriba en ritmo sostenido.",
+    "descriptionEs": "Saltos coordinados abriendo piernas y juntando brazos arriba en ritmo sostenido.",
+    "descriptionEn": "Coordinated jumps opening feet while bringing hands overhead in sustained rhythm.",
+    "coachingPoints": [
+      "Amortiguar con rodillas suaves",
+      "Respiración acompasada"
+    ],
+    "coachingPointsEs": [
+      "Amortiguar con rodillas suaves",
+      "Respiración acompasada"
+    ],
+    "coachingPointsEn": [
+      "Soft knee landings",
+      "Keep steady breathing cadence"
+    ],
+    "targetZones": [
+      "cardio",
+      "hombros",
+      "pantorrilla"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-015",
+    "name": "Paso Ruso (Marcha con Patada Recta)",
+    "nameEs": "Paso Ruso (Marcha con Patada Recta)",
+    "nameEn": "Straight Leg Russian Kicks",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Marcha activa levantando pierna extendida hacia adelante para tocar la mano contraria.",
+    "descriptionEs": "Marcha activa levantando pierna extendida hacia adelante para tocar la mano contraria.",
+    "descriptionEn": "Active march kicking straight leg forward to touch opposite outstretched hand.",
+    "coachingPoints": [
+      "No encorvar la espalda",
+      "Mantener rodilla bloqueada suave"
+    ],
+    "coachingPointsEs": [
+      "No encorvar la espalda",
+      "Mantener rodilla bloqueada suave"
+    ],
+    "coachingPointsEn": [
+      "Do not round lower back",
+      "Keep knee softly locked"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "core"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-016",
+    "name": "Aperturas y Cierres de Valla Imaginaria",
+    "nameEs": "Aperturas y Cierres de Valla Imaginaria",
+    "nameEn": "Hurdle Step Over & Under Drill",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Simular pasar la pierna por encima de una valla alta hacia afuera y luego hacia adentro alternando.",
+    "descriptionEs": "Simular pasar la pierna por encima de una valla alta hacia afuera y luego hacia adentro alternando.",
+    "descriptionEn": "Simulate stepping over a high hurdle outward and inward alternately with each leg.",
+    "coachingPoints": [
+      "Elevar rodilla a la altura del ombligo",
+      "Pie de apoyo firme"
+    ],
+    "coachingPointsEs": [
+      "Elevar rodilla a la altura del ombligo",
+      "Pie de apoyo firme"
+    ],
+    "coachingPointsEn": [
+      "Lift knee to navel height",
+      "Support leg stays solid"
+    ],
+    "targetZones": [
+      "cadera",
+      "aductores",
+      "psoas"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-017",
+    "name": "Desplazamiento Lateral con Toco Suelo",
+    "nameEs": "Desplazamiento Lateral con Toco Suelo",
+    "nameEn": "Lateral Shuffle & Floor Touch",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 25,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Dos pasos laterales rápidos a la derecha, flexionar rodillas para tocar el suelo con la mano, repetir a la izquierda.",
+    "descriptionEs": "Dos pasos laterales rápidos a la derecha, flexionar rodillas para tocar el suelo con la mano, repetir a la izquierda.",
+    "descriptionEn": "Two fast shuffle steps right, bend knees to touch floor with hand, repeat to left.",
+    "coachingPoints": [
+      "Bajar con flexión de cadera y rodillas, no doblando la espalda",
+      "Mirada al frente"
+    ],
+    "coachingPointsEs": [
+      "Bajar con flexión de cadera y rodillas, no doblando la espalda",
+      "Mirada al frente"
+    ],
+    "coachingPointsEn": [
+      "Hinge at hips and knees, do not hunch back",
+      "Eyes forward"
+    ],
+    "targetZones": [
+      "cuadriceps",
+      "aductores",
+      "cardio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-018",
+    "name": "Molino de Viento Dinámico (Windmill)",
+    "nameEs": "Molino de Viento Dinámico (Windmill)",
+    "nameEn": "Dynamic Standing Windmill",
+    "category": "calentamiento",
+    "level": "basico",
+    "series": 2,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Pies muy separados, brazos en cruz, inclinar el tronco para tocar el pie contrario alternativamente.",
+    "descriptionEs": "Pies muy separados, brazos en cruz, inclinar el tronco para tocar el pie contrario alternativamente.",
+    "descriptionEn": "Wide stance, arms spread, hinge to touch opposite toes alternately with rotational control.",
+    "coachingPoints": [
+      "Girar desde la cintura escapular",
+      "Piernas extendidas"
+    ],
+    "coachingPointsEs": [
+      "Girar desde la cintura escapular",
+      "Piernas extendidas"
+    ],
+    "coachingPointsEn": [
+      "Rotate through shoulder girdle",
+      "Keep legs straight"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "oblicuos",
+      "espalda"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-019",
+    "name": "Sentadilla Profunda con Extensión Torácica",
+    "nameEs": "Sentadilla Profunda con Extensión Torácica",
+    "nameEn": "Deep Squat with Thoracic Reach",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Bajar a sentadilla profunda, sujetar punteras y elevar un brazo hacia el techo rotando el tronco.",
+    "descriptionEs": "Bajar a sentadilla profunda, sujetar punteras y elevar un brazo hacia el techo rotando el tronco.",
+    "descriptionEn": "Descend to deep squat, hold toes, then extend one arm to ceiling rotating upper back.",
+    "coachingPoints": [
+      "Talones clavados en el suelo",
+      "Pecho abierto"
+    ],
+    "coachingPointsEs": [
+      "Talones clavados en el suelo",
+      "Pecho abierto"
+    ],
+    "coachingPointsEn": [
+      "Heels pinned to floor",
+      "Open chest wide"
+    ],
+    "targetZones": [
+      "tobillos",
+      "caderas",
+      "columna_toracica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-020",
+    "name": "Saltitos de Tobillo Reactivos (Pogo Jumps)",
+    "nameEs": "Saltitos de Tobillo Reactivos (Pogo Jumps)",
+    "nameEn": "Ankle Stiffness Pogo Jumps",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 15,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Saltos verticales muy rápidos y cortos rebotando exclusivamente desde los tobillos con rodillas casi fijas.",
+    "descriptionEs": "Saltos verticales muy rápidos y cortos rebotando exclusivamente desde los tobillos con rodillas casi fijas.",
+    "descriptionEn": "Rapid short vertical hops rebounding solely from ankles with knees stiffened.",
+    "coachingPoints": [
+      "Sensación de muelle en el tendón de Aquiles",
+      "Punteras activas hacia arriba"
+    ],
+    "coachingPointsEs": [
+      "Sensación de muelle en el tendón de Aquiles",
+      "Punteras activas hacia arriba"
+    ],
+    "coachingPointsEn": [
+      "Feel spring elasticity in Achilles tendon",
+      "Keep toes pulled up in flight"
+    ],
+    "targetZones": [
+      "tendon_aquiles",
+      "gemelos",
+      "rigidez_reactiva"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Rebote elástico sobre metatarsos; suspender ante sobrecarga en gemelos o tendón de Aquiles.",
+      "en": "Elastic forefoot rebound; stop if calf or Achilles tendon tightness occurs."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-021",
+    "name": "Activación de Glúteo en Puente Unipodal Dinámico",
+    "nameEs": "Activación de Glúteo en Puente Unipodal Dinámico",
+    "nameEn": "Dynamic Single-Leg Glute Activation",
+    "category": "calentamiento",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Boca arriba con una pierna flexionada y la otra en el aire, elevar pelvis contrayendo glúteo 1 segundo arriba.",
+    "descriptionEs": "Boca arriba con una pierna flexionada y la otra en el aire, elevar pelvis contrayendo glúteo 1 segundo arriba.",
+    "descriptionEn": "Supine with one knee bent and opposite leg raised, drive hips up squeezing glute for 1s at top.",
+    "coachingPoints": [
+      "Empujar desde el talón",
+      "Cero dolor lumbar"
+    ],
+    "coachingPointsEs": [
+      "Empujar desde el talón",
+      "Cero dolor lumbar"
+    ],
+    "coachingPointsEn": [
+      "Drive through heel",
+      "No lower back hyperextension"
+    ],
+    "targetZones": [
+      "gluteo_mayor",
+      "isquiosurales",
+      "pelvis"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-022",
+    "name": "FIFA 11+ Aceleración y Desaceleración Corta",
+    "nameEs": "FIFA 11+ Aceleración y Desaceleración Corta",
+    "nameEn": "FIFA 11+ Short Deceleration Shuttle",
+    "category": "calentamiento",
+    "level": "avanzado",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "cones or bottles"
+    ],
+    "description": "Acelerar 3 metros hacia cono frontal, frenar en 2 apoyos bajando centro de gravedad y retroceder de espaldas.",
+    "descriptionEs": "Acelerar 3 metros hacia cono frontal, frenar en 2 apoyos bajando centro de gravedad y retroceder de espaldas.",
+    "descriptionEn": "Sprint 3 meters forward to cone, brake in 2 steps dropping center of gravity, then backpedal.",
+    "coachingPoints": [
+      "Rodilla alineada con puntera en frenada",
+      "Tronco inclinado al acelerar"
+    ],
+    "coachingPointsEs": [
+      "Rodilla alineada con puntera en frenada",
+      "Tronco inclinado al acelerar"
+    ],
+    "coachingPointsEn": [
+      "Knee aligned with toe during brake",
+      "Forward torso lean when accelerating"
+    ],
+    "targetZones": [
+      "frenada_excentrica",
+      "lca",
+      "cardio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "conos"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "botella"
+      ],
+      "nota": {
+        "es": "Usar botellas de plástico vacías o zapatillas como marcas delimitadoras.",
+        "en": "Use empty plastic bottles or shoes as delimiting markers."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-023",
+    "name": "Campanita (Toques Interior-Interior)",
+    "nameEs": "Campanita (Toques Interior-Interior)",
+    "nameEn": "Bell Taps (Inside-Inside Touches)",
+    "category": "tecnica",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pasar el balón rápidamente de interior a interior entre ambos pies en el sitio.",
+    "descriptionEs": "Pasar el balón rápidamente de interior a interior entre ambos pies en el sitio.",
+    "descriptionEn": "Pass the ball quickly between inside of both feet in place with light rhythm.",
+    "coachingPoints": [
+      "Rodillas semiflexionadas",
+      "Mirar al frente en intervalos"
+    ],
+    "coachingPointsEs": [
+      "Rodillas semiflexionadas",
+      "Mirar al frente en intervalos"
+    ],
+    "coachingPointsEn": [
+      "Knees slightly bent",
+      "Lift eyes periodically off the ball"
+    ],
+    "targetZones": [
+      "control_pie",
+      "coordinacion_tecnica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-024",
+    "name": "Pisas Alternas (Sole Taps)",
+    "nameEs": "Pisas Alternas (Sole Taps)",
+    "nameEn": "Sole Taps on Top of Ball",
+    "category": "tecnica",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Tocar la parte superior del balón con la suela de cada pie alternando con saltitos reactivos.",
+    "descriptionEs": "Tocar la parte superior del balón con la suela de cada pie alternando con saltitos reactivos.",
+    "descriptionEn": "Tap top of ball alternately with sole of each foot using bouncy rhythmic hops.",
+    "coachingPoints": [
+      "No apoyar el peso sobre el balón",
+      "Brazos coordinados"
+    ],
+    "coachingPointsEs": [
+      "No apoyar el peso sobre el balón",
+      "Brazos coordinados"
+    ],
+    "coachingPointsEn": [
+      "Do not rest body weight on ball",
+      "Coordinate arm swing"
+    ],
+    "targetZones": [
+      "sensibilidad_planta",
+      "ritmo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-025",
+    "name": "Arrastre con Suela y Toque de Interior (V-Pull Inside)",
+    "nameEs": "Arrastre con Suela y Toque de Interior (V-Pull Inside)",
+    "nameEn": "V-Pull Inside (Sole Drag & Push)",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Arrastrar el balón hacia atrás con la suela y empujarlo en diagonal hacia adelante con el interior del mismo pie formando una V.",
+    "descriptionEs": "Arrastrar el balón hacia atrás con la suela y empujarlo en diagonal hacia adelante con el interior del mismo pie formando una V.",
+    "descriptionEn": "Drag ball back with sole, then push diagonally forward with inside of same foot in a V-pattern.",
+    "coachingPoints": [
+      "Cambio de peso ágil en el pie de apoyo",
+      "Dibujar una V limpia"
+    ],
+    "coachingPointsEs": [
+      "Cambio de peso ágil en el pie de apoyo",
+      "Dibujar una V limpia"
+    ],
+    "coachingPointsEn": [
+      "Smooth weight shift on standing foot",
+      "Shape a clean V trajectory"
+    ],
+    "targetZones": [
+      "regate_corto",
+      "pie_dominante_y_no_dominante"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-026",
+    "name": "Arrastre con Suela y Salida de Exterior (V-Pull Outside)",
+    "nameEs": "Arrastre con Suela y Salida de Exterior (V-Pull Outside)",
+    "nameEn": "V-Pull Outside (Sole Drag & Exterior Push)",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pisar y arrastrar hacia atrás, salir con el empeine exterior hacia el lateral abriendo el ángulo.",
+    "descriptionEs": "Pisar y arrastrar hacia atrás, salir con el empeine exterior hacia el lateral abriendo el ángulo.",
+    "descriptionEn": "Drag back with sole, accelerate outward with outside of foot opening the passing line.",
+    "coachingPoints": [
+      "Giro de cadera explosivo",
+      "Toque de salida con la distancia justa"
+    ],
+    "coachingPointsEs": [
+      "Giro de cadera explosivo",
+      "Toque de salida con la distancia justa"
+    ],
+    "coachingPointsEn": [
+      "Explosive hip turn",
+      "Calibrated exit touch distance"
+    ],
+    "targetZones": [
+      "cambio_direccion",
+      "proteccion_balon"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-027",
+    "name": "Triángulo Técnico con Suela e Interior",
+    "nameEs": "Triángulo Técnico con Suela e Interior",
+    "nameEn": "Technical Triangle with Sole & Inside",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 15,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pisar atrás con derecha, pasar con interior a izquierda, empujar con izquierda al frente. Repetir en triángulo invertido.",
+    "descriptionEs": "Pisar atrás con derecha, pasar con interior a izquierda, empujar con izquierda al frente. Repetir en triángulo invertido.",
+    "descriptionEn": "Sole drag back right, pass inside to left foot, push forward with left. Complete geometric triangle.",
+    "coachingPoints": [
+      "Fluidez continua sin frenar el balón",
+      "Pies ligeros"
+    ],
+    "coachingPointsEs": [
+      "Fluidez continua sin frenar el balón",
+      "Pies ligeros"
+    ],
+    "coachingPointsEn": [
+      "Continuous flow without stopping ball",
+      "Light fast feet"
+    ],
+    "targetZones": [
+      "vision_espacial",
+      "ambidextrismo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-028",
+    "name": "La Croqueta de Iniesta en Espacio Reducido",
+    "nameEs": "La Croqueta de Iniesta en Espacio Reducido",
+    "nameEn": "In-Place Iniesta Croqueta",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Desplazar el balón con interior de pie derecho directamente hacia interior de pie izquierdo y salir hacia delante.",
+    "descriptionEs": "Desplazar el balón con interior de pie derecho directamente hacia interior de pie izquierdo y salir hacia delante.",
+    "descriptionEn": "Slide ball with inside of right foot directly into inside of left foot and accelerate forward.",
+    "coachingPoints": [
+      "Movimiento en un solo tiempo continuo",
+      "Fintar con el tronco antes del contacto"
+    ],
+    "coachingPointsEs": [
+      "Movimiento en un solo tiempo continuo",
+      "Fintar con el tronco antes del contacto"
+    ],
+    "coachingPointsEn": [
+      "Single fluid tempo",
+      "Feint with upper body before contact"
+    ],
+    "targetZones": [
+      "regate_desborde",
+      "coordinacion_bimanual_pies"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-029",
+    "name": "Bicicleta Simple (Step Over Outward)",
+    "nameEs": "Bicicleta Simple (Step Over Outward)",
+    "nameEn": "Single Step-Over Outward",
+    "category": "tecnica",
+    "level": "basico",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pasar el pie por delante del balón de adentro hacia afuera sin tocarlo, apoyando para fintar y salir con el otro pie.",
+    "descriptionEs": "Pasar el pie por delante del balón de adentro hacia afuera sin tocarlo, apoyando para fintar y salir con el otro pie.",
+    "descriptionEn": "Circle foot over ball from inside to out without touching, plant to fake and exit opposite way.",
+    "coachingPoints": [
+      "Bajar el hombro para engañar",
+      "No golpear el balón con el talón"
+    ],
+    "coachingPointsEs": [
+      "Bajar el hombro para engañar",
+      "No golpear el balón con el talón"
+    ],
+    "coachingPointsEn": [
+      "Drop shoulder to sell the feint",
+      "Avoid clipping ball with heel"
+    ],
+    "targetZones": [
+      "finta",
+      "engano_corporal"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-030",
+    "name": "Doble Bicicleta con Salida de Exterior",
+    "nameEs": "Doble Bicicleta con Salida de Exterior",
+    "nameEn": "Double Step-Over with Exterior Exit",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Bicicleta con pierna derecha, inmediata bicicleta con pierna izquierda y toque explosivo con exterior derecho.",
+    "descriptionEs": "Bicicleta con pierna derecha, inmediata bicicleta con pierna izquierda y toque explosivo con exterior derecho.",
+    "descriptionEn": "Right foot step-over immediately followed by left foot step-over, then explosive right exterior push.",
+    "coachingPoints": [
+      "Velocidad de ejecución sin perder equilibrio",
+      "Aceleración en el cambio de ritmo"
+    ],
+    "coachingPointsEs": [
+      "Velocidad de ejecución sin perder equilibrio",
+      "Aceleración en el cambio de ritmo"
+    ],
+    "coachingPointsEn": [
+      "Execution speed without balance loss",
+      "Sharp acceleration on exit"
+    ],
+    "targetZones": [
+      "regate_avanzado",
+      "cambio_de_ritmo"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-031",
+    "name": "Bicicleta Inversa (Scissors Inward)",
+    "nameEs": "Bicicleta Inversa (Scissors Inward)",
+    "nameEn": "Inward Scissors Feint",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pasar el pie por encima del balón de afuera hacia adentro rodeándolo, amortiguar y salir en dirección contraria.",
+    "descriptionEs": "Pasar el pie por encima del balón de afuera hacia adentro rodeándolo, amortiguar y salir en dirección contraria.",
+    "descriptionEn": "Wrap foot over ball from outside to in, plant and push away in opposite direction.",
+    "coachingPoints": [
+      "Movimiento circular limpio",
+      "Cadera baja"
+    ],
+    "coachingPointsEs": [
+      "Movimiento circular limpio",
+      "Cadera baja"
+    ],
+    "coachingPointsEn": [
+      "Clean circular orbit",
+      "Low center of gravity"
+    ],
+    "targetZones": [
+      "finta_inversa",
+      "agilidad"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-032",
+    "name": "El Recorte de Cruyff Clásico",
+    "nameEs": "El Recorte de Cruyff Clásico",
+    "nameEn": "Cruyff Turn Drill",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Fintar pase o tiro, pisar con pie de apoyo al lado del balón y recortar hacia atrás por detrás de la pierna de apoyo con el interior.",
+    "descriptionEs": "Fintar pase o tiro, pisar con pie de apoyo al lado del balón y recortar hacia atrás por detrás de la pierna de apoyo con el interior.",
+    "descriptionEn": "Fake a strike, plant support foot next to ball and chop ball back behind support leg with inside of foot.",
+    "coachingPoints": [
+      "Engaño total con el tronco superior",
+      "Giro de 180 grados veloz"
+    ],
+    "coachingPointsEs": [
+      "Engaño total con el tronco superior",
+      "Giro de 180 grados veloz"
+    ],
+    "coachingPointsEn": [
+      "Total conviction in shooting fake",
+      "Fast 180-degree pivot"
+    ],
+    "targetZones": [
+      "recorte",
+      "frenada",
+      "180_giro"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-033",
+    "name": "Ruleta de Marsella (Zidane Turn)",
+    "nameEs": "Ruleta de Marsella (Zidane Turn)",
+    "nameEn": "Marseille Roulette (Zidane Turn)",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Pisar balón con derecha girando espalda al rival, saltar sobre pie derecho y arrastrar con suela izquierda hacia adelante.",
+    "descriptionEs": "Pisar balón con derecha girando espalda al rival, saltar sobre pie derecho y arrastrar con suela izquierda hacia adelante.",
+    "descriptionEn": "Drag ball with right sole pivoting back to defender, switch feet and drag forward with left sole.",
+    "coachingPoints": [
+      "Interponer el cuerpo entre balón y contrario",
+      "Giro fluido de 360 grados"
+    ],
+    "coachingPointsEs": [
+      "Interponer el cuerpo entre balón y contrario",
+      "Giro fluido de 360 grados"
+    ],
+    "coachingPointsEn": [
+      "Shield ball with body during pivot",
+      "Fluid 360 rotation"
+    ],
+    "targetZones": [
+      "regate_protegido",
+      "coordinacion_alta"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-034",
+    "name": "Elástico de Ronaldinho en Corto",
+    "nameEs": "Elástico de Ronaldinho en Corto",
+    "nameEn": "Short Elastic Flip-Flap Drill",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 4,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Toque exterior hacia afuera y en el mismo movimiento de tobillo enganche interior hacia adentro.",
+    "descriptionEs": "Toque exterior hacia afuera y en el mismo movimiento de tobillo enganche interior hacia adentro.",
+    "descriptionEn": "Flick ball outward with outside of laces and snap it inward with inside of foot in one wrist-like motion.",
+    "coachingPoints": [
+      "Flexibilidad y reactividad de tobillo",
+      "El balón no debe despegarse del pie"
+    ],
+    "coachingPointsEs": [
+      "Flexibilidad y reactividad de tobillo",
+      "El balón no debe despegarse del pie"
+    ],
+    "coachingPointsEn": [
+      "Ankle flexibility and quick snap",
+      "Ball stays glued to boot"
+    ],
+    "targetZones": [
+      "regate_explosivo",
+      "movilidad_tobillo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-035",
+    "name": "Pases Rasos de Precisión contra Pared (Pie Dominante)",
+    "nameEs": "Pases Rasos de Precisión contra Pared (Pie Dominante)",
+    "nameEn": "Wall Push Passes (Dominant Foot)",
+    "category": "tecnica",
+    "level": "basico",
+    "series": 3,
+    "reps": 25,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Pases tensos y rasos con el interior del pie dominante a 2 metros de una pared firme.",
+    "descriptionEs": "Pases tensos y rasos con el interior del pie dominante a 2 metros de una pared firme.",
+    "descriptionEn": "Firm ground passes with inside of dominant foot 2 meters from a solid wall.",
+    "coachingPoints": [
+      "Tobillo rígido y bloqueado",
+      "Impactar el centro del balón"
+    ],
+    "coachingPointsEs": [
+      "Tobillo rígido y bloqueado",
+      "Impactar el centro del balón"
+    ],
+    "coachingPointsEn": [
+      "Locked ankle at contact",
+      "Strike dead center of ball"
+    ],
+    "targetZones": [
+      "pase_corto",
+      "pie_dominante"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-036",
+    "name": "Pases Rasos de Precisión contra Pared (Pie No Dominante)",
+    "nameEs": "Pases Rasos de Precisión contra Pared (Pie No Dominante)",
+    "nameEn": "Wall Push Passes (Non-Dominant Foot)",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 25,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Pases tensos continuos con el pie débil buscando idéntica precisión y firmeza que con el dominante.",
+    "descriptionEs": "Pases tensos continuos con el pie débil buscando idéntica precisión y firmeza que con el dominante.",
+    "descriptionEn": "Continuous firm passes with weak foot matching the accuracy and crispness of dominant foot.",
+    "coachingPoints": [
+      "Pie de apoyo apuntando hacia el objetivo",
+      "Acompañar la pierna tras el golpeo"
+    ],
+    "coachingPointsEs": [
+      "Pie de apoyo apuntando hacia el objetivo",
+      "Acompañar la pierna tras el golpeo"
+    ],
+    "coachingPointsEn": [
+      "Support foot aimed squarely at target",
+      "Follow through cleanly"
+    ],
+    "targetZones": [
+      "pie_debil",
+      "equilibrio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-037",
+    "name": "Pared Alternada a Dos Toques (Control + Pase)",
+    "nameEs": "Pared Alternada a Dos Toques (Control + Pase)",
+    "nameEn": "Alternating Wall Rebound (Control + Pass)",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 30,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Pase con derecha, controlar orientado con interior izquierda, pase con izquierda, controlar con derecha.",
+    "descriptionEs": "Pase con derecha, controlar orientado con interior izquierda, pase con izquierda, controlar con derecha.",
+    "descriptionEn": "Pass right, directional control with inside of left, pass left, directional control with right.",
+    "coachingPoints": [
+      "Primer toque siempre en diagonal hacia el otro pie",
+      "Cuerpo perfilado"
+    ],
+    "coachingPointsEs": [
+      "Primer toque siempre en diagonal hacia el otro pie",
+      "Cuerpo perfilado"
+    ],
+    "coachingPointsEn": [
+      "First touch angled toward opposite foot",
+      "Keep body open to receiving"
+    ],
+    "targetZones": [
+      "control_orientado",
+      "ritmo_dos_toques"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-038",
+    "name": "Pared al Primer Toque (One-Touch Alterno)",
+    "nameEs": "Pared al Primer Toque (One-Touch Alterno)",
+    "nameEn": "One-Touch Wall Rally",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Pases ininterrumpidos de primera alternando pie izquierdo y pie derecho a máxima velocidad.",
+    "descriptionEs": "Pases ininterrumpidos de primera alternando pie izquierdo y pie derecho a máxima velocidad.",
+    "descriptionEn": "Unbroken one-touch ground passes alternating left and right feet at high tempo.",
+    "coachingPoints": [
+      "Ajuste de pasos constantes antes de impactar",
+      "Brazos equilibrando el cuerpo"
+    ],
+    "coachingPointsEs": [
+      "Ajuste de pasos constantes antes de impactar",
+      "Brazos equilibrando el cuerpo"
+    ],
+    "coachingPointsEn": [
+      "Micro-adjust steps before contact",
+      "Arms out for balance"
+    ],
+    "targetZones": [
+      "primer_toque",
+      "tiempo_reaccion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-039",
+    "name": "Control Orientado con Exterior y Pase Cruzado",
+    "nameEs": "Control Orientado con Exterior y Pase Cruzado",
+    "nameEn": "Outside Cushion Touch & Cross Pass",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Recibir rebote de pared, amortiguar con exterior hacia el lateral alejándolo del rival imaginario y pasar.",
+    "descriptionEs": "Recibir rebote de pared, amortiguar con exterior hacia el lateral alejándolo del rival imaginario y pasar.",
+    "descriptionEn": "Receive wall rebound, cushion laterally with outside of foot away from imaginary pressure, then pass.",
+    "coachingPoints": [
+      "Amortiguar relajando el tobillo al contacto",
+      "Orientar la carrera de salida"
+    ],
+    "coachingPointsEs": [
+      "Amortiguar relajando el tobillo al contacto",
+      "Orientar la carrera de salida"
+    ],
+    "coachingPointsEn": [
+      "Soft relaxed ankle on cushion",
+      "Turn hips into exit lane"
+    ],
+    "targetZones": [
+      "control_exterior",
+      "desmarque"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-040",
+    "name": "Control Aéreo Amortiguado con Empeine (Drop & Catch)",
+    "nameEs": "Control Aéreo Amortiguado con Empeine (Drop & Catch)",
+    "nameEn": "Aerial Cushion Catch with Laces",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 15,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Lanzar balón a la altura del pecho y amortiguarlo con el empeine bajando el pie como un colchón sin que bote.",
+    "descriptionEs": "Lanzar balón a la altura del pecho y amortiguarlo con el empeine bajando el pie como un colchón sin que bote.",
+    "descriptionEn": "Drop ball from chest height and cushion dead on laces by dropping foot like a velvet cushion.",
+    "coachingPoints": [
+      "Acompañar la caída del balón hacia abajo",
+      "Silencio al contacto"
+    ],
+    "coachingPointsEs": [
+      "Acompañar la caída del balón hacia abajo",
+      "Silencio al contacto"
+    ],
+    "coachingPointsEn": [
+      "Ride descent of ball downward",
+      "Silent contact"
+    ],
+    "targetZones": [
+      "sensibilidad_empeine",
+      "control_aereo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-041",
+    "name": "Dominadas Básicas Alternas (Juggling Empeine)",
+    "nameEs": "Dominadas Básicas Alternas (Juggling Empeine)",
+    "nameEn": "Alternating Laces Juggling",
+    "category": "tecnica",
+    "level": "basico",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Toques de empeine continuos alternando pie derecho y pie izquierdo sin que el balón toque el suelo.",
+    "descriptionEs": "Toques de empeine continuos alternando pie derecho y pie izquierdo sin que el balón toque el suelo.",
+    "descriptionEn": "Keepy-uppies with laces alternating right and left foot continuously without ground bounce.",
+    "coachingPoints": [
+      "Balón con efecto de rotación hacia el cuerpo",
+      "Toque no más alto que la cintura"
+    ],
+    "coachingPointsEs": [
+      "Balón con efecto de rotación hacia el cuerpo",
+      "Toque no más alto que la cintura"
+    ],
+    "coachingPointsEn": [
+      "Backspin rotation towards body",
+      "Keep ball below waist height"
+    ],
+    "targetZones": [
+      "tacto_balon",
+      "propiocepcion_pie"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-042",
+    "name": "Dominadas con Muslo y Empeine Combinadas",
+    "nameEs": "Dominadas con Muslo y Empeine Combinadas",
+    "nameEn": "Thigh to Laces Juggling Ladder",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon"
+    ],
+    "materialsEs": [
+      "balón"
+    ],
+    "materialsEn": [
+      "ball"
+    ],
+    "description": "Secuencia: muslo derecho -> empeine derecho -> muslo izquierdo -> empeine izquierdo ininterrumpidamente.",
+    "descriptionEs": "Secuencia: muslo derecho -> empeine derecho -> muslo izquierdo -> empeine izquierdo ininterrumpidamente.",
+    "descriptionEn": "Sequence: right thigh -> right laces -> left thigh -> left laces without missing a beat.",
+    "coachingPoints": [
+      "Muslo a 90 grados al recibir",
+      "Pequeño salto en pie de apoyo"
+    ],
+    "coachingPointsEs": [
+      "Muslo a 90 grados al recibir",
+      "Pequeño salto en pie de apoyo"
+    ],
+    "coachingPointsEn": [
+      "Thigh at 90 degrees to receive",
+      "Micro-hop on base leg"
+    ],
+    "targetZones": [
+      "coordinacion_segmentaria",
+      "control_aereo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-043",
+    "name": "Circuito Slalom en Conos en Espacio Reducido",
+    "nameEs": "Circuito Slalom en Conos en Espacio Reducido",
+    "nameEn": "Tight Cone Slalom Dribble",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 4,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon",
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "balón",
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "ball",
+      "cones or bottles"
+    ],
+    "description": "Sortear 4 conos separados por 60 cm usando interior y exterior del mismo pie, luego cambiar de pie.",
+    "descriptionEs": "Sortear 4 conos separados por 60 cm usando interior y exterior del mismo pie, luego cambiar de pie.",
+    "descriptionEn": "Slalom through 4 cones spaced 60cm apart using inside and outside of same foot, then switch feet.",
+    "coachingPoints": [
+      "Toques cortos cada paso",
+      "Brazos abiertos para balancear"
+    ],
+    "coachingPointsEs": [
+      "Toques cortos cada paso",
+      "Brazos abiertos para balancear"
+    ],
+    "coachingPointsEn": [
+      "Touch ball with every stride",
+      "Arms spread for balance"
+    ],
+    "targetZones": [
+      "conduccion_corta",
+      "frecuencia_apoyos"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-044",
+    "name": "Slalom con Doble Suela (Roll-Over Cones)",
+    "nameEs": "Slalom con Doble Suela (Roll-Over Cones)",
+    "nameEn": "Sole Roll-Over Cone Weave",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon",
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "balón",
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "ball",
+      "cones or bottles"
+    ],
+    "description": "Atravesar conos pisando y rodando el balón de lado a lado con la suela de un pie al otro.",
+    "descriptionEs": "Atravesar conos pisando y rodando el balón de lado a lado con la suela de un pie al otro.",
+    "descriptionEn": "Navigate cones rolling ball laterally across the body with sole from one foot to the other.",
+    "coachingPoints": [
+      "El balón cruza el eje central del cuerpo",
+      "Mirada arriba al rodar"
+    ],
+    "coachingPointsEs": [
+      "El balón cruza el eje central del cuerpo",
+      "Mirada arriba al rodar"
+    ],
+    "coachingPointsEn": [
+      "Ball crosses body midline",
+      "Keep vision up during rolls"
+    ],
+    "targetZones": [
+      "futsal_skills",
+      "dominio_planta"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-045",
+    "name": "Pase aéreo picado contra pared y control de pecho",
+    "nameEs": "Pase aéreo picado contra pared y control de pecho",
+    "nameEn": "Lofted Wall Rebound to Chest Control",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "balon",
+      "pared"
+    ],
+    "materialsEs": [
+      "balón",
+      "pared"
+    ],
+    "materialsEn": [
+      "ball",
+      "wall"
+    ],
+    "description": "Picar el balón por debajo contra la pared a media altura, recibir de pecho amortiguando hacia el suelo y rematar a un toque.",
+    "descriptionEs": "Picar el balón por debajo contra la pared a media altura, recibir de pecho amortiguando hacia el suelo y rematar a un toque.",
+    "descriptionEn": "Chip ball against wall at chest height, cushion with chest downward to feet and finish one-touch.",
+    "coachingPoints": [
+      "Sacar el pecho y retraer en el impacto",
+      "No doblar la espalda hacia atrás en exceso"
+    ],
+    "coachingPointsEs": [
+      "Sacar el pecho y retraer en el impacto",
+      "No doblar la espalda hacia atrás en exceso"
+    ],
+    "coachingPointsEn": [
+      "Puff chest out then retract on impact",
+      "Avoid hyperextending spine"
+    ],
+    "targetZones": [
+      "control_pecho",
+      "vision_aerea"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-046",
+    "name": "Control Orientado con Giros de 90 Grados (Cuadrado)",
+    "nameEs": "Control Orientado con Giros de 90 Grados (Cuadrado)",
+    "nameEn": "Square 90-Degree Directional Touches",
+    "category": "tecnica",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "balón",
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "ball",
+      "cones or bottles"
+    ],
+    "description": "En un cuadrado de 2x2 metros, pasar el balón de esquina a esquina realizando controles de 90 grados en cada vértice.",
+    "descriptionEs": "En un cuadrado de 2x2 metros, pasar el balón de esquina a esquina realizando controles de 90 grados en cada vértice.",
+    "descriptionEn": "Within a 2x2m grid, push ball corner to corner making sharp 90-degree directional touches at each vertex.",
+    "coachingPoints": [
+      "Abrir el pie perpendicular a la trayectoria",
+      "Acelerar tras el giro"
+    ],
+    "coachingPointsEs": [
+      "Abrir el pie perpendicular a la trayectoria",
+      "Acelerar tras el giro"
+    ],
+    "coachingPointsEn": [
+      "Open foot perpendicular to ball line",
+      "Accelerate immediately after turning"
+    ],
+    "targetZones": [
+      "perfilacion",
+      "cambio_sentido"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-047",
+    "name": "Reto de Precisión al Cono (Target Striking)",
+    "nameEs": "Reto de Precisión al Cono (Target Striking)",
+    "nameEn": "Target Cone Precision Striking",
+    "category": "tecnica",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "balon",
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "balón",
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "ball",
+      "cones or bottles"
+    ],
+    "description": "Colocar un cono o botella a 4 metros y golpearlo con pase raso con interior buscando derribarlo o tocarlo.",
+    "descriptionEs": "Colocar un cono o botella a 4 metros y golpearlo con pase raso con interior buscando derribarlo o tocarlo.",
+    "descriptionEn": "Set a cone or bottle 4m away and hit it with a crisp inside-foot pass aiming for a direct strike.",
+    "coachingPoints": [
+      "Fijar la vista en el objetivo antes del armado",
+      "Pierna de golpeo sigue una línea recta"
+    ],
+    "coachingPointsEs": [
+      "Fijar la vista en el objetivo antes del armado",
+      "Pierna de golpeo sigue una línea recta"
+    ],
+    "coachingPointsEn": [
+      "Lock eyes on target before backswing",
+      "Striking leg follows a straight laser line"
+    ],
+    "targetZones": [
+      "punteria_pase",
+      "concentracion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pelota"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pelota"
+      ],
+      "nota": {
+        "es": "En interiores se recomienda balón de fútbol sala o pelota blanda si el espacio es reducido.",
+        "en": "Indoors use futsal or soft foam ball if training in compact room."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-048",
+    "name": "Salto a la Cuerda con Pies Juntos (Rope Double Bounce)",
+    "nameEs": "Salto a la Cuerda con Pies Juntos (Rope Double Bounce)",
+    "nameEn": "Jump Rope Basic Bounce",
+    "category": "coordinacion_agilidad",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "cuerda"
+    ],
+    "materialsEs": [
+      "cuerda"
+    ],
+    "materialsEn": [
+      "jump rope"
+    ],
+    "description": "Saltar la comba con pies juntos manteniendo ritmo estable, muñecas relajadas y apoyos de metatarso.",
+    "descriptionEs": "Saltar la comba con pies juntos manteniendo ritmo estable, muñecas relajadas y apoyos de metatarso.",
+    "descriptionEn": "Jump rope with both feet together maintaining steady rhythm, loose wrists, and forefoot bounces.",
+    "coachingPoints": [
+      "Girar la cuerda desde las muñecas, no desde los hombros",
+      "Saltar solo lo necesario para que pase"
+    ],
+    "coachingPointsEs": [
+      "Girar la cuerda desde las muñecas, no desde los hombros",
+      "Saltar solo lo necesario para que pase"
+    ],
+    "coachingPointsEn": [
+      "Turn rope from wrists, not whole arms",
+      "Jump just high enough for rope clearance"
+    ],
+    "targetZones": [
+      "resistencia_gemelos",
+      "coordinacion_manos_pies"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "cuerda"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Si no dispones de comba, realizar salto imitativo con giros rítmicos de muñeca.",
+        "en": "If without jump rope, mimic hops with rhythmic wrist rotations."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-049",
+    "name": "Salto a la Cuerda con Paso de Boxeador (Boxer Skip)",
+    "nameEs": "Salto a la Cuerda con Paso de Boxeador (Boxer Skip)",
+    "nameEn": "Boxer Skip Jump Rope",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "cuerda"
+    ],
+    "materialsEs": [
+      "cuerda"
+    ],
+    "materialsEn": [
+      "jump rope"
+    ],
+    "description": "Alternar el peso de un pie al otro con doble rebote sutil simulando el juego de pies de un púgil.",
+    "descriptionEs": "Alternar el peso de un pie al otro con doble rebote sutil simulando el juego de pies de un púgil.",
+    "descriptionEn": "Shift weight from one foot to the other with subtle double taps mimicking a boxer shuffle.",
+    "coachingPoints": [
+      "Cambio de peso fluido",
+      "Torso relajado"
+    ],
+    "coachingPointsEs": [
+      "Cambio de peso fluido",
+      "Torso relajado"
+    ],
+    "coachingPointsEn": [
+      "Fluid weight distribution",
+      "Relaxed upper body"
+    ],
+    "targetZones": [
+      "transferencia_peso",
+      "ritmo_motor"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "cuerda"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Si no dispones de comba, realizar salto imitativo con giros rítmicos de muñeca.",
+        "en": "If without jump rope, mimic hops with rhythmic wrist rotations."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-050",
+    "name": "Salto a la Cuerda a Pata Coja Alternada",
+    "nameEs": "Salto a la Cuerda a Pata Coja Alternada",
+    "nameEn": "Single-Leg Alternating Jump Rope",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "cuerda"
+    ],
+    "materialsEs": [
+      "cuerda"
+    ],
+    "materialsEn": [
+      "jump rope"
+    ],
+    "description": "3 saltos continuos sobre pie derecho seguidos de 3 saltos sobre pie izquierdo sin detener la cuerda.",
+    "descriptionEs": "3 saltos continuos sobre pie derecho seguidos de 3 saltos sobre pie izquierdo sin detener la cuerda.",
+    "descriptionEn": "3 continuous hops on right foot followed by 3 hops on left foot without breaking rope swing.",
+    "coachingPoints": [
+      "Estabilidad rotuliana",
+      "Evitar que la rodilla colapse hacia adentro"
+    ],
+    "coachingPointsEs": [
+      "Estabilidad rotuliana",
+      "Evitar que la rodilla colapse hacia adentro"
+    ],
+    "coachingPointsEn": [
+      "Knee stability on landing",
+      "Prevent knee valgus collapse"
+    ],
+    "targetZones": [
+      "fuerza_elastica",
+      "tobillo_unipodal"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "cuerda"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Si no dispones de comba, realizar salto imitativo con giros rítmicos de muñeca.",
+        "en": "If without jump rope, mimic hops with rhythmic wrist rotations."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-051",
+    "name": "Escalera de Agilidad: 1 Pie por Hueco Rápido",
+    "nameEs": "Escalera de Agilidad: 1 Pie por Hueco Rápido",
+    "nameEn": "Agility Ladder One Foot Per Hole",
+    "category": "coordinacion_agilidad",
+    "level": "basico",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "escalera_o_cinta_suelo"
+    ],
+    "materialsEs": [
+      "escalera o cinta en el suelo"
+    ],
+    "materialsEn": [
+      "agility ladder or floor tape"
+    ],
+    "description": "Correr a través de 6 peldaños en el suelo apoyando exactamente un pie en cada hueco a máxima frecuencia.",
+    "descriptionEs": "Correr a través de 6 peldaños en el suelo apoyando exactamente un pie en cada hueco a máxima frecuencia.",
+    "descriptionEn": "Run through 6 rungs on floor planting exactly one foot per space at maximum foot speed.",
+    "coachingPoints": [
+      "Braceo coordinado con las piernas",
+      "No pisar las líneas"
+    ],
+    "coachingPointsEs": [
+      "Braceo coordinado con las piernas",
+      "No pisar las líneas"
+    ],
+    "coachingPointsEn": [
+      "Sync arms with leg turnover",
+      "Never step on the rungs"
+    ],
+    "targetZones": [
+      "frecuencia_zancada",
+      "velocidad_apoyos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-052",
+    "name": "Escalera de Agilidad: 2 Pies por Hueco (Two-In)",
+    "nameEs": "Escalera de Agilidad: 2 Pies por Hueco (Two-In)",
+    "nameEn": "Agility Ladder Two Feet Per Hole",
+    "category": "coordinacion_agilidad",
+    "level": "basico",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "escalera_o_cinta_suelo"
+    ],
+    "materialsEs": [
+      "escalera o cinta en el suelo"
+    ],
+    "materialsEn": [
+      "agility ladder or floor tape"
+    ],
+    "description": "Entrar con pie derecho y luego izquierdo en el mismo hueco antes de avanzar al siguiente.",
+    "descriptionEs": "Entrar con pie derecho y luego izquierdo en el mismo hueco antes de avanzar al siguiente.",
+    "descriptionEn": "Step right then left foot into same rung box before advancing to the next.",
+    "coachingPoints": [
+      "Ritmo 1-2, 1-2 continuo",
+      "Caderas bajas"
+    ],
+    "coachingPointsEs": [
+      "Ritmo 1-2, 1-2 continuo",
+      "Caderas bajas"
+    ],
+    "coachingPointsEn": [
+      "Steady 1-2, 1-2 cadence",
+      "Low athletic hips"
+    ],
+    "targetZones": [
+      "coordinacion_fina",
+      "metatarsos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-053",
+    "name": "Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)",
+    "nameEs": "Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)",
+    "nameEn": "Icky Shuffle (In-In-Out Pattern)",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "escalera_o_cinta_suelo"
+    ],
+    "materialsEs": [
+      "escalera o cinta en el suelo"
+    ],
+    "materialsEn": [
+      "agility ladder or floor tape"
+    ],
+    "description": "Patrón lateral: pie derecho dentro, pie izquierdo dentro, pie derecho fuera al lateral y avanzar en diagonal.",
+    "descriptionEs": "Patrón lateral: pie derecho dentro, pie izquierdo dentro, pie derecho fuera al lateral y avanzar en diagonal.",
+    "descriptionEn": "Lateral drill: right foot in, left foot in, right foot out laterally and advance diagonally.",
+    "coachingPoints": [
+      "Paso de apoyo exterior explosivo",
+      "Mirada arriba"
+    ],
+    "coachingPointsEs": [
+      "Paso de apoyo exterior explosivo",
+      "Mirada arriba"
+    ],
+    "coachingPointsEn": [
+      "Explosive outside plant foot",
+      "Eyes scanning up"
+    ],
+    "targetZones": [
+      "cambio_apoyo_lateral",
+      "frenada_corta"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-054",
+    "name": "Escalera de Agilidad: Pasos Ali (Ali Shuffle)",
+    "nameEs": "Escalera de Agilidad: Pasos Ali (Ali Shuffle)",
+    "nameEn": "Ali Shuffle Footwork Drill",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "escalera_o_cinta_suelo"
+    ],
+    "materialsEs": [
+      "escalera o cinta en el suelo"
+    ],
+    "materialsEn": [
+      "agility ladder or floor tape"
+    ],
+    "description": "De perfil a la escalera, alternar un pie dentro y otro fuera en tijera rápida mientras se avanza lateralmente.",
+    "descriptionEs": "De perfil a la escalera, alternar un pie dentro y otro fuera en tijera rápida mientras se avanza lateralmente.",
+    "descriptionEn": "Facing perpendicular, scissor one foot inside and one foot outside while shifting sideways down the ladder.",
+    "coachingPoints": [
+      "Giro de cadera rápido",
+      "Postura atlética compacta"
+    ],
+    "coachingPointsEs": [
+      "Giro de cadera rápido",
+      "Postura atlética compacta"
+    ],
+    "coachingPointsEn": [
+      "Fast hip snap",
+      "Compact athletic posture"
+    ],
+    "targetZones": [
+      "disociacion_tren_inferior",
+      "velocidad_reaccion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-055",
+    "name": "Cruces Dentro-Fuera en Línea Recta (In & Out)",
+    "nameEs": "Cruces Dentro-Fuera en Línea Recta (In & Out)",
+    "nameEn": "In & Out Fast Lateral Line Steps",
+    "category": "coordinacion_agilidad",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Abrir ambos pies por fuera de una línea imaginaria y volver a cerrarlos al centro a máxima frecuencia.",
+    "descriptionEs": "Abrir ambos pies por fuera de una línea imaginaria y volver a cerrarlos al centro a máxima frecuencia.",
+    "descriptionEn": "Step both feet wide across an imaginary line and quickly snap them back to center at top cadence.",
+    "coachingPoints": [
+      "Pies como si el suelo quemara",
+      "Rodillas elásticas"
+    ],
+    "coachingPointsEs": [
+      "Pies como si el suelo quemara",
+      "Rodillas elásticas"
+    ],
+    "coachingPointsEn": [
+      "Feet off floor like hot coals",
+      "Springy responsive knees"
+    ],
+    "targetZones": [
+      "agilidad_pies",
+      "cardio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-056",
+    "name": "Saltos en Cruz Multidireccionales a Pies Juntos",
+    "nameEs": "Saltos en Cruz Multidireccionales a Pies Juntos",
+    "nameEn": "Four-Square Cross Hops",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Saltar en forma de cruz: centro -> adelante -> centro -> atrás -> centro -> derecha -> centro -> izquierda.",
+    "descriptionEs": "Saltar en forma de cruz: centro -> adelante -> centro -> atrás -> centro -> derecha -> centro -> izquierda.",
+    "descriptionEn": "Four-way cross jump: center -> forward -> center -> back -> center -> right -> center -> left.",
+    "coachingPoints": [
+      "Tiempos de contacto mínimos",
+      "Tronco erguido y estable"
+    ],
+    "coachingPointsEs": [
+      "Tiempos de contacto mínimos",
+      "Tronco erguido y estable"
+    ],
+    "coachingPointsEn": [
+      "Minimal ground contact time",
+      "Stable upright torso"
+    ],
+    "targetZones": [
+      "reactividad_multidireccional",
+      "propiocepcion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Rebote elástico sobre metatarsos; suspender ante sobrecarga en gemelos o tendón de Aquiles.",
+      "en": "Elastic forefoot rebound; stop if calf or Achilles tendon tightness occurs."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-057",
+    "name": "Saltos en Cruz a Pata Coja (Unipodal Cross Hops)",
+    "nameEs": "Saltos en Cruz a Pata Coja (Unipodal Cross Hops)",
+    "nameEn": "Single-Leg Cross Hops",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Realizar el circuito en cruz apoyando un solo pie y controlando cada caída sin apoyar el pie libre.",
+    "descriptionEs": "Realizar el circuito en cruz apoyando un solo pie y controlando cada caída sin apoyar el pie libre.",
+    "descriptionEn": "Execute cross pattern on a single leg sticking and controlling each landing without touching down free foot.",
+    "coachingPoints": [
+      "Rodilla amortigua con flexión controlada",
+      "Tobillo firme sin inclinación"
+    ],
+    "coachingPointsEs": [
+      "Rodilla amortigua con flexión controlada",
+      "Tobillo firme sin inclinación"
+    ],
+    "coachingPointsEn": [
+      "Knee absorbs with slight bend",
+      "Solid ankle with no tilt"
+    ],
+    "targetZones": [
+      "estabilidad_tobillo",
+      "lca_prevencion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Rebote elástico sobre metatarsos; suspender ante sobrecarga en gemelos o tendón de Aquiles.",
+      "en": "Elastic forefoot rebound; stop if calf or Achilles tendon tightness occurs."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-058",
+    "name": "Paso de Patinador con Frenada (Skater Jumps & Stick)",
+    "nameEs": "Paso de Patinador con Frenada (Skater Jumps & Stick)",
+    "nameEn": "Skater Jumps with 2-Second Hold",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Salto lateral amplio sobre una pierna, clavar la caída congelando la postura 2 segundos antes de saltar al otro lado.",
+    "descriptionEs": "Salto lateral amplio sobre una pierna, clavar la caída congelando la postura 2 segundos antes de saltar al otro lado.",
+    "descriptionEn": "Wide lateral leap onto one leg, stick and freeze landing for 2 seconds before bounding back.",
+    "coachingPoints": [
+      "Glúteo activo absorbiendo el impacto",
+      "Pecho no se cae hacia adelante"
+    ],
+    "coachingPointsEs": [
+      "Glúteo activo absorbiendo el impacto",
+      "Pecho no se cae hacia adelante"
+    ],
+    "coachingPointsEn": [
+      "Glute engages to absorb force",
+      "Chest remains proud and upright"
+    ],
+    "targetZones": [
+      "frenada_lateral",
+      "gluteo_medio",
+      "rodilla"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Rebote elástico sobre metatarsos; suspender ante sobrecarga en gemelos o tendón de Aquiles.",
+      "en": "Elastic forefoot rebound; stop if calf or Achilles tendon tightness occurs."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-059",
+    "name": "Patinador Continuo Reactivo (Speed Skaters)",
+    "nameEs": "Patinador Continuo Reactivo (Speed Skaters)",
+    "nameEn": "Continuous Reactive Speed Skaters",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Saltos laterales continuos sin pausa con rebote explosivo y braceo potente simulando un patinador de velocidad.",
+    "descriptionEs": "Saltos laterales continuos sin pausa con rebote explosivo y braceo potente simulando un patinador de velocidad.",
+    "descriptionEn": "Continuous side-to-side bounds without pause using explosive rebound and speed-skater arm pump.",
+    "coachingPoints": [
+      "Potencia horizontal máxima",
+      "Transición rápida en metatarsos"
+    ],
+    "coachingPointsEs": [
+      "Potencia horizontal máxima",
+      "Transición rápida en metatarsos"
+    ],
+    "coachingPointsEn": [
+      "Maximum horizontal power",
+      "Fast forefoot turnarounds"
+    ],
+    "targetZones": [
+      "potencia_lateral",
+      "cardio_anaerobico"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Rebote elástico sobre metatarsos; suspender ante sobrecarga en gemelos o tendón de Aquiles.",
+      "en": "Elastic forefoot rebound; stop if calf or Achilles tendon tightness occurs."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-060",
+    "name": "T-Test de Agilidad en Salón (3x3 Metros)",
+    "nameEs": "T-Test de Agilidad en Salón (3x3 Metros)",
+    "nameEn": "Living Room 3x3m T-Test",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 4,
+    "reps": 4,
+    "durationSeconds": 0,
+    "restSeconds": 40,
+    "materials": [
+      "conos_o_botellas"
+    ],
+    "materialsEs": [
+      "conos o botellas"
+    ],
+    "materialsEn": [
+      "cones or bottles"
+    ],
+    "description": "Sprint 3m adelante -> paso lateral 1.5m a la izquierda -> 3m lateral a la derecha -> 1.5m lateral al centro -> retroceso de espaldas.",
+    "descriptionEs": "Sprint 3m adelante -> paso lateral 1.5m a la izquierda -> 3m lateral a la derecha -> 1.5m lateral al centro -> retroceso de espaldas.",
+    "descriptionEn": "Sprint 3m forward -> lateral shuffle 1.5m left -> 3m right -> 1.5m back to center -> backpedal to start.",
+    "coachingPoints": [
+      "Nunca cruzar las piernas en desplazamientos laterales",
+      "Tocar la base de los conos"
+    ],
+    "coachingPointsEs": [
+      "Nunca cruzar las piernas en desplazamientos laterales",
+      "Tocar la base de los conos"
+    ],
+    "coachingPointsEn": [
+      "Never cross feet during shuffles",
+      "Touch cone bases with fingers"
+    ],
+    "targetZones": [
+      "agilidad_cod",
+      "frenada",
+      "perfil_defensivo"
+    ],
+    "contexto": "campo_only",
+    "material_preferido": [
+      "conos"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "botella"
+      ],
+      "nota": {
+        "es": "Usar botellas de plástico vacías o zapatillas como marcas delimitadoras.",
+        "en": "Use empty plastic bottles or shoes as delimiting markers."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-061",
+    "name": "Equilibrio Unipodal en Pata Coja con Ojos Cerrados",
+    "nameEs": "Equilibrio Unipodal en Pata Coja con Ojos Cerrados",
+    "nameEn": "Eyes-Closed Single-Leg Balance",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 25,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Sostenerse sobre un solo pie, rodilla ligeramente desbloqueada, cerrar ojos y mantener estabilidad sin apoyar el otro.",
+    "descriptionEs": "Sostenerse sobre un solo pie, rodilla ligeramente desbloqueada, cerrar ojos y mantener estabilidad sin apoyar el otro.",
+    "descriptionEn": "Stand on one foot with soft knee bend, close eyes, and hold motionless balance.",
+    "coachingPoints": [
+      "Hacer microajustes desde el tobillo",
+      "Cerca de pared por seguridad"
+    ],
+    "coachingPointsEs": [
+      "Hacer microajustes desde el tobillo",
+      "Cerca de pared por seguridad"
+    ],
+    "coachingPointsEn": [
+      "Micro-adjust from ankle tendons",
+      "Stay near wall for safety"
+    ],
+    "targetZones": [
+      "propiocepcion_tobillo",
+      "sistema_vestibular"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-062",
+    "name": "Equilibrio Unipodal sobre Cojín o Superficie Blanda",
+    "nameEs": "Equilibrio Unipodal sobre Cojín o Superficie Blanda",
+    "nameEn": "Unstable Cushion Single-Leg Stance",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "cojin_o_toalla"
+    ],
+    "materialsEs": [
+      "cojín o toalla doblada"
+    ],
+    "materialsEn": [
+      "cushion or folded towel"
+    ],
+    "description": "Colocar un cojín en el suelo, subirse con un solo pie y resistir las microoscilaciones manteniendo la pelvis nivelada.",
+    "descriptionEs": "Colocar un cojín en el suelo, subirse con un solo pie y resistir las microoscilaciones manteniendo la pelvis nivelada.",
+    "descriptionEn": "Place cushion on floor, stand on one foot, and resist micro-wobbles keeping pelvis level.",
+    "coachingPoints": [
+      "Mirar a un punto fijo al frente",
+      "Contraer glúteo del pie de apoyo"
+    ],
+    "coachingPointsEs": [
+      "Mirar a un punto fijo al frente",
+      "Contraer glúteo del pie de apoyo"
+    ],
+    "coachingPointsEn": [
+      "Fix gaze on steady point ahead",
+      "Brace support glute"
+    ],
+    "targetZones": [
+      "propiocepcion_profunda",
+      "ligamentos_tobillo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "wobble_pad"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "cojin"
+      ],
+      "nota": {
+        "es": "El cojín reduce la inestabilidad en comparación con una superficie inestable profesional (Bosu/wobble pad); mantener concentración en la alineación del tobillo.",
+        "en": "A cushion provides less instability than professional equipment (Bosu/wobble board); maintain focus on ankle alignment."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Mantener apoyo cerca de pared por seguridad si se pierde el equilibrio.",
+      "en": "Keep support hand near wall for safety if balance is lost."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Verhagen et al. 2004, ankle injury prevention"
+    }
+  },
+  {
+    "id": "hex-063",
+    "name": "Toques de Reloj Unipodales (Clock Reach)",
+    "nameEs": "Toques de Reloj Unipodales (Clock Reach)",
+    "nameEn": "Single-Leg Clock Cone Reaches",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Sobre una pierna, flexionar ligeramente y tocar el suelo con la punta del pie libre a las 12, las 3, las 6 y las 9.",
+    "descriptionEs": "Sobre una pierna, flexionar ligeramente y tocar el suelo con la punta del pie libre a las 12, las 3, las 6 y las 9.",
+    "descriptionEn": "On one leg, dip slightly and reach free toe to tap imaginary clock points at 12, 3, 6, and 9 o clock.",
+    "coachingPoints": [
+      "El peso nunca se transfiere al pie que toca",
+      "Rodilla alineada"
+    ],
+    "coachingPointsEs": [
+      "El peso nunca se transfiere al pie que toca",
+      "Rodilla alineada"
+    ],
+    "coachingPointsEn": [
+      "Never transfer weight onto tapping toe",
+      "Maintain knee tracking"
+    ],
+    "targetZones": [
+      "control_motor",
+      "estabilidad_lumbopelvica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-064",
+    "name": "Caída desde Salto y Clavado (Drop Jump Stick)",
+    "nameEs": "Caída desde Salto y Clavado (Drop Jump Stick)",
+    "nameEn": "Drop Jump & Two-Foot Stick",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "escalon_bajo"
+    ],
+    "materialsEs": [
+      "escalón bajo o bordillo"
+    ],
+    "materialsEn": [
+      "low step or curb"
+    ],
+    "description": "Dejarse caer desde un escalón bajo de 15-20 cm y clavar la caída en dos pies simultáneos absorbiendo en sentadilla parcial.",
+    "descriptionEs": "Dejarse caer desde un escalón bajo de 15-20 cm y clavar la caída en dos pies simultáneos absorbiendo en sentadilla parcial.",
+    "descriptionEn": "Step off low 15-20cm step and stick landing on both feet simultaneously absorbing into partial squat.",
+    "coachingPoints": [
+      "Caída silenciosa como un gato",
+      "Rodillas jamás colapsan hacia adentro (valgo)"
+    ],
+    "coachingPointsEs": [
+      "Caída silenciosa como un gato",
+      "Rodillas jamás colapsan hacia adentro (valgo)"
+    ],
+    "coachingPointsEn": [
+      "Silent landing like a cat",
+      "No inward knee valgus collapse"
+    ],
+    "targetZones": [
+      "prevencion_lca",
+      "absorcion_impactos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "cajon_bajo"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "escalon"
+      ],
+      "nota": {
+        "es": "El escalón doméstico reduce la altura de caída respecto a un cajón pliométrico. Asegurar superficie que amortigüe el impacto y controlar el ruido para vecinos.",
+        "en": "Household step reduces drop height compared to a plyo box. Ensure cushioned impact surface and control noise for downstairs neighbors."
+      }
+    },
+    "age_min": 16,
+    "age_max": null,
+    "edad_minima_segura": 16,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Superficie que amortigüe, espacio vertical y calzado adecuado. No prescribir sin base de fuerza y técnica de aterrizaje.",
+      "en": "Cushioned landing surface, vertical clearance and proper footwear. Do not prescribe without strength base and landing mechanics."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-065",
+    "name": "Salto Vertical con Caída a Una Pierna (Single-Leg Land)",
+    "nameEs": "Salto Vertical con Caída a Una Pierna (Single-Leg Land)",
+    "nameEn": "Vertical Hop with Single-Leg Stick",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Salto vertical moderado con ambos pies y caer amortiguando sobre una sola pierna congelando la postura.",
+    "descriptionEs": "Salto vertical moderado con ambos pies y caer amortiguando sobre una sola pierna congelando la postura.",
+    "descriptionEn": "Moderate two-foot vertical jump and land sticking on a single leg freezing posture instantly.",
+    "coachingPoints": [
+      "Flexión de cadera y rodilla simétrica",
+      "Mantener 3 segundos inmóvil"
+    ],
+    "coachingPointsEs": [
+      "Flexión de cadera y rodilla simétrica",
+      "Mantener 3 segundos inmóvil"
+    ],
+    "coachingPointsEn": [
+      "Symmetric hip and knee flexion",
+      "Hold motionless for 3 seconds"
+    ],
+    "targetZones": [
+      "lca_control_excentrico",
+      "propiocepcion_rodilla"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 16,
+    "age_max": null,
+    "edad_minima_segura": 16,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Superficie que amortigüe, espacio vertical y calzado adecuado. No prescribir sin base de fuerza y técnica de aterrizaje.",
+      "en": "Cushioned landing surface, vertical clearance and proper footwear. Do not prescribe without strength base and landing mechanics."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-066",
+    "name": "Arrancadas Explosivas de Reacción Auditiva",
+    "nameEs": "Arrancadas Explosivas de Reacción Auditiva",
+    "nameEn": "Audio Reaction Explosive Starts",
+    "category": "coordinacion_agilidad",
+    "level": "intermedio",
+    "series": 4,
+    "reps": 5,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Trotar suave en el sitio; al sonar un aplauso o pitido digital, arrancar a sprint máximo de 2 metros y frenar.",
+    "descriptionEs": "Trotar suave en el sitio; al sonar un aplauso o pitido digital, arrancar a sprint máximo de 2 metros y frenar.",
+    "descriptionEn": "Jog lightly in place; upon clap or audio cue, explode into a 2m sprint and brake sharply.",
+    "coachingPoints": [
+      "Primer paso agresivo hacia adelante",
+      "Centro de gravedad bajo al salir"
+    ],
+    "coachingPointsEs": [
+      "Primer paso agresivo hacia adelante",
+      "Centro de gravedad bajo al salir"
+    ],
+    "coachingPointsEn": [
+      "Aggressive first forward step",
+      "Low center of gravity at launch"
+    ],
+    "targetZones": [
+      "tiempo_reaccion",
+      "aceleracion_corta"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-067",
+    "name": "Giro de 180 Grados y Sprint de Espaldas a Frontal",
+    "nameEs": "Giro de 180 Grados y Sprint de Espaldas a Frontal",
+    "nameEn": "180-Degree Pivot & Accelerate",
+    "category": "coordinacion_agilidad",
+    "level": "avanzado",
+    "series": 4,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Espaldas a la dirección; pivotar 180 grados girando sobre un pie y acelerar 3 metros de cara de forma reactiva.",
+    "descriptionEs": "Espaldas a la dirección; pivotar 180 grados girando sobre un pie y acelerar 3 metros de cara de forma reactiva.",
+    "descriptionEn": "Back to run lane; pivot 180 degrees over single foot and sprint 3 meters forward reactively.",
+    "coachingPoints": [
+      "Girar cabeza primero para identificar espacio",
+      "Empuje enérgico de piernas"
+    ],
+    "coachingPointsEs": [
+      "Girar cabeza primero para identificar espacio",
+      "Empuje enérgico de piernas"
+    ],
+    "coachingPointsEn": [
+      "Turn head first to scan space",
+      "Powerful leg drive"
+    ],
+    "targetZones": [
+      "giro_pivot",
+      "aceleracion_post_transicion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-068",
+    "name": "Plancha Frontal Clásica (Isometric Plank)",
+    "nameEs": "Plancha Frontal Clásica (Isometric Plank)",
+    "nameEn": "Classic Forearm Plank",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Apoyo sobre antebrazos y puntas de los pies. Mantener cuerpo en línea recta activando abdomen y glúteos.",
+    "descriptionEs": "Apoyo sobre antebrazos y puntas de los pies. Mantener cuerpo en línea recta activando abdomen y glúteos.",
+    "descriptionEn": "Forearm plank on toes. Keep body in a straight line engaging core and glutes.",
+    "coachingPoints": [
+      "No dejar caer la pelvis ni arquear zona lumbar",
+      "Cuello neutro alineado"
+    ],
+    "coachingPointsEs": [
+      "No dejar caer la pelvis ni arquear zona lumbar",
+      "Cuello neutro alineado"
+    ],
+    "coachingPointsEn": [
+      "Do not drop pelvis or sag lower back",
+      "Keep neck in neutral alignment"
+    ],
+    "targetZones": [
+      "core",
+      "transverso_abdomen",
+      "lumbar"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-069",
+    "name": "Plancha Lateral con Apoyo de Codo",
+    "nameEs": "Plancha Lateral con Apoyo de Codo",
+    "nameEn": "Elbow Side Plank",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 25,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Apoyado sobre un codo y lateral de los pies, elevar cadera hasta alinear tobillo, pelvis y hombro.",
+    "descriptionEs": "Apoyado sobre un codo y lateral de los pies, elevar cadera hasta alinear tobillo, pelvis y hombro.",
+    "descriptionEn": "Rest on one elbow and edge of feet, lift hips until ankle, hip, and shoulder form a straight line.",
+    "coachingPoints": [
+      "Codo justo debajo del hombro",
+      "Cadera empujando arriba"
+    ],
+    "coachingPointsEs": [
+      "Codo justo debajo del hombro",
+      "Cadera empujando arriba"
+    ],
+    "coachingPointsEn": [
+      "Elbow directly under shoulder",
+      "Keep hips pressed high"
+    ],
+    "targetZones": [
+      "oblicuos",
+      "cuadrado_lumbar",
+      "gluteo_medio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-070",
+    "name": "Plancha Lateral con Elevación de Pierna (Star Plank)",
+    "nameEs": "Plancha Lateral con Elevación de Pierna (Star Plank)",
+    "nameEn": "Side Plank with Leg Abduction",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En plancha lateral, elevar y descender la pierna superior con control sin perder la altura de la cadera.",
+    "descriptionEs": "En plancha lateral, elevar y descender la pierna superior con control sin perder la altura de la cadera.",
+    "descriptionEn": "From side plank, lift and lower the top leg smoothly without dropping hip height.",
+    "coachingPoints": [
+      "Puntera de pierna levantada mirando al frente",
+      "Glúteo medio en fuego"
+    ],
+    "coachingPointsEs": [
+      "Puntera de pierna levantada mirando al frente",
+      "Glúteo medio en fuego"
+    ],
+    "coachingPointsEn": [
+      "Top toe pointing forward",
+      "Engage abductor glute"
+    ],
+    "targetZones": [
+      "gluteo_medio",
+      "oblicuos",
+      "estabilidad_pelvica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-071",
+    "name": "Plancha Frontal con Toques de Hombro (Shoulder Taps)",
+    "nameEs": "Plancha Frontal con Toques de Hombro (Shoulder Taps)",
+    "nameEn": "Plank Shoulder Taps",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En plancha alta sobre palmas, tocar el hombro opuesto con una mano alternando sin balancear la cadera.",
+    "descriptionEs": "En plancha alta sobre palmas, tocar el hombro opuesto con una mano alternando sin balancear la cadera.",
+    "descriptionEn": "High plank on hands, tap opposite shoulder alternately while locking hips still.",
+    "coachingPoints": [
+      "Pies algo más anchos para mayor base",
+      "Cero balanceo pélvico"
+    ],
+    "coachingPointsEs": [
+      "Pies algo más anchos para mayor base",
+      "Cero balanceo pélvico"
+    ],
+    "coachingPointsEn": [
+      "Wider stance for base support",
+      "Zero hip wobble"
+    ],
+    "targetZones": [
+      "anti_rotacion",
+      "estabilidad_escapular",
+      "core"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-072",
+    "name": "Pájaro-Perro (Bird-Dog Contralateral)",
+    "nameEs": "Pájaro-Perro (Bird-Dog Contralateral)",
+    "nameEn": "Contralateral Bird-Dog",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En cuadrupedia, extender simultáneamente brazo derecho y pierna izquierda paralelos al suelo y sostener 2 segundos.",
+    "descriptionEs": "En cuadrupedia, extender simultáneamente brazo derecho y pierna izquierda paralelos al suelo y sostener 2 segundos.",
+    "descriptionEn": "On all fours, extend right arm and left leg parallel to floor simultaneously, hold for 2 seconds.",
+    "coachingPoints": [
+      "Apretar glúteo al extender pierna",
+      "Espalda plana como una mesa"
+    ],
+    "coachingPointsEs": [
+      "Apretar glúteo al extender pierna",
+      "Espalda plana como una mesa"
+    ],
+    "coachingPointsEn": [
+      "Squeeze glute at full leg reach",
+      "Tabletop flat back"
+    ],
+    "targetZones": [
+      "erectores_espinales",
+      "gluteo_mayor",
+      "core"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-073",
+    "name": "Bicho Muerto (Dead Bug Contralateral)",
+    "nameEs": "Bicho Muerto (Dead Bug Contralateral)",
+    "nameEn": "Contralateral Dead Bug",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 14,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Boca arriba con brazos al techo y rodillas a 90 grados, descender brazo derecho y pierna izquierda rozando el suelo.",
+    "descriptionEs": "Boca arriba con brazos al techo y rodillas a 90 grados, descender brazo derecho y pierna izquierda rozando el suelo.",
+    "descriptionEn": "Supine with arms up and knees at 90 degrees, lower right arm and left heel toward floor keeping back pinned.",
+    "coachingPoints": [
+      "Zona lumbar permanentemente aplastando la colchoneta",
+      "Exhalar al extender"
+    ],
+    "coachingPointsEs": [
+      "Zona lumbar permanentemente aplastando la colchoneta",
+      "Exhalar al extender"
+    ],
+    "coachingPointsEn": [
+      "Lower back glued flat against mat",
+      "Exhale during limb extension"
+    ],
+    "targetZones": [
+      "anti_extension_lumbar",
+      "coordinacion_cruzada"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-074",
+    "name": "Puente de Glúteo Bipodal con Pausa Isométrica",
+    "nameEs": "Puente de Glúteo Bipodal con Pausa Isométrica",
+    "nameEn": "Glute Bridge with Isometric Pause",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 15,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Tumbado boca arriba, flexionar rodillas a 90 grados y elevar cadera apretando glúteos 2 segundos en la cima.",
+    "descriptionEs": "Tumbado boca arriba, flexionar rodillas a 90 grados y elevar cadera apretando glúteos 2 segundos en la cima.",
+    "descriptionEn": "Lie on back, bend knees at 90 degrees and bridge hips up squeezing glutes for 2 seconds at top.",
+    "coachingPoints": [
+      "Empujar desde los talones",
+      "No arquear la columna lumbar al subir"
+    ],
+    "coachingPointsEs": [
+      "Empujar desde los talones",
+      "No arquear la columna lumbar al subir"
+    ],
+    "coachingPointsEn": [
+      "Drive through heels",
+      "Do not hyperextend lower back"
+    ],
+    "targetZones": [
+      "gluteo_mayor",
+      "isquiosurales",
+      "pelvis"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-075",
+    "name": "Puente de Glúteo Unipodal con Pierna Extendida",
+    "nameEs": "Puente de Glúteo Unipodal con Pierna Extendida",
+    "nameEn": "Single-Leg Glute Bridge",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Con una pierna en el aire alineada con el muslo de apoyo, elevar la pelvis utilizando la fuerza exclusiva del glúteo de apoyo.",
+    "descriptionEs": "Con una pierna en el aire alineada con el muslo de apoyo, elevar la pelvis utilizando la fuerza exclusiva del glúteo de apoyo.",
+    "descriptionEn": "With one leg extended in line with working thigh, elevate pelvis purely through single supporting glute.",
+    "coachingPoints": [
+      "Pelvis nivelada sin inclinación hacia el lado libre",
+      "Contracción firme"
+    ],
+    "coachingPointsEs": [
+      "Pelvis nivelada sin inclinación hacia el lado libre",
+      "Contracción firme"
+    ],
+    "coachingPointsEn": [
+      "Pelvis stays square with no hip drop",
+      "Solid glute peak contraction"
+    ],
+    "targetZones": [
+      "gluteo_aislado",
+      "cadena_posterior"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-076",
+    "name": "Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)",
+    "nameEs": "Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)",
+    "nameEn": "Copenhagen Adductor Plank (Bench Support)",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sofa_o_silla"
+    ],
+    "materialsEs": [
+      "sofá o silla baja"
+    ],
+    "materialsEn": [
+      "sofa or low bench"
+    ],
+    "description": "Plancha lateral con la pierna superior apoyada en el sofá o silla, elevando pelvis y suspendiendo pierna inferior.",
+    "descriptionEs": "Plancha lateral con la pierna superior apoyada en el sofá o silla, elevando pelvis y suspendiendo pierna inferior.",
+    "descriptionEn": "Side plank with top foot resting on couch/bench, raising hips and holding bottom leg hovering.",
+    "coachingPoints": [
+      "Cuerpo recto como una tabla",
+      "Fundamental para prevenir pubalgias"
+    ],
+    "coachingPointsEs": [
+      "Cuerpo recto como una tabla",
+      "Fundamental para prevenir pubalgias"
+    ],
+    "coachingPointsEn": [
+      "Body straight as an arrow",
+      "Crucial groin/pubalgia prevention"
+    ],
+    "targetZones": [
+      "aductores",
+      "pubalgia_prevencion",
+      "core_lateral"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "banco",
+      "silla_estable"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "silla_estable",
+        "sofa",
+        "escalon"
+      ],
+      "nota": {
+        "es": "Usar silla firme apoyada contra pared o base de sofá. Cuidar la altura para no forzar la aducción.",
+        "en": "Use sturdy chair against wall or couch base. Control height to prevent adductor strain."
+      }
+    },
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Carga alta en inserción del aductor largo. Detener si hay molestia en sínfisis púbica.",
+      "en": "High load on adductor longus insertion. Stop immediately if pubic discomfort occurs."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Thorborg/Hölmich, Copenhagen adduction exercise literature; Harøy et al. 2019"
+    }
+  },
+  {
+    "id": "hex-077",
+    "name": "Copenhague Modificado en Suelo con Rodilla Apoyada",
+    "nameEs": "Copenhague Modificado en Suelo con Rodilla Apoyada",
+    "nameEn": "Floor Knee-Supported Copenhagen Plank",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Plancha lateral apoyando la cara interna de la rodilla superior en el suelo y elevando cadera de forma progresiva.",
+    "descriptionEs": "Plancha lateral apoyando la cara interna de la rodilla superior en el suelo y elevando cadera de forma progresiva.",
+    "descriptionEn": "Side plank supporting on inner knee on floor, bridging hips up progressively with reduced lever arm.",
+    "coachingPoints": [
+      "Brazo de palanca más corto y seguro",
+      "Activación del aductor mayor"
+    ],
+    "coachingPointsEs": [
+      "Brazo de palanca más corto y seguro",
+      "Activación del aductor mayor"
+    ],
+    "coachingPointsEn": [
+      "Shorter safer lever arm",
+      "Target adductor magnus"
+    ],
+    "targetZones": [
+      "aductor_medio",
+      "pubis"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Palanca corta adecuada para formación formativa sub-12/sub-14.",
+      "en": "Short lever arm appropriate for youth u12/u14 athlete progression."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Harøy et al. 2019, Br J Sports Med"
+    }
+  },
+  {
+    "id": "hex-078",
+    "name": "Nordic Hamstring Curl Casero Asistido con Puerta o Sofá",
+    "nameEs": "Nordic Hamstring Curl Casero Asistido con Puerta o Sofá",
+    "nameEn": "Assisted Home Nordic Hamstring Curl",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 6,
+    "durationSeconds": 0,
+    "restSeconds": 40,
+    "materials": [
+      "sofa_pesado_o_tope_puerta"
+    ],
+    "materialsEs": [
+      "sofá pesado o tope de puerta"
+    ],
+    "materialsEn": [
+      "heavy sofa or door strap"
+    ],
+    "description": "De rodillas con tobillos anclados bajo el sofá, dejarse caer lentamente hacia adelante frenando con los isquiosurales.",
+    "descriptionEs": "De rodillas con tobillos anclados bajo el sofá, dejarse caer lentamente hacia adelante frenando con los isquiosurales.",
+    "descriptionEn": "Kneeling with heels anchored under heavy couch, lean forward lowering slowly resisting with hamstrings.",
+    "coachingPoints": [
+      "Caderas extendidas sin doblar cintura",
+      "Frenar la caída hasta el último instante"
+    ],
+    "coachingPointsEs": [
+      "Caderas extendidas sin doblar cintura",
+      "Frenar la caída hasta el último instante"
+    ],
+    "coachingPointsEn": [
+      "Hips fully extended without bending waist",
+      "Brake descent as far as possible"
+    ],
+    "targetZones": [
+      "isquiosurales_excentrico",
+      "prevencion_roturas"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "anclaje_pies"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "sofa_pesado",
+        "tope_puerta",
+        "companero"
+      ],
+      "nota": {
+        "es": "Asegurar anclaje estable en base de sofá pesado, bajo puerta firme o con ayuda de un adulto. Nunca prescribir sin supervisión presencial.",
+        "en": "Ensure stable anchor at base of heavy couch, firm door strap or adult partner. Never prescribe without in-person supervision."
+      }
+    },
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "No prescribir sin base de fuerza previa. Progresar de isométrico a asistido a full. Supervisión obligatoria.",
+      "en": "Do not prescribe without prior strength base. Progress from isometric to assisted to full. Mandatory supervision."
+    },
+    "source": {
+      "type": "estudio_peer_reviewed",
+      "citation": "Petersen et al. 2011, Am J Sports Med"
+    }
+  },
+  {
+    "id": "hex-079",
+    "name": "Slide Hamstring Curl con Toalla en Suelo Liso",
+    "nameEs": "Slide Hamstring Curl con Toalla en Suelo Liso",
+    "nameEn": "Towel Floor Hamstring Slide Curl",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "toalla"
+    ],
+    "materialsEs": [
+      "toalla en suelo de baldosa o parquet"
+    ],
+    "materialsEn": [
+      "towel on tile/wood floor"
+    ],
+    "description": "Boca arriba en puente glúteo con talones sobre una toalla, deslizar piernas extendiéndolas y recoger flexionando rodillas.",
+    "descriptionEs": "Boca arriba en puente glúteo con talones sobre una toalla, deslizar piernas extendiéndolas y recoger flexionando rodillas.",
+    "descriptionEn": "Supine in glute bridge with heels on towel, slide feet out into extension and curl back pulling heels to hips.",
+    "coachingPoints": [
+      "Pelvis levantada durante toda la extensión",
+      "Control concéntrico y excéntrico"
+    ],
+    "coachingPointsEs": [
+      "Pelvis levantada durante toda la extensión",
+      "Control concéntrico y excéntrico"
+    ],
+    "coachingPointsEn": [
+      "Keep hips high during entire slide",
+      "Both concentric and eccentric control"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "gluteos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "toalla"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "toalla"
+      ],
+      "nota": {
+        "es": "Usar toalla sobre suelo liso (parquet/baldosa) o calcetines gruesos.",
+        "en": "Use towel on smooth tile/wood floor or thick socks."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-080",
+    "name": "Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)",
+    "nameEs": "Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)",
+    "nameEn": "Bodyweight Bulgarian Split Squat",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "silla_o_sofa"
+    ],
+    "materialsEs": [
+      "silla o sofá"
+    ],
+    "materialsEn": [
+      "chair or sofa"
+    ],
+    "description": "Un pie apoyado atrás sobre la silla, descender flexionando pierna delantera hasta que el muslo quede paralelo al suelo.",
+    "descriptionEs": "Un pie apoyado atrás sobre la silla, descender flexionando pierna delantera hasta que el muslo quede paralelo al suelo.",
+    "descriptionEn": "Rear foot elevated on chair, descend with front leg until thigh is parallel to floor keeping knee aligned.",
+    "coachingPoints": [
+      "Rodilla delantera nunca colapsa hacia adentro",
+      "Tronco con ligera inclinación natural"
+    ],
+    "coachingPointsEs": [
+      "Rodilla delantera nunca colapsa hacia adentro",
+      "Tronco con ligera inclinación natural"
+    ],
+    "coachingPointsEn": [
+      "Front knee tracks straight over second toe",
+      "Slight natural forward torso lean"
+    ],
+    "targetZones": [
+      "cuadriceps",
+      "gluteo_mayor",
+      "estabilidad_rodilla"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "silla_estable"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "silla_estable",
+        "sofa"
+      ],
+      "nota": {
+        "es": "Asegurar que la silla esté firmemente apoyada contra una pared.",
+        "en": "Ensure chair is firmly backed against a wall."
+      }
+    },
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Exige dorsiflexión y control de valgo; no permitir colapso medial de la rodilla.",
+      "en": "Requires dorsiflexion and valgus knee control; avoid medial knee collapse."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines"
+    }
+  },
+  {
+    "id": "hex-081",
+    "name": "Peso Muerto Rumano a Una Pierna (Single-Leg RDL)",
+    "nameEs": "Peso Muerto Rumano a Una Pierna (Single-Leg RDL)",
+    "nameEn": "Single-Leg Romanian Deadlift (RDL)",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 10,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "De pie sobre una pierna con rodilla ligeramente flexionada, bascular cadera atrás bajando tronco recto y elevando pierna trasera.",
+    "descriptionEs": "De pie sobre una pierna con rodilla ligeramente flexionada, bascular cadera atrás bajando tronco recto y elevando pierna trasera.",
+    "descriptionEn": "Stand on one leg with soft knee, hinge at hip reaching torso forward and rear leg back like a see-saw.",
+    "coachingPoints": [
+      "Espalda completamente neutra",
+      "Caderas paralelas al suelo"
+    ],
+    "coachingPointsEs": [
+      "Espalda completamente neutra",
+      "Caderas paralelas al suelo"
+    ],
+    "coachingPointsEn": [
+      "Flat neutral spine throughout",
+      "Hips squared to floor"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "gluteo_medio",
+      "tobillo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Exige dorsiflexión y control de valgo; no permitir colapso medial de la rodilla.",
+      "en": "Requires dorsiflexion and valgus knee control; avoid medial knee collapse."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines"
+    }
+  },
+  {
+    "id": "hex-082",
+    "name": "Sentadilla Pistol Asistida a Silla (Box Pistol Squat)",
+    "nameEs": "Sentadilla Pistol Asistida a Silla (Box Pistol Squat)",
+    "nameEn": "Assisted Box Pistol Squat",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "silla"
+    ],
+    "materialsEs": [
+      "silla"
+    ],
+    "materialsEn": [
+      "chair"
+    ],
+    "description": "Sobre una sola pierna con la otra al frente, descender de forma controlada hasta sentarse en la silla y ponerse de pie.",
+    "descriptionEs": "Sobre una sola pierna con la otra al frente, descender de forma controlada hasta sentarse en la silla y ponerse de pie.",
+    "descriptionEn": "On one leg with opposite leg extended in front, squat down under control to touch chair and stand back up.",
+    "coachingPoints": [
+      "Sin dejarse caer al asiento",
+      "Presionar firme desde el talón"
+    ],
+    "coachingPointsEs": [
+      "Sin dejarse caer al asiento",
+      "Presionar firme desde el talón"
+    ],
+    "coachingPointsEn": [
+      "Do not plop onto seat",
+      "Drive up smoothly through heel"
+    ],
+    "targetZones": [
+      "fuerza_unipodal",
+      "cuadriceps",
+      "tobillo_dorsiflexion"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "silla_estable"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "silla_estable",
+        "sofa"
+      ],
+      "nota": {
+        "es": "Asegurar que la silla esté firmemente apoyada contra una pared.",
+        "en": "Ensure chair is firmly backed against a wall."
+      }
+    },
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Exige dorsiflexión y control de valgo; no permitir colapso medial de la rodilla.",
+      "en": "Requires dorsiflexion and valgus knee control; avoid medial knee collapse."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines"
+    }
+  },
+  {
+    "id": "hex-083",
+    "name": "Elevación de Gemelos en Escalón con Fase Excéntrica Lenta",
+    "nameEs": "Elevación de Gemelos en Escalón con Fase Excéntrica Lenta",
+    "nameEn": "Calf Raises with 3-Second Eccentric",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 15,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "escalon"
+    ],
+    "materialsEs": [
+      "escalón"
+    ],
+    "materialsEn": [
+      "step"
+    ],
+    "description": "En el borde de un escalón, subir con ambos pies y descender los talones por debajo del nivel del borde en 3 segundos.",
+    "descriptionEs": "En el borde de un escalón, subir con ambos pies y descender los talones por debajo del nivel del borde en 3 segundos.",
+    "descriptionEn": "On edge of step, rise on toes and lower heels below step level taking 3 seconds on eccentric descent.",
+    "coachingPoints": [
+      "Rango de movimiento completo",
+      "Pausa en máxima extensión"
+    ],
+    "coachingPointsEs": [
+      "Rango de movimiento completo",
+      "Pausa en máxima extensión"
+    ],
+    "coachingPointsEn": [
+      "Full range of motion",
+      "Brief peak hold"
+    ],
+    "targetZones": [
+      "gemelos",
+      "tendon_aquiles",
+      "soleo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "escalon"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "escalon"
+      ],
+      "nota": {
+        "es": "Utilizar el primer escalón de una escalera con barandilla disponible para seguridad.",
+        "en": "Use bottom step with banister nearby for safety."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-084",
+    "name": "Elevación de Sóleo Unipodal con Rodilla Semiflexionada",
+    "nameEs": "Elevación de Sóleo Unipodal con Rodilla Semiflexionada",
+    "nameEn": "Bent-Knee Single-Leg Soleus Raise",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Apoyado en pared con rodilla flexionada 30 grados, elevar talón manteniendo el ángulo de flexión para aislar el sóleo.",
+    "descriptionEs": "Apoyado en pared con rodilla flexionada 30 grados, elevar talón manteniendo el ángulo de flexión para aislar el sóleo.",
+    "descriptionEn": "Leaning on wall with knee bent 30 degrees, elevate heel keeping knee angle fixed to isolate soleus.",
+    "coachingPoints": [
+      "La rodilla no se extiende durante la subida",
+      "Crucial para deceleraciones"
+    ],
+    "coachingPointsEs": [
+      "La rodilla no se extiende durante la subida",
+      "Crucial para deceleraciones"
+    ],
+    "coachingPointsEn": [
+      "Knee stays flexed through rep",
+      "Vital for deceleration capacity"
+    ],
+    "targetZones": [
+      "soleo",
+      "prevencion_aquiles"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-085",
+    "name": "Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)",
+    "nameEs": "Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)",
+    "nameEn": "Wall Tibialis Anterior Raises",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 20,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Espalda apoyada en pared con pies adelantados 40 cm, levantar las puntas de los pies hacia las espinillas con fuerza.",
+    "descriptionEs": "Espalda apoyada en pared con pies adelantados 40 cm, levantar las puntas de los pies hacia las espinillas con fuerza.",
+    "descriptionEn": "Back resting on wall with heels 40cm out, lift toes toward shins aggressively holding at peak.",
+    "coachingPoints": [
+      "Rodillas rectas",
+      "Previene periostitis tibial y esguinces"
+    ],
+    "coachingPointsEs": [
+      "Rodillas rectas",
+      "Previene periostitis tibial y esguinces"
+    ],
+    "coachingPointsEn": [
+      "Knees straight",
+      "Prevents shin splints and sprains"
+    ],
+    "targetZones": [
+      "tibial_anterior",
+      "espinillas"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-086",
+    "name": "La Almeja para Glúteo Medio (Clamshell con Pausa)",
+    "nameEs": "La Almeja para Glúteo Medio (Clamshell con Pausa)",
+    "nameEn": "Side-Lying Clamshell with 2s Hold",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 15,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Tumbado de lado con rodillas flexionadas a 90 grados y talones juntos, abrir la rodilla superior sin rotar la pelvis atrás.",
+    "descriptionEs": "Tumbado de lado con rodillas flexionadas a 90 grados y talones juntos, abrir la rodilla superior sin rotar la pelvis atrás.",
+    "descriptionEn": "Side lying with knees at 90 degrees and heels together, open top knee like a clam shell without rolling pelvis back.",
+    "coachingPoints": [
+      "Pelvis perpendicular al suelo",
+      "Contracción pura de glúteo medio"
+    ],
+    "coachingPointsEs": [
+      "Pelvis perpendicular al suelo",
+      "Contracción pura de glúteo medio"
+    ],
+    "coachingPointsEn": [
+      "Pelvis remains perpendicular to floor",
+      "Pure gluteus medius recruitment"
+    ],
+    "targetZones": [
+      "gluteo_medio",
+      "estabilizacion_cadera"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-087",
+    "name": "Paseo de Monstruo con Banda o Isométrico (Monster Walk)",
+    "nameEs": "Paseo de Monstruo con Banda o Isométrico (Monster Walk)",
+    "nameEn": "Athletic Stance Lateral Monster Walk",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "reps": 16,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "banda_elastica_o_sin_material"
+    ],
+    "materialsEs": [
+      "banda elástica o peso corporal"
+    ],
+    "materialsEn": [
+      "resistance band or bodyweight"
+    ],
+    "description": "En media sentadilla con pies al ancho de hombros, dar pasos diagonales hacia adelante manteniendo tensión constante.",
+    "descriptionEs": "En media sentadilla con pies al ancho de hombros, dar pasos diagonales hacia adelante manteniendo tensión constante.",
+    "descriptionEn": "In quarter squat with feet shoulder-width, take diagonal steps forward maintaining constant hip tension.",
+    "coachingPoints": [
+      "Pies siempre separados",
+      "Rodillas empujan hacia afuera"
+    ],
+    "coachingPointsEs": [
+      "Pies siempre separados",
+      "Rodillas empujan hacia afuera"
+    ],
+    "coachingPointsEn": [
+      "Feet stay wide",
+      "Knees tracking outwards"
+    ],
+    "targetZones": [
+      "abductores",
+      "gluteo_medio"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "banda_elastica"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Sin banda no hay resistencia elástica progresiva; mantener patrón como activación muscular pero no como fortalecimiento equivalente. Alternativa: puente monopodal o empuje contra marco de puerta.",
+        "en": "Without band there is no progressive elastic resistance; maintain pattern as activation but not equivalent strengthening. Alternative: single-leg bridge or isometric doorframe press."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-088",
+    "name": "Silla Isométrica en Pared (Wall Sit)",
+    "nameEs": "Silla Isométrica en Pared (Wall Sit)",
+    "nameEn": "Wall Sit Isometric Hold",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 35,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Espalda pegada a la pared, flexionar rodillas a 90 grados como sentado en una silla imaginaria y aguantar la posición.",
+    "descriptionEs": "Espalda pegada a la pared, flexionar rodillas a 90 grados como sentado en una silla imaginaria y aguantar la posición.",
+    "descriptionEn": "Back flat against wall, slide down until knees reach 90 degrees and hold position like a chair.",
+    "coachingPoints": [
+      "Rodillas sobre tobillos",
+      "Presión firme a través de los pies"
+    ],
+    "coachingPointsEs": [
+      "Rodillas sobre tobillos",
+      "Presión firme a través de los pies"
+    ],
+    "coachingPointsEn": [
+      "Knees stacked above ankles",
+      "Firm pressure through full foot"
+    ],
+    "targetZones": [
+      "cuadriceps",
+      "tendon_rotuliano",
+      "fuerza_estatica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-089",
+    "name": "Silla Isométrica Unipodal en Pared",
+    "nameEs": "Silla Isométrica Unipodal en Pared",
+    "nameEn": "Single-Leg Wall Sit Hold",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 35,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Desde posición de silla a 90 grados en pared, levantar una pierna extendida al frente soportando el peso con una sola pierna.",
+    "descriptionEs": "Desde posición de silla a 90 grados en pared, levantar una pierna extendida al frente soportando el peso con una sola pierna.",
+    "descriptionEn": "From 90-degree wall sit, extend one leg out in front holding full body tension on single leg.",
+    "coachingPoints": [
+      "Caderas no caen de lado",
+      "Respirar profundamente sin contener aire"
+    ],
+    "coachingPointsEs": [
+      "Caderas no caen de lado",
+      "Respirar profundamente sin contener aire"
+    ],
+    "coachingPointsEn": [
+      "Keep hips level on wall",
+      "Breathe steadily without breath-holding"
+    ],
+    "targetZones": [
+      "cuadriceps_aislado",
+      "tendinopatia_rotuliana"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-090",
+    "name": "Flexiones de Brazos con Control Escapular (Scapular Push-Up)",
+    "nameEs": "Flexiones de Brazos con Control Escapular (Scapular Push-Up)",
+    "nameEn": "Push-Up with Scapular Protraction",
+    "category": "fuerza_preventiva",
+    "level": "basico",
+    "series": 3,
+    "reps": 12,
+    "durationSeconds": 0,
+    "restSeconds": 30,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En posición de plancha alta, juntar escápulas bajando el pecho 5 cm y empujar el suelo redondeando la parte alta de la espalda.",
+    "descriptionEs": "En posición de plancha alta, juntar escápulas bajando el pecho 5 cm y empujar el suelo redondeando la parte alta de la espalda.",
+    "descriptionEn": "In high plank, pinch shoulder blades together dropping chest 5cm, then press ground away protracting upper back.",
+    "coachingPoints": [
+      "Brazos rectos en todo momento",
+      "Activación del serrato anterior"
+    ],
+    "coachingPointsEs": [
+      "Brazos rectos en todo momento",
+      "Activación del serrato anterior"
+    ],
+    "coachingPointsEn": [
+      "Arms straight throughout",
+      "Serratus anterior activation"
+    ],
+    "targetZones": [
+      "serrato_anterior",
+      "estabilidad_hombro"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-091",
+    "name": "El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)",
+    "nameEs": "El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)",
+    "nameEn": "Isometric Towel Pallof Press",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 20,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "toalla",
+      "poste_o_pomo_puerta"
+    ],
+    "materialsEs": [
+      "toalla anclada a pomo o barandilla"
+    ],
+    "materialsEn": [
+      "towel anchored to door/railing"
+    ],
+    "description": "De pie de perfil a la puerta, sujetar la toalla anclada y empujar hacia delante resistiendo la fuerza de rotación.",
+    "descriptionEs": "De pie de perfil a la puerta, sujetar la toalla anclada y empujar hacia delante resistiendo la fuerza de rotación.",
+    "descriptionEn": "Standing sideways to anchor, hold towel with both hands and press straight out resisting lateral pull.",
+    "coachingPoints": [
+      "Tronco inmóvil como una columna de granito",
+      "Pelvis cuadrada"
+    ],
+    "coachingPointsEs": [
+      "Tronco inmóvil como una columna de granito",
+      "Pelvis cuadrada"
+    ],
+    "coachingPointsEn": [
+      "Torso solid like granite",
+      "Square hips forward"
+    ],
+    "targetZones": [
+      "anti_rotacion_core",
+      "oblicuos"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "toalla"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "toalla"
+      ],
+      "nota": {
+        "es": "Usar toalla sobre suelo liso (parquet/baldosa) o calcetines gruesos.",
+        "en": "Use towel on smooth tile/wood floor or thick socks."
+      }
+    },
+    "age_min": 10,
+    "age_max": null,
+    "edad_minima_segura": 10,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Alinear columna neutra y mantener respiración fluida.",
+      "en": "Maintain neutral spine and steady breathing."
+    },
+    "source": {
+      "type": "guia_fifa",
+      "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    }
+  },
+  {
+    "id": "hex-092",
+    "name": "Sentadilla Profunda con Salto Vertical y Aterrizaje Blando",
+    "nameEs": "Sentadilla Profunda con Salto Vertical y Aterrizaje Blando",
+    "nameEn": "Squat Jump with Soft Deceleration",
+    "category": "fuerza_preventiva",
+    "level": "avanzado",
+    "series": 3,
+    "reps": 8,
+    "durationSeconds": 0,
+    "restSeconds": 35,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Descender a media sentadilla, saltar con máxima explosividad vertical y aterrizar absorbiendo suavemente en 2 tiempos.",
+    "descriptionEs": "Descender a media sentadilla, saltar con máxima explosividad vertical y aterrizar absorbiendo suavemente en 2 tiempos.",
+    "descriptionEn": "Drop to quarter squat, jump with maximum vertical power and cushion landing into deep squat deceleration.",
+    "coachingPoints": [
+      "Cero impacto seco",
+      "Cadera absorbe la fuerza hacia atrás"
+    ],
+    "coachingPointsEs": [
+      "Cero impacto seco",
+      "Cadera absorbe la fuerza hacia atrás"
+    ],
+    "coachingPointsEn": [
+      "Zero loud thud on impact",
+      "Hips absorb force backward"
+    ],
+    "targetZones": [
+      "potencia_tren_inferior",
+      "fuerza_reactiva"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 16,
+    "age_max": null,
+    "edad_minima_segura": 16,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Superficie que amortigüe, espacio vertical y calzado adecuado. No prescribir sin base de fuerza y técnica de aterrizaje.",
+      "en": "Cushioned landing surface, vertical clearance and proper footwear. Do not prescribe without strength base and landing mechanics."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    }
+  },
+  {
+    "id": "hex-093",
+    "name": "Estiramiento Pasivo de Isquiosurales con Toalla",
+    "nameEs": "Estiramiento Pasivo de Isquiosurales con Toalla",
+    "nameEn": "Towel Hamstring Supine Stretch",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "toalla",
+      "esterilla"
+    ],
+    "materialsEs": [
+      "toalla",
+      "esterilla"
+    ],
+    "materialsEn": [
+      "towel",
+      "mat"
+    ],
+    "description": "Tumbado boca arriba, pasar una toalla por la planta del pie y elevar la pierna recta hacia el techo con tracción suave.",
+    "descriptionEs": "Tumbado boca arriba, pasar una toalla por la planta del pie y elevar la pierna recta hacia el techo con tracción suave.",
+    "descriptionEn": "Lie supine, loop towel around foot sole, and gently pull straight leg toward ceiling until mild stretch.",
+    "coachingPoints": [
+      "Pierna contraria apoyada y relajada",
+      "Respiración diafragmática profunda"
+    ],
+    "coachingPointsEs": [
+      "Pierna contraria apoyada y relajada",
+      "Respiración diafragmática profunda"
+    ],
+    "coachingPointsEn": [
+      "Opposite leg flat and relaxed",
+      "Deep diaphragmatic breathing"
+    ],
+    "targetZones": [
+      "isquiosurales",
+      "hueco_popliteo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "toalla"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "toalla",
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Usar toalla de baño doblada o cinturón de tela. Tracción suave y progresiva.",
+        "en": "Use folded bath towel or cloth belt. Smooth progressive traction."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-094",
+    "name": "Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)",
+    "nameEs": "Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)",
+    "nameEn": "Couch Stretch (Quad & Hip Flexor)",
+    "category": "vuelta_calma",
+    "level": "intermedio",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "sofa_o_pared"
+    ],
+    "materialsEs": [
+      "sofá o pared"
+    ],
+    "materialsEn": [
+      "couch or wall"
+    ],
+    "description": "Una rodilla en el suelo pegada a la pared con espinilla vertical, dar paso adelante con la otra pierna y erguir el tronco.",
+    "descriptionEs": "Una rodilla en el suelo pegada a la pared con espinilla vertical, dar paso adelante con la otra pierna y erguir el tronco.",
+    "descriptionEn": "Rear knee on floor against couch with shin vertical, step forward with other foot and raise torso tall.",
+    "coachingPoints": [
+      "Apretar glúteo trasero para abrir cadera",
+      "Cero arqueo lumbar"
+    ],
+    "coachingPointsEs": [
+      "Apretar glúteo trasero para abrir cadera",
+      "Cero arqueo lumbar"
+    ],
+    "coachingPointsEn": [
+      "Squeeze back glute to open hip",
+      "Zero lumbar arch"
+    ],
+    "targetZones": [
+      "psoas_iliaco",
+      "recto_anterior_cuadriceps"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-095",
+    "name": "Estiramiento de Glúteo en Figura 4 (Supine Figure Four)",
+    "nameEs": "Estiramiento de Glúteo en Figura 4 (Supine Figure Four)",
+    "nameEn": "Supine Figure-4 Piriformis Stretch",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Boca arriba, cruzar tobillo derecho sobre rodilla izquierda y abrazar el muslo izquierdo hacia el pecho.",
+    "descriptionEs": "Boca arriba, cruzar tobillo derecho sobre rodilla izquierda y abrazar el muslo izquierdo hacia el pecho.",
+    "descriptionEn": "Lie supine, cross right ankle over left knee, and thread hands to pull left thigh gently toward chest.",
+    "coachingPoints": [
+      "Hombros y cuello relajados en el suelo",
+      "Sostener sin rebotes"
+    ],
+    "coachingPointsEs": [
+      "Hombros y cuello relajados en el suelo",
+      "Sostener sin rebotes"
+    ],
+    "coachingPointsEn": [
+      "Keep shoulders and neck relaxed on floor",
+      "Steady hold without bouncing"
+    ],
+    "targetZones": [
+      "piramidal",
+      "gluteo_profundo"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-096",
+    "name": "La Rana para Aductores (Frog Stretch)",
+    "nameEs": "La Rana para Aductores (Frog Stretch)",
+    "nameEn": "Frog Pose Adductor Stretch",
+    "category": "vuelta_calma",
+    "level": "intermedio",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En cuadrupedia, abrir rodillas ampliamente hacia los lados con pies orientados hacia afuera y descender pelvis hacia atrás.",
+    "descriptionEs": "En cuadrupedia, abrir rodillas ampliamente hacia los lados con pies orientados hacia afuera y descender pelvis hacia atrás.",
+    "descriptionEn": "On all fours, spread knees wide apart with feet turned out and sink hips back toward heels.",
+    "coachingPoints": [
+      "Apoyo sobre antebrazos",
+      "Respirar hacia la zona pélvica"
+    ],
+    "coachingPointsEs": [
+      "Apoyo sobre antebrazos",
+      "Respirar hacia la zona pélvica"
+    ],
+    "coachingPointsEn": [
+      "Rest on forearms",
+      "Breathe into pelvic area"
+    ],
+    "targetZones": [
+      "aductores_profundos",
+      "cadera_movilidad"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 12,
+    "age_max": null,
+    "edad_minima_segura": 12,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-097",
+    "name": "Postura de Paloma Modificada (Pigeon Pose)",
+    "nameEs": "Postura de Paloma Modificada (Pigeon Pose)",
+    "nameEn": "Modified Pigeon Pose Stretch",
+    "category": "vuelta_calma",
+    "level": "intermedio",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Pierna delantera flexionada con rodilla abierta hacia afuera, pierna trasera extendida atrás, apoyar pecho hacia adelante.",
+    "descriptionEs": "Pierna delantera flexionada con rodilla abierta hacia afuera, pierna trasera extendida atrás, apoyar pecho hacia adelante.",
+    "descriptionEn": "Front leg bent with knee pointing out, back leg extended straight behind, fold chest forward over front shin.",
+    "coachingPoints": [
+      "Caderas cuadradas al suelo",
+      "Dejar caer el peso suavemente"
+    ],
+    "coachingPointsEs": [
+      "Caderas cuadradas al suelo",
+      "Dejar caer el peso suavemente"
+    ],
+    "coachingPointsEn": [
+      "Square hips to floor",
+      "Sink weight down gently with gravity"
+    ],
+    "targetZones": [
+      "gluteo_medio",
+      "rotadores_externos_cadera"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-098",
+    "name": "Estiramiento de Gemelo y Sóleo contra Pared",
+    "nameEs": "Estiramiento de Gemelo y Sóleo contra Pared",
+    "nameEn": "Wall Gastrocnemius & Soleus Stretch",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "pared"
+    ],
+    "materialsEs": [
+      "pared"
+    ],
+    "materialsEn": [
+      "wall"
+    ],
+    "description": "Manos en la pared, dar paso atrás con una pierna manteniendo rodilla extendida y talón pegado al suelo.",
+    "descriptionEs": "Manos en la pared, dar paso atrás con una pierna manteniendo rodilla extendida y talón pegado al suelo.",
+    "descriptionEn": "Hands on wall, step one leg back keeping knee straight and heel flat on floor for calf stretch.",
+    "coachingPoints": [
+      "Puntera trasera apuntando al frente",
+      "Flexionar luego ligeramente la rodilla para tocar sóleo"
+    ],
+    "coachingPointsEs": [
+      "Puntera trasera apuntando al frente",
+      "Flexionar luego ligeramente la rodilla para tocar sóleo"
+    ],
+    "coachingPointsEn": [
+      "Rear toe pointed dead ahead",
+      "Softly bend rear knee to shift to soleus"
+    ],
+    "targetZones": [
+      "gemelos",
+      "soleo",
+      "tendon_aquiles"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-099",
+    "name": "Postura del Niño con Descarga de Hombros (Child Pose)",
+    "nameEs": "Postura del Niño con Descarga de Hombros (Child Pose)",
+    "nameEn": "Child Pose with Shoulder Extension",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 45,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "De rodillas, sentarse sobre los talones, estirar brazos al frente en el suelo y relajar la frente en la esterilla.",
+    "descriptionEs": "De rodillas, sentarse sobre los talones, estirar brazos al frente en el suelo y relajar la frente en la esterilla.",
+    "descriptionEn": "Kneeling, sit back onto heels, reach arms far forward on floor and rest forehead on mat.",
+    "coachingPoints": [
+      "Descomprimir zona lumbar",
+      "Respiración abdominal lenta"
+    ],
+    "coachingPointsEs": [
+      "Descomprimir zona lumbar",
+      "Respiración abdominal lenta"
+    ],
+    "coachingPointsEn": [
+      "Decompress lumbar spine",
+      "Slow abdominal belly breaths"
+    ],
+    "targetZones": [
+      "dorsales",
+      "lumbar",
+      "relajacion_global"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-100",
+    "name": "Torsión Espinal Tumbado (Supine Spinal Twist)",
+    "nameEs": "Torsión Espinal Tumbado (Supine Spinal Twist)",
+    "nameEn": "Supine Gentle Spinal Twist",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Boca arriba con brazos en cruz, doblar una rodilla y cruzarla suavemente sobre el cuerpo hacia el lado contrario.",
+    "descriptionEs": "Boca arriba con brazos en cruz, doblar una rodilla y cruzarla suavemente sobre el cuerpo hacia el lado contrario.",
+    "descriptionEn": "Lie supine with arms out in T, bring one knee to 90 degrees and gently roll it across body to opposite floor.",
+    "coachingPoints": [
+      "Ambos hombros permanecen pegados al suelo",
+      "Mirar hacia la mano opuesta"
+    ],
+    "coachingPointsEs": [
+      "Ambos hombros permanecen pegados al suelo",
+      "Mirar hacia la mano opuesta"
+    ],
+    "coachingPointsEn": [
+      "Both shoulder blades stay pinned to floor",
+      "Look toward opposite hand"
+    ],
+    "targetZones": [
+      "movilidad_toracica",
+      "gluteo",
+      "columna"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-101",
+    "name": "Enhebrar la Aguja para Espalda Alta (Thread the Needle)",
+    "nameEs": "Enhebrar la Aguja para Espalda Alta (Thread the Needle)",
+    "nameEn": "Thread the Needle Thoracic Stretch",
+    "category": "vuelta_calma",
+    "level": "intermedio",
+    "series": 2,
+    "durationSeconds": 35,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En cuadrupedia, deslizar un brazo por debajo del torso apoyando hombro y mejilla en el suelo.",
+    "descriptionEs": "En cuadrupedia, deslizar un brazo por debajo del torso apoyando hombro y mejilla en el suelo.",
+    "descriptionEn": "On all fours, thread one arm beneath torso resting shoulder and cheek on floor for upper back release.",
+    "coachingPoints": [
+      "Sentir apertura en la escápula",
+      "Liberar tensiones cervicales"
+    ],
+    "coachingPointsEs": [
+      "Sentir apertura en la escápula",
+      "Liberar tensiones cervicales"
+    ],
+    "coachingPointsEn": [
+      "Feel opening across scapula",
+      "Release neck tension"
+    ],
+    "targetZones": [
+      "romboides",
+      "deltoides_posterior",
+      "torax"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-102",
+    "name": "Apertura Pectoral en Marco de Puerta",
+    "nameEs": "Apertura Pectoral en Marco de Puerta",
+    "nameEn": "Doorway Chest & Biceps Stretch",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "marco_puerta"
+    ],
+    "materialsEs": [
+      "marco de una puerta"
+    ],
+    "materialsEn": [
+      "door frame"
+    ],
+    "description": "Apoyar antebrazo a 90 grados en el marco de la puerta y dar un paso adelante rotando ligeramente el tronco hacia afuera.",
+    "descriptionEs": "Apoyar antebrazo a 90 grados en el marco de la puerta y dar un paso adelante rotando ligeramente el tronco hacia afuera.",
+    "descriptionEn": "Place forearm at 90 degrees against doorframe, step forward and rotate torso slightly away to stretch chest.",
+    "coachingPoints": [
+      "Hombro relajado abajo",
+      "No forzar la articulación"
+    ],
+    "coachingPointsEs": [
+      "Hombro relajado abajo",
+      "No forzar la articulación"
+    ],
+    "coachingPointsEn": [
+      "Shoulder relaxed away from ear",
+      "Never crank joint aggressively"
+    ],
+    "targetZones": [
+      "pectoral_mayor",
+      "hombro_anterior"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-103",
+    "name": "Estiramiento de la Cobra Suave para Cadena Anterior",
+    "nameEs": "Estiramiento de la Cobra Suave para Cadena Anterior",
+    "nameEn": "Gentle Sphinx / Cobra Pose",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 30,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Tumbado boca abajo, apoyar antebrazos en el suelo y elevar suavemente el pecho alargando el cuello hacia el techo.",
+    "descriptionEs": "Tumbado boca abajo, apoyar antebrazos en el suelo y elevar suavemente el pecho alargando el cuello hacia el techo.",
+    "descriptionEn": "Lie prone, support on forearms and gently press chest up elongating neck without compressing lumbar spine.",
+    "coachingPoints": [
+      "Alargar la columna sin pellizcar la zona lumbar",
+      "Hombros lejos de orejas"
+    ],
+    "coachingPointsEs": [
+      "Alargar la columna sin pellizcar la zona lumbar",
+      "Hombros lejos de orejas"
+    ],
+    "coachingPointsEn": [
+      "Lengthen spine without pinching lower back",
+      "Shoulders down and back"
+    ],
+    "targetZones": [
+      "recto_abdominal",
+      "extension_columna"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-104",
+    "name": "Perro Boca Abajo con Pedaleo de Talones (Downward Dog)",
+    "nameEs": "Perro Boca Abajo con Pedaleo de Talones (Downward Dog)",
+    "nameEn": "Downward Dog with Heel Pedals",
+    "category": "vuelta_calma",
+    "level": "intermedio",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "En forma de V invertida, empujar el suelo con las palmas y alternar la presión de talones estirando gemelos e isquios.",
+    "descriptionEs": "En forma de V invertida, empujar el suelo con las palmas y alternar la presión de talones estirando gemelos e isquios.",
+    "descriptionEn": "Inverted V pose, push floor through palms and alternate heel presses down to stretch calves and hamstrings.",
+    "coachingPoints": [
+      "Cadera apunta alta al techo",
+      "Cabeza relajada entre los brazos"
+    ],
+    "coachingPointsEs": [
+      "Cadera apunta alta al techo",
+      "Cabeza relajada entre los brazos"
+    ],
+    "coachingPointsEn": [
+      "Hips driving high to ceiling",
+      "Head relaxed between biceps"
+    ],
+    "targetZones": [
+      "cadena_posterior_completa",
+      "gemelos",
+      "hombros"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-105",
+    "name": "Descompresión Lumbar en Pelota o Rodillas al Pecho",
+    "nameEs": "Descompresión Lumbar en Pelota o Rodillas al Pecho",
+    "nameEn": "Supine Double Knees-to-Chest Hug",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 2,
+    "durationSeconds": 40,
+    "reps": 0,
+    "restSeconds": 20,
+    "materials": [
+      "esterilla"
+    ],
+    "materialsEs": [
+      "esterilla"
+    ],
+    "materialsEn": [
+      "mat"
+    ],
+    "description": "Boca arriba, abrazar ambas rodillas hacia el pecho con las manos y realizar un balanceo sutil a los lados.",
+    "descriptionEs": "Boca arriba, abrazar ambas rodillas hacia el pecho con las manos y realizar un balanceo sutil a los lados.",
+    "descriptionEn": "Lie supine, hug both knees into chest with hands and perform gentle side-to-side rocking massage.",
+    "coachingPoints": [
+      "Masajear el sacro contra la colchoneta",
+      "Soltar tensión"
+    ],
+    "coachingPointsEs": [
+      "Masajear el sacro contra la colchoneta",
+      "Soltar tensión"
+    ],
+    "coachingPointsEn": [
+      "Massage sacrum against mat",
+      "Release residual tension"
+    ],
+    "targetZones": [
+      "lumbar_descarga",
+      "sacro"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-106",
+    "name": "Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)",
+    "nameEs": "Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)",
+    "nameEn": "Legs-Up-The-Wall Restorative Posture",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 1,
+    "durationSeconds": 90,
+    "reps": 0,
+    "restSeconds": 0,
+    "materials": [
+      "pared",
+      "esterilla"
+    ],
+    "materialsEs": [
+      "pared",
+      "esterilla"
+    ],
+    "materialsEn": [
+      "wall",
+      "mat"
+    ],
+    "description": "Tumbado en el suelo con los glúteos pegados a la pared y piernas extendidas verticales hacia arriba descansando.",
+    "descriptionEs": "Tumbado en el suelo con los glúteos pegados a la pared y piernas extendidas verticales hacia arriba descansando.",
+    "descriptionEn": "Lie supine with hips flush to wall and legs extended vertically up the wall resting completely.",
+    "coachingPoints": [
+      "Acelera la recuperación del lactato",
+      "Favorece el drenaje venoso"
+    ],
+    "coachingPointsEs": [
+      "Acelera la recuperación del lactato",
+      "Favorece el drenaje venoso"
+    ],
+    "coachingPointsEn": [
+      "Aids metabolic recovery",
+      "Promotes venous and lymphatic drainage"
+    ],
+    "targetZones": [
+      "retorno_venoso",
+      "piernas_cansadas",
+      "recuperacion_parasimpatica"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "pared"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "pared"
+      ],
+      "nota": {
+        "es": "Requiere pared lisa despejada sin enchufes ni elementos frágiles.",
+        "en": "Requires solid clear wall with no sockets or fragile items."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-107",
+    "name": "Respiración Diafragmática Box Breathing (4-4-4-4)",
+    "nameEs": "Respiración Diafragmática Box Breathing (4-4-4-4)",
+    "nameEn": "Box Breathing Cadence (4-4-4-4)",
+    "category": "vuelta_calma",
+    "level": "basico",
+    "series": 1,
+    "durationSeconds": 90,
+    "reps": 0,
+    "restSeconds": 0,
+    "materials": [
+      "sin_material"
+    ],
+    "materialsEs": [
+      "sin material"
+    ],
+    "materialsEn": [
+      "no equipment"
+    ],
+    "description": "Tumbado boca arriba con manos en el abdomen: 4s inhalar, 4s retener con pulmón lleno, 4s exhalar, 4s retener vacío.",
+    "descriptionEs": "Tumbado boca arriba con manos en el abdomen: 4s inhalar, 4s retener con pulmón lleno, 4s exhalar, 4s retener vacío.",
+    "descriptionEn": "Supine with hands on belly: inhale 4s, hold full 4s, exhale 4s, hold empty 4s to switch into parasympathetic recovery.",
+    "coachingPoints": [
+      "Expandir el diafragma, no el pecho",
+      "Bajar pulsaciones de forma consciente"
+    ],
+    "coachingPointsEs": [
+      "Expandir el diafragma, no el pecho",
+      "Bajar pulsaciones de forma consciente"
+    ],
+    "coachingPointsEn": [
+      "Expand belly not chest",
+      "Consciously bring heart rate down"
+    ],
+    "targetZones": [
+      "sistema_nervioso_parasimpatico",
+      "frecuencia_cardiaca"
+    ],
+    "contexto": "casa",
+    "material_preferido": [
+      "peso_corporal"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal",
+        "colchoneta"
+      ],
+      "nota": {
+        "es": "No requiere material adicional; realizar sobre suelo cómodo o colchoneta.",
+        "en": "No additional gear needed; perform on comfortable floor or mat."
+      }
+    },
+    "age_min": 8,
+    "age_max": null,
+    "edad_minima_segura": 8,
+    "requiere_supervision_presencial": false,
+    "safety_notes": {
+      "es": "Estiramientos suaves y progresivos sin rebotes ni dolor agudo.",
+      "en": "Gentle progressive stretches without bouncing or sharp pain."
+    },
+    "source": {
+      "type": "consenso_fisio_colegiado",
+      "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    }
+  },
+  {
+    "id": "hex-108",
+    "name": "Isométrico Cervical Multidireccional de Portero",
+    "nameEs": "Isométrico Cervical Multidireccional de Portero",
+    "nameEn": "Goalkeeper Multidirectional Neck Isometric",
+    "category": "fuerza_preventiva",
+    "level": "intermedio",
+    "series": 3,
+    "durationSeconds": 15,
+    "reps": 0,
+    "restSeconds": 30,
+    "materials": [
+      "toalla"
+    ],
+    "materialsEs": [
+      "toalla o propia mano"
+    ],
+    "materialsEn": [
+      "towel or own hand"
+    ],
+    "material_preferido": [
+      "toalla"
+    ],
+    "alternativa_casa": {
+      "option": [
+        "peso_corporal"
+      ],
+      "nota": {
+        "es": "Resistencia manual con la palma de la mano o toalla doblada; mantener cuello rígido y neutro. Prohibido autoprescribir sin supervisión técnica o médica previa.",
+        "en": "Manual resistance using palm or folded towel; keep neck rigid and neutral. Forbidden to self-prescribe without prior coaching or medical clearance."
+      }
+    },
+    "contexto": "casa",
+    "age_min": 14,
+    "age_max": null,
+    "edad_minima_segura": 14,
+    "requiere_supervision_presencial": true,
+    "safety_notes": {
+      "es": "Presión submáxima progresiva en 4 direcciones (frontal, occipital, laterales). Cero sacudidas o movimientos balísticos para prevenir lesiones cervicales o conmociones.",
+      "en": "Submaximal progressive pressure in 4 directions (front, back, sides). Zero jerking or ballistic motions to prevent cervical injury or concussion risk."
+    },
+    "description": "De pie o sentado con columna erguida, aplicar fuerza isométrica moderada con la mano o toalla en frente, nuca y sienes resistiendo sin mover la cabeza.",
+    "descriptionEs": "De pie o sentado con columna erguida, aplicar fuerza isométrica moderada con la mano o toalla en frente, nuca y sienes resistiendo sin mover la cabeza.",
+    "descriptionEn": "Seated or standing tall, apply moderate isometric resistance with hand or towel to forehead, back of head, and temples holding head rock-steady.",
+    "coachingPoints": [
+      "Contracción isométrica pura sin movimiento articular",
+      "Respiración constante sin apnea"
+    ],
+    "coachingPointsEs": [
+      "Contracción isométrica pura sin movimiento articular",
+      "Respiración constante sin apnea"
+    ],
+    "coachingPointsEn": [
+      "Pure isometric hold with zero neck motion",
+      "Breathe continuously without breath holding"
+    ],
+    "targetZones": [
+      "cuello",
+      "prevencion_conmocion_cuello_gk",
+      "trapecio"
+    ],
+    "source": {
+      "type": "guia_federacion",
+      "citation": "Federación/programa de porteros; protocolo de fortalecimiento cervical para prevención de conmociones"
+    }
   }
 ];
 

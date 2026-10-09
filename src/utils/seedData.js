@@ -12,6 +12,7 @@ import {
   addDoc,
   serverTimestamp
 } from 'firebase/firestore';
+import { HOME_EXERCISES_107 } from '../data/homeExercisesCatalog.js';
 
 /**
  * @param {string} teamId - ID del equipo recién creado
@@ -171,3 +172,37 @@ export const seedInitialData = async (teamId, userId, customPath = null) => {
     console.error('[seedInitialData] Error insertando datos de muestra:', err);
   }
 };
+
+/**
+ * Siembra los 107 ejercicios en casa en Firestore si la colección está vacía
+ * @param {string} teamId - ID del equipo
+ * @param {string} userId - UID del usuario autenticado
+ * @param {string|null} customPath - Ruta personalizada opcional
+ */
+export const seedHomeExercises = async (teamId, userId, customPath = null) => {
+  if (!teamId || !userId) return { count: 0, seeded: false };
+  const teamPath = customPath || `users/${userId}/teams/${teamId}`;
+
+  try {
+    const exercisesRef = collection(db, teamPath, 'exercises');
+    const snap = await getDocs(exercisesRef);
+
+    if (snap.empty) {
+      let inserted = 0;
+      for (const ex of HOME_EXERCISES_107) {
+        await addDoc(exercisesRef, {
+          ...ex,
+          createdAt: serverTimestamp()
+        });
+        inserted++;
+      }
+      return { count: inserted, seeded: true };
+    }
+
+    return { count: snap.size, seeded: false };
+  } catch (err) {
+    console.error('[seedHomeExercises] Error sembrando catálogo de 107 ejercicios:', err);
+    return { count: 0, seeded: false, error: err.message };
+  }
+};
+

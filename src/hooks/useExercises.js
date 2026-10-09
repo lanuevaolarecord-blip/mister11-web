@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 import { isEn, t } from '../i18n/index.js';
+import { HOME_EXERCISES_107 } from '../data/homeExercisesCatalog.js';
 
-export const PREDEFINED_EXERCISES = [
+export { HOME_EXERCISES_107 };
+
+export const SYSTEM_CORE_EXERCISES = [
   {
     id: 'sys-1', 
     name: 'Plancha Frontal', 
@@ -124,6 +127,11 @@ export const PREDEFINED_EXERCISES = [
     descriptionEn: 'On all fours, hand behind head, rotate torso opening chest upward.',
     durationSeconds: 0, reps: 10, series: 2, source: 'system', createdBy: 'system'
   }
+];
+
+export const PREDEFINED_EXERCISES = [
+  ...SYSTEM_CORE_EXERCISES,
+  ...HOME_EXERCISES_107
 ];
 
 export const getLocalizedExercise = (ex, isEnglish) => {

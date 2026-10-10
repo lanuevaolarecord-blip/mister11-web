@@ -886,6 +886,84 @@
   color: var(--m11-muted);
 }
 
+/* Selector Completo de 6 Idiomas Oficiales en Footer */
+.footer-lang-selector-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.footer-lang-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--m11-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.footer-lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(23, 45, 33, 0.75);
+  border: 1px solid var(--m11-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--m11-texto);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 38px;
+  transition: all 0.2s ease;
+}
+
+.footer-lang-chip:hover {
+  border-color: var(--m11-oro);
+  background: rgba(42, 89, 64, 0.45);
+  transform: translateY(-1px);
+}
+
+.footer-lang-chip.active {
+  border-color: var(--m11-oro);
+  background: rgba(212, 168, 67, 0.18);
+  color: var(--m11-oro);
+  box-shadow: 0 0 10px rgba(212, 168, 67, 0.25);
+}
+
+.footer-lang-flag {
+  font-size: 0.95rem;
+}
+
+.footer-lang-name {
+  white-space: nowrap;
+}
+
+html.light .footer-lang-chip,
+:root:not(.dark) .footer-lang-chip {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #1B3A2D;
+}
+
+html.light .footer-lang-chip.active,
+:root:not(.dark) .footer-lang-chip.active {
+  border-color: #1B3A2D;
+  background: #E8F5EE;
+  color: #1B3A2D;
+  box-shadow: 0 0 8px rgba(27, 58, 45, 0.15);
+}
+
 /* ── 6. Responsive Breakpoints ────────────────────────────────── */
 @media (max-width: 768px) {
   .landing-hero {
@@ -911,6 +989,16 @@
   .footer-content {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
+  }
+
+  .footer-lang-selector-block {
+    align-items: center;
+    width: 100%;
+  }
+
+  .footer-lang-grid {
+    justify-content: center;
   }
 
   .landing-brand {

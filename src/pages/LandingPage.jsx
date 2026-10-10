@@ -22,7 +22,7 @@ import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { t, isEn, setLanguage } = useTranslation();
+  const { t, isEn, language, setLanguage } = useTranslation();
   const { darkMode, toggleTheme } = useTheme();
   const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
 
@@ -643,6 +643,38 @@ const LandingPage = () => {
             <a href="/instalar">
               {t('pricing.footer.install')}
             </a>
+          </div>
+
+          {/* Selector Completo de 6 Idiomas Oficiales Tier 1 */}
+          <div className="footer-lang-selector-block" aria-label={isEn ? 'Language selector' : 'Selector de idiomas'}>
+            <div className="footer-lang-label">
+              <Globe size={14} color="#D4A843" />
+              <span>{isEn ? 'Languages' : 'Idiomas'}:</span>
+            </div>
+            <div className="footer-lang-grid">
+              {[
+                { code: 'Español (ES)', label: 'Español', flag: '🇪🇸' },
+                { code: 'Español (Latinoamérica)', label: 'Latam', flag: '🌎' },
+                { code: 'English (EN)', label: 'English', flag: '🇬🇧' },
+                { code: 'Português (Brasil)', label: 'Português', flag: '🇧🇷' },
+                { code: 'Français (FR)', label: 'Français', flag: '🇫🇷' },
+                { code: 'Bahasa Indonesia (ID)', label: 'Bahasa', flag: '🇮🇩' },
+              ].map(item => {
+                const isSelected = language === item.code || (language === 'es' && item.code.startsWith('Español (ES)')) || (language === 'en' && item.code.startsWith('English'));
+                return (
+                  <button
+                    key={item.code}
+                    type="button"
+                    className={`footer-lang-chip ${isSelected ? 'active' : ''}`}
+                    onClick={() => setLanguage(item.code)}
+                    aria-label={`Cambiar idioma a ${item.label}`}
+                  >
+                    <span className="footer-lang-flag">{item.flag}</span>
+                    <span className="footer-lang-name">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         <div className="footer-bottom">

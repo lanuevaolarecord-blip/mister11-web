@@ -103,16 +103,16 @@ const Header = ({ onToggleNotif }) => {
                 WebkitAppearance: 'none'
               }}
             >
-              {teams.map(t => {
-                if (!t) return null;
-                const rawName = t.nombre || t.name;
+              {teams.map(teamItem => {
+                if (!teamItem) return null;
+                const rawName = teamItem.nombre || teamItem.name;
                 const teamName = (!rawName || rawName.trim().toLowerCase() === 'mi equipo' || rawName.trim().toLowerCase() === 'my team')
                   ? t('common.myTeam', {}, 'MI EQUIPO')
                   : rawName;
-                const prefix = t.source === 'club' ? `🏢 ${t.clubName || 'Club'} - ` : '👤 ';
+                const prefix = teamItem.source === 'club' ? `🏢 ${teamItem.clubName || 'Club'} - ` : '👤 ';
                 const label = `${prefix}${teamName}`;
                 return (
-                  <option key={t.id} value={t.id} style={{ color: '#000', background: '#fff' }}>
+                  <option key={teamItem.id} value={teamItem.id} style={{ color: '#000', background: '#fff' }}>
                     {label.toUpperCase()}
                   </option>
                 );

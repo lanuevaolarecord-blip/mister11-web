@@ -307,9 +307,17 @@ const Tests = () => {
   const { t: tr, isEn, locale } = useTranslation();
   const { matches } = usePlayerSeasonStats(activeTeamId);
 
+  const currentLangKey = useMemo(() => {
+    const loc = (locale || (isEn ? 'en' : 'es')).toLowerCase();
+    if (loc.startsWith('fr')) return 'fr';
+    if (loc.startsWith('pt')) return 'pt';
+    if (loc.startsWith('id')) return 'id';
+    if (loc.startsWith('en')) return 'en';
+    return 'es';
+  }, [locale, isEn]);
+
   const getCategoryLabel = useCallback((cat) => {
     if (!cat) return '';
-    const l = (locale || (isEn ? 'en' : 'es')).toLowerCase();
     const cleanCat = String(cat).trim().toLowerCase();
     const map = {
       'resistencia': { en: 'Endurance', fr: 'Endurance', pt: 'Resistência', id: 'Daya Tahan', es: 'Resistencia' },
@@ -339,147 +347,563 @@ const Tests = () => {
       'trabajo en equipo': { en: 'Teamwork', fr: 'Travail d\'Équipe', pt: 'Trabalho em Equipe', id: 'Kerja Sama Tim', es: 'Trabajo en Equipo' },
       'resiliencia': { en: 'Resilience', fr: 'Résilience', pt: 'Resiliência', id: 'Ketahanan', es: 'Resiliencia' }
     };
-    const langKey = l.startsWith('fr') ? 'fr' : (l.startsWith('pt') ? 'pt' : (l.startsWith('id') ? 'id' : (l.startsWith('en') ? 'en' : 'es')));
-    return map[cleanCat]?.[langKey] || cat;
-  }, [locale, isEn]);
+    return map[cleanCat]?.[currentLangKey] || cat;
+  }, [currentLangKey]);
+
+  const TEST_NAME_MAP = useMemo(() => ({
+    'Test de Cooper': { en: 'Cooper Test', fr: 'Test de Cooper', pt: 'Teste de Cooper', id: 'Tes Cooper' },
+    'Course Navette': { en: 'Beep Test (Course Navette)', fr: 'Course Navette (Test Léger)', pt: 'Course Navette (Teste Léger)', id: 'Tes Bleep (Course Navette)' },
+    'Sprint 10m': { en: '10m Sprint', fr: 'Sprint 10 m', pt: 'Sprint 10m', id: 'Sprint 10m' },
+    'Sprint 30m': { en: '30m Sprint', fr: 'Sprint 30 m', pt: 'Sprint 30m', id: 'Sprint 30m' },
+    'T-Test': { en: 'T-Test', fr: 'Test en T (Agilité)', pt: 'T-Test (Agilidade)', id: 'T-Test (Kelincahan)' },
+    'Salto CMJ': { en: 'CMJ Jump', fr: 'Saut CMJ', pt: 'Salto CMJ', id: 'Lompatan CMJ' },
+    'Salto Horizontal': { en: 'Standing Long Jump', fr: 'Saut horizontal pieds joints', pt: 'Salto Horizontal Pés Juntos', id: 'Lompat Jauh Tanpa Awalan' },
+    'Conducción conos': { en: 'Cone Dribbling', fr: 'Slalom entre cônes', pt: 'Condução entre cones', id: 'Menggiring Bola Kerucut' },
+    'Pase a portería': { en: 'Target Passing', fr: 'Passe vers mini-buts', pt: 'Passe para mini-gol', id: 'Umpan ke Gawang Sasaran' },
+    'Inventario de Habilidades de Afrontamiento (ACSI-28)': { en: 'Coping Skills Inventory (ACSI-28)', fr: 'Inventaire des compétences d’adaptation (ACSI-28)', pt: 'Inventário de Habilidades de Enfrentamento (ACSI-28)', id: 'Inventaris Keterampilan Koping (ACSI-28)' },
+    'Cuestionario de Fortaleza Mental (MTQ-10)': { en: 'Mental Toughness Questionnaire (MTQ-10)', fr: 'Questionnaire de Force Mentale (MTQ-10)', pt: 'Questionário de Fortaleza Mental (MTQ-10)', id: 'Kuesioner Ketangguhan Mental (MTQ-10)' },
+    'Escala de Establecimiento de Metas': { en: 'Goal Setting Scale', fr: 'Échelle de fixation d’objectifs', pt: 'Escala de Estabelecimento de Metas', id: 'Skala Penetapan Tujuan' },
+    'Inventario de Liderazgo y Comunicación': { en: 'Leadership & Communication Inventory', fr: 'Inventaire de leadership et communication', pt: 'Inventário de Liderança e Comunicação', id: 'Inventaris Kepemimpinan & Komunikasi' },
+    'Cuestionario de Cohesión de Equipo (GEQ)': { en: 'Group Environment Questionnaire (GEQ)', fr: 'Questionnaire de cohésion d’équipe (GEQ)', pt: 'Questionário de Coesão de Equipe (GEQ)', id: 'Kuesioner Kohesi Tim (GEQ)' },
+    'Escala de Bienestar Mental (MHC-SF)': { en: 'Mental Health Continuum (MHC-SF)', fr: 'Échelle de bien-être mental (MHC-SF)', pt: 'Escala de Bem-estar Mental (MHC-SF)', id: 'Skala Kesejahteraan Mental (MHC-SF)' },
+    'Test de Autoconciencia Emocional': { en: 'Emotional Self-Awareness Test', fr: 'Test de conscience émotionnelle', pt: 'Teste de Autoconsciência Emocional', id: 'Tes Kesadaran Diri Emosional' },
+    'Escala de Empatía Deportiva': { en: 'Sports Empathy Scale', fr: 'Échelle d’empathie sportive', pt: 'Escala de Empatia Esportiva', id: 'Skala Empati Olahraga' },
+    'Cuestionario de Resolución de Conflictos': { en: 'Conflict Resolution Questionnaire', fr: 'Questionnaire de résolution de conflits', pt: 'Questionário de Resolução de Conflitos', id: 'Kuesioner Resolusi Konflik' },
+    'ACSI-28 (Habilidades de Afrontamiento)': { en: 'ACSI-28 (Athletic Coping Skills)', fr: 'ACSI-28 (Compétences d’adaptation)', pt: 'ACSI-28 (Habilidades de Enfrentamento)', id: 'ACSI-28 (Keterampilan Koping)' },
+    'Escala de Autoconfianza': { en: 'Self-Confidence Scale', fr: 'Échelle d’auto-efficacité', pt: 'Escala de Autoconfiança', id: 'Skala Kepercayaan Diri' },
+    'Ansiedad Competitiva (CSAI-2R)': { en: 'Competitive Anxiety (CSAI-2R)', fr: 'Anxiété compétitive (CSAI-2R)', pt: 'Ansiedade Competitiva (CSAI-2R)', id: 'Kecemasan Kompetitif (CSAI-2R)' },
+    'Motivación Deportiva (SMS-II)': { en: 'Sport Motivation Scale (SMS-II)', fr: 'Motivation sportive (SMS-II)', pt: 'Motivação Esportiva (SMS-II)', id: 'Motivasi Olahraga (SMS-II)' },
+    'Resiliencia en el Deporte': { en: 'Sports Resilience', fr: 'Résilience dans le sport', pt: 'Resiliência no Esporte', id: 'Ketahanan dalam Olahraga' },
+    'Atención y Concentración': { en: 'Attention & Concentration', fr: 'Attention et concentration', pt: 'Atenção e Concentração', id: 'Perhatian & Konsentrasi' },
+    'Cohesión de Equipo (GEQ)': { en: 'Team Cohesion (GEQ)', fr: 'Cohésion d’équipe (GEQ)', pt: 'Coesão de Equipe (GEQ)', id: 'Kohesi Tim (GEQ)' },
+    'Escala de Deporte Limpio': { en: 'Clean Sport Scale', fr: 'Échelle de sport propre', pt: 'Escala de Esporte Limpo', id: 'Skala Olahraga Bersih' },
+    'Habilidades Sociales': { en: 'Social Skills', fr: 'Compétences sociales', pt: 'Habilidades Sociais', id: 'Keterampilan Sosial' },
+    'Liderazgo Percibido': { en: 'Perceived Leadership', fr: 'Leadership perçu', pt: 'Liderança Percebida', id: 'Kepemimpinan yang Dirasakan' },
+    'Satisfacción con el Entrenador': { en: 'Coach Satisfaction', fr: 'Satisfaction envers l’entraîneur', pt: 'Satisfação com o Treinador', id: 'Kepuasan terhadap Pelatih' },
+    'IRES (Resiliencia en el Deporte)': { en: 'IRES (Sports Resilience)', fr: 'IRES (Résilience sportive)', pt: 'IRES (Resiliência no Esporte)', id: 'IRES (Ketahanan Olahraga)' },
+    'GETS (Trabajo en Equipo para Jóvenes)': { en: 'GETS (Youth Teamwork)', fr: 'GETS (Travail d’équipe jeunes)', pt: 'GETS (Trabalho em Equipe Juvenil)', id: 'GETS (Kerja Sama Tim Pemuda)' },
+    'CWMS (Bienestar Mental)': { en: 'CWMS (Mental Well-Being)', fr: 'CWMS (Bien-être mental)', pt: 'CWMS (Bem-estar Mental)', id: 'CWMS (Kesejahteraan Mental)' },
+    'ECED (Cohesión en Equipos)': { en: 'ECED (Team Cohesion)', fr: 'ECED (Cohésion d’équipe)', pt: 'ECED (Coesão em Equipes)', id: 'ECED (Kohesi Tim)' },
+    'EDL (Deporte Limpio)': { en: 'EDL (Clean Sport)', fr: 'EDL (Sport propre)', pt: 'EDL (Esporte Limpo)', id: 'EDL (Olahraga Bersih)' }
+  }), []);
+
+  const TEST_DESC_MAP = useMemo(() => ({
+    'Distancia recorrida en 12 minutos.': {
+      en: 'Distance covered in 12 minutes.',
+      fr: 'Distance parcourue en 12 minutes.',
+      pt: 'Distância percorrida em 12 minutos.',
+      id: 'Jarak yang ditempuh dalam 12 menit.'
+    },
+    'Carrera de ida y vuelta de 20m con pitidos.': {
+      en: '20m shuttle run with acoustic beeps.',
+      fr: 'Course aller-retour de 20 m avec bips sonores.',
+      pt: 'Corrida de ida e volta de 20m com sinais sonoros.',
+      id: 'Lari bolak-balik 20m dengan bunyi bip.'
+    },
+    'Aceleración en distancia corta.': {
+      en: 'Short-distance acceleration.',
+      fr: 'Accélération sur courte distance.',
+      pt: 'Aceleração em curta distância.',
+      id: 'Akselerasi jarak pendek.'
+    },
+    'Velocidad máxima lanzada.': {
+      en: 'Maximum flying speed.',
+      fr: 'Vitesse maximale lancée.',
+      pt: 'Velocidade máxima lançada.',
+      id: 'Kecepatan maksimal.'
+    },
+    'Desplazamientos frontales, laterales y de espaldas.': {
+      en: 'Forward, lateral, and backpedal movements.',
+      fr: 'Déplacements vers l’avant, latéraux et en arrière.',
+      pt: 'Deslocamentos frontais, laterais e de costas.',
+      id: 'Gerakan ke depan, samping, dan ke belakang.'
+    },
+    'Salto vertical con contramovimiento.': {
+      en: 'Vertical countermovement jump.',
+      fr: 'Saut vertical avec contre-mouvement.',
+      pt: 'Salto vertical com contramovimento.',
+      id: 'Lompatan vertikal countermovement.'
+    },
+    'Salto horizontal a pies juntos.': {
+      en: 'Standing broad jump with feet together.',
+      fr: 'Saut horizontal pieds joints.',
+      pt: 'Salto horizontal com pés juntos.',
+      id: 'Lompatan horizontal dengan kedua kaki rapat.'
+    },
+    'Slalom entre conos con finalización.': {
+      en: 'Slalom through cones with target pass.',
+      fr: 'Slalom entre les cônes avec passe finale.',
+      pt: 'Slalom entre cones com finalização.',
+      id: 'Slalom melewati kerucut dengan penyelesaian.'
+    },
+    'Precisión de pase a zonas objetivo (10 pases).': {
+      en: 'Passing accuracy to target zones (10 passes).',
+      fr: 'Précision de passe vers des zones cibles (10 passes).',
+      pt: 'Precisão de passe para zonas-alvo (10 passes).',
+      id: 'Akurasi umpan ke area target (10 umpan).'
+    },
+    'Evalúa cómo el jugador maneja la presión y la adversidad': {
+      en: 'Evaluates how the player handles pressure and adversity',
+      fr: 'Évalue comment le joueur gère la pression et l’adversité',
+      pt: 'Avalia como o jogador lida com a pressão e a adversidade',
+      id: 'Mengevaluasi bagaimana pemain menangani tekanan dan kesulitan'
+    },
+    'Mide la capacidad de perseverar bajo presión': {
+      en: 'Measures ability to persevere under pressure',
+      fr: 'Mesure la capacité à persévérer sous pression',
+      pt: 'Mede a capacidade de perseverar sob pressão',
+      id: 'Mengukur kemampuan untuk bertahan di bawah tekanan'
+    },
+    'Evalúa capacidad de fijar y perseguir objetivos': {
+      en: 'Evaluates goal-setting and achievement capacity',
+      fr: 'Évalue la capacité à fixer et poursuivre des objectifs',
+      pt: 'Avalia a capacidade de definir e buscar objetivos',
+      id: 'Mengevaluasi kapasitas menetapkan dan mengejar tujuan'
+    },
+    'Mide habilidades de liderazgo y comunicación': {
+      en: 'Measures leadership and communication skills',
+      fr: 'Mesure les compétences en leadership et communication',
+      pt: 'Mede habilidades de liderança e comunicação',
+      id: 'Mengukur keterampilan kepemimpinan dan komunikasi'
+    },
+    'Evalúa la unión del grupo': {
+      en: 'Evaluates team cohesion and unity',
+      fr: 'Évalue la cohésion et l’unité du groupe',
+      pt: 'Avalia a união e coesão do grupo',
+      id: 'Mengevaluasi persatuan dan kohesi kelompok'
+    },
+    'Evalúa bienestar emocional, psicológico y social': {
+      en: 'Evaluates emotional, psychological, and social well-being',
+      fr: 'Évalue le bien-être émotionnel, psychologique et social',
+      pt: 'Avalia o bem-estar emocional, psicológico e social',
+      id: 'Mengevaluasi kesejahteraan emosional, psikologis, dan sosial'
+    },
+    'Capacidad de reconocer y nombrar emociones propias': {
+      en: 'Ability to recognize and name personal emotions',
+      fr: 'Capacité à reconnaître et nommer ses propres émotions',
+      pt: 'Capacidade de reconhecer e nomear as próprias emoções',
+      id: 'Kemampuan mengenali dan menamai emosi sendiri'
+    },
+    'Capacidad de comprender emociones de compañeros': {
+      en: 'Ability to understand teammates’ emotions',
+      fr: 'Capacité à comprendre les émotions de ses coéquipiers',
+      pt: 'Capacidade de compreender as emoções dos companheiros',
+      id: 'Kemampuan memahami emosi rekan satu tim'
+    },
+    'Habilidad para manejar desacuerdos constructivamente': {
+      en: 'Skill to manage disagreements constructively',
+      fr: 'Habileté à gérer les désaccords de manière constructive',
+      pt: 'Habilidade para lidar com divergências de forma construtiva',
+      id: 'Keterampilan mengelola perbedaan pendapat secara konstruktif'
+    },
+    'Evalúa cómo maneja la presión, se concentra y se comunica.': {
+      en: 'Evaluates handling pressure, concentration, and communication.',
+      fr: 'Évalue la gestion de la pression, la concentration et la communication.',
+      pt: 'Avalia como lida com a pressão, concentração e comunicação.',
+      id: 'Mengevaluasi pengelolaan tekanan, konsentrasi, dan komunikasi.'
+    },
+    'Mide la confianza del jugador en sus capacidades deportivas': {
+      en: "Measures the player's confidence in their athletic abilities",
+      fr: 'Mesure la confiance du joueur en ses capacités sportives',
+      pt: 'Mede a confiança do jogador em suas capacidades esportivas',
+      id: 'Mengukur kepercayaan diri pemain terhadap kemampuan olahraganya'
+    },
+    'Evalúa ansiedad cognitiva, somática y autoconfianza': {
+      en: 'Evaluates cognitive, somatic anxiety and self-confidence',
+      fr: 'Évalue l’anxiété cognitive, somatique et la confiance en soi',
+      pt: 'Avalia a ansiedade cognitiva, somática e a autoconfiança',
+      id: 'Mengevaluasi kecemasan kognitif, somatik, dan kepercayaan diri'
+    },
+    'Mide tipos de motivación en el deporte': {
+      en: 'Measures types of motivation in sport',
+      fr: 'Mesure les types de motivation dans le sport',
+      pt: 'Mede os tipos de motivação no esporte',
+      id: 'Mengukur jenis motivasi dalam olahraga'
+    },
+    'Capacidad de sobreponerse a situaciones adversas': {
+      en: 'Ability to overcome adverse situations',
+      fr: 'Capacité à surmonter les situations indésirables',
+      pt: 'Capacidade de superar situações adversas',
+      id: 'Kemampuan mengatasi situasi sulit'
+    },
+    'Mide la atención selectiva y concentración': {
+      en: 'Measures selective attention and concentration',
+      fr: 'Mesure l’attention sélective et la concentration',
+      pt: 'Mede a atenção seletiva e a concentração',
+      id: 'Mengukur perhatian selektif dan konsentrasi'
+    },
+    'Cuestionario del Ambiente de Grupo': {
+      en: 'Group Environment Questionnaire',
+      fr: 'Questionnaire de l’ambiance de groupe',
+      pt: 'Questionário do Ambiente de Grupo',
+      id: 'Kuesioner Lingkungan Kelompok'
+    },
+    'Actitudes hacia el Fair Play': {
+      en: 'Attitudes towards Fair Play',
+      fr: 'Attitudes envers le Fair-Play',
+      pt: 'Atitudes em relação ao Fair Play',
+      id: 'Sikap terhadap Fair Play'
+    },
+    'Asertividad y comunicación en el deporte': {
+      en: 'Assertiveness and communication in sports',
+      fr: 'Assertivité et communication dans le sport',
+      pt: 'Assertividade e comunicação no esporte',
+      id: 'Asertivitas dan komunikasi dalam olahraga'
+    },
+    'Percepción de roles de liderazgo en el equipo': {
+      en: 'Perception of leadership roles in the team',
+      fr: 'Perception des rôles de leadership dans l’équipe',
+      pt: 'Percepção de funções de liderança na equipe',
+      id: 'Persepsi peran kepemimpinan dalam tim'
+    },
+    'Percepción sobre el cuerpo técnico': {
+      en: 'Perception of coaching staff',
+      fr: 'Perception du staff technique',
+      pt: 'Percepção sobre a comissão técnica',
+      id: 'Persepsi tentang staf kepelatihan'
+    },
+    'Capacidad de recuperarse de reveses.': {
+      en: 'Ability to recover from setbacks.',
+      fr: 'Capacité à se remettre des revers.',
+      pt: 'Capacidade de se recuperar de reveses.',
+      id: 'Kemampuan untuk bangkit dari kemunduran.'
+    },
+    'Habilidad para colaborar y comunicarse.': {
+      en: 'Ability to collaborate and communicate.',
+      fr: 'Aptitude à collaborer et à communiquer.',
+      pt: 'Habilidade para colaborar e se comunicar.',
+      id: 'Kemampuan untuk berkolaborasi dan berkomunikasi.'
+    },
+    'Bienestar emocional, psicológico y social.': {
+      en: 'Emotional, psychological, and social well-being.',
+      fr: 'Bien-être émotionnel, psychologique et social.',
+      pt: 'Bem-estar emocional, psicológico e social.',
+      id: 'Kesejahteraan emosional, psikologis, dan sosial.'
+    },
+    'Cohesión de tarea y social.': {
+      en: 'Task and social cohesion.',
+      fr: 'Cohésion de tâche et cohésion sociale.',
+      pt: 'Coesão de tarefa e social.',
+      id: 'Kohesi tugas dan sosial.'
+    },
+    'Conductas antideportivas y presión por ganar.': {
+      en: 'Unsportsmanlike behavior and winning pressure.',
+      fr: 'Comportements antisportifs et pression de gagner.',
+      pt: 'Comportamentos antidesportivos e pressão para vencer.',
+      id: 'Perilaku tidak sportif dan tekanan untuk menang.'
+    }
+  }), []);
+
+  const PROTOCOL_TEXT_MAP = useMemo(() => ({
+    'Responder cuestionario en escala de 1 a 5.': {
+      en: 'Answer questionnaire on a 1 to 5 scale.',
+      fr: 'Répondre au questionnaire sur une échelle de 1 à 5.',
+      pt: 'Responder questionário em escala de 1 a 5.',
+      id: 'Jawab kuesioner dengan skala 1 sampai 5.'
+    },
+    'Cuestionario de 4 preguntas.': {
+      en: '4-question questionnaire.',
+      fr: 'Questionnaire de 4 questions.',
+      pt: 'Questionário de 4 perguntas.',
+      id: 'Kuesioner 4 pertanyaan.'
+    },
+    'Responder a 3 preguntas.': {
+      en: 'Answer 3 questions.',
+      fr: 'Répondre à 3 questions.',
+      pt: 'Responder a 3 perguntas.',
+      id: 'Jawab 3 pertanyaan.'
+    },
+    'Responder a 4 preguntas.': {
+      en: 'Answer 4 questions.',
+      fr: 'Répondre à 4 questions.',
+      pt: 'Responder a 4 perguntas.',
+      id: 'Jawab 4 perguntas.'
+    },
+    'Responder a 2 preguntas.': {
+      en: 'Answer 2 questions.',
+      fr: 'Répondre à 2 questions.',
+      pt: 'Responder a 2 perguntas.',
+      id: 'Jawab 2 pertanyaan.'
+    },
+    '28 preguntas. Escala 1-4.': {
+      en: '28 questions. 1-4 scale.',
+      fr: '28 questions. Échelle 1-4.',
+      pt: '28 perguntas. Escala 1-4.',
+      id: '28 pertanyaan. Skala 1-4.'
+    },
+    '19 preguntas. Escala 1-4.': {
+      en: '19 questions. 1-4 scale.',
+      fr: '19 questions. Échelle 1-4.',
+      pt: '19 perguntas. Escala 1-4.',
+      id: '19 pertanyaan. Skala 1-4.'
+    },
+    '10 preguntas. Escala 1-5.': {
+      en: '10 questions. 1-5 scale.',
+      fr: '10 questions. Échelle 1-5.',
+      pt: '10 perguntas. Escala 1-5.',
+      id: '10 pertanyaan. Skala 1-5.'
+    },
+    '14 preguntas. Escala 1-5.': {
+      en: '14 questions. 1-5 scale.',
+      fr: '14 questions. Échelle 1-5.',
+      pt: '14 perguntas. Escala 1-5.',
+      id: '14 pertanyaan. Skala 1-5.'
+    },
+    '12 preguntas. Escala 1-7.': {
+      en: '12 questions. 1-7 scale.',
+      fr: '12 questions. Échelle 1-7.',
+      pt: '12 perguntas. Escala 1-7.',
+      id: '12 pertanyaan. Skala 1-7.'
+    },
+    '10 preguntas. Escala 1-4.': {
+      en: '10 questions. 1-4 scale.',
+      fr: '10 questions. Échelle 1-4.',
+      pt: '10 perguntas. Escala 1-4.',
+      id: '10 pertanyaan. Skala 1-4.'
+    },
+    'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.': {
+      en: 'Rosenberg questionnaire adapted to sports. Likert scale responses.',
+      fr: 'Questionnaire de Rosenberg adapté au sport. Réponses de type Likert.',
+      pt: 'Questionário de Rosenberg adaptado ao esporte. Respostas tipo Likert.',
+      id: 'Kuesioner Rosenberg yang diadaptasi untuk olahraga. Jawaban skala Likert.'
+    },
+    'Cuestionario antes de competir.': {
+      en: 'Pre-competition questionnaire.',
+      fr: 'Questionnaire pré-compétitif.',
+      pt: 'Questionário pré-competitivo.',
+      id: 'Kuesioner pra-kompetisi.'
+    },
+    'Cuestionario SMS-II': {
+      en: 'SMS-II Questionnaire',
+      fr: 'Questionnaire SMS-II',
+      pt: 'Questionário SMS-II',
+      id: 'Kuesioner SMS-II'
+    },
+    'Cuestionario de resiliencia': {
+      en: 'Resilience questionnaire',
+      fr: 'Questionnaire de résilience',
+      pt: 'Questionário de resiliência',
+      id: 'Kuesioner ketahanan'
+    },
+    'Prueba cognitiva cronometrada': {
+      en: 'Timed cognitive test',
+      fr: 'Test cognitif chronométré',
+      pt: 'Teste cognitivo cronometrado',
+      id: 'Tes kognitif berjangka waktu'
+    },
+    'Evalúa la cohesión social y de tarea.': {
+      en: 'Evaluates social and task cohesion.',
+      fr: 'Évalue la cohésion sociale et la cohésion opératoire.',
+      pt: 'Avalia a coesão social e a de tarefa.',
+      id: 'Mengevaluasi kohesi sosial dan tugas.'
+    },
+    'Cuestionario de actitudes.': {
+      en: 'Attitudes questionnaire.',
+      fr: 'Questionnaire sur les attitudes.',
+      pt: 'Questionário de atitudes.',
+      id: 'Kuesioner sikap.'
+    },
+    'Evaluación de habilidades interpersonales.': {
+      en: 'Interpersonal skills assessment.',
+      fr: 'Évaluation des compétences interpersonnelles.',
+      pt: 'Avaliação de habilidades interpessoais.',
+      id: 'Penilaian keterampilan interpersonal.'
+    },
+    'Cuestionario de liderazgo deportivo.': {
+      en: 'Sports leadership questionnaire.',
+      fr: 'Questionnaire de leadership sportif.',
+      pt: 'Questionário de liderança esportiva.',
+      id: 'Kuesioner kepemimpinan olahraga.'
+    },
+    'Cuestionario de satisfacción': {
+      en: 'Satisfaction questionnaire',
+      fr: 'Questionnaire de satisfaction',
+      pt: 'Questionário de satisfação',
+      id: 'Kuesioner kepuasan'
+    },
+    'Correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado.': {
+      en: 'Run the greatest distance possible in 12 minutes around a marked track or field.',
+      fr: 'Courir la plus grande distance possible en 12 minutes autour d’une piste ou d’un terrain balisé.',
+      pt: 'Correr a maior distância possível em 12 minutos ao redor de uma pista ou campo marcado.',
+      id: 'Berlari sejauh mungkin dalam 12 menit di sekitar lintasan atau lapangan yang telah ditandai.'
+    },
+    'Se anota la distancia total en metros usando cinta métrica o GPS.': {
+      en: 'Record total distance in meters using measuring tape or GPS.',
+      fr: 'La distance totale est notée en mètres à l’aide d’un mètre ruban ou d’un GPS.',
+      pt: 'Anota-se a distância total em metros usando fita métrica ou GPS.',
+      id: 'Catat total jarak dalam meter menggunakan pita pengukur atau GPS.'
+    },
+    'Medir la capacidad aeróbica máxima (VO2 máx) y la resistencia general.': {
+      en: 'Measure maximal aerobic capacity (VO2 max) and general endurance.',
+      fr: 'Mesurer la capacité aérobie maximale (VO2 max) et l’endurance générale.',
+      pt: 'Medir a capacidade aeróbica máxima (VO2 máx) e a resistência geral.',
+      id: 'Mengukur kapasitas aerobik maksimal (VO2 maks) dan daya tahan umum.'
+    },
+    'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto.': {
+      en: '20-meter shuttle runs paced by an audio beep that accelerates every minute.',
+      fr: 'Courses de 20 mètres au rythme d’un bip sonore qui s’accélère chaque minute.',
+      pt: 'Corridas de 20 metros ao ritmo de um sinal sonoro que acelera a cada minuto.',
+      id: 'Lari 20 meter dengan ritme bip audio yang dipercepat setiap menit.'
+    },
+    'Se anota el último palier (nivel) completado antes de no llegar a tiempo a la línea.': {
+      en: 'Record the last completed stage (level) before failing to reach the line in time.',
+      fr: 'On note le dernier palier complété avant de ne plus arriver à temps sur la ligne.',
+      pt: 'Anota-se o último estágio completado antes de não chegar a tempo à linha.',
+      id: 'Catat tingkatan terakhir yang diselesaikan sebelum gagal mencapai garis tepat waktu.'
+    },
+    'Medir la potencia aeróbica máxima y el consumo máximo de oxígeno.': {
+      en: 'Measure maximal aerobic power and maximum oxygen uptake.',
+      fr: 'Mesurer la puissance aérobie maximale et la consommation maximale d’oxygène.',
+      pt: 'Medir a potência aeróbica máxima e o consumo máximo de oxigênio.',
+      id: 'Mengukur daya aerobik maksimal dan konsumsi oksigen maksimal.'
+    },
+    'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros.': {
+      en: 'From a stationary position, sprint at maximum effort across the 10-meter line.',
+      fr: 'Depuis une position statique, sprint à effort maximal jusqu’à franchir la ligne des 10 mètres.',
+      pt: 'A partir de posição estática, sprint em esforço máximo até ultrapassar a linha de 10 metros.',
+      id: 'Dari posisi diam, lari cepat dengan usaha maksimal hingga melewati garis 10 meter.'
+    },
+    'Uso de cronómetro manual o fotocélulas. Se anota el tiempo en segundos.': {
+      en: 'Use of manual stopwatch or timing gates. Record time in seconds.',
+      fr: 'Utilisation d’un chronomètre manuel ou de cellules photoélectriques. Temps noté en secondes.',
+      pt: 'Uso de cronômetro manual ou fotocélulas. Tempo anotado em segundos.',
+      id: 'Gunakan stopwatch manual atau fotosel. Waktu dicatat dalam detik.'
+    },
+    'Mejorar la capacidad de aceleración y explosividad en los primeros metros.': {
+      en: 'Evaluate acceleration capacity and explosiveness in the opening meters.',
+      fr: 'Évaluer la capacité d’accélération et l’explosivité sur les premiers mètres.',
+      pt: 'Avaliar a capacidade de aceleração e explosão nos primeiros metros.',
+      id: 'Mengukur kapasitas akselerasi dan daya ledak pada meter-meter awal.'
+    },
+    'Sprint de 30 metros al máximo esfuerzo desde posición estática.': {
+      en: '30-meter sprint at maximum effort from a stationary position.',
+      fr: 'Sprint de 30 mètres à effort maximal depuis une position statique.',
+      pt: 'Sprint de 30 metros em esforço máximo a partir de posição estática.',
+      id: 'Sprint 30 meter dengan usaha maksimal dari posisi diam.'
+    },
+    'Tiempo en segundos cronometrado.': {
+      en: 'Timed in seconds.',
+      fr: 'Temps chronométré en secondes.',
+      pt: 'Tempo cronometrado em segundos.',
+      id: 'Waktu dicatat dalam detik.'
+    },
+    'Medir la velocidad máxima y capacidad anaeróbica aláctica.': {
+      en: 'Measure maximal speed and alactic anaerobic capacity.',
+      fr: 'Mesurer la vitesse maximale et la capacité anaérobie alactique.',
+      pt: 'Medir a velocidade máxima e a capacidade anaeróbica alática.',
+      id: 'Mengukur kecepatan maksimal dan kapasitas anaerobik alaktik.'
+    },
+    'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.': {
+      en: '10m forward sprint, 5m lateral shuffle left, 10m right, 5m to center, and 10m backpedal to start.',
+      fr: 'Sprint de 10 m vers l’avant, pas chassés 5 m à gauche, 10 m à droite, 5 m au centre et 10 m en arrière vers le départ.',
+      pt: 'Sprint 10m à frente, deslocamento lateral 5m à esquerda, 10m à direita, 5m ao centro e 10m de costas até o início.',
+      id: 'Sprint 10m ke depan, bergerak ke samping 5m ke kiri, 10m ke kanan, 5m ke tengah, dan 10m mundur ke awal.'
+    },
+    'Tiempo en segundos. Se penaliza si se cruzan las piernas en el lateral.': {
+      en: 'Time in seconds. Penalized if legs cross during lateral shuffle.',
+      fr: 'Temps en secondes. Pénalité si les jambes se croisent en déplacement latéral.',
+      pt: 'Tempo em segundos. Penalização caso as pernas se cruzem no deslocamento lateral.',
+      id: 'Waktu dalam detik. Dikenakan penalti jika kaki menyilang saat bergerak ke samping.'
+    },
+    'Evaluar la agilidad, equilibrio y cambios de dirección rápidos.': {
+      en: 'Evaluate agility, balance, and quick directional changes.',
+      fr: 'Évaluer l’agilité, l’équilibre et les changements de direction rapides.',
+      pt: 'Avaliar a agilidade, o equilíbrio e mudanças rápidas de direção.',
+      id: 'Mengevaluasi kelincahan, keseimbangan, dan perubahan arah yang cepat.'
+    },
+    'Manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.': {
+      en: 'Hands on hips. Lower center of gravity (knee flexion) and immediately jump as high as possible.',
+      fr: 'Mains sur les hanches. Fléchir les genoux et sauter immédiatement le plus haut possible.',
+      pt: 'Mãos nos quadris. Flexionar os joelhos e saltar imediatamente o mais alto possível.',
+      id: 'Tangan di pinggul. Turunkan pusat gravitasi (tekuk lutut) dan segera lompat setinggi mungkin.'
+    },
+    'Altura del salto en centímetros (usar plataforma de contacto o app de video).': {
+      en: 'Jump height in centimeters (using contact mat or video app).',
+      fr: 'Hauteur du saut en centimètres (plateforme de contact ou application vidéo).',
+      pt: 'Altura do salto em centímetros (usar plataforma de contato ou app de vídeo).',
+      id: 'Tinggi lompatan dalam sentimeter (gunakan matras kontak atau aplikasi video).'
+    },
+    'Medir la potencia explosiva del tren inferior (fuerza reactiva).': {
+      en: 'Measure explosive power of lower body (reactive strength).',
+      fr: 'Mesurer la puissance explosive du bas du corps (force réactive).',
+      pt: 'Medir a potência explosiva dos membros inferiores (força reativa).',
+      id: 'Mengukur daya ledak tubuh bagian bawah (kekuatan reaktif).'
+    },
+    'Pies juntos tras la línea de batida. Salto impulsando con ambos brazos.': {
+      en: 'Feet together behind take-off line. Jump driving with both arms.',
+      fr: 'Pieds joints derrière la ligne d’appel. Saut avec impulsion des deux bras.',
+      pt: 'Pés juntos atrás da linha de partida. Salto impulsionando com ambos os braços.',
+      id: 'Kedua kaki rapat di belakang garis batas. Melompat dengan dorongan kedua lengan.'
+    },
+    'Distancia en cm hasta el talón más retrasado. Distinción por género RFEF.': {
+      en: 'Distance in cm to the rearmost heel. RFEF gender distinction.',
+      fr: 'Distance en cm jusqu’au talon le plus reculé. Différenciation de genre RFEF.',
+      pt: 'Distância em cm até o calcanhar mais recuado. Distinção por gênero RFEF.',
+      id: 'Jarak dalam cm hingga tumit paling belakang. Perbedaan gender RFEF.'
+    },
+    'Medir la potencia explosiva horizontal del tren inferior.': {
+      en: 'Measure horizontal explosive power of lower body.',
+      fr: 'Mesurer la puissance explosive horizontale des membres inférieurs.',
+      pt: 'Medir a potência explosiva horizontal dos membros inferiores.',
+      id: 'Mengukur daya ledak horizontal tubuh bagian bawah.'
+    },
+    'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.': {
+      en: 'Dribble ball through slalom of 5 cones spaced 2 meters apart and deliver a pass to target.',
+      fr: 'Conduire le ballon en slalom entre 5 cônes espacés de 2 mètres et effectuer une passe vers une cible.',
+      pt: 'Conduzir a bola em slalom entre 5 cones espaçados por 2 metros e fazer um passe para o alvo.',
+      id: 'Giring bola secara slalom melewati 5 kerucut berjarak 2 meter dan berikan umpan ke target.'
+    },
+    'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.': {
+      en: 'Total time in seconds from start until pass enters target.',
+      fr: 'Temps total en secondes depuis le départ jusqu’à l’entrée de la passe dans la cible.',
+      pt: 'Tempo total em segundos desde o início até o passe atingir o alvo.',
+      id: 'Total waktu dalam detik dari awal hingga umpan masuk ke target.'
+    },
+    'Evaluar el control del balón en velocidad y precisión final.': {
+      en: 'Evaluate ball control at speed and finishing accuracy.',
+      fr: 'Évaluer le contrôle du ballon à pleine vitesse et la précision finale.',
+      pt: 'Avaliar o controle de bola em velocidade e a precisão final.',
+      id: 'Mengevaluasi kontrol bola dalam kecepatan dan akurasi akhir.'
+    },
+    '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.': {
+      en: '10 passes from the edge of the penalty area toward mini-goals or marked zones.',
+      fr: '10 passes depuis l’entrée de la surface vers de petits buts ou des zones balisées.',
+      pt: '10 passes da entrada da área para mini-gols ou áreas marcadas.',
+      id: '10 umpan dari tepi kotak penalti ke gawang kecil atau area bertanda.'
+    },
+    '1 punto por cada acierto. Total de 10 puntos posibles.': {
+      en: '1 point per hit. Total of 10 possible points.',
+      fr: '1 point par réussite. Total de 10 points possibles.',
+      pt: '1 ponto por acerto. Total de 10 pontos possíveis.',
+      id: '1 poin untuk setiap keberhasilan. Total 10 poin.'
+    },
+    'Medir la precisión del golpeo y concentración técnica.': {
+      en: 'Measure striking accuracy and technical focus.',
+      fr: 'Mesurer la précision de frappe et la concentration technique.',
+      pt: 'Medir a precisão do passe e a concentração technique.',
+      id: 'Mengukur akurasi tendangan dan fokus teknis.'
+    }
+  }), []);
 
   const getTestDisplayName = useCallback((t) => {
     if (!t) return '';
     const rawName = typeof t === 'string' ? t : (t?.name || '');
-    if (!isEn) return rawName;
-    const map = {
-      'Test de Cooper': 'Cooper Test',
-      'Course Navette': 'Beep Test (Course Navette)',
-      'Sprint 10m': '10m Sprint',
-      'Sprint 30m': '30m Sprint',
-      'T-Test': 'T-Test',
-      'Salto CMJ': 'CMJ Jump',
-      'Conducción conos': 'Cone Dribbling',
-      'Pase a portería': 'Target Passing',
-      'Inventario de Habilidades de Afrontamiento (ACSI-28)': 'Coping Skills Inventory (ACSI-28)',
-      'Cuestionario de Fortaleza Mental (MTQ-10)': 'Mental Toughness Questionnaire (MTQ-10)',
-      'Escala de Establecimiento de Metas': 'Goal Setting Scale',
-      'Inventario de Liderazgo y Comunicación': 'Leadership & Communication Inventory',
-      'Cuestionario de Cohesión de Equipo (GEQ)': 'Group Environment Questionnaire (GEQ)',
-      'Escala de Bienestar Mental (MHC-SF)': 'Mental Health Continuum (MHC-SF)',
-      'Test de Autoconciencia Emocional': 'Emotional Self-Awareness Test',
-      'Escala de Empatía Deportiva': 'Sports Empathy Scale',
-      'Cuestionario de Resolución de Conflictos': 'Conflict Resolution Questionnaire',
-      'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)',
-      'Escala de Autoconfianza': 'Self-Confidence Scale',
-      'Ansiedad Competitiva (CSAI-2R)': 'Competitive Anxiety (CSAI-2R)',
-      'Motivación Deportiva (SMS-II)': 'Sport Motivation Scale (SMS-II)',
-      'Resiliencia en el Deporte': 'Sports Resilience',
-      'Atención y Concentración': 'Attention & Concentration',
-      'Cohesión de Equipo (GEQ)': 'Team Cohesion (GEQ)',
-      'Escala de Deporte Limpio': 'Clean Sport Scale',
-      'Habilidades Sociales': 'Social Skills',
-      'Liderazgo Percibido': 'Perceived Leadership',
-      'Satisfacción con el Entrenador': 'Coach Satisfaction',
-      'IRES (Resiliencia en el Deporte)': 'IRES (Sports Resilience)',
-      'GETS (Trabajo en Equipo para Jóvenes)': 'GETS (Youth Teamwork)',
-      'CWMS (Bienestar Mental)': 'CWMS (Mental Well-Being)',
-      'ECED (Cohesión en Equipos)': 'ECED (Team Cohesion)',
-      'EDL (Deporte Limpio)': 'EDL (Clean Sport)'
-    };
-    return map[rawName] || rawName;
-  }, [isEn]);
+    if (currentLangKey === 'es') return rawName;
+    return TEST_NAME_MAP[rawName]?.[currentLangKey] || TEST_NAME_MAP[rawName]?.en || rawName;
+  }, [currentLangKey, TEST_NAME_MAP]);
 
   const getTestDisplayDesc = useCallback((t) => {
     if (!t) return '';
     const rawDesc = typeof t === 'string' ? t : (t?.desc || '');
-    if (!isEn) return rawDesc;
-    const map = {
-      'Distancia recorrida en 12 minutos.': 'Distance covered in 12 minutes.',
-      'Carrera de ida y vuelta de 20m con pitidos.': '20m shuttle run with acoustic beeps.',
-      'Aceleración en distancia corta.': 'Short-distance acceleration.',
-      'Velocidad máxima lanzada.': 'Maximum flying speed.',
-      'Desplazamientos frontales, laterales y de espaldas.': 'Forward, lateral, and backpedal movements.',
-      'Salto vertical con contramovimiento.': 'Vertical countermovement jump.',
-      'Slalom entre conos con finalización.': 'Slalom through cones with target pass.',
-      'Precisión de pase a zonas objetivo (10 pases).': 'Passing accuracy to target zones (10 passes).',
-      'Evalúa cómo el jugador maneja la presión y la adversidad': 'Evaluates how the player handles pressure and adversity',
-      'Mide la capacidad de perseverar bajo presión': 'Measures ability to persevere under pressure',
-      'Evalúa capacidad de fijar y perseguir objetivos': 'Evaluates goal-setting and achievement capacity',
-      'Mide habilidades de liderazgo y comunicación': 'Measures leadership and communication skills',
-      'Evalúa la unión del grupo': 'Evaluates team cohesion and unity',
-      'Evalúa bienestar emocional, psicológico y social': 'Evaluates emotional, psychological, and social well-being',
-      'Capacidad de reconocer y nombrar emociones propias': 'Ability to recognize and name personal emotions',
-      'Capacidad de comprender emociones de compañeros': 'Ability to understand teammates’ emotions',
-      'Habilidad para manejar desacuerdos constructivamente': 'Skill to manage disagreements constructively',
-      'Evalúa cómo maneja la presión, se concentra y se comunica.': 'Evaluates handling pressure, concentration, and communication.',
-      'Mide la confianza del jugador en sus capacidades deportivas': "Measures the player's confidence in their athletic abilities",
-      'Evalúa ansiedad cognitiva, somática y autoconfianza': 'Evaluates cognitive, somatic anxiety and self-confidence',
-      'Mide tipos de motivación en el deporte': 'Measures types of motivation in sport',
-      'Capacidad de sobreponerse a situaciones adversas': 'Ability to overcome adverse situations',
-      'Mide la atención selectiva y concentración': 'Measures selective attention and concentration',
-      'Cuestionario del Ambiente de Grupo': 'Group Environment Questionnaire',
-      'Actitudes hacia el Fair Play': 'Attitudes towards Fair Play',
-      'Asertividad y comunicación en el deporte': 'Assertiveness and communication in sports',
-      'Percepción de roles de liderazgo en el equipo': 'Perception of leadership roles in the team',
-      'Percepción sobre el cuerpo técnico': 'Perception of coaching staff',
-      'Capacidad de recuperarse de reveses.': 'Ability to recover from setbacks.',
-      'Habilidad para colaborar y comunicarse.': 'Ability to collaborate and communicate.',
-      'Bienestar emocional, psicológico y social.': 'Emotional, psychological, and social well-being.',
-      'Cohesión de tarea y social.': 'Task and social cohesion.',
-      'Conductas antideportivas y presión por ganar.': 'Unsportsmanlike behavior and winning pressure.'
-    };
-    return map[rawDesc] || rawDesc;
-  }, [isEn]);
-
-  const PROTOCOL_TEXT_MAP = {
-    'Responder cuestionario en escala de 1 a 5.': 'Answer questionnaire on a 1 to 5 scale.',
-    'Cuestionario de 4 preguntas.': '4-question questionnaire.',
-    'Responder a 3 preguntas.': 'Answer 3 questions.',
-    'Responder a 4 preguntas.': 'Answer 4 questions.',
-    'Responder a 2 preguntas.': 'Answer 2 questions.',
-    '28 preguntas. Escala 1-4.': '28 questions. 1-4 scale.',
-    '19 preguntas. Escala 1-4.': '19 questions. 1-4 scale.',
-    '10 preguntas. Escala 1-5.': '10 questions. 1-5 scale.',
-    '14 preguntas. Escala 1-5.': '14 questions. 1-5 scale.',
-    '12 preguntas. Escala 1-7.': '12 questions. 1-7 scale.',
-    '10 preguntas. Escala 1-4.': '10 questions. 1-4 scale.',
-    'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.': 'Rosenberg questionnaire adapted to sports. Likert scale responses.',
-    'Cuestionario antes de competir.': 'Pre-competition questionnaire.',
-    'Cuestionario SMS-II': 'SMS-II Questionnaire',
-    'Cuestionario de resiliencia': 'Resilience questionnaire',
-    'Prueba cognitiva cronometrada': 'Timed cognitive test',
-    'Evalúa la cohesión social y de tarea.': 'Evaluates social and task cohesion.',
-    'Cuestionario de actitudes.': 'Attitudes questionnaire.',
-    'Evaluación de habilidades interpersonales.': 'Interpersonal skills assessment.',
-    'Cuestionario de liderazgo deportivo.': 'Sports leadership questionnaire.',
-    'Cuestionario de satisfacción': 'Satisfaction questionnaire',
-    'Correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado.': 'Run the greatest distance possible in 12 minutes around a marked track or field.',
-    'Se anota la distancia total en metros usando cinta métrica o GPS.': 'Record total distance in meters using measuring tape or GPS.',
-    'Medir la capacidad aeróbica máxima (VO2 máx) y la resistencia general.': 'Measure maximal aerobic capacity (VO2 max) and general endurance.',
-    'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto.': '20-meter shuttle runs paced by an audio beep that accelerates every minute.',
-    'Se anota el último palier (nivel) completado antes de no llegar a tiempo a la línea.': 'Record the last completed stage (level) before failing to reach the line in time.',
-    'Medir la potencia aeróbica máxima y el consumo máximo de oxígeno.': 'Measure maximal aerobic power and maximum oxygen uptake.',
-    'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros.': 'From a stationary position, sprint at maximum effort across the 10-meter line.',
-    'Uso de cronómetro manual o fotocélulas. Se anota el tiempo en segundos.': 'Use of manual stopwatch or timing gates. Record time in seconds.',
-    'Mejorar la capacidad de aceleración y explosividad en los primeros metros.': 'Evaluate acceleration capacity and explosiveness in the opening meters.',
-    'Sprint de 30 metros al máximo esfuerzo desde posición estática.': '30-meter sprint at maximum effort from a stationary position.',
-    'Tiempo en segundos cronometrado.': 'Timed in seconds.',
-    'Medir la velocidad máxima y capacidad anaeróbica aláctica.': 'Measure maximal speed and alactic anaerobic capacity.',
-    'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.': '10m forward sprint, 5m lateral shuffle left, 10m right, 5m to center, and 10m backpedal to start.',
-    'Tiempo en segundos. Se penaliza si se cruzan las piernas en el lateral.': 'Time in seconds. Penalized if legs cross during lateral shuffle.',
-    'Evaluar la agilidad, equilibrio y cambios de dirección rápidos.': 'Evaluate agility, balance, and quick directional changes.',
-    'Manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.': 'Hands on hips. Lower center of gravity (knee flexion) and immediately jump as high as possible.',
-    'Altura del salto en centímetros (usar plataforma de contacto o app de video).': 'Jump height in centimeters (using contact mat or video app).',
-    'Medir la potencia explosiva del tren inferior (fuerza reactiva).': 'Measure explosive power of lower body (reactive strength).',
-    'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.': 'Dribble ball through slalom of 5 cones spaced 2 meters apart and deliver a pass to target.',
-    'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.': 'Total time in seconds from start until pass enters target.',
-    'Evaluar el control del balón en velocidad y precisión final.': 'Evaluate ball control at speed and finishing accuracy.',
-    '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.': '10 passes from the edge of the penalty area toward mini-goals or marked zones.',
-    '1 punto por cada acierto. Total de 10 puntos posibles.': '1 point per hit. Total of 10 possible points.',
-    'Medir la precisión del golpeo y concentración técnica.': 'Measure striking accuracy and technical focus.'
-  };
+    if (currentLangKey === 'es') return rawDesc;
+    return TEST_DESC_MAP[rawDesc]?.[currentLangKey] || TEST_DESC_MAP[rawDesc]?.en || rawDesc;
+  }, [currentLangKey, TEST_DESC_MAP]);
 
   const getProtocolText = useCallback((text) => {
     if (!text) return '';
-    if (!isEn) return text;
-    return PROTOCOL_TEXT_MAP[text] || text;
-  }, [isEn]);
+    if (currentLangKey === 'es') return text;
+    return PROTOCOL_TEXT_MAP[text]?.[currentLangKey] || PROTOCOL_TEXT_MAP[text]?.en || text;
+  }, [currentLangKey, PROTOCOL_TEXT_MAP]);
   const effectiveTeamPath = getTeamPath ? getTeamPath(activeTeamId) : (activeTeam ? (activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeamId}` : `users/${user?.uid}/teams/${activeTeamId}`) : '');
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
@@ -2124,25 +2548,25 @@ const Tests = () => {
                       }
                     }}
                   >
-                    📄 {isEn ? 'Export Team Report' : 'Exportar Informe Colectivo'}
+                    📄 {tr('tests.matrix.exportTeamReport')}
                   </button>
                 </div>
               </div>
 
               {/* PLANNING MATRIX */}
               <div>
-                <div className="matrix-label-row">{isEn ? 'PLANNING MATRIX' : 'MATRIZ DE PLANIFICACIÓN'}</div>
+                <div className="matrix-label-row">{tr('tests.matrix.title')}</div>
                 <div className="matrix-container">
                   <table className="matrix-table">
                     <thead>
                       <tr>
-                        <th>{isEn ? 'Number' : 'Dorsal'}</th>
-                        <th style={{ textAlign: 'left' }}>{isEn ? 'Player' : 'Jugador'}</th>
-                        <th>{isEn ? 'Initial Eval' : 'Eval Inicial'}</th>
+                        <th>{tr('tests.matrix.number')}</th>
+                        <th style={{ textAlign: 'left' }}>{tr('tests.matrix.player')}</th>
+                        <th>{tr('tests.matrix.initialEval')}</th>
                         <th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th>
-                        <th>{isEn ? 'Previous Eval' : 'Penúltima Eval'}</th>
-                        <th>{isEn ? 'Latest Eval' : 'Última Eval'}</th>
-                        <th>{isEn ? 'Progress' : 'Evolución'}</th>
+                        <th>{tr('tests.matrix.previousEval')}</th>
+                        <th>{tr('tests.matrix.latestEval')}</th>
+                        <th>{tr('tests.matrix.progress')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2263,40 +2687,40 @@ const Tests = () => {
         <div className="modal-overlay" onClick={() => setIsNewTestModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{isEn ? "New Test" : "Nuevo Test"}</h2>
+              <h2>{tr('tests.newModal.title')}</h2>
               <button className="btn-close" onClick={() => setIsNewTestModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>{isEn ? "Test Name" : "Nombre del Test"}</label>
-                <input type="text" value={newTest.name} onChange={e => setNewTest({...newTest, name: e.target.value})} placeholder={isEn ? "e.g. Squat 1RM" : "Ej. RM Sentadilla"} />
+                <label>{tr('tests.newModal.name')}</label>
+                <input type="text" value={newTest.name} onChange={e => setNewTest({...newTest, name: e.target.value})} placeholder={tr('tests.newModal.namePlaceholder')} />
               </div>
               <div className="form-row-team">
                 <div className="form-group">
-                  <label>{isEn ? "Test Type" : "Tipo de Test"}</label>
+                  <label>{tr('tests.newModal.type')}</label>
                   <select value={newTest.type} onChange={e => setNewTest({...newTest, type: e.target.value})}>
-                    <option value="fisico">{isEn ? "Physical" : "Físico"}</option>
-                    <option value="tactico">{isEn ? "Tactical" : "Táctico"}</option>
-                    <option value="psicosocial">{isEn ? "Psychosocial" : "Psicosocial"}</option>
-                    <option value="socioemocional">{isEn ? "Socio-emotional" : "Socioemocional"}</option>
+                    <option value="fisico">{tr('tests.newModal.physical')}</option>
+                    <option value="tactico">{tr('tests.newModal.tactical')}</option>
+                    <option value="psicosocial">{tr('tests.newModal.psychosocial')}</option>
+                    <option value="socioemocional">{tr('tests.newModal.socioemotional')}</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>{isEn ? "Specific Category" : "Categoría Específica"}</label>
-                  <input type="text" value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})} placeholder={isEn ? "e.g. Endurance, Psychology..." : "Ej. Resistencia, Psicología..."} />
+                  <label>{tr('tests.newModal.category')}</label>
+                  <input type="text" value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})} placeholder={tr('tests.newModal.categoryPlaceholder')} />
                 </div>
               </div>
               <div className="form-group">
-                <label>{isEn ? "Unit of Measurement" : "Unidad de medida"}</label>
-                <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder={isEn ? "e.g. kg, sec, pts" : "Ej. kg, seg, pts"} />
+                <label>{tr('tests.newModal.unit')}</label>
+                <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder={tr('tests.newModal.unitPlaceholder')} />
               </div>
               <div className="form-group">
-                <label>{isEn ? "Short Description" : "Descripción rápida"}</label>
-                <input type="text" value={newTest.desc} onChange={e => setNewTest({...newTest, desc: e.target.value})} placeholder={isEn ? "Test summary" : "Resumen del test"} />
+                <label>{tr('tests.newModal.desc')}</label>
+                <input type="text" value={newTest.desc} onChange={e => setNewTest({...newTest, desc: e.target.value})} placeholder={tr('tests.newModal.descPlaceholder')} />
               </div>
               <div className="form-group">
-                <label>{isEn ? "Complete Execution Protocol" : "Protocolo de Ejecución Completo"}</label>
-                <textarea rows="4" value={newTest.protocol || ''} onChange={e => setNewTest({...newTest, protocol: e.target.value})} placeholder={isEn ? "Exact steps on how the test is performed on field..." : "Pasos exactos de cómo se realiza la prueba en campo..."}></textarea>
+                <label>{tr('tests.newModal.protocol')}</label>
+                <textarea rows="4" value={newTest.protocol || ''} onChange={e => setNewTest({...newTest, protocol: e.target.value})} placeholder={tr('tests.newModal.protocolPlaceholder')}></textarea>
               </div>
             </div>
             <div className="modal-footer">
@@ -2354,35 +2778,33 @@ const Tests = () => {
               </div>
               <div className="test-info-block" style={{ padding: '0 0 20px 0' }}>
                 <div className="protocolo-card">
-                  <h3>{isEn ? 'OBJECTIVE & DESCRIPTION' : 'OBJETIVO Y DESCRIPCIÓN'}</h3>
+                  <h3>{tr('tests.modal.objectiveDesc')}</h3>
                   <p>{getTestDisplayDesc(selectedTestDetail)}</p>
                 </div>
                 
                 <div className="protocolo-card" style={{ marginTop: '16px' }}>
-                  <h3>{isEn ? 'EXECUTION PROTOCOL' : 'PROTOCOLO DE EJECUCIÓN'}</h3>
+                  <h3>{tr('tests.modal.executionProtocol')}</h3>
                   {typeof selectedTestDetail.protocol === 'string' ? (
-                    <p>{getProtocolText(selectedTestDetail.protocol) || (isEn ? 'No detailed protocol specified for this test.' : 'No se ha especificado un protocolo detallado para esta prueba.')}</p>
+                    <p>{getProtocolText(selectedTestDetail.protocol) || tr('tests.modal.noProtocol')}</p>
                   ) : selectedTestDetail.protocol && typeof selectedTestDetail.protocol === 'object' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <p><strong>{isEn ? 'Execution:' : 'Ejecución:'}</strong> {getProtocolText(selectedTestDetail.protocol.ejecucion)}</p>
-                      <p><strong>{isEn ? 'Measurement:' : 'Medición:'}</strong> {getProtocolText(selectedTestDetail.protocol.medicion)}</p>
-                      <p><strong>{isEn ? 'Objective:' : 'Objetivo:'}</strong> {getProtocolText(selectedTestDetail.protocol.objetivo)}</p>
+                      <p><strong>{tr('tests.modal.execution')}</strong> {getProtocolText(selectedTestDetail.protocol.ejecucion)}</p>
+                      <p><strong>{tr('tests.modal.measurement')}</strong> {getProtocolText(selectedTestDetail.protocol.medicion)}</p>
+                      <p><strong>{tr('tests.modal.objective')}</strong> {getProtocolText(selectedTestDetail.protocol.objetivo)}</p>
                     </div>
                   ) : (
-                    <p>{isEn ? 'No detailed protocol specified for this test.' : 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                    <p>{tr('tests.modal.noProtocol')}</p>
                   )}
                 </div>
                 
                 <div className="test-meta" style={{ marginTop: '16px' }}>
-                  <span><strong>{isEn ? 'Unit of measurement:' : 'Unidad de medida:'}</strong> {selectedTestDetail.unit}</span>
+                  <span><strong>{tr('tests.modal.unit')}</strong> {selectedTestDetail.unit}</span>
                 </div>
 
                 {(selectedTestDetail.id?.includes('salto') || selectedTestDetail.name?.toLowerCase().includes('salto') || selectedTestDetail.source) && (
                   <div
                     className="baremo-rfef-tooltip-box"
-                    title={isEn
-                      ? "Source: Real Federación Española de Fútbol (RFEF) - Physical Fitness Standards in Youth Female Football (Standing Long Jump)."
-                      : "Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos)."}
+                    title={tr('tests.modal.rfefTooltip')}
                     style={{
                       marginTop: '16px',
                       padding: '12px 14px',
@@ -2393,12 +2815,10 @@ const Tests = () => {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, color: '#10B981', marginBottom: '4px', fontSize: '12px' }}>
                       <span>🏅</span>
-                      <span>{isEn ? 'Official RFEF Benchmark (Male & Female Percentiles)' : 'Baremo Oficial RFEF (Percentiles Masculino y Femenino)'}</span>
+                      <span>{tr('tests.modal.rfefBadge')}</span>
                     </div>
                     <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                      {isEn
-                        ? 'Source: Real Federación Española de Fútbol (RFEF) - Physical Fitness Standards in Youth Female Football (Standing Long Jump).'
-                        : 'Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).'}
+                      {tr('tests.modal.rfefTooltip')}
                     </p>
                   </div>
                 )}
@@ -2407,7 +2827,7 @@ const Tests = () => {
               {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
                 <button className="btn-outline-gold" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => descargarPlantilla(selectedTestDetail, players)}>
-                  ⬇️ {isEn ? 'Download Data Collection Template' : 'Descargar Plantilla de Toma de Datos'}
+                  ⬇️ {tr('tests.modal.downloadTemplate')}
                 </button>
                 <button className="btn-primary" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => {
                   if (selectedTestDetail.isQuestionnaire) {
@@ -2419,7 +2839,7 @@ const Tests = () => {
                   }
                   setSelectedTestDetail(null);
                 }}>
-                  {isEn ? 'Go to Record Results' : 'Ir a Registrar Resultados'}
+                  {tr('tests.modal.goToRecord')}
                 </button>
               </div>
             </div>
@@ -2438,12 +2858,12 @@ const Tests = () => {
         <div className="modal-overlay" onClick={() => setIsRegModalOpen(false)}>
           <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '88vh', height: '88vh', overflow: 'hidden', backgroundColor: 'var(--bg-card, #FAF8F5)', borderRadius: '16px' }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
-              <h2>{isEn ? 'Record:' : 'Registro:'} {getTestDisplayName(getTestById(regSelectedTest))}</h2>
+              <h2>{tr('tests.modal.recordTitle')} {getTestDisplayName(getTestById(regSelectedTest))}</h2>
               <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 20px 40px 20px' }}>
               <div className="reg-main-header" style={{ marginBottom: '15px' }}>
-                <span className="unit-badge">{isEn ? 'Unit: ' : 'Unidad: '}{getTestById(regSelectedTest)?.unit}</span>
+                <span className="unit-badge">{tr('tests.modal.unitLabel')}{getTestById(regSelectedTest)?.unit}</span>
               </div>
               <div className="reg-players-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {players.map(p => (
@@ -2549,14 +2969,14 @@ const Tests = () => {
                   className="btn-modal-cancel" 
                   onClick={() => modalConfig.onConfirm(false)}
                 >
-                  {isEn ? 'CANCEL' : 'CANCELAR'}
+                  {tr('tests.modal.cancel')}
                 </button>
               )}
               <button 
                 className="btn-modal-confirm" 
                 onClick={() => modalConfig.onConfirm(true)}
               >
-                {isEn ? 'OK' : 'ACEPTAR'}
+                {tr('tests.modal.confirm')}
               </button>
             </div>
           </div>

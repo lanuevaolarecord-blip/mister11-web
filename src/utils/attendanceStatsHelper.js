@@ -33,6 +33,7 @@ import {
   toDateKey,
   isEventPast
 } from './attendanceMath.js';
+import { t, getLocale } from '../i18n/index.js';
 
 export const DEFAULT_XP_TABLE = {
   xpPresente: 10,
@@ -114,7 +115,7 @@ export const safeFormatAttendanceDate = (rawDate, fallback = '') => {
       }
       return fallback;
     }
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+    return d.toLocaleDateString(getLocale ? getLocale() : 'es-ES', { day: '2-digit', month: '2-digit' });
   } catch (_) {
     return fallback;
   }
@@ -775,9 +776,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
     return {
       id: `match_${cleanMId}`,
       rawId: cleanMId,
-      title: `🏆 [Partido] vs ${event.rival || event.opponent || 'Rival'}`,
+      title: `🏆 [${t('common.matchTag', {}, 'Partido')}] vs ${event.rival || event.opponent || t('common.rival', {}, 'Rival')}`,
       date: dateKey,
-      formattedDate: safeFormatAttendanceDate(dateKey, 'Partido'),
+      formattedDate: safeFormatAttendanceDate(dateKey, t('common.matchTag', {}, 'Partido')),
       pct,
       pctAbsent,
       pctLate,
@@ -861,9 +862,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
     return {
       id: `session_${cleanSId}`,
       rawId: cleanSId,
-      title: `⚽ [Sesión] ${event.title || event.titulo || 'Entrenamiento'}`,
+      title: `⚽ [${t('common.sessionTag', {}, 'Sesión')}] ${event.title || event.titulo || t('common.training', {}, 'Entrenamiento')}`,
       date: dateKey,
-      formattedDate: safeFormatAttendanceDate(dateKey, 'Sesión'),
+      formattedDate: safeFormatAttendanceDate(dateKey, t('common.sessionTag', {}, 'Sesión')),
       pct,
       pctAbsent,
       pctLate,

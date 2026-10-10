@@ -161,7 +161,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       ...(sessions || []).map((s) => ({
         id: `session_${s.id}`,
         rawId: s.id,
-        title: `⚽ [Sesión] ${s.title || 'Entrenamiento'}`,
+        title: `⚽ [${t('common.sessionTag', {}, 'Sesión')}] ${s.title || t('common.training', {}, 'Entrenamiento')}`,
         date: s.date || new Date().toISOString().split('T')[0],
         type: 'session',
         isSuspended: Boolean(s.isSuspended)
@@ -169,7 +169,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       ...(matches || []).map((m) => ({
         id: `match_${m.id}`,
         rawId: m.id,
-        title: `🏆 [Partido] vs ${m.rival || m.opponent || 'Rival'}`,
+        title: `🏆 [${t('common.matchTag', {}, 'Partido')}] vs ${m.rival || m.opponent || t('common.rival', {}, 'Rival')}`,
         date: m.date || new Date().toISOString().split('T')[0],
         type: 'match',
         isSuspended: false
@@ -179,7 +179,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       const ta = a.date ? new Date(a.date).getTime() : 0;
       return (isNaN(tb) ? 0 : tb) - (isNaN(ta) ? 0 : ta);
     });
-  }, [sessions, matches]);
+  }, [sessions, matches, t]);
 
   const selectedMatch = selectedSessionType === 'match'
     ? (matches || []).find((m) => `match_${m.id}` === selectedSessionId || m.id === selectedSessionId)
@@ -310,9 +310,9 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     else if (rawSessionObj?.fecha || rawSessionObj?.date) setSelectedSessionDate(rawSessionObj.fecha || rawSessionObj.date);
 
     if (existingRecord?.sessionTitle) setSelectedSessionTitle(existingRecord.sessionTitle);
-    else if (selectedMatch?.rival) setSelectedSessionTitle(`🏆 [Partido] vs ${selectedMatch.rival}`);
+    else if (selectedMatch?.rival) setSelectedSessionTitle(`🏆 [${t('common.matchTag', {}, 'Partido')}] vs ${selectedMatch.rival}`);
     else if (rawSessionObj?.titulo || rawSessionObj?.title) setSelectedSessionTitle(rawSessionObj.titulo || rawSessionObj.title);
-  }, [selectedSessionId, attendanceRecords, players, selectedMatch, sessions]);
+  }, [selectedSessionId, attendanceRecords, players, selectedMatch, sessions, t]);
 
   const handleSelectEvent = (eventId) => {
     if (!eventId) return;

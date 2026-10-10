@@ -37,7 +37,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { darkMode } = useTheme();
-  const { t, isEn, locale } = useTranslation();
+  const { t, isEn, locale, formatDate, getWeekdays } = useTranslation();
   const navigate = useNavigate();
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
@@ -276,7 +276,7 @@ const Dashboard = () => {
 
   const getWorkloadData = () => {
     const lang = settings.language || 'Español (ES)';
-    const dayLabelsShort = isEn ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const dayLabelsShort = getWeekdays ? getWeekdays('short') : (isEn ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']);
 
     switch (workloadPeriod) {
       case 'session': {
@@ -429,11 +429,11 @@ const Dashboard = () => {
             }}
           >
             <UserPlus size={18} />
-            {t('dashboard.joinAsStaff', 'Unirse a un equipo como Staff')}
+            {t('dashboard.joinAsStaff', {}, 'Unirse a un equipo como Staff')}
           </button>
           <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0, minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '8px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
-              {new Date().toLocaleDateString(locale || getLocale(settings.language), { month: 'long', year: 'numeric' })}
+              {formatDate(new Date(), { month: 'long', year: 'numeric' })}
             </span>
             <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('dashboard.today')}</strong>
           </div>
@@ -816,7 +816,7 @@ const Dashboard = () => {
                 const dateObj = new Date(s.date);
                 const formattedDate = isNaN(dateObj.getTime())
                   ? (s.date || '')
-                  : dateObj.toLocaleDateString(locale || getLocale(settings.language), { weekday: 'short', day: 'numeric', month: 'short' });
+                  : formatDate(dateObj, { weekday: 'short', day: 'numeric', month: 'short' });
 
                 return (
                   <div key={s.id || idx} className="card-base" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', boxShadow: 'none' }} onClick={() => navigate('/sesiones')}>

@@ -74,7 +74,13 @@ const Header = ({ onToggleNotif }) => {
           <div className="team-switcher-header-v2" style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
             <Shield fill="#1B3A2D" color="#FFF" size={16} style={{ pointerEvents: 'none', marginRight: '6px' }} />
             <span className="team-name-span" style={{ pointerEvents: 'none', marginRight: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-              {(activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase()}
+              {(() => {
+                const raw = activeTeam?.nombre || activeTeam?.name;
+                if (!raw || raw.trim().toLowerCase() === 'mi equipo' || raw.trim().toLowerCase() === 'my team') {
+                  return t('common.myTeam', {}, 'MI EQUIPO').toUpperCase();
+                }
+                return raw.toUpperCase();
+              })()}
             </span>
             <ChevronDown size={14} style={{ pointerEvents: 'none' }} />
             
@@ -99,7 +105,10 @@ const Header = ({ onToggleNotif }) => {
             >
               {teams.map(t => {
                 if (!t) return null;
-                const teamName = t.nombre || t.name || 'MI EQUIPO';
+                const rawName = t.nombre || t.name;
+                const teamName = (!rawName || rawName.trim().toLowerCase() === 'mi equipo' || rawName.trim().toLowerCase() === 'my team')
+                  ? t('common.myTeam', {}, 'MI EQUIPO')
+                  : rawName;
                 const prefix = t.source === 'club' ? `🏢 ${t.clubName || 'Club'} - ` : '👤 ';
                 const label = `${prefix}${teamName}`;
                 return (

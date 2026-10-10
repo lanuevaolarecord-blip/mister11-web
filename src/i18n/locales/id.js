@@ -1421,7 +1421,7 @@ export const id = {
   "month.Abr": "Abr",
   "month.Ago": "Agt",
   "month.Dic": "Des",
-  "month.Ene": "Ene",
+  "month.Ene": "Jan",
   "month.Feb": "Feb",
   "month.Jul": "Jul",
   "month.Jun": "Jun",

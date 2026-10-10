@@ -1114,7 +1114,6 @@ const Planificacion = () => {
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏋</span>
                 <span className="plan-metric-name">{t('plan.chip.work').toUpperCase()}</span>
-                <span className="plan-metric-badge">Tektips</span>
                 <span className="plan-metric-count" style={{ color: trabajoColor }}>{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
@@ -1135,7 +1134,6 @@ const Planificacion = () => {
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏆</span>
                 <span className="plan-metric-name">{t('plan.chip.compet').toUpperCase()}</span>
-                <span className="plan-metric-badge chip-compet-badge">{t('plan.chip.compet')}</span>
                 <span className="plan-metric-count" style={{ color: competColor }}>{computedMetrics.compet}/{computedMetrics.competMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>

@@ -1,65 +1,77 @@
 /**
  * homeExercisesCatalog.js
- * Míster11 — Catálogo Canónico de Ejercicios de Entrenamiento en Casa / Tecnificación
+ * Míster11 — Catálogo Maestro de Ejercicios en Casa, Delta de Material y Seguridad Clínica (Oleada 6.1 / 6.4)
  *
- * Oleada 6.1:
- * - Esquema clínico con material_preferido, alternativa_casa, contexto
- * - Umbrales duros de edad (edad_minima_segura, requiere_supervision_presencial, safety_notes)
- * - Fuentes clínicas de lista blanca (FIFA 11+, Petersen, Thorborg, ACSM, Lloyd LTAD, etc.)
- * - Cero source: 'system'
- * - Categorías con iconos Lucide y paleta Tierra y Campo
+ * ESQUEMA POR EJERCICIO:
+ * - id: Identificador único hex-XXX
+ * - name, nameEs, nameEn: Nombres bilingües
+ * - category: Fase de entrenamiento ('calentamiento' | 'tecnica' | 'coordinacion_agilidad' | 'fuerza_preventiva' | 'vuelta_calma')
+ * - level: 'basico' | 'intermedio' | 'avanzado'
+ * - series, reps, durationSeconds, restSeconds: Dosificación deportiva
+ * - materials, materialsEs, materialsEn: Etiquetas de material
+ * - description, descriptionEs, descriptionEn: Explicación de ejecución
+ * - coachingPoints, coachingPointsEs, coachingPointsEn: Puntos clave
+ * - targetZones: Zonas biomecánicas y cadenas musculares
+ * - contexto: 'casa' | 'campo_only' | 'gym'
+ * - material_preferido: Material óptimo
+ * - alternativa_casa: { option: string[], nota: { es: string, en: string } }
+ * - age_min, age_max, edad_minima_segura: Umbrales LTAD
+ * - requiere_supervision_presencial: boolean
+ * - safety_notes: { es: string, en: string }
+ * - source: { type: string, citation: string }
+ * - illustration: { type: 'svg_determinista'|'foto_licenciada'|'pendiente', url: string|null, alt: object, source: object|null, reviewed_by_human: boolean }
  */
 
 export const DEFAULT_USER_INVENTORY = [
-  'peso_corporal',
-  'toalla',
-  'botella',
-  'mochila_lastre',
-  'escalon',
-  'silla_estable',
-  'cojin',
-  'colchoneta',
-  'marco_puerta',
-  'pared',
-  'suelo',
-  'pelota'
+  "peso_corporal",
+  "toalla",
+  "botella",
+  "mochila_lastre",
+  "escalon",
+  "silla_estable",
+  "cojin",
+  "colchoneta",
+  "marco_puerta",
+  "pared",
+  "suelo",
+  "pelota"
 ];
 
 export const HOME_EXERCISES_CATEGORIES = {
-  calentamiento: {
-    id: 'calentamiento',
-    nameEs: 'Calentamiento y Activación Dinámica',
-    nameEn: 'Warm-up & Dynamic Activation',
-    icon: 'Flame',
-    color: '#C85A32' // --terracota
+  "calentamiento": {
+    "id": "calentamiento",
+    "nameEs": "Calentamiento y Activación Dinámica",
+    "nameEn": "Warm-up & Dynamic Activation",
+    "icon": "Flame",
+    "color": "#C85A32"
   },
-  tecnica: {
-    id: 'tecnica',
-    nameEs: 'Técnica Individual y Control',
-    nameEn: 'Individual Technique & Control',
-    icon: 'Target',
-    color: '#D4A843' // --oro
+  "tecnica": {
+    "id": "tecnica",
+    "nameEs": "Técnica Individual y Control",
+    "nameEn": "Individual Technique & Control",
+    "icon": "Target",
+    "color": "#D4A843"
   },
-  coordinacion_agilidad: {
-    id: 'coordinacion_agilidad',
-    nameEs: 'Coordinación y Agilidad',
-    nameEn: 'Coordination & Agility',
-    icon: 'Zap',
-    color: '#9C6A3B' // --ocre
+  "coordinacion_agilidad": {
+    "id": "coordinacion_agilidad",
+    "nameEs": "Coordinación y Agilidad",
+    "nameEn": "Coordination & Agility",
+    "icon": "Zap",
+    "color": "#9C6A3B"
   },
-  fuerza_preventiva: {
-    id: 'fuerza_preventiva',
-    nameEs: 'Fuerza Preventiva y Core',
-    nameEn: 'Preventive Strength & Core',
-    icon: 'ShieldCheck',
-    color: '#1B3A2D' // --verde-selva
+  "fuerza_preventiva": {
+    "id": "fuerza_preventiva",
+    "nameEs": "Fuerza Preventiva y Core",
+    "nameEn": "Preventive Strength & Core",
+    "icon": "ShieldCheck",
+    "color": "#1B3A2D"
   },
-  vuelta_calma: {
-    id: 'vuelta_calma',
-    nameEs: 'Vuelta a la Calma y Movilidad',
-    nameEn: 'Cool-down & Mobility',
-    icon: 'Wind',
-    color: '#4CAF7D' // --verde-campo
+  "vuelta_calma": {
+    "id": "vuelta_calma",
+    "nameEs": "Vuelta a la Calma y Movilidad",
+    "nameEn": "Cool-down & Mobility",
+    "icon": "Wind",
+    "color": "#4CAF7D"
   }
 };
 
@@ -127,6 +139,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Movilidad de Tobillo Dinámica",
+        "en": "Technical illustration pending for Dynamic Ankle Mobility",
+        "pt": "Ilustração técnica pendente para Movilidad de Tobillo Dinámica",
+        "fr": "Illustration technique en attente pour Dynamic Ankle Mobility",
+        "id": "Ilustrasi teknis tertunda untuk Dynamic Ankle Mobility"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -192,6 +217,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Balanceo de Pierna Frontal",
+        "en": "Technical illustration pending for Front Leg Swings",
+        "pt": "Ilustração técnica pendente para Balanceo de Pierna Frontal",
+        "fr": "Illustration technique en attente pour Front Leg Swings",
+        "id": "Ilustrasi teknis tertunda untuk Front Leg Swings"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -257,6 +295,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Balanceo de Pierna Lateral",
+        "en": "Technical illustration pending for Lateral Leg Swings",
+        "pt": "Ilustração técnica pendente para Balanceo de Pierna Lateral",
+        "fr": "Illustration technique en attente pour Lateral Leg Swings",
+        "id": "Ilustrasi teknis tertunda untuk Lateral Leg Swings"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -323,6 +374,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Círculos Articulares de Cadera",
+        "en": "Technical illustration pending for Hip Controlled Articular Rotations",
+        "pt": "Ilustração técnica pendente para Círculos Articulares de Cadera",
+        "fr": "Illustration technique en attente pour Hip Controlled Articular Rotations",
+        "id": "Ilustrasi teknis tertunda untuk Hip Controlled Articular Rotations"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -389,6 +453,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Gato-Camello Dinámico",
+        "en": "Technical illustration pending for Dynamic Cat-Cow",
+        "pt": "Ilustração técnica pendente para Gato-Camello Dinámico",
+        "fr": "Illustration technique en attente pour Dynamic Cat-Cow",
+        "id": "Ilustrasi teknis tertunda untuk Dynamic Cat-Cow"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -456,6 +533,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para El Mejor Estiramiento del Mundo (World Greatest)",
+        "en": "Technical illustration pending for World Greatest Stretch",
+        "pt": "Ilustração técnica pendente para El Mejor Estiramiento del Mundo (World Greatest)",
+        "fr": "Illustration technique en attente pour World Greatest Stretch",
+        "id": "Ilustrasi teknis tertunda untuk World Greatest Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -523,6 +613,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Zancada Inversa con Rotación Torácica",
+        "en": "Technical illustration pending for Reverse Lunge with Thoracic Twist",
+        "pt": "Ilustração técnica pendente para Zancada Inversa con Rotación Torácica",
+        "fr": "Illustration technique en attente pour Reverse Lunge with Thoracic Twist",
+        "id": "Ilustrasi teknis tertunda untuk Reverse Lunge with Thoracic Twist"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -590,6 +693,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Zancada Lateral Dinámica (Cossack Parcial)",
+        "en": "Technical illustration pending for Dynamic Lateral Lunge",
+        "pt": "Ilustração técnica pendente para Zancada Lateral Dinámica (Cossack Parcial)",
+        "fr": "Illustration technique en attente pour Dynamic Lateral Lunge",
+        "id": "Ilustrasi teknis tertunda untuk Dynamic Lateral Lunge"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -657,6 +773,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Gusano (Inchworm) con Toque de Puntera",
+        "en": "Technical illustration pending for Inchworm with Toe Tap",
+        "pt": "Ilustração técnica pendente para Gusano (Inchworm) con Toque de Puntera",
+        "fr": "Illustration technique en attente pour Inchworm with Toe Tap",
+        "id": "Ilustrasi teknis tertunda untuk Inchworm with Toe Tap"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -724,6 +853,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Carioca Dinámica en el Sitio",
+        "en": "Technical illustration pending for In-Place Carioca Drill",
+        "pt": "Ilustração técnica pendente para Carioca Dinámica en el Sitio",
+        "fr": "Illustration technique en attente pour In-Place Carioca Drill",
+        "id": "Ilustrasi teknis tertunda untuk In-Place Carioca Drill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -791,6 +933,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Skipping Bajo con Apoyos Rápidos",
+        "en": "Technical illustration pending for Low High-Frequency Skipping",
+        "pt": "Ilustração técnica pendente para Skipping Bajo con Apoyos Rápidos",
+        "fr": "Illustration technique en attente pour Low High-Frequency Skipping",
+        "id": "Ilustrasi teknis tertunda untuk Low High-Frequency Skipping"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -858,6 +1013,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Skipping Alto Técnico (A-Skip)",
+        "en": "Technical illustration pending for Technical A-Skip",
+        "pt": "Ilustração técnica pendente para Skipping Alto Técnico (A-Skip)",
+        "fr": "Illustration technique en attente pour Technical A-Skip",
+        "id": "Ilustrasi teknis tertunda untuk Technical A-Skip"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -924,6 +1092,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Talones al Glúteo con Braceo (B-Skip)",
+        "en": "Technical illustration pending for Heel-Flicks with Arm Drive",
+        "pt": "Ilustração técnica pendente para Talones al Glúteo con Braceo (B-Skip)",
+        "fr": "Illustration technique en attente pour Heel-Flicks with Arm Drive",
+        "id": "Ilustrasi teknis tertunda untuk Heel-Flicks with Arm Drive"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -991,6 +1172,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Jumping Jacks Rítmicos",
+        "en": "Technical illustration pending for Rhythmic Jumping Jacks",
+        "pt": "Ilustração técnica pendente para Jumping Jacks Rítmicos",
+        "fr": "Illustration technique en attente pour Rhythmic Jumping Jacks",
+        "id": "Ilustrasi teknis tertunda untuk Rhythmic Jumping Jacks"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1057,6 +1251,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Paso Ruso (Marcha con Patada Recta)",
+        "en": "Technical illustration pending for Straight Leg Russian Kicks",
+        "pt": "Ilustração técnica pendente para Paso Ruso (Marcha con Patada Recta)",
+        "fr": "Illustration technique en attente pour Straight Leg Russian Kicks",
+        "id": "Ilustrasi teknis tertunda untuk Straight Leg Russian Kicks"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1124,6 +1331,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Aperturas y Cierres de Valla Imaginaria",
+        "en": "Technical illustration pending for Hurdle Step Over & Under Drill",
+        "pt": "Ilustração técnica pendente para Aperturas y Cierres de Valla Imaginaria",
+        "fr": "Illustration technique en attente pour Hurdle Step Over & Under Drill",
+        "id": "Ilustrasi teknis tertunda untuk Hurdle Step Over & Under Drill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1191,6 +1411,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Desplazamiento Lateral con Toco Suelo",
+        "en": "Technical illustration pending for Lateral Shuffle & Floor Touch",
+        "pt": "Ilustração técnica pendente para Desplazamiento Lateral con Toco Suelo",
+        "fr": "Illustration technique en attente pour Lateral Shuffle & Floor Touch",
+        "id": "Ilustrasi teknis tertunda untuk Lateral Shuffle & Floor Touch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1258,6 +1491,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Molino de Viento Dinámico (Windmill)",
+        "en": "Technical illustration pending for Dynamic Standing Windmill",
+        "pt": "Ilustração técnica pendente para Molino de Viento Dinámico (Windmill)",
+        "fr": "Illustration technique en attente pour Dynamic Standing Windmill",
+        "id": "Ilustrasi teknis tertunda untuk Dynamic Standing Windmill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1325,6 +1571,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Sentadilla Profunda con Extensión Torácica",
+        "en": "Technical illustration pending for Deep Squat with Thoracic Reach",
+        "pt": "Ilustração técnica pendente para Sentadilla Profunda con Extensión Torácica",
+        "fr": "Illustration technique en attente pour Deep Squat with Thoracic Reach",
+        "id": "Ilustrasi teknis tertunda untuk Deep Squat with Thoracic Reach"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1392,6 +1651,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Saltitos de Tobillo Reactivos (Pogo Jumps)",
+        "en": "Technical illustration pending for Ankle Stiffness Pogo Jumps",
+        "pt": "Ilustração técnica pendente para Saltitos de Tobillo Reactivos (Pogo Jumps)",
+        "fr": "Illustration technique en attente pour Ankle Stiffness Pogo Jumps",
+        "id": "Ilustrasi teknis tertunda untuk Ankle Stiffness Pogo Jumps"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1459,6 +1731,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Activación de Glúteo en Puente Unipodal Dinámico",
+        "en": "Technical illustration pending for Dynamic Single-Leg Glute Activation",
+        "pt": "Ilustração técnica pendente para Activación de Glúteo en Puente Unipodal Dinámico",
+        "fr": "Illustration technique en attente pour Dynamic Single-Leg Glute Activation",
+        "id": "Ilustrasi teknis tertunda untuk Dynamic Single-Leg Glute Activation"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1525,6 +1810,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para FIFA 11+ Aceleración y Desaceleración Corta",
+        "en": "Technical illustration pending for FIFA 11+ Short Deceleration Shuttle",
+        "pt": "Ilustração técnica pendente para FIFA 11+ Aceleración y Desaceleración Corta",
+        "fr": "Illustration technique en attente pour FIFA 11+ Short Deceleration Shuttle",
+        "id": "Ilustrasi teknis tertunda untuk FIFA 11+ Short Deceleration Shuttle"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1590,6 +1888,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Campanita (Toques Interior-Interior)",
+        "en": "Technical illustration pending for Bell Taps (Inside-Inside Touches)",
+        "pt": "Ilustração técnica pendente para Campanita (Toques Interior-Interior)",
+        "fr": "Illustration technique en attente pour Bell Taps (Inside-Inside Touches)",
+        "id": "Ilustrasi teknis tertunda untuk Bell Taps (Inside-Inside Touches)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1655,6 +1966,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pisas Alternas (Sole Taps)",
+        "en": "Technical illustration pending for Sole Taps on Top of Ball",
+        "pt": "Ilustração técnica pendente para Pisas Alternas (Sole Taps)",
+        "fr": "Illustration technique en attente pour Sole Taps on Top of Ball",
+        "id": "Ilustrasi teknis tertunda untuk Sole Taps on Top of Ball"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1720,6 +2044,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Arrastre con Suela y Toque de Interior (V-Pull Inside)",
+        "en": "Technical illustration pending for V-Pull Inside (Sole Drag & Push)",
+        "pt": "Ilustração técnica pendente para Arrastre con Suela y Toque de Interior (V-Pull Inside)",
+        "fr": "Illustration technique en attente pour V-Pull Inside (Sole Drag & Push)",
+        "id": "Ilustrasi teknis tertunda untuk V-Pull Inside (Sole Drag & Push)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1785,6 +2122,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Arrastre con Suela y Salida de Exterior (V-Pull Outside)",
+        "en": "Technical illustration pending for V-Pull Outside (Sole Drag & Exterior Push)",
+        "pt": "Ilustração técnica pendente para Arrastre con Suela y Salida de Exterior (V-Pull Outside)",
+        "fr": "Illustration technique en attente pour V-Pull Outside (Sole Drag & Exterior Push)",
+        "id": "Ilustrasi teknis tertunda untuk V-Pull Outside (Sole Drag & Exterior Push)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1850,6 +2200,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Triángulo Técnico con Suela e Interior",
+        "en": "Technical illustration pending for Technical Triangle with Sole & Inside",
+        "pt": "Ilustração técnica pendente para Triángulo Técnico con Suela e Interior",
+        "fr": "Illustration technique en attente pour Technical Triangle with Sole & Inside",
+        "id": "Ilustrasi teknis tertunda untuk Technical Triangle with Sole & Inside"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1915,6 +2278,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para La Croqueta de Iniesta en Espacio Reducido",
+        "en": "Technical illustration pending for In-Place Iniesta Croqueta",
+        "pt": "Ilustração técnica pendente para La Croqueta de Iniesta en Espacio Reducido",
+        "fr": "Illustration technique en attente pour In-Place Iniesta Croqueta",
+        "id": "Ilustrasi teknis tertunda untuk In-Place Iniesta Croqueta"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -1980,6 +2356,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Bicicleta Simple (Step Over Outward)",
+        "en": "Technical illustration pending for Single Step-Over Outward",
+        "pt": "Ilustração técnica pendente para Bicicleta Simple (Step Over Outward)",
+        "fr": "Illustration technique en attente pour Single Step-Over Outward",
+        "id": "Ilustrasi teknis tertunda untuk Single Step-Over Outward"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2045,6 +2434,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Doble Bicicleta con Salida de Exterior",
+        "en": "Technical illustration pending for Double Step-Over with Exterior Exit",
+        "pt": "Ilustração técnica pendente para Doble Bicicleta con Salida de Exterior",
+        "fr": "Illustration technique en attente pour Double Step-Over with Exterior Exit",
+        "id": "Ilustrasi teknis tertunda untuk Double Step-Over with Exterior Exit"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2110,6 +2512,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Bicicleta Inversa (Scissors Inward)",
+        "en": "Technical illustration pending for Inward Scissors Feint",
+        "pt": "Ilustração técnica pendente para Bicicleta Inversa (Scissors Inward)",
+        "fr": "Illustration technique en attente pour Inward Scissors Feint",
+        "id": "Ilustrasi teknis tertunda untuk Inward Scissors Feint"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2176,6 +2591,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para El Recorte de Cruyff Clásico",
+        "en": "Technical illustration pending for Cruyff Turn Drill",
+        "pt": "Ilustração técnica pendente para El Recorte de Cruyff Clásico",
+        "fr": "Illustration technique en attente pour Cruyff Turn Drill",
+        "id": "Ilustrasi teknis tertunda untuk Cruyff Turn Drill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2241,6 +2669,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Ruleta de Marsella (Zidane Turn)",
+        "en": "Technical illustration pending for Marseille Roulette (Zidane Turn)",
+        "pt": "Ilustração técnica pendente para Ruleta de Marsella (Zidane Turn)",
+        "fr": "Illustration technique en attente pour Marseille Roulette (Zidane Turn)",
+        "id": "Ilustrasi teknis tertunda untuk Marseille Roulette (Zidane Turn)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2306,6 +2747,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Elástico de Ronaldinho en Corto",
+        "en": "Technical illustration pending for Short Elastic Flip-Flap Drill",
+        "pt": "Ilustração técnica pendente para Elástico de Ronaldinho en Corto",
+        "fr": "Illustration technique en attente pour Short Elastic Flip-Flap Drill",
+        "id": "Ilustrasi teknis tertunda untuk Short Elastic Flip-Flap Drill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2374,6 +2828,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pases Rasos de Precisión contra Pared (Pie Dominante)",
+        "en": "Technical illustration pending for Wall Push Passes (Dominant Foot)",
+        "pt": "Ilustração técnica pendente para Pases Rasos de Precisión contra Pared (Pie Dominante)",
+        "fr": "Illustration technique en attente pour Wall Push Passes (Dominant Foot)",
+        "id": "Ilustrasi teknis tertunda untuk Wall Push Passes (Dominant Foot)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2442,6 +2909,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pases Rasos de Precisión contra Pared (Pie No Dominante)",
+        "en": "Technical illustration pending for Wall Push Passes (Non-Dominant Foot)",
+        "pt": "Ilustração técnica pendente para Pases Rasos de Precisión contra Pared (Pie No Dominante)",
+        "fr": "Illustration technique en attente pour Wall Push Passes (Non-Dominant Foot)",
+        "id": "Ilustrasi teknis tertunda untuk Wall Push Passes (Non-Dominant Foot)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2510,6 +2990,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pared Alternada a Dos Toques (Control + Pase)",
+        "en": "Technical illustration pending for Alternating Wall Rebound (Control + Pass)",
+        "pt": "Ilustração técnica pendente para Pared Alternada a Dos Toques (Control + Pase)",
+        "fr": "Illustration technique en attente pour Alternating Wall Rebound (Control + Pass)",
+        "id": "Ilustrasi teknis tertunda untuk Alternating Wall Rebound (Control + Pass)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2578,6 +3071,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pared al Primer Toque (One-Touch Alterno)",
+        "en": "Technical illustration pending for One-Touch Wall Rally",
+        "pt": "Ilustração técnica pendente para Pared al Primer Toque (One-Touch Alterno)",
+        "fr": "Illustration technique en attente pour One-Touch Wall Rally",
+        "id": "Ilustrasi teknis tertunda untuk One-Touch Wall Rally"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2646,6 +3152,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Control Orientado con Exterior y Pase Cruzado",
+        "en": "Technical illustration pending for Outside Cushion Touch & Cross Pass",
+        "pt": "Ilustração técnica pendente para Control Orientado con Exterior y Pase Cruzado",
+        "fr": "Illustration technique en attente pour Outside Cushion Touch & Cross Pass",
+        "id": "Ilustrasi teknis tertunda untuk Outside Cushion Touch & Cross Pass"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2711,6 +3230,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Control Aéreo Amortiguado con Empeine (Drop & Catch)",
+        "en": "Technical illustration pending for Aerial Cushion Catch with Laces",
+        "pt": "Ilustração técnica pendente para Control Aéreo Amortiguado con Empeine (Drop & Catch)",
+        "fr": "Illustration technique en attente pour Aerial Cushion Catch with Laces",
+        "id": "Ilustrasi teknis tertunda untuk Aerial Cushion Catch with Laces"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2776,6 +3308,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Dominadas Básicas Alternas (Juggling Empeine)",
+        "en": "Technical illustration pending for Alternating Laces Juggling",
+        "pt": "Ilustração técnica pendente para Dominadas Básicas Alternas (Juggling Empeine)",
+        "fr": "Illustration technique en attente pour Alternating Laces Juggling",
+        "id": "Ilustrasi teknis tertunda untuk Alternating Laces Juggling"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2841,6 +3386,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Dominadas con Muslo y Empeine Combinadas",
+        "en": "Technical illustration pending for Thigh to Laces Juggling Ladder",
+        "pt": "Ilustração técnica pendente para Dominadas con Muslo y Empeine Combinadas",
+        "fr": "Illustration technique en attente pour Thigh to Laces Juggling Ladder",
+        "id": "Ilustrasi teknis tertunda untuk Thigh to Laces Juggling Ladder"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2909,6 +3467,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Circuito Slalom en Conos en Espacio Reducido",
+        "en": "Technical illustration pending for Tight Cone Slalom Dribble",
+        "pt": "Ilustração técnica pendente para Circuito Slalom en Conos en Espacio Reducido",
+        "fr": "Illustration technique en attente pour Tight Cone Slalom Dribble",
+        "id": "Ilustrasi teknis tertunda untuk Tight Cone Slalom Dribble"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -2977,6 +3548,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Slalom con Doble Suela (Roll-Over Cones)",
+        "en": "Technical illustration pending for Sole Roll-Over Cone Weave",
+        "pt": "Ilustração técnica pendente para Slalom con Doble Suela (Roll-Over Cones)",
+        "fr": "Illustration technique en attente pour Sole Roll-Over Cone Weave",
+        "id": "Ilustrasi teknis tertunda untuk Sole Roll-Over Cone Weave"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3045,6 +3629,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pase aéreo picado contra pared y control de pecho",
+        "en": "Technical illustration pending for Lofted Wall Rebound to Chest Control",
+        "pt": "Ilustração técnica pendente para Pase aéreo picado contra pared y control de pecho",
+        "fr": "Illustration technique en attente pour Lofted Wall Rebound to Chest Control",
+        "id": "Ilustrasi teknis tertunda untuk Lofted Wall Rebound to Chest Control"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3113,6 +3710,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Control Orientado con Giros de 90 Grados (Cuadrado)",
+        "en": "Technical illustration pending for Square 90-Degree Directional Touches",
+        "pt": "Ilustração técnica pendente para Control Orientado con Giros de 90 Grados (Cuadrado)",
+        "fr": "Illustration technique en attente pour Square 90-Degree Directional Touches",
+        "id": "Ilustrasi teknis tertunda untuk Square 90-Degree Directional Touches"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3181,6 +3791,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Reto de Precisión al Cono (Target Striking)",
+        "en": "Technical illustration pending for Target Cone Precision Striking",
+        "pt": "Ilustração técnica pendente para Reto de Precisión al Cono (Target Striking)",
+        "fr": "Illustration technique en attente pour Target Cone Precision Striking",
+        "id": "Ilustrasi teknis tertunda untuk Target Cone Precision Striking"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3246,6 +3869,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Salto a la Cuerda con Pies Juntos (Rope Double Bounce)",
+        "en": "Technical illustration pending for Jump Rope Basic Bounce",
+        "pt": "Ilustração técnica pendente para Salto a la Cuerda con Pies Juntos (Rope Double Bounce)",
+        "fr": "Illustration technique en attente pour Jump Rope Basic Bounce",
+        "id": "Ilustrasi teknis tertunda untuk Jump Rope Basic Bounce"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3311,6 +3947,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Salto a la Cuerda con Paso de Boxeador (Boxer Skip)",
+        "en": "Technical illustration pending for Boxer Skip Jump Rope",
+        "pt": "Ilustração técnica pendente para Salto a la Cuerda con Paso de Boxeador (Boxer Skip)",
+        "fr": "Illustration technique en attente pour Boxer Skip Jump Rope",
+        "id": "Ilustrasi teknis tertunda untuk Boxer Skip Jump Rope"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3376,6 +4025,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Salto a la Cuerda a Pata Coja Alternada",
+        "en": "Technical illustration pending for Single-Leg Alternating Jump Rope",
+        "pt": "Ilustração técnica pendente para Salto a la Cuerda a Pata Coja Alternada",
+        "fr": "Illustration technique en attente pour Single-Leg Alternating Jump Rope",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Alternating Jump Rope"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3442,6 +4104,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Escalera de Agilidad: 1 Pie por Hueco Rápido",
+        "en": "Technical illustration pending for Agility Ladder One Foot Per Hole",
+        "pt": "Ilustração técnica pendente para Escalera de Agilidad: 1 Pie por Hueco Rápido",
+        "fr": "Illustration technique en attente pour Agility Ladder One Foot Per Hole",
+        "id": "Ilustrasi teknis tertunda untuk Agility Ladder One Foot Per Hole"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3508,6 +4183,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Escalera de Agilidad: 2 Pies por Hueco (Two-In)",
+        "en": "Technical illustration pending for Agility Ladder Two Feet Per Hole",
+        "pt": "Ilustração técnica pendente para Escalera de Agilidad: 2 Pies por Hueco (Two-In)",
+        "fr": "Illustration technique en attente pour Agility Ladder Two Feet Per Hole",
+        "id": "Ilustrasi teknis tertunda untuk Agility Ladder Two Feet Per Hole"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3574,6 +4262,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)",
+        "en": "Technical illustration pending for Icky Shuffle (In-In-Out Pattern)",
+        "pt": "Ilustração técnica pendente para Escalera de Agilidad: Icky Shuffle (Dentro-Dentro-Fuera)",
+        "fr": "Illustration technique en attente pour Icky Shuffle (In-In-Out Pattern)",
+        "id": "Ilustrasi teknis tertunda untuk Icky Shuffle (In-In-Out Pattern)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3640,6 +4341,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Escalera de Agilidad: Pasos Ali (Ali Shuffle)",
+        "en": "Technical illustration pending for Ali Shuffle Footwork Drill",
+        "pt": "Ilustração técnica pendente para Escalera de Agilidad: Pasos Ali (Ali Shuffle)",
+        "fr": "Illustration technique en attente pour Ali Shuffle Footwork Drill",
+        "id": "Ilustrasi teknis tertunda untuk Ali Shuffle Footwork Drill"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3706,6 +4420,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Cruces Dentro-Fuera en Línea Recta (In & Out)",
+        "en": "Technical illustration pending for In & Out Fast Lateral Line Steps",
+        "pt": "Ilustração técnica pendente para Cruces Dentro-Fuera en Línea Recta (In & Out)",
+        "fr": "Illustration technique en attente pour In & Out Fast Lateral Line Steps",
+        "id": "Ilustrasi teknis tertunda untuk In & Out Fast Lateral Line Steps"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3772,6 +4499,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Saltos en Cruz Multidireccionales a Pies Juntos",
+        "en": "Technical illustration pending for Four-Square Cross Hops",
+        "pt": "Ilustração técnica pendente para Saltos en Cruz Multidireccionales a Pies Juntos",
+        "fr": "Illustration technique en attente pour Four-Square Cross Hops",
+        "id": "Ilustrasi teknis tertunda untuk Four-Square Cross Hops"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3838,6 +4578,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Saltos en Cruz a Pata Coja (Unipodal Cross Hops)",
+        "en": "Technical illustration pending for Single-Leg Cross Hops",
+        "pt": "Ilustração técnica pendente para Saltos en Cruz a Pata Coja (Unipodal Cross Hops)",
+        "fr": "Illustration technique en attente pour Single-Leg Cross Hops",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Cross Hops"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3905,6 +4658,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Paso de Patinador con Frenada (Skater Jumps & Stick)",
+        "en": "Technical illustration pending for Skater Jumps with 2-Second Hold",
+        "pt": "Ilustração técnica pendente para Paso de Patinador con Frenada (Skater Jumps & Stick)",
+        "fr": "Illustration technique en attente pour Skater Jumps with 2-Second Hold",
+        "id": "Ilustrasi teknis tertunda untuk Skater Jumps with 2-Second Hold"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -3971,6 +4737,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Patinador Continuo Reactivo (Speed Skaters)",
+        "en": "Technical illustration pending for Continuous Reactive Speed Skaters",
+        "pt": "Ilustração técnica pendente para Patinador Continuo Reactivo (Speed Skaters)",
+        "fr": "Illustration technique en attente pour Continuous Reactive Speed Skaters",
+        "id": "Ilustrasi teknis tertunda untuk Continuous Reactive Speed Skaters"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4037,6 +4816,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para T-Test de Agilidad en Salón (3x3 Metros)",
+        "en": "Technical illustration pending for Living Room 3x3m T-Test",
+        "pt": "Ilustração técnica pendente para T-Test de Agilidad en Salón (3x3 Metros)",
+        "fr": "Illustration technique en attente pour Living Room 3x3m T-Test",
+        "id": "Ilustrasi teknis tertunda untuk Living Room 3x3m T-Test"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4103,6 +4895,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Equilibrio Unipodal en Pata Coja con Ojos Cerrados",
+        "en": "Technical illustration pending for Eyes-Closed Single-Leg Balance",
+        "pt": "Ilustração técnica pendente para Equilibrio Unipodal en Pata Coja con Ojos Cerrados",
+        "fr": "Illustration technique en attente pour Eyes-Closed Single-Leg Balance",
+        "id": "Ilustrasi teknis tertunda untuk Eyes-Closed Single-Leg Balance"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4168,6 +4973,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Verhagen et al. 2004, ankle injury prevention"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Equilibrio Unipodal sobre Cojín o Superficie Blanda",
+        "en": "Technical illustration pending for Unstable Cushion Single-Leg Stance",
+        "pt": "Ilustração técnica pendente para Equilibrio Unipodal sobre Cojín o Superficie Blanda",
+        "fr": "Illustration technique en attente pour Unstable Cushion Single-Leg Stance",
+        "id": "Ilustrasi teknis tertunda untuk Unstable Cushion Single-Leg Stance"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4234,6 +5052,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Toques de Reloj Unipodales (Clock Reach)",
+        "en": "Technical illustration pending for Single-Leg Clock Cone Reaches",
+        "pt": "Ilustração técnica pendente para Toques de Reloj Unipodales (Clock Reach)",
+        "fr": "Illustration technique en attente pour Single-Leg Clock Cone Reaches",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Clock Cone Reaches"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4299,6 +5130,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Caída desde Salto y Clavado (Drop Jump Stick)",
+        "en": "Technical illustration pending for Drop Jump & Two-Foot Stick",
+        "pt": "Ilustração técnica pendente para Caída desde Salto y Clavado (Drop Jump Stick)",
+        "fr": "Illustration technique en attente pour Drop Jump & Two-Foot Stick",
+        "id": "Ilustrasi teknis tertunda untuk Drop Jump & Two-Foot Stick"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4365,6 +5209,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Salto Vertical con Caída a Una Pierna (Single-Leg Land)",
+        "en": "Technical illustration pending for Vertical Hop with Single-Leg Stick",
+        "pt": "Ilustração técnica pendente para Salto Vertical con Caída a Una Pierna (Single-Leg Land)",
+        "fr": "Illustration technique en attente pour Vertical Hop with Single-Leg Stick",
+        "id": "Ilustrasi teknis tertunda untuk Vertical Hop with Single-Leg Stick"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4431,6 +5288,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Arrancadas Explosivas de Reacción Auditiva",
+        "en": "Technical illustration pending for Audio Reaction Explosive Starts",
+        "pt": "Ilustração técnica pendente para Arrancadas Explosivas de Reacción Auditiva",
+        "fr": "Illustration technique en attente pour Audio Reaction Explosive Starts",
+        "id": "Ilustrasi teknis tertunda untuk Audio Reaction Explosive Starts"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4497,6 +5367,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Giro de 180 Grados y Sprint de Espaldas a Frontal",
+        "en": "Technical illustration pending for 180-Degree Pivot & Accelerate",
+        "pt": "Ilustração técnica pendente para Giro de 180 Grados y Sprint de Espaldas a Frontal",
+        "fr": "Illustration technique en attente pour 180-Degree Pivot & Accelerate",
+        "id": "Ilustrasi teknis tertunda untuk 180-Degree Pivot & Accelerate"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4564,6 +5447,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Plancha Frontal Clásica (Isometric Plank)",
+        "en": "Technical illustration pending for Classic Forearm Plank",
+        "pt": "Ilustração técnica pendente para Plancha Frontal Clásica (Isometric Plank)",
+        "fr": "Illustration technique en attente pour Classic Forearm Plank",
+        "id": "Ilustrasi teknis tertunda untuk Classic Forearm Plank"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4631,6 +5527,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Plancha Lateral con Apoyo de Codo",
+        "en": "Technical illustration pending for Elbow Side Plank",
+        "pt": "Ilustração técnica pendente para Plancha Lateral con Apoyo de Codo",
+        "fr": "Illustration technique en attente pour Elbow Side Plank",
+        "id": "Ilustrasi teknis tertunda untuk Elbow Side Plank"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4698,6 +5607,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Plancha Lateral con Elevación de Pierna (Star Plank)",
+        "en": "Technical illustration pending for Side Plank with Leg Abduction",
+        "pt": "Ilustração técnica pendente para Plancha Lateral con Elevación de Pierna (Star Plank)",
+        "fr": "Illustration technique en attente pour Side Plank with Leg Abduction",
+        "id": "Ilustrasi teknis tertunda untuk Side Plank with Leg Abduction"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4765,6 +5687,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Plancha Frontal con Toques de Hombro (Shoulder Taps)",
+        "en": "Technical illustration pending for Plank Shoulder Taps",
+        "pt": "Ilustração técnica pendente para Plancha Frontal con Toques de Hombro (Shoulder Taps)",
+        "fr": "Illustration technique en attente pour Plank Shoulder Taps",
+        "id": "Ilustrasi teknis tertunda untuk Plank Shoulder Taps"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4832,6 +5767,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Pájaro-Perro (Bird-Dog Contralateral)",
+        "en": "Technical illustration pending for Contralateral Bird-Dog",
+        "pt": "Ilustração técnica pendente para Pájaro-Perro (Bird-Dog Contralateral)",
+        "fr": "Illustration technique en attente pour Contralateral Bird-Dog",
+        "id": "Ilustrasi teknis tertunda untuk Contralateral Bird-Dog"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4898,6 +5846,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Bicho Muerto (Dead Bug Contralateral)",
+        "en": "Technical illustration pending for Contralateral Dead Bug",
+        "pt": "Ilustração técnica pendente para Bicho Muerto (Dead Bug Contralateral)",
+        "fr": "Illustration technique en attente pour Contralateral Dead Bug",
+        "id": "Ilustrasi teknis tertunda untuk Contralateral Dead Bug"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -4965,6 +5926,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Puente de Glúteo Bipodal con Pausa Isométrica",
+        "en": "Technical illustration pending for Glute Bridge with Isometric Pause",
+        "pt": "Ilustração técnica pendente para Puente de Glúteo Bipodal con Pausa Isométrica",
+        "fr": "Illustration technique en attente pour Glute Bridge with Isometric Pause",
+        "id": "Ilustrasi teknis tertunda untuk Glute Bridge with Isometric Pause"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5031,6 +6005,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Puente de Glúteo Unipodal con Pierna Extendida",
+        "en": "Technical illustration pending for Single-Leg Glute Bridge",
+        "pt": "Ilustração técnica pendente para Puente de Glúteo Unipodal con Pierna Extendida",
+        "fr": "Illustration technique en attente pour Single-Leg Glute Bridge",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Glute Bridge"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5100,6 +6087,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Thorborg/Hölmich, Copenhagen adduction exercise literature; Harøy et al. 2019"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)",
+        "en": "Technical illustration pending for Copenhagen Adductor Plank (Bench Support)",
+        "pt": "Ilustração técnica pendente para Ejercicio de Aductores de Copenhague (Nivel Banco/Sofá)",
+        "fr": "Illustration technique en attente pour Copenhagen Adductor Plank (Bench Support)",
+        "id": "Ilustrasi teknis tertunda untuk Copenhagen Adductor Plank (Bench Support)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5166,6 +6166,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Harøy et al. 2019, Br J Sports Med"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Copenhague Modificado en Suelo con Rodilla Apoyada",
+        "en": "Technical illustration pending for Floor Knee-Supported Copenhagen Plank",
+        "pt": "Ilustração técnica pendente para Copenhague Modificado en Suelo con Rodilla Apoyada",
+        "fr": "Illustration technique en attente pour Floor Knee-Supported Copenhagen Plank",
+        "id": "Ilustrasi teknis tertunda untuk Floor Knee-Supported Copenhagen Plank"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5233,6 +6246,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "estudio_peer_reviewed",
       "citation": "Petersen et al. 2011, Am J Sports Med"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Nordic Hamstring Curl Casero Asistido con Puerta o Sofá",
+        "en": "Technical illustration pending for Assisted Home Nordic Hamstring Curl",
+        "pt": "Ilustração técnica pendente para Nordic Hamstring Curl Casero Asistido con Puerta o Sofá",
+        "fr": "Illustration technique en attente pour Assisted Home Nordic Hamstring Curl",
+        "id": "Ilustrasi teknis tertunda untuk Assisted Home Nordic Hamstring Curl"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5298,6 +6324,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Slide Hamstring Curl con Toalla en Suelo Liso",
+        "en": "Technical illustration pending for Towel Floor Hamstring Slide Curl",
+        "pt": "Ilustração técnica pendente para Slide Hamstring Curl con Toalla en Suelo Liso",
+        "fr": "Illustration technique en attente pour Towel Floor Hamstring Slide Curl",
+        "id": "Ilustrasi teknis tertunda untuk Towel Floor Hamstring Slide Curl"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5365,6 +6404,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)",
+        "en": "Technical illustration pending for Bodyweight Bulgarian Split Squat",
+        "pt": "Ilustração técnica pendente para Sentadilla Búlgara con Peso Corporal (Bulgarian Split Squat)",
+        "fr": "Illustration technique en attente pour Bodyweight Bulgarian Split Squat",
+        "id": "Ilustrasi teknis tertunda untuk Bodyweight Bulgarian Split Squat"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5432,6 +6484,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Peso Muerto Rumano a Una Pierna (Single-Leg RDL)",
+        "en": "Technical illustration pending for Single-Leg Romanian Deadlift (RDL)",
+        "pt": "Ilustração técnica pendente para Peso Muerto Rumano a Una Pierna (Single-Leg RDL)",
+        "fr": "Illustration technique en attente pour Single-Leg Romanian Deadlift (RDL)",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Romanian Deadlift (RDL)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5499,6 +6564,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Sentadilla Pistol Asistida a Silla (Box Pistol Squat)",
+        "en": "Technical illustration pending for Assisted Box Pistol Squat",
+        "pt": "Ilustração técnica pendente para Sentadilla Pistol Asistida a Silla (Box Pistol Squat)",
+        "fr": "Illustration technique en attente pour Assisted Box Pistol Squat",
+        "id": "Ilustrasi teknis tertunda untuk Assisted Box Pistol Squat"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5565,6 +6643,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Elevación de Gemelos en Escalón con Fase Excéntrica Lenta",
+        "en": "Technical illustration pending for Calf Raises with 3-Second Eccentric",
+        "pt": "Ilustração técnica pendente para Elevación de Gemelos en Escalón con Fase Excéntrica Lenta",
+        "fr": "Illustration technique en attente pour Calf Raises with 3-Second Eccentric",
+        "id": "Ilustrasi teknis tertunda untuk Calf Raises with 3-Second Eccentric"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5630,6 +6721,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Elevación de Sóleo Unipodal con Rodilla Semiflexionada",
+        "en": "Technical illustration pending for Bent-Knee Single-Leg Soleus Raise",
+        "pt": "Ilustração técnica pendente para Elevación de Sóleo Unipodal con Rodilla Semiflexionada",
+        "fr": "Illustration technique en attente pour Bent-Knee Single-Leg Soleus Raise",
+        "id": "Ilustrasi teknis tertunda untuk Bent-Knee Single-Leg Soleus Raise"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5695,6 +6799,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)",
+        "en": "Technical illustration pending for Wall Tibialis Anterior Raises",
+        "pt": "Ilustração técnica pendente para Dorsiflexión de Tibial Anterior contra Pared (Tibialis Raises)",
+        "fr": "Illustration technique en attente pour Wall Tibialis Anterior Raises",
+        "id": "Ilustrasi teknis tertunda untuk Wall Tibialis Anterior Raises"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5761,6 +6878,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para La Almeja para Glúteo Medio (Clamshell con Pausa)",
+        "en": "Technical illustration pending for Side-Lying Clamshell with 2s Hold",
+        "pt": "Ilustração técnica pendente para La Almeja para Glúteo Medio (Clamshell con Pausa)",
+        "fr": "Illustration technique en attente pour Side-Lying Clamshell with 2s Hold",
+        "id": "Ilustrasi teknis tertunda untuk Side-Lying Clamshell with 2s Hold"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5826,6 +6956,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Paseo de Monstruo con Banda o Isométrico (Monster Walk)",
+        "en": "Technical illustration pending for Athletic Stance Lateral Monster Walk",
+        "pt": "Ilustração técnica pendente para Paseo de Monstruo con Banda o Isométrico (Monster Walk)",
+        "fr": "Illustration technique en attente pour Athletic Stance Lateral Monster Walk",
+        "id": "Ilustrasi teknis tertunda untuk Athletic Stance Lateral Monster Walk"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5892,6 +7035,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Silla Isométrica en Pared (Wall Sit)",
+        "en": "Technical illustration pending for Wall Sit Isometric Hold",
+        "pt": "Ilustração técnica pendente para Silla Isométrica en Pared (Wall Sit)",
+        "fr": "Illustration technique en attente pour Wall Sit Isometric Hold",
+        "id": "Ilustrasi teknis tertunda untuk Wall Sit Isometric Hold"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -5957,6 +7113,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Silla Isométrica Unipodal en Pared",
+        "en": "Technical illustration pending for Single-Leg Wall Sit Hold",
+        "pt": "Ilustração técnica pendente para Silla Isométrica Unipodal en Pared",
+        "fr": "Illustration technique en attente pour Single-Leg Wall Sit Hold",
+        "id": "Ilustrasi teknis tertunda untuk Single-Leg Wall Sit Hold"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6023,6 +7192,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Flexiones de Brazos con Control Escapular (Scapular Push-Up)",
+        "en": "Technical illustration pending for Push-Up with Scapular Protraction",
+        "pt": "Ilustração técnica pendente para Flexiones de Brazos con Control Escapular (Scapular Push-Up)",
+        "fr": "Illustration technique en attente pour Push-Up with Scapular Protraction",
+        "id": "Ilustrasi teknis tertunda untuk Push-Up with Scapular Protraction"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6089,6 +7271,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_fifa",
       "citation": "FIFA 11+ Programme Manual, FIFA/F-MARC"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)",
+        "en": "Technical illustration pending for Isometric Towel Pallof Press",
+        "pt": "Ilustração técnica pendente para El Candado Lumbopélvico (Pallof Press Isométrico con Toalla)",
+        "fr": "Illustration technique en attente pour Isometric Towel Pallof Press",
+        "id": "Ilustrasi teknis tertunda untuk Isometric Towel Pallof Press"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6155,6 +7350,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 Guidelines; Lloyd 2016 LTAD"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Sentadilla Profunda con Salto Vertical y Aterrizaje Blando",
+        "en": "Technical illustration pending for Squat Jump with Soft Deceleration",
+        "pt": "Ilustração técnica pendente para Sentadilla Profunda con Salto Vertical y Aterrizaje Blando",
+        "fr": "Illustration technique en attente pour Squat Jump with Soft Deceleration",
+        "id": "Ilustrasi teknis tertunda untuk Squat Jump with Soft Deceleration"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6224,6 +7432,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Estiramiento Pasivo de Isquiosurales con Toalla",
+        "en": "Technical illustration pending for Towel Hamstring Supine Stretch",
+        "pt": "Ilustração técnica pendente para Estiramiento Pasivo de Isquiosurales con Toalla",
+        "fr": "Illustration technique en attente pour Towel Hamstring Supine Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Towel Hamstring Supine Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6290,6 +7511,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)",
+        "en": "Technical illustration pending for Couch Stretch (Quad & Hip Flexor)",
+        "pt": "Ilustração técnica pendente para Estiramiento de Cuádriceps y Psoas en Caballero (Couch Stretch)",
+        "fr": "Illustration technique en attente pour Couch Stretch (Quad & Hip Flexor)",
+        "id": "Ilustrasi teknis tertunda untuk Couch Stretch (Quad & Hip Flexor)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6356,6 +7590,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Estiramiento de Glúteo en Figura 4 (Supine Figure Four)",
+        "en": "Technical illustration pending for Supine Figure-4 Piriformis Stretch",
+        "pt": "Ilustração técnica pendente para Estiramiento de Glúteo en Figura 4 (Supine Figure Four)",
+        "fr": "Illustration technique en attente pour Supine Figure-4 Piriformis Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Supine Figure-4 Piriformis Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6422,6 +7669,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para La Rana para Aductores (Frog Stretch)",
+        "en": "Technical illustration pending for Frog Pose Adductor Stretch",
+        "pt": "Ilustração técnica pendente para La Rana para Aductores (Frog Stretch)",
+        "fr": "Illustration technique en attente pour Frog Pose Adductor Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Frog Pose Adductor Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6488,6 +7748,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Postura de Paloma Modificada (Pigeon Pose)",
+        "en": "Technical illustration pending for Modified Pigeon Pose Stretch",
+        "pt": "Ilustração técnica pendente para Postura de Paloma Modificada (Pigeon Pose)",
+        "fr": "Illustration technique en attente pour Modified Pigeon Pose Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Modified Pigeon Pose Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6554,6 +7827,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Estiramiento de Gemelo y Sóleo contra Pared",
+        "en": "Technical illustration pending for Wall Gastrocnemius & Soleus Stretch",
+        "pt": "Ilustração técnica pendente para Estiramiento de Gemelo y Sóleo contra Pared",
+        "fr": "Illustration technique en attente pour Wall Gastrocnemius & Soleus Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Wall Gastrocnemius & Soleus Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6621,6 +7907,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Postura del Niño con Descarga de Hombros (Child Pose)",
+        "en": "Technical illustration pending for Child Pose with Shoulder Extension",
+        "pt": "Ilustração técnica pendente para Postura del Niño con Descarga de Hombros (Child Pose)",
+        "fr": "Illustration technique en attente pour Child Pose with Shoulder Extension",
+        "id": "Ilustrasi teknis tertunda untuk Child Pose with Shoulder Extension"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6688,6 +7987,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Torsión Espinal Tumbado (Supine Spinal Twist)",
+        "en": "Technical illustration pending for Supine Gentle Spinal Twist",
+        "pt": "Ilustração técnica pendente para Torsión Espinal Tumbado (Supine Spinal Twist)",
+        "fr": "Illustration technique en attente pour Supine Gentle Spinal Twist",
+        "id": "Ilustrasi teknis tertunda untuk Supine Gentle Spinal Twist"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6755,6 +8067,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Enhebrar la Aguja para Espalda Alta (Thread the Needle)",
+        "en": "Technical illustration pending for Thread the Needle Thoracic Stretch",
+        "pt": "Ilustração técnica pendente para Enhebrar la Aguja para Espalda Alta (Thread the Needle)",
+        "fr": "Illustration technique en attente pour Thread the Needle Thoracic Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Thread the Needle Thoracic Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6821,6 +8146,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Apertura Pectoral en Marco de Puerta",
+        "en": "Technical illustration pending for Doorway Chest & Biceps Stretch",
+        "pt": "Ilustração técnica pendente para Apertura Pectoral en Marco de Puerta",
+        "fr": "Illustration technique en attente pour Doorway Chest & Biceps Stretch",
+        "id": "Ilustrasi teknis tertunda untuk Doorway Chest & Biceps Stretch"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6887,6 +8225,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Estiramiento de la Cobra Suave para Cadena Anterior",
+        "en": "Technical illustration pending for Gentle Sphinx / Cobra Pose",
+        "pt": "Ilustração técnica pendente para Estiramiento de la Cobra Suave para Cadena Anterior",
+        "fr": "Illustration technique en attente pour Gentle Sphinx / Cobra Pose",
+        "id": "Ilustrasi teknis tertunda untuk Gentle Sphinx / Cobra Pose"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -6954,6 +8305,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Perro Boca Abajo con Pedaleo de Talones (Downward Dog)",
+        "en": "Technical illustration pending for Downward Dog with Heel Pedals",
+        "pt": "Ilustração técnica pendente para Perro Boca Abajo con Pedaleo de Talones (Downward Dog)",
+        "fr": "Illustration technique en attente pour Downward Dog with Heel Pedals",
+        "id": "Ilustrasi teknis tertunda untuk Downward Dog with Heel Pedals"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -7020,6 +8384,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Descompresión Lumbar en Pelota o Rodillas al Pecho",
+        "en": "Technical illustration pending for Supine Double Knees-to-Chest Hug",
+        "pt": "Ilustração técnica pendente para Descompresión Lumbar en Pelota o Rodillas al Pecho",
+        "fr": "Illustration technique en attente pour Supine Double Knees-to-Chest Hug",
+        "id": "Ilustrasi teknis tertunda untuk Supine Double Knees-to-Chest Hug"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -7089,6 +8466,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)",
+        "en": "Technical illustration pending for Legs-Up-The-Wall Restorative Posture",
+        "pt": "Ilustração técnica pendente para Piernas en la Pared para Retorno Venoso (Legs-Up-The-Wall)",
+        "fr": "Illustration technique en attente pour Legs-Up-The-Wall Restorative Posture",
+        "id": "Ilustrasi teknis tertunda untuk Legs-Up-The-Wall Restorative Posture"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -7155,6 +8545,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "consenso_fisio_colegiado",
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Respiración Diafragmática Box Breathing (4-4-4-4)",
+        "en": "Technical illustration pending for Box Breathing Cadence (4-4-4-4)",
+        "pt": "Ilustração técnica pendente para Respiración Diafragmática Box Breathing (4-4-4-4)",
+        "fr": "Illustration technique en attente pour Box Breathing Cadence (4-4-4-4)",
+        "id": "Ilustrasi teknis tertunda untuk Box Breathing Cadence (4-4-4-4)"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   },
   {
@@ -7221,8 +8624,19 @@ export const HOME_EXERCISES_107 = [
     "source": {
       "type": "guia_federacion",
       "citation": "Federación/programa de porteros; protocolo de fortalecimiento cervical para prevención de conmociones"
+    },
+    "illustration": {
+      "type": "pendiente",
+      "url": null,
+      "alt": {
+        "es": "Ilustración técnica pendiente para Isométrico Cervical Multidireccional de Portero",
+        "en": "Technical illustration pending for Goalkeeper Multidirectional Neck Isometric",
+        "pt": "Ilustração técnica pendente para Isométrico Cervical Multidireccional de Portero",
+        "fr": "Illustration technique en attente pour Goalkeeper Multidirectional Neck Isometric",
+        "id": "Ilustrasi teknis tertunda untuk Goalkeeper Multidirectional Neck Isometric"
+      },
+      "source": null,
+      "reviewed_by_human": false
     }
   }
 ];
-
-export default HOME_EXERCISES_107;

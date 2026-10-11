@@ -37,6 +37,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'guia_fifa',
       citation: 'FIFA 11+ Programme Manual, Part 2 (Core stability)'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -65,6 +78,19 @@ export const SYSTEM_CORE_EXERCISES = [
     source: {
       type: 'guia_fifa',
       citation: 'FIFA 11+ Programme Manual, Part 2'
+    },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
     },
     createdBy: 'clinical_seed'
   },
@@ -98,6 +124,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'estudio_peer_reviewed',
       citation: 'Verhagen et al. 2004, ankle injury prevention'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -129,6 +168,19 @@ export const SYSTEM_CORE_EXERCISES = [
     source: {
       type: 'estudio_peer_reviewed',
       citation: 'Petersen et al. 2011, Am J Sports Med'
+    },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
     },
     createdBy: 'clinical_seed'
   },
@@ -162,6 +214,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'estudio_peer_reviewed',
       citation: 'Thorborg/Hölmich, Copenhagen adduction exercise literature'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -193,6 +258,19 @@ export const SYSTEM_CORE_EXERCISES = [
     source: {
       type: 'consenso_fisio_colegiado',
       citation: 'ACSM 2022 Guidelines; strength & conditioning principles'
+    },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
     },
     createdBy: 'clinical_seed'
   },
@@ -226,6 +304,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'consenso_fisio_colegiado',
       citation: 'ACSM 2022 Guidelines; hamstring & glute stabilization'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -258,6 +349,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'consenso_fisio_colegiado',
       citation: 'ACSM 2022 flexibility; Page 2012 stretching concepts'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -287,6 +391,19 @@ export const SYSTEM_CORE_EXERCISES = [
       type: 'guia_fifa',
       citation: 'FIFA 11+ Programme Manual, Part 2'
     },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
+    },
     createdBy: 'clinical_seed'
   },
   {
@@ -315,6 +432,19 @@ export const SYSTEM_CORE_EXERCISES = [
     source: {
       type: 'guia_fifa',
       citation: 'FIFA 11+ Programme Manual, Part 1'
+    },
+        illustration: {
+      type: 'pendiente',
+      url: null,
+      alt: {
+        es: 'Ilustración técnica pendiente',
+        en: 'Technical illustration pending',
+        pt: 'Ilustração técnica pendente',
+        fr: 'Illustration technique en attente',
+        id: 'Ilustrasi teknis tertunda'
+      },
+      source: null,
+      reviewed_by_human: false
     },
     createdBy: 'clinical_seed'
   }

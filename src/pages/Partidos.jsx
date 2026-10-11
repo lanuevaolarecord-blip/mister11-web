@@ -2044,7 +2044,7 @@ const Partidos = () => {
                   teamData={activeTeam || {}}
                   teamId={effectiveTeamId}
                   teamPath={activeTeam?.id ? `teams/${activeTeam.id}` : null}
-                  coachName={user?.displayName || user?.email?.split('@')[0] || 'Míster Principal'}
+                  coachName={user?.displayName || user?.email?.split('@')[0] || 'Mister Principal'}
                   lang={currentGlobalLanguage}
                   currentUserId={user?.uid}
                   onSaveConvocation={async (newConvocados, newConvocadosStaff) => {
@@ -3556,7 +3556,7 @@ const Partidos = () => {
                         {/* Calificaciones 1-10 */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
                           <h5 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
-                            ⭐ {isGlobalEn ? 'Coach Ratings (1-10)' : 'Calificación del Míster (1-10)'}
+                            ⭐ {isGlobalEn ? 'Coach Ratings (1-10)' : 'Calificación del Mister (1-10)'}
                           </h5>
                           {calledPlayers.filter(Boolean).map(id => {
                             const p = players.find(pl => pl && pl.id === id);

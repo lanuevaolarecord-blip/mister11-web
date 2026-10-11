@@ -160,7 +160,7 @@ const Planificacion = () => {
     endDate: defaultDates.endDate,
     category: activeTeam?.categoria || activeTeam?.category || 'Infantil A',
     objective: 'Adapteremos al equipo en la parte técnica y táctica, mediante trabajos de posición y finalización.',
-    trainer: user?.displayName || 'Míster',
+    trainer: user?.displayName || 'Mister',
     sessionDuration: 90,
     trainingDays: [0, 2, 4],
     matchDayOfWeek: 5, // (A) Sábado por defecto

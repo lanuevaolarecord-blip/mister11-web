@@ -403,7 +403,7 @@ const Dashboard = () => {
     <div className="page-wrapper">
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div style={{ minWidth: '220px', flex: '1 1 auto' }}>
-          <h1 className="page-title">{t('dashboard.welcome', { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
+          <h1 className="page-title">{t('dashboard.welcome', { name: (settings.profileName || user?.displayName || 'Mister').trim().split(' ')[0] })}</h1>
           <p className="page-subtitle">{t('dashboard.activity', { club: settings.clubName || activeTeam?.name || 'Mi Equipo' })}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flexShrink: 0 }}>

@@ -391,7 +391,8 @@ export const drawPdfHeader = (doc, title, subtitle, pageW = 210) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text(`MÍSTER 11 — ${title.toUpperCase()}`, 14, 16);
+  // Regla PD3: Marca canónica sin tilde MISTER11
+  doc.text(`MISTER11 — ${title.toUpperCase()}`, 14, 16);
 
   if (subtitle) {
     doc.setFontSize(9.5);
@@ -404,7 +405,7 @@ export const drawPdfHeader = (doc, title, subtitle, pageW = 210) => {
 /**
  * Renderiza el pie de página unificado Míster11.
  */
-export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, totalPages = 1) => {
+export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, totalPages = 1, lang = null) => {
   let w = pageW;
   let h = pageH;
   let cur = currentPage;
@@ -416,6 +417,7 @@ export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, to
     h = pageW.pageH || pageW.height || doc?.internal?.pageSize?.getHeight?.() || 297;
     cur = pageW.currentPage || pageW.cur || doc?.internal?.getCurrentPageInfo?.()?.pageNumber || doc?.internal?.getNumberOfPages?.() || 1;
     total = pageW.totalPages || pageW.total || doc?.internal?.getNumberOfPages?.() || cur;
+    if (pageW.lang) lang = pageW.lang;
   }
 
   doc.setDrawColor(...PDF_COLORS.border);
@@ -424,11 +426,21 @@ export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, to
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...PDF_COLORS.textMuted);
-  // FRENTE F (PDF-Q): Usar '-' en lugar de '•' para que jsPDF/helvetica no rompa el kerning en 'mister11.a pp' -> 'mister11.app'
+  // FRENTE F (PDF-Q): Usar '-' en lugar de '•' y marca sin tilde Mister11
   doc.text('Mister11 Platform - mister11.app', 14, h - 8);
 
-  // FRENTE F (PDF-Q): Usar 'Pagina' sin tilde para evitar que el diacrítico rompa el espaciado en helvetica 'Pá g ina' -> 'Pagina'
-  const pageStr = `Pagina ${cur} de ${total}`;
+  // PD1 / PD2: Paginación localizada sin tilde que rompa kerning
+  const loc = (lang || (typeof window !== 'undefined' && localStorage.getItem('mister11_language')) || 'es').toLowerCase();
+  let pageStr = `Pagina ${cur} de ${total}`;
+  if (loc.startsWith('fr') || loc.includes('français')) {
+    pageStr = `Page ${cur} sur ${total}`;
+  } else if (loc.startsWith('id') || loc.includes('indonesia')) {
+    pageStr = `Halaman ${cur} dari ${total}`;
+  } else if (loc.startsWith('en') || loc.includes('english')) {
+    pageStr = `Page ${cur} of ${total}`;
+  } else {
+    pageStr = `Pagina ${cur} de ${total}`;
+  }
   doc.text(pageStr, w - 14, h - 8, { align: 'right' });
 };
 

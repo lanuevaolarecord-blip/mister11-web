@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { isDeveloperEmail } from '../config/admins';
 import { useEffectivePlan } from '../hooks/usePlan';
 import BadgePlanHeredado from './BadgePlanHeredado';
-import { ChevronDown, Sun, Moon, Bell, Settings, Shield, LogOut, User } from 'lucide-react';
+import { ChevronDown, Sun, Moon, Bell, Settings, Shield, ShieldCheck, Users, Activity, Clock, HeartPulse, BarChart3, LogOut, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { useTranslation } from '../hooks/useTranslation';
@@ -109,7 +109,7 @@ const Header = ({ onToggleNotif }) => {
                 const teamName = (!rawName || rawName.trim().toLowerCase() === 'mi equipo' || rawName.trim().toLowerCase() === 'my team')
                   ? t('common.myTeam', {}, 'MI EQUIPO')
                   : rawName;
-                const prefix = teamItem.source === 'club' ? `🏢 ${teamItem.clubName || 'Club'} - ` : '👤 ';
+                const prefix = teamItem.source === 'club' ? `[Club] ${teamItem.clubName || 'Club'} - ` : '';
                 const label = `${prefix}${teamName}`;
                 return (
                   <option key={teamItem.id} value={teamItem.id} style={{ color: '#000', background: '#fff' }}>
@@ -147,12 +147,14 @@ const Header = ({ onToggleNotif }) => {
               boxSizing: 'border-box'
             }}
           >
-            <span style={{ fontSize: '1.1rem', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}>
-              {permissions.role === 'admin' || permissions.role === 'first_coach' || permissions.role === 'owner' ? '👑' :
-               permissions.role === 'coach' || permissions.role === 'second_coach' ? '🥈' :
-               permissions.role === 'fitness_coach' || permissions.role === 'pf' ? '🏋️' :
-               permissions.role === 'assistant' ? '⏱️' :
-               permissions.role === 'physio' ? '🩺' : '👑'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', userSelect: 'none' }}>
+              {permissions.role === 'admin' || permissions.role === 'first_coach' || permissions.role === 'owner' ? <ShieldCheck size={18} color={permissions.roleInfo.color} /> :
+               permissions.role === 'coach' || permissions.role === 'second_coach' ? <Users size={18} color={permissions.roleInfo.color} /> :
+               permissions.role === 'fitness_coach' || permissions.role === 'pf' ? <Activity size={18} color={permissions.roleInfo.color} /> :
+               permissions.role === 'assistant' ? <Clock size={18} color={permissions.roleInfo.color} /> :
+               permissions.role === 'physio' ? <HeartPulse size={18} color={permissions.roleInfo.color} /> :
+               permissions.role === 'analyst' ? <BarChart3 size={18} color={permissions.roleInfo.color} /> :
+               <ShieldCheck size={18} color={permissions.roleInfo.color} />}
             </span>
             <select
               value={permissions.role}
@@ -177,11 +179,12 @@ const Header = ({ onToggleNotif }) => {
                   value={r.id} 
                   style={{ background: '#121C16', color: '#FFFFFF', fontSize: '0.85rem', padding: '6px' }}
                 >
-                  {r.id === 'admin' ? (isEn ? '👑 Head Coach' : '👑 Primer Entrenador') :
-                   r.id === 'coach' ? (isEn ? '🥈 Assistant Coach' : '🥈 Segundo Entrenador') :
-                   r.id === 'fitness_coach' ? (isEn ? '🏋️ Fitness Coach' : '🏋️ Preparador Físico') :
-                   r.id === 'assistant' ? (isEn ? '⏱️ Assistant' : '⏱️ Ayudante') :
-                   r.id === 'physio' ? (isEn ? '🩺 Physiotherapist' : '🩺 Fisioterapeuta') : r.badge}
+                  {r.id === 'admin' ? (isEn ? 'Head Coach' : 'Primer Entrenador') :
+                   r.id === 'coach' ? (isEn ? 'Assistant Coach' : 'Segundo Entrenador') :
+                   r.id === 'fitness_coach' ? (isEn ? 'Fitness Coach' : 'Preparador Físico') :
+                   r.id === 'assistant' ? (isEn ? 'Assistant' : 'Ayudante') :
+                   r.id === 'physio' ? (isEn ? 'Physiotherapist' : 'Fisioterapeuta') :
+                   r.id === 'analyst' ? (isEn ? 'Tactical Analyst' : 'Analista Táctico') : r.label}
                 </option>
               ))}
             </select>
@@ -216,7 +219,7 @@ const Header = ({ onToggleNotif }) => {
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: '0.9rem' }}>⚽</span>
+            <Activity size={14} style={{ marginRight: '4px' }} />
             {formatMatchTime(matchSeconds)}
           </button>
         )}

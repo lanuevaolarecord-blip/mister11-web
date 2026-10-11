@@ -19,7 +19,7 @@ export const STAFF_ROLES = {
     id: 'admin',
     aliases: ['first_coach', 'owner', 'admin'],
     label: 'Primer Entrenador (Admin)',
-    badge: '👑 Primer Entrenador',
+    badge: 'Primer Entrenador',
     color: '#D4A843',
     textColor: '#FFFFFF',
     description: 'Control total: gestión del equipo, miembros, partidos, sesiones, salud y táctica.'
@@ -28,7 +28,7 @@ export const STAFF_ROLES = {
     id: 'coach',
     aliases: ['second_coach', 'coach'],
     label: 'Segundo Entrenador',
-    badge: '🟢 Segundo Entrenador',
+    badge: 'Segundo Entrenador',
     color: '#10B981',
     textColor: '#FFFFFF',
     description: 'Edición de partidos, alineaciones, sesiones, pizarra, planning y asistencia.'
@@ -37,7 +37,7 @@ export const STAFF_ROLES = {
     id: 'fitness_coach',
     aliases: ['physical_trainer', 'preparador_fisico', 'pf', 'fitness', 'preparador'],
     label: 'Preparador Físico',
-    badge: '🏋️‍♂️ Preparador Físico',
+    badge: 'Preparador Físico',
     color: '#F59E0B',
     textColor: '#FFFFFF',
     description: 'Control de preparación física, cargas de entrenamiento, pruebas físicas y estado atlético.'
@@ -46,7 +46,7 @@ export const STAFF_ROLES = {
     id: 'assistant',
     aliases: ['assistant_coach', 'assistant'],
     label: 'Ayudante / 3er Entrenador',
-    badge: '🔵 Ayudante',
+    badge: 'Ayudante',
     color: '#3B82F6',
     textColor: '#FFFFFF',
     description: 'Registro de Live Stats, control de asistencia y apoyo en sesiones.'
@@ -55,7 +55,7 @@ export const STAFF_ROLES = {
     id: 'physio',
     aliases: ['medical', 'physio'],
     label: 'Fisioterapeuta / Médico',
-    badge: '🔴 Fisioterapeuta',
+    badge: 'Fisioterapeuta',
     color: '#EF4444',
     textColor: '#FFFFFF',
     description: 'Acceso y edición de historial médico, lesiones, tests físicos/wellness y asistencia.'
@@ -64,8 +64,8 @@ export const STAFF_ROLES = {
     id: 'analyst',
     aliases: ['scout', 'analyst'],
     label: 'Analista Táctico',
-    badge: '🟣 Analista',
-    color: '#8B5CF6',
+    badge: 'Analista',
+    color: '#1B3A2D',
     textColor: '#FFFFFF',
     description: 'Registro y análisis de Live Stats en tiempo real, informes y analíticas.'
   },
@@ -73,7 +73,7 @@ export const STAFF_ROLES = {
     id: 'player',
     aliases: ['jugador', 'player'],
     label: 'Jugador',
-    badge: '⚪ Jugador',
+    badge: 'Jugador',
     color: '#94A3B8',
     textColor: '#FFFFFF',
     description: 'Acceso de solo lectura a su ficha individual, sesiones y calendario.'

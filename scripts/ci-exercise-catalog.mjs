@@ -17,7 +17,7 @@
  */
 
 import { HOME_EXERCISES_107, HOME_EXERCISES_CATEGORIES } from '../src/data/homeExercisesCatalog.js';
-import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises } from '../src/utils/exerciseSafety.js';
+import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises, isHighClinicalRisk } from '../src/utils/exerciseSafety.js';
 
 console.log('══════════════════════════════════════════════════════════════════════');
 console.log('🏆 [CI-EXERCISE-CATALOG] CERTIFICACIÓN CLÍNICA, MATERIALES Y SEGURIDAD 6.1');
@@ -417,6 +417,42 @@ for (const [catKey, catDef] of Object.entries(HOME_EXERCISES_CATEGORIES)) {
 
 if (govOk) {
   console.log('   ✅ Categorías libres de emojis y con paleta 100% canónica Tierra y Campo.');
+}
+
+// ── G10. RIESGO CLÍNICO ALTO E ILUSTRACIÓN VALIDADA (OLEADA 6.4) ────────────
+console.log('\n▶ [G10] Verificando que todo ejercicio de riesgo alto sin ilustración validada exija supervisión...');
+let g10Ok = true;
+let highRiskCount = 0;
+
+HOME_EXERCISES_107.forEach(ex => {
+  const isHighRisk = isHighClinicalRisk(ex);
+  if (isHighRisk) {
+    highRiskCount++;
+    const isPending = !ex.illustration?.reviewed_by_human || ex.illustration?.type === 'pendiente';
+    
+    // Si la ilustración está pendiente o no revisada por humano, no puede ser prescribible sin supervisión
+    if (isPending) {
+      const evalResult = canPrescribeAtHome(ex, {
+        playerAge: ex.edad_minima_segura || 16,
+        userInventory: ['peso_corporal', 'toalla', 'silla_estable', 'pared', 'suelo', 'pelota', 'banco', 'sofa', 'esterilla', 'colchoneta'],
+        hasSupervision: false,
+        hasGymAccess: true
+      });
+
+      if (evalResult.prescribable) {
+        console.error(`   ❌ FALLO G10: Ejercicio de riesgo alto ${ex.id} (${ex.name}) es prescribible sin supervisión presencial teniendo ilustración pendiente.`);
+        g10Ok = false;
+        failed = true;
+      }
+    }
+  }
+});
+
+if (g10Ok && highRiskCount > 0) {
+  console.log(`   ✅ G10 Certificado: ${highRiskCount} ejercicios de alto riesgo evaluados; 100% exigen supervisión presencial mientras type='pendiente'.`);
+} else if (highRiskCount === 0) {
+  console.error('   ❌ FALLO G10: No se detectaron ejercicios de alto riesgo.');
+  failed = true;
 }
 
 // ── RESULTADO FINAL ────────────────────────────────────────────────────────

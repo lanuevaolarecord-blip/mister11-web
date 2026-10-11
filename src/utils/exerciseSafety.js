@@ -26,6 +26,30 @@ export const assertAgeSafe = (playerAge, exercise) => {
 };
 
 /**
+ * Clasificador clínico de ejercicios de alto riesgo biomecánico / articular (Oleada 6.4).
+ * Incluye: Nordic, Copenhagen (todos los niveles), pliometría/drop jump/box jump,
+ * landing/absorción de aterrizaje, cuello/cervical GK, y targetZones críticas.
+ */
+export const isHighClinicalRisk = (exercise) => {
+  if (!exercise) return false;
+  const name = ((exercise.name || '') + ' ' + (exercise.nameEs || '') + ' ' + (exercise.nameEn || '') + ' ' + (exercise.id || '')).toLowerCase();
+  const tz = (exercise.targetZones || []).map(z => String(z).toLowerCase());
+  
+  // 1. Nordic / Hamstring excéntrico
+  const isNordic = name.includes('nordic') || name.includes('nórdic') || tz.some(z => z.includes('isquiosurales_excentrico'));
+  // 2. Copenhagen / aductores en fuerza preventiva
+  const isCopenhagen = name.includes('copenhagen') || name.includes('copenhague') || (tz.includes('aductores') && exercise.category === 'fuerza_preventiva');
+  // 3. Pliometría / Drop Jump / Box Jump / Caídas
+  const isPlio = name.includes('plio') || name.includes('drop jump') || name.includes('box jump') || name.includes('jump stick') || name.includes('caída desde salto');
+  // 4. Landing / Absorción / Prevención LCA
+  const isLandingLCA = name.includes('landing') || name.includes('single-leg land') || name.includes('aterrizaje') || tz.some(z => z.includes('prevencion_lca') || z.includes('lca_prevencion') || z === 'lca');
+  // 5. Cuello GK / Cervical
+  const isNeckGK = name.includes('cuello') || name.includes('cervical') || name.includes('neck') || tz.some(z => z.includes('cuello') || z.includes('cervical'));
+
+  return isNordic || isCopenhagen || isPlio || isLandingLCA || isNeckGK;
+};
+
+/**
  * Motor de prescripción segura en casa (C1, C2, C3).
  * Bloquea campo_only, evalúa inventario de usuario con equivalencias y supervisión.
  */
@@ -73,6 +97,17 @@ export const canPrescribeAtHome = (exercise, {
       prescribable: false,
       reason: 'supervision_required',
       badge: 'Requiere supervisión presencial'
+    };
+  }
+
+  // G10 (Oleada 6.4): Ejercicio de riesgo alto sin ilustración validada requiere supervisión presencial obligatoria
+  const isHighRisk = isHighClinicalRisk(exercise);
+  const unreviewedIllustration = !exercise.illustration?.reviewed_by_human || exercise.illustration?.type === 'pendiente';
+  if (isHighRisk && unreviewedIllustration && !hasSupervision) {
+    return {
+      prescribable: false,
+      reason: 'high_risk_unreviewed_illustration',
+      badge: 'Requiere supervisión presencial (ilustración pendiente)'
     };
   }
 

@@ -102,7 +102,9 @@ export const t = (key, language, replacements = {}, fallback = null) => {
 
   if (text === undefined) {
     if (typeof window !== 'undefined' && window.dispatchEvent) {
-      window.dispatchEvent(new CustomEvent('m11-i18n-missing-key', { detail: { key, lang: effLang } }));
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('m11-i18n-missing-key', { detail: { key, lang: effLang } }));
+      }, 0);
     }
     text = translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || fallback || key;
   }

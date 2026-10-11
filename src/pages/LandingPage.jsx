@@ -72,25 +72,30 @@ const LandingPage = () => {
         </div>
 
         <div className="landing-header-actions">
-          {/* Selector de idioma accesible con touch target >=48dp */}
-          <div className="landing-lang-toggle" role="group" aria-label={isEn ? 'Language selector' : 'Selector de idioma'}>
-            <button
-              type="button"
-              className={`lang-btn ${!isEn ? 'active' : ''}`}
-              onClick={() => setLanguage('es')}
-              aria-label={isEn ? 'Switch to Spanish' : 'Cambiar a Español'}
+          {/* Selector de idioma accesible con los 6 idiomas Tier 1 y touch target >=48dp */}
+          <div className="landing-lang-selector" title={isEn ? 'Select language' : 'Seleccionar idioma'}>
+            <Globe size={16} className="landing-lang-globe" aria-hidden="true" />
+            <select
+              className="landing-lang-dropdown"
+              value={
+                (language === 'es' || language === 'Español (ES)') ? 'Español (ES)'
+                : (language === 'en' || language === 'English (EN)') ? 'English (EN)'
+                : (language === 'es-419' || language === 'Español (Latinoamérica)') ? 'Español (Latinoamérica)'
+                : (language === 'pt' || language === 'pt-BR' || language === 'Português (Brasil)') ? 'Português (Brasil)'
+                : (language === 'fr' || language === 'fr-FR' || language === 'Français (FR)') ? 'Français (FR)'
+                : (language === 'id' || language === 'id-ID' || language === 'Bahasa Indonesia (ID)') ? 'Bahasa Indonesia (ID)'
+                : language
+              }
+              onChange={(e) => setLanguage(e.target.value)}
+              aria-label={isEn ? 'Select language' : 'Seleccionar idioma'}
             >
-              ES
-            </button>
-            <span className="lang-divider">|</span>
-            <button
-              type="button"
-              className={`lang-btn ${isEn ? 'active' : ''}`}
-              onClick={() => setLanguage('en')}
-              aria-label={isEn ? 'Switch to English' : 'Cambiar a Inglés'}
-            >
-              EN
-            </button>
+              <option value="Español (ES)">Español (ES)</option>
+              <option value="Español (Latinoamérica)">Español (Latam)</option>
+              <option value="English (EN)">English (EN)</option>
+              <option value="Português (Brasil)">Português (BR)</option>
+              <option value="Français (FR)">Français (FR)</option>
+              <option value="Bahasa Indonesia (ID)">Bahasa (ID)</option>
+            </select>
           </div>
 
           {/* Conmutador de tema Claro / Oscuro (Touch target >=48dp) */}

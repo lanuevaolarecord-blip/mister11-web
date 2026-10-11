@@ -311,6 +311,11 @@ function App() {
           </Route>
 
           <Route 
+            path="/landing" 
+            element={<LandingPage />} 
+          />
+
+          <Route 
             path="/player-dashboard" 
             element={user ? <ErrorBoundary><PlayerDashboard /></ErrorBoundary> : <Navigate to="/login" replace />} 
           />

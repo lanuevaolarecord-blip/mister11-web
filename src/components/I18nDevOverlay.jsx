@@ -90,39 +90,36 @@ export const I18nDevOverlay = () => {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-            <button
-              type="button"
-              onClick={() => setLanguage('Español (ES)')}
-              style={{
-                flex: 1,
-                padding: '6px',
-                borderRadius: '6px',
-                border: 'none',
-                background: !isEn ? '#D4A843' : 'rgba(255,255,255,0.15)',
-                color: !isEn ? '#000' : '#FFF',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              ES
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('English (EN)')}
-              style={{
-                flex: 1,
-                padding: '6px',
-                borderRadius: '6px',
-                border: 'none',
-                background: isEn ? '#D4A843' : 'rgba(255,255,255,0.15)',
-                color: isEn ? '#000' : '#FFF',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              EN
-            </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
+            {[
+              { code: 'Español (ES)', label: '🇪🇸 ES' },
+              { code: 'Español (Latinoamérica)', label: '🌎 LATAM' },
+              { code: 'English (EN)', label: '🇬🇧 EN' },
+              { code: 'Português (Brasil)', label: '🇧🇷 PT' },
+              { code: 'Français (FR)', label: '🇫🇷 FR' },
+              { code: 'Bahasa Indonesia (ID)', label: '🇮🇩 ID' }
+            ].map(item => {
+              const isActive = language === item.code || (language === 'es' && item.code.startsWith('Español (ES)')) || (language === 'en' && item.code.startsWith('English'));
+              return (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => setLanguage(item.code)}
+                  style={{
+                    padding: '6px 4px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: isActive ? '#D4A843' : 'rgba(255,255,255,0.15)',
+                    color: isActive ? '#000' : '#FFF',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
 
           <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.8)', display: 'flex', flexDirection: 'column', gap: '4px' }}>

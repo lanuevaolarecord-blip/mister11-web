@@ -282,7 +282,7 @@ export const generateMatchPdfReport = async ({
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...colorAccent);
-    doc.text(`MÍSTER 11 — ${titleText}`, pageW / 2, 14, { align: 'center' });
+    doc.text(`MISTER11 — ${titleText}`, pageW / 2, 14, { align: 'center' });
 
     // Subtítulo con Metadatos del Encuentro (sin artefactos de corchetes e.g. "BURRIANA B vs Xilxes (visitante)")
     doc.setFontSize(8.5);
@@ -1146,7 +1146,7 @@ export const generateMatchPdfReport = async ({
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(148, 163, 184);
       doc.text(
-        isEn ? 'Official Validation · Míster 11 Platform' : 'Conformidad Oficial · Plataforma Míster 11',
+        isEn ? 'Official Validation · Mister11 Platform' : 'Conformidad Oficial · Plataforma Mister11',
         sig2X + boxW / 2,
         y + 26,
         { align: 'center' }

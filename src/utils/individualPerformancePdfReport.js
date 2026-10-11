@@ -6,7 +6,7 @@
  * - Paridad 1:1 con la tabla en pantalla (StatsDataTable) y Descargar CSV.
  * - Cabecera con escudo / nombre del equipo, rival, fecha, marcador y competición.
  * - Gráficos y barras comparativas en paleta canónica Tierra y Campo (Cero azul / morado).
- * - Pie institucional: "Generado por Míster11".
+ * - Pie institucional: "Generado por Mister11".
  */
 
 import { cleanPdfText } from './pdfTheme.js';
@@ -155,8 +155,8 @@ export const generateIndividualPerformancePdf = async ({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   const titleText = isEn
-    ? 'MÍSTER 11 — INDIVIDUAL PERFORMANCE REPORT'
-    : 'MÍSTER 11 — INFORME DE RENDIMIENTO INDIVIDUAL';
+    ? 'MISTER11 — INDIVIDUAL PERFORMANCE REPORT'
+    : 'MISTER11 — INFORME DE RENDIMIENTO INDIVIDUAL';
   doc.text(titleText, 14, 12);
 
   // Subtítulo con metadatos del partido
@@ -348,7 +348,7 @@ export const generateIndividualPerformancePdf = async ({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(...THEME_PRIMARY);
-      doc.text('Generado por Míster11', 14, pageH - 5.5);
+      doc.text('Generado por Mister11', 14, pageH - 5.5);
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...TEXT_MUTED);

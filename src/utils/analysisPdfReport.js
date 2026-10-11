@@ -200,7 +200,7 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text(isEn ? 'MÍSTER 11 · MULTI-MATCH COMPARATIVE ANALYSIS' : 'MÍSTER 11 · ANÁLISIS COMPARATIVO MULTIPARTIDO', 36, 15);
+    doc.text(isEn ? 'MISTER11 · MULTI-MATCH COMPARATIVE ANALYSIS' : 'MISTER11 · ANÁLISIS COMPARATIVO MULTIPARTIDO', 36, 15);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
@@ -475,7 +475,7 @@ export const exportMultiMatchAnalysisPDF = async ({
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.text(
-        isEn ? 'Mister 11 Club Engine - Tactical Intelligence & Analytics Module' : 'Mister 11 Club Engine - Modulo de Inteligencia y Analisis Tactico',
+        isEn ? 'Mister11 Club Engine - Tactical Intelligence & Analytics Module' : 'Mister11 Club Engine - Modulo de Inteligencia y Analisis Tactico',
         12,
         pageH - 3.5
       );

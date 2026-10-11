@@ -443,7 +443,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFillColor(...colorAccent);
     doc.rect(0, 34, pageW, 2, 'F');
 
-    // Logo oficial de Míster11 a la izquierda
+    // Logo oficial de Mister11 a la izquierda
     const mr11LogoData = await imageUrlToBase64('/logo_mister11.png', 'M11', false);
     if (mr11LogoData) {
       doc.addImage(mr11LogoData, 'PNG', 14, 8, 18, 18);
@@ -482,11 +482,11 @@ export const generateAttendancePdfReport = async ({
     doc.setTextColor(148, 163, 184);
     doc.text(
       locTr({ 
-        es: 'SISTEMA OFICIAL DE REGISTRO Y CONTROL DE ASISTENCIA · MÍSTER 11', 
-        en: 'OFFICIAL PLATFORM TRACKING & AUDIT SYSTEM · MÍSTER 11', 
-        fr: 'SYSTÈME OFFICIEL DE SUIVI ET DE CONTRÔLE DES PRÉSENCES · MÍSTER 11', 
-        pt: 'SISTEMA OFICIAL DE REGISTRO E CONTROLE DE PRESENÇA · MÍSTER 11', 
-        id: 'SISTEM RESMI PENCATATAN & KONTROL KEHADIRAN · MÍSTER 11' 
+        es: 'SISTEMA OFICIAL DE REGISTRO Y CONTROL DE ASISTENCIA · MISTER11', 
+        en: 'OFFICIAL PLATFORM TRACKING & AUDIT SYSTEM · MISTER11', 
+        fr: 'SYSTÈME OFFICIEL DE SUIVI ET DE CONTRÔLE DES PRÉSENCES · MISTER11', 
+        pt: 'SISTEMA OFICIAL DE REGISTRO E CONTROLE DE PRESENÇA · MISTER11', 
+        id: 'SISTEM RESMI PENCATATAN & KONTROL KEHADIRAN · MISTER11' 
       }),
       pageW / 2,
       29,
@@ -700,7 +700,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     doc.text(
-      locTr({ es: 'MÍSTER 11 · AUDITORÍA INDIVIDUAL Y CONTROL DE ASISTENCIA', en: 'MÍSTER 11 · SQUAD ATTENDANCE AUDIT & BREAKDOWN', fr: 'MÍSTER 11 · AUDIT INDIVIDUEL ET CONTRÔLE DES PRÉSENCES', pt: 'MÍSTER 11 · AUDITORIA INDIVIDUAL E CONTROLE DE PRESENÇA', id: 'MÍSTER 11 · AUDIT INDIVIDU & KONTROL KEHADIRAN' }),
+      locTr({ es: 'MISTER11 · AUDITORÍA INDIVIDUAL Y CONTROL DE ASISTENCIA', en: 'MISTER11 · SQUAD ATTENDANCE AUDIT & BREAKDOWN', fr: 'MISTER11 · AUDIT INDIVIDUEL ET CONTRÔLE DES PRÉSENCES', pt: 'MISTER11 · AUDITORIA INDIVIDUAL E CONTROLE DE PRESENÇA', id: 'MISTER11 · AUDIT INDIVIDU & KONTROL KEHADIRAN' }),
       14,
       10
     );
@@ -865,7 +865,7 @@ export const generateAttendancePdfReport = async ({
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
     doc.text(
-      locTr({ es: 'Certificado oficial generado por Míster11', en: 'Document certified by Míster11', fr: 'Document certifié généré par Míster11', pt: 'Certificado oficial gerado pelo Míster11', id: 'Sertifikat resmi diterbitkan oleh Míster11' }),
+      locTr({ es: 'Certificado oficial generado por Mister11', en: 'Document certified by Mister11', fr: 'Document certifié généré par Mister11', pt: 'Certificado oficial gerado pelo Mister11', id: 'Sertifikat resmi diterbitkan oleh Mister11' }),
       sigX + sigBoxW / 2,
       p2Y + 26,
       { align: 'center' }

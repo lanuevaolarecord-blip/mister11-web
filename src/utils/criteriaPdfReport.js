@@ -23,7 +23,7 @@ const getPdfLibs = async () => {
  * @param {string} [options.teamName]
  * @param {string} [options.language]
  */
-export async function generateCriteriaPdfReport({ teamName = 'Míster11', language = 'es' } = {}) {
+export async function generateCriteriaPdfReport({ teamName = 'Mister11', language = 'es' } = {}) {
   const { jsPDF, autoTable } = await getPdfLibs();
   const isEn = String(language).toLowerCase().includes('en');
 
@@ -139,7 +139,7 @@ export async function generateCriteriaPdfReport({ teamName = 'Míster11', langua
       drawPdfFooter(doc, {
         teamName,
         isEn,
-        footerText: isEn ? 'Míster11 · Data Capture Standards' : 'Míster11 · Manual de Criterios de Captura',
+        footerText: isEn ? 'Mister11 · Data Capture Standards' : 'Mister11 · Manual de Criterios de Captura',
       });
     },
   });

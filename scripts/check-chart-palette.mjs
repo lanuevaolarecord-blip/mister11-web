@@ -60,6 +60,9 @@ const TARGET_FILES = [
   'src/components/MatchStats/StatsFilters.jsx',
   'src/components/player/PlayerPlansPortalTab.jsx',
   'src/components/player/PlayerPlansPortalTab.css',
+  'src/components/ExerciseLibrary.jsx',
+  'src/components/ExerciseLibrary.css',
+  'src/components/AssignPlanModal.jsx',
   'src/pages/AdminPanel.jsx'
 ];
 
@@ -108,12 +111,15 @@ for (const relPath of TARGET_FILES) {
 //    - Cero emojis
 //    - Cero #EF4444 (rojo de bandera)
 //    - Validación estricta de todos los estilos inline '--action-color'
-// 2. Auditoría de captura y modales:
+// 2. Auditoría de captura, biblioteca y modales:
 const CAPTURE_COMPONENTS = [
   'src/components/LiveStats.jsx',
   'src/components/ShotCaptureModal.jsx',
   'src/components/PlayerChipRow.jsx',
-  'src/components/player/PlayerPlansPortalTab.jsx'
+  'src/components/player/PlayerPlansPortalTab.jsx',
+  'src/components/ExerciseLibrary.jsx',
+  'src/components/ExerciseLibrary.css',
+  'src/components/AssignPlanModal.jsx'
 ];
 
 for (const relPath of CAPTURE_COMPONENTS) {

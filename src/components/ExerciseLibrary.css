@@ -94,9 +94,9 @@
   padding: 4px 8px;
   border-radius: 12px;
   font-weight: 600;
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
+  background: rgba(27, 58, 45, 0.08);
+  color: #1B3A2D;
+  border: 1px solid rgba(27, 58, 45, 0.2);
   white-space: nowrap;
 }
 
@@ -109,10 +109,10 @@
   font-weight: 600;
 }
 
-.cat-prevencion { background: #D1FAE5; color: #065F46; }
-.cat-recuperacion { background: #DBEAFE; color: #1E40AF; }
-.cat-fortalecimiento { background: #FEE2E2; color: #991B1B; }
-.cat-movilidad { background: #FEF3C7; color: #92400E; }
+.cat-prevencion { background: rgba(76, 175, 125, 0.15); color: #1B3A2D; }
+.cat-recuperacion { background: rgba(156, 106, 59, 0.15); color: #9C6A3B; }
+.cat-fortalecimiento { background: rgba(200, 90, 50, 0.15); color: #C85A32; }
+.cat-movilidad { background: rgba(212, 168, 67, 0.18); color: #9C6A3B; }
 
 .exercise-card-body p {
   font-size: 0.9rem;
@@ -136,7 +136,7 @@
   right: 15px;
   background: transparent;
   border: none;
-  color: #EF4444;
+  color: #C85A32;
   cursor: pointer;
   padding: 5px;
   border-radius: 50%;

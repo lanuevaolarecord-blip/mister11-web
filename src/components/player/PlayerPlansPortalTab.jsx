@@ -23,6 +23,8 @@ import {
   Info
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { HOME_EXERCISES_107 } from '../../data/homeExercisesCatalog';
+import ExerciseIllustrationBlock from '../ExerciseIllustrationBlock';
 import './PlayerPlansPortalTab.css';
 
 // Catálogo enriquecido de Ejercicios Preventivos y de Preparación Física de Míster11
@@ -217,7 +219,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     }
   };
 
-  // Resolución de detalles de un ejercicio
+  // Resolución de detalles de un ejercicio con slot de ilustración y catálogo canónico
   const resolveExerciseDetails = (ex, idx) => {
     // Si el ejercicio ya trae nombre y detalles explícitos
     const directName = ex.name || ex.exerciseName || ex.titulo;
@@ -227,6 +229,14 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
 
     // Buscar en ejercicios del equipo por id
     const foundInTeam = teamExercises.find(te => te.id === ex.exerciseId || te.name === directName);
+
+    // Buscar en catálogo de 108 ejercicios
+    const catMatch = HOME_EXERCISES_107.find(he => 
+      he.id === ex.exerciseId || 
+      he.id === ex.id || 
+      (he.nameEs && he.nameEs.toLowerCase() === (directName || '').toLowerCase()) || 
+      (he.nameEn && he.nameEn.toLowerCase() === (directName || '').toLowerCase())
+    );
 
     // Buscar en catálogo canónico de Míster11
     const exKey = (ex.exerciseId || directName || '').toLowerCase();
@@ -242,22 +252,32 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const fallbackList = Object.values(CANONICAL_EXERCISE_GUIDES);
     const defaultCanonical = fallbackList[idx % fallbackList.length];
 
-    const name = directName || foundInTeam?.name || foundInTeam?.titulo || canonical?.name || defaultCanonical.name;
-    const category = ex.category || foundInTeam?.category || canonical?.category || defaultCanonical.category;
+    const name = (isEn ? (catMatch?.nameEn || foundInTeam?.nameEn) : (catMatch?.nameEs || foundInTeam?.nameEs)) || directName || canonical?.name || defaultCanonical.name;
+    const category = ex.category || catMatch?.category || foundInTeam?.category || canonical?.category || defaultCanonical.category;
     const sets = directSets || canonical?.sets || defaultCanonical.sets;
     const reps = directReps || canonical?.reps || defaultCanonical.reps;
+    const cue = (isEn ? (catMatch?.descriptionEn || foundInTeam?.descriptionEn) : (catMatch?.descriptionEs || foundInTeam?.descriptionEs)) || directDesc || '';
+    const coachingPoints = (isEn ? (catMatch?.coachingPointsEn || catMatch?.coachingPoints) : (catMatch?.coachingPointsEs || catMatch?.coachingPoints)) || [];
     const steps = ex.steps || foundInTeam?.steps || canonical?.steps || defaultCanonical.steps;
     const postureTips = ex.postureTips || foundInTeam?.postureTips || canonical?.postureTips || defaultCanonical.postureTips;
     const preventionValue = canonical?.preventionValue || defaultCanonical.preventionValue;
+    const illustration = ex.illustration || catMatch?.illustration || foundInTeam?.illustration || {
+      type: 'pendiente',
+      url: null,
+      reviewed_by_human: false
+    };
 
     return {
       name,
       category,
       sets,
       reps,
+      cue,
+      coachingPoints,
       steps,
       postureTips,
-      preventionValue
+      preventionValue,
+      illustration
     };
   };
 
@@ -420,6 +440,36 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 <span>{isEn ? 'Guide' : 'Guía'}</span>
                                 {isGuideOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                               </button>
+                            </div>
+
+                            {/* ILUSTRACIÓN O PLACEHOLDER HONESTO */}
+                            <div style={{ padding: '0 12px' }}>
+                              <ExerciseIllustrationBlock 
+                                illustration={details.illustration} 
+                                exerciseName={details.name} 
+                                compact={true} 
+                              />
+
+                              {/* CUE / DESCRIPCIÓN TÉCNICA */}
+                              {details.cue && (
+                                <p style={{ fontSize: '0.82rem', color: '#475569', margin: '4px 0 8px 0', lineHeight: 1.4 }}>
+                                  {details.cue}
+                                </p>
+                              )}
+
+                              {/* COACHING POINTS */}
+                              {details.coachingPoints && details.coachingPoints.length > 0 && (
+                                <div style={{ marginBottom: '8px', padding: '6px 10px', background: 'rgba(27, 58, 45, 0.04)', borderRadius: '6px', fontSize: '0.78rem' }}>
+                                  <span style={{ fontWeight: 700, color: '#1B3A2D', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                                    <CheckCircle2 size={13} color="#4CAF7D" /> {t('exercise.coachingPoints', 'Puntos clave')}:
+                                  </span>
+                                  <ul style={{ margin: 0, paddingLeft: '16px', color: '#334155', lineHeight: 1.4 }}>
+                                    {details.coachingPoints.map((cp, cIdx) => (
+                                      <li key={cIdx}>{cp}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
 
                             {/* GUÍA TÉCNICA DIGITAL DESPLEGABLE */}

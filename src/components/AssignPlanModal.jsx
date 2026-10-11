@@ -4,7 +4,22 @@ import { usePlayerPlans } from '../hooks/usePlayerPlans';
 import { useTranslation } from '../hooks/useTranslation';
 import { assertAgeSafe } from '../utils/exerciseSafety';
 import { calcularEdad } from '../utils/calcularEdad';
-import { X, Search, CheckSquare, Square, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { 
+  X, 
+  Search, 
+  CheckSquare, 
+  Square, 
+  AlertTriangle, 
+  ShieldAlert, 
+  Baby, 
+  Eye, 
+  Dumbbell, 
+  Home, 
+  Check, 
+  Ban,
+  ClipboardList 
+} from 'lucide-react';
+import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
 
 const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
   const { t, isEn, language } = useTranslation();
@@ -110,8 +125,9 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>
-              📋 {t('plans.assignModal.title', 'Asignar Plan de Ejercicios')}
+            <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ClipboardList size={20} color="#4CAF7D" />
+              <span>{t('plans.assignModal.title', 'Asignar Plan de Ejercicios')}</span>
             </h2>
             <p style={{ margin: '4px 0 0', opacity: 0.7, fontSize: '0.9rem' }}>
               {player.name || player.nombre}
@@ -218,15 +234,15 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                         display: 'flex', alignItems: 'flex-start', gap: '12px',
                         padding: '12px', borderRadius: '8px',
                         cursor: isBlocked ? 'not-allowed' : 'pointer',
-                        background: isBlocked ? '#FEF2F2' : (isSelected ? '#F0FDF4' : '#F8FAFC'),
-                        border: isBlocked ? '1px solid #FCA5A5' : (isSelected ? '1px solid #4CAF7D' : '1px solid transparent'),
+                        background: isBlocked ? 'rgba(200, 90, 50, 0.08)' : (isSelected ? '#F0FDF4' : '#F8FAFC'),
+                        border: isBlocked ? '1px solid rgba(200, 90, 50, 0.3)' : (isSelected ? '1px solid #4CAF7D' : '1px solid transparent'),
                         opacity: isBlocked ? 0.8 : 1,
                         transition: 'all 0.15s'
                       }}
                     >
                       <div style={{ paddingTop: '2px' }}>
                         {isBlocked ? (
-                          <ShieldAlert size={18} color="#DC2626" style={{ flexShrink: 0 }} />
+                          <ShieldAlert size={18} color="#C85A32" style={{ flexShrink: 0 }} />
                         ) : isSelected ? (
                           <CheckSquare size={18} color="#4CAF7D" style={{ flexShrink: 0 }} />
                         ) : (
@@ -235,7 +251,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                          <div style={{ fontWeight: 600, color: isBlocked ? '#991B1B' : '#111827', fontSize: '0.9rem' }}>
+                          <div style={{ fontWeight: 600, color: isBlocked ? '#C85A32' : '#111827', fontSize: '0.9rem' }}>
                             {displayName}
                           </div>
                           {/* Badges de Seguridad */}
@@ -243,30 +259,42 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                             {isBlocked && (
                               <span style={{
                                 fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px',
-                                background: '#FEE2E2', color: '#B91C1C', fontWeight: 700,
-                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                                background: 'rgba(200, 90, 50, 0.12)', color: '#C85A32', fontWeight: 700,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                border: '1px solid rgba(200, 90, 50, 0.3)'
                               }}>
-                                ⛔ {t('plans.assignModal.ageBlocked', 'No apto para edad')} ({minAge} {isEn ? 'yrs' : 'años'})
+                                <Ban size={12} /> {t('plans.assignModal.ageBlocked', 'No apto para edad')} ({minAge} {isEn ? 'yrs' : 'años'})
                               </span>
                             )}
                             {!isBlocked && minAge > 0 && (
                               <span style={{
                                 fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px',
-                                background: '#EFF6FF', color: '#1D4ED8', fontWeight: 600
+                                background: 'rgba(27, 58, 45, 0.08)', color: '#1B3A2D', fontWeight: 600,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                border: '1px solid rgba(27, 58, 45, 0.2)'
                               }}>
-                                👶 {t('plans.assignModal.minAge', 'Edad mín.')}: {minAge} {isEn ? 'yrs' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : 'años')}
+                                <Baby size={12} /> {t('plans.assignModal.minAge', 'Edad mín.')}: {minAge} {isEn ? 'yrs' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : 'años')}
                               </span>
                             )}
                             {reqSupervision && (
                               <span style={{
                                 fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px',
-                                background: '#FEF3C7', color: '#B45309', fontWeight: 600
+                                background: 'rgba(200, 90, 50, 0.12)', color: '#C85A32', fontWeight: 600,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                border: '1px solid rgba(200, 90, 50, 0.25)'
                               }}>
-                                👁️ {t('plans.assignModal.supervisionRequired', 'Supervisión presencial')}
+                                <Eye size={12} /> {t('plans.assignModal.supervisionRequired', 'Supervisión presencial')}
                               </span>
                             )}
                           </div>
                         </div>
+
+                        {/* ILUSTRACIÓN O PLACEHOLDER HONESTO */}
+                        <ExerciseIllustrationBlock 
+                          illustration={ex.illustration} 
+                          exerciseName={displayName} 
+                          compact={true} 
+                        />
 
                         <div style={{ fontSize: '0.78rem', color: '#6B7280', marginTop: '2px' }}>
                           {ex.category || 'General'} {ex.series > 0 ? (isEn ? `· ${ex.series} sets` : `· ${ex.series} series`) : ''} {ex.durationSeconds > 0 ? `· ${ex.durationSeconds}s` : ''} {ex.reps > 0 ? `· ${ex.reps} reps` : ''}
@@ -276,14 +304,18 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                         {(preferredMaterial || altOptions) && (
                           <div style={{ fontSize: '0.75rem', color: '#4B5563', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {preferredMaterial && (
-                              <div>
-                                <span style={{ fontWeight: 600 }}>🏋️ {t('plans.assignModal.preferredMaterial', 'Material preferido')}:</span> {preferredMaterial}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Dumbbell size={13} color="#1B3A2D" />
+                                <span style={{ fontWeight: 600 }}>{t('plans.assignModal.preferredMaterial', 'Material preferido')}:</span> {preferredMaterial}
                               </div>
                             )}
                             {altOptions && (
-                              <div style={{ color: '#047857' }}>
-                                <span style={{ fontWeight: 600 }}>🏡 {t('plans.assignModal.homeAlternative', 'Alternativa casera')}:</span> {altOptions}
-                                {altNota ? <span style={{ fontStyle: 'italic', color: '#6B7280' }}> ({altNota})</span> : null}
+                              <div style={{ color: '#047857', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                                <Home size={13} color="#4CAF7D" style={{ marginTop: '2px', flexShrink: 0 }} />
+                                <div>
+                                  <span style={{ fontWeight: 600 }}>{t('plans.assignModal.homeAlternative', 'Alternativa casera')}:</span> {altOptions}
+                                  {altNota ? <span style={{ fontStyle: 'italic', color: '#6B7280' }}> ({altNota})</span> : null}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -311,9 +343,10 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
           <button onClick={handleSave} disabled={saving} style={{
             padding: '10px 24px', borderRadius: '8px', border: 'none',
             background: '#4CAF7D', color: 'white', fontWeight: 700, cursor: 'pointer',
-            fontFamily: 'inherit', opacity: saving ? 0.7 : 1
+            fontFamily: 'inherit', opacity: saving ? 0.7 : 1,
+            display: 'inline-flex', alignItems: 'center', gap: '6px'
           }}>
-            {saving ? (t('common.saving', 'Guardando...')) : (`✅ ${t('plans.assignModal.assignBtn', 'Asignar Plan')}`)}
+            {saving ? (t('common.saving', 'Guardando...')) : (<><Check size={16} /> {t('plans.assignModal.assignBtn', 'Asignar Plan')}</>)}
           </button>
         </div>
       </div>

@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Search, Filter, Eye } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  Search, 
+  Filter, 
+  Eye, 
+  Clock, 
+  Repeat, 
+  RotateCw, 
+  BarChart2, 
+  Baby, 
+  Dumbbell, 
+  Home, 
+  ShieldAlert, 
+  Shield, 
+  CheckCircle2 
+} from 'lucide-react';
 import { useExercises, getLocalizedExercise } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
+import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
 import './ExerciseLibrary.css';
 
 const renderMarkdown = (text) => {
@@ -133,15 +150,20 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                       marginLeft: '6px'
                     }}
                   >
-                    🛡️ {t('clinical.fallbackChip')}
+                    <Shield size={12} /> {t('clinical.fallbackChip')}
                   </span>
                 )}
                 <p>{ex.description || (isEn ? 'No description' : 'Sin descripción')}</p>
                 <div className="exercise-meta">
-                  {ex.durationSeconds > 0 && <span>⏱️ {ex.durationSeconds}s</span>}
-                  {ex.reps > 0 && <span>🔁 {ex.reps} reps</span>}
-                  {ex.series > 0 && <span>🔄 {ex.series} {isEn ? 'sets' : 'series'}</span>}
-                  <span>⭐ {isEn ? 'Level' : 'Nivel'} {ex.difficulty}</span>
+                  {ex.durationSeconds > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Clock size={13} /> {ex.durationSeconds}s</span>}
+                  {ex.reps > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Repeat size={13} /> {ex.reps} reps</span>}
+                  {ex.series > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><RotateCw size={13} /> {ex.series} {isEn ? 'sets' : 'series'}</span>}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><BarChart2 size={13} /> {isEn ? 'Level' : 'Nivel'} {ex.difficulty || ex.level || 1}</span>
+                  {(ex.edad_minima_segura || ex.age_min) && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#1B3A2D', fontWeight: 600 }}>
+                      <Baby size={13} /> {t('exercise.minSafeAge', 'Edad mín.')}: {ex.edad_minima_segura || ex.age_min}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="exercise-card-actions">
@@ -239,7 +261,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                       border: '1px solid rgba(212, 168, 67, 0.4)'
                     }}
                   >
-                    🛡️ {t('clinical.fallbackChip')}
+                    <Shield size={12} /> {t('clinical.fallbackChip')}
                   </span>
                 )}
                 {activeViewEx.locale && activeViewEx.locale !== (isEn ? 'en' : 'es') && (
@@ -253,24 +275,132 @@ const ExerciseLibrary = ({ activeTeamId }) => {
               </div>
             </div>
             
-            <div className="exercise-meta-detail">
-              {activeViewEx.durationSeconds > 0 && <span>⏱️ {activeViewEx.durationSeconds}s</span>}
-              {activeViewEx.reps > 0 && <span>🔁 {activeViewEx.reps} reps</span>}
-              {activeViewEx.series > 0 && <span>🔄 {activeViewEx.series} {isEn ? 'sets' : 'series'}</span>}
-              <span>⭐ {isEn ? 'Level' : 'Nivel'} {activeViewEx.difficulty}</span>
+            {/* 1. ILUSTRACIÓN O PLACEHOLDER HONESTO */}
+            <ExerciseIllustrationBlock 
+              illustration={activeViewEx.illustration} 
+              exerciseName={activeViewEx.name || activeViewEx.titulo} 
+            />
+
+            {/* Dosificación atlética */}
+            <div className="exercise-meta-detail" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              {activeViewEx.durationSeconds > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> {activeViewEx.durationSeconds}s</span>}
+              {activeViewEx.reps > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Repeat size={14} /> {activeViewEx.reps} reps</span>}
+              {activeViewEx.series > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><RotateCw size={14} /> {activeViewEx.series} {isEn ? 'sets' : 'series'}</span>}
             </div>
 
-            <div className="exercise-description-detail">
+            {/* 2. CUE / DESCRIPCIÓN TÉCNICA */}
+            <div className="exercise-description-detail" style={{ marginBottom: '12px' }}>
               {activeViewEx.markdown ? (
                 <div className="ia-markdown">
                   {renderMarkdown(activeViewEx.markdown)}
                 </div>
               ) : (
-                <p>{activeViewEx.description || (isEn ? 'No description' : 'Sin descripción')}</p>
+                <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.5, color: '#334155' }}>
+                  {activeViewEx.description || (isEn ? 'No description' : 'Sin descripción')}
+                </p>
               )}
             </div>
 
-            <div className="modal-actions">
+            {/* 3. COACHING POINTS */}
+            {activeViewEx.coachingPoints && activeViewEx.coachingPoints.length > 0 && (
+              <div className="exercise-coaching-points-box" style={{ marginBottom: '14px', padding: '10px 14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.84rem', color: '#1B3A2D', marginBottom: '6px' }}>
+                  <CheckCircle2 size={15} color="#4CAF7D" />
+                  <span>{t('exercise.coachingPoints', 'Puntos clave de ejecución')}:</span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.82rem', color: '#334155', lineHeight: 1.5 }}>
+                  {activeViewEx.coachingPoints.map((cp, idx) => (
+                    <li key={idx}>{cp}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 4. DISTINCIÓN CLÍNICA: NIVEL (PROGRESIÓN) VS EDAD MÍN. SEGURA (SEGURIDAD) */}
+            {(() => {
+              const minAgeSafe = activeViewEx.edad_minima_segura ?? activeViewEx.age_min ?? null;
+              const reqSupervision = activeViewEx.requiere_supervision_presencial;
+              const preferredMaterial = Array.isArray(activeViewEx.material_preferido) && activeViewEx.material_preferido.length > 0
+                ? activeViewEx.material_preferido.join(', ')
+                : (activeViewEx.material || (Array.isArray(activeViewEx.materials) ? activeViewEx.materials.join(', ') : null));
+              const altOptions = Array.isArray(activeViewEx.alternativa_casa?.option) && activeViewEx.alternativa_casa.option.length > 0
+                ? activeViewEx.alternativa_casa.option.join(', ')
+                : null;
+              const altNota = activeViewEx.alternativa_casa?.nota?.[language] ||
+                              activeViewEx.alternativa_casa?.nota?.es ||
+                              activeViewEx.alternativa_casa?.nota?.en || '';
+              const safetyNote = activeViewEx.safety_notes?.[language] ||
+                                 activeViewEx.safety_notes?.es ||
+                                 activeViewEx.safety_notes?.en || '';
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                  {/* Fila de Badges: Nivel vs Edad vs Supervisión */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600,
+                      background: 'rgba(212, 168, 67, 0.15)', color: '#9C6A3B', border: '1px solid rgba(212, 168, 67, 0.3)'
+                    }}>
+                      <BarChart2 size={14} /> {isEn ? 'Level' : 'Nivel'}: {activeViewEx.level || activeViewEx.difficulty || '1'}
+                    </span>
+
+                    {minAgeSafe && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                        padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
+                        background: 'rgba(27, 58, 45, 0.08)', color: '#1B3A2D', border: '1px solid rgba(27, 58, 45, 0.2)'
+                      }}>
+                        <Baby size={14} /> {t('exercise.minSafeAge', 'Edad mín. segura')}: {minAgeSafe} {isEn ? 'years' : 'años'}
+                      </span>
+                    )}
+
+                    {reqSupervision && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                        padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
+                        background: 'rgba(200, 90, 50, 0.12)', color: '#C85A32', border: '1px solid rgba(200, 90, 50, 0.25)'
+                      }}>
+                        <Eye size={14} /> {t('exercise.supervisionRequired', 'Supervisión presencial requerida')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 5. MATERIAL PREFERIDO Y ALTERNATIVA CASERA */}
+                  {(preferredMaterial || altOptions) && (
+                    <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {preferredMaterial && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1E293B' }}>
+                          <Dumbbell size={14} color="#1B3A2D" />
+                          <span style={{ fontWeight: 700 }}>{t('exercise.preferredMaterial', 'Material preferido')}:</span>
+                          <span>{preferredMaterial}</span>
+                        </div>
+                      )}
+                      {altOptions && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#1B3A2D' }}>
+                          <Home size={14} color="#4CAF7D" style={{ marginTop: '2px', flexShrink: 0 }} />
+                          <div>
+                            <span style={{ fontWeight: 700 }}>{t('exercise.homeAlternative', 'Alternativa casera')}:</span>
+                            <span style={{ marginLeft: '4px' }}>{altOptions}</span>
+                            {altNota && <div style={{ fontStyle: 'italic', color: '#64748B', marginTop: '2px' }}>({altNota})</div>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 6. NOTA DE SEGURIDAD CLÍNICA */}
+                  {safetyNote && (
+                    <div style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(200, 90, 50, 0.08)', border: '1px solid rgba(200, 90, 50, 0.2)', fontSize: '0.78rem', color: '#C85A32', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <ShieldAlert size={14} style={{ flexShrink: 0 }} />
+                      <span>{safetyNote}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div className="modal-actions" style={{ marginTop: '16px' }}>
               <button className="btn-primary" onClick={() => setViewExercise(null)}>{t('common.close')}</button>
             </div>
           </div>

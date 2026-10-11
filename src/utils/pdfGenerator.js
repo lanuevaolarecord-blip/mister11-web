@@ -13,17 +13,156 @@ import {
   drawMomentumChartCanvas,
   cleanPdfText
 } from './pdfTheme.js';
+import { setupUnicodeFonts } from './pdfFontRoboto.js';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine.js';
 import { getEffectiveLanguage } from '../i18n/translations.js';
 
-export const getPdfLocale = () => {
-  const l = getEffectiveLanguage();
+export const getPdfLocale = (forcedLang = null) => {
+  const l = forcedLang || getEffectiveLanguage();
   if (l === 'English (EN)' || l === 'en' || (typeof l === 'string' && l.toLowerCase().startsWith('en'))) return 'en';
   if (l === 'Français (FR)' || l === 'fr' || (typeof l === 'string' && l.toLowerCase().startsWith('fr'))) return 'fr';
   if (l === 'Português (Brasil)' || l === 'pt-BR' || l === 'pt' || (typeof l === 'string' && l.toLowerCase().startsWith('pt'))) return 'pt';
   if (l === 'Bahasa Indonesia (ID)' || l === 'id-ID' || l === 'id' || (typeof l === 'string' && l.toLowerCase().startsWith('id'))) return 'id';
   if (l === 'Español (Latinoamérica)' || l === 'es-419') return 'es-419';
   return 'es';
+};
+
+export const tPdf = (key, forcedLang = null) => {
+  const loc = getPdfLocale(forcedLang);
+  const PDF_MAP = {
+    trainingSheet: {
+      es: 'FICHA DE ENTRENAMIENTO',
+      'es-419': 'FICHA DE ENTRENAMIENTO',
+      en: 'TRAINING SESSION SHEET',
+      pt: 'FICHA DE TREINO',
+      fr: "FICHE D'ENTRAÎNEMENT",
+      id: 'LEMBAR LATIHAN'
+    },
+    date: {
+      es: 'FECHA',
+      'es-419': 'FECHA',
+      en: 'DATE',
+      pt: 'DATA',
+      fr: 'DATE',
+      id: 'TANGGAL'
+    },
+    time: {
+      es: 'HORA',
+      'es-419': 'HORA',
+      en: 'TIME',
+      pt: 'HORA',
+      fr: 'HEURE',
+      id: 'WAKTU'
+    },
+    duration: {
+      es: 'DURACIÓN',
+      'es-419': 'DURACIÓN',
+      en: 'DURATION',
+      pt: 'DURAÇÃO',
+      fr: 'DURÉE',
+      id: 'DURASI'
+    },
+    intensity: {
+      es: 'INTENSIDAD',
+      'es-419': 'INTENSIDAD',
+      en: 'INTENSITY',
+      pt: 'INTENSIDADE',
+      fr: 'INTENSITÉ',
+      id: 'INTENSITAS'
+    },
+    category: {
+      es: 'CATEGORÍA',
+      'es-419': 'CATEGORÍA',
+      en: 'CATEGORY',
+      pt: 'CATEGORIA',
+      fr: 'CATÉGORIE',
+      id: 'KATEGORI'
+    },
+    material: {
+      es: 'MATERIAL',
+      'es-419': 'MATERIAL',
+      en: 'EQUIPMENT',
+      pt: 'MATERIAL',
+      fr: 'MATÉRIEL',
+      id: 'PERALATAN'
+    },
+    blocks: {
+      es: 'BLOQUES',
+      'es-419': 'BLOQUES',
+      en: 'BLOCKS',
+      pt: 'BLOCOS',
+      fr: 'BLOCS',
+      id: 'BLOK'
+    },
+    mainTacticalDiagram: {
+      es: 'DIAGRAMA TÁCTICO PRINCIPAL',
+      'es-419': 'DIAGRAMA TÁCTICO PRINCIPAL',
+      en: 'MAIN TACTICAL DIAGRAM',
+      pt: 'DIAGRAMA TÁTICO PRINCIPAL',
+      fr: 'DIAGRAMME TACTIQUE PRINCIPAL',
+      id: 'DIAGRAM TAKTIK UTAMA'
+    },
+    trainingBlocks: {
+      es: 'BLOQUES DE ENTRENAMIENTO',
+      'es-419': 'BLOQUES DE ENTRENAMIENTO',
+      en: 'TRAINING BLOCKS',
+      pt: 'BLOCOS DE TREINAMENTO',
+      fr: "BLOCS D'ENTRAÎNEMENT",
+      id: 'BLOK LATIHAN'
+    },
+    convocation: {
+      es: 'CONVOCATORIA',
+      'es-419': 'CONVOCATORIA',
+      en: 'SQUAD CALL-UP',
+      pt: 'CONVOCAÇÃO',
+      fr: 'CONVOCATION',
+      id: 'DAFTAR PEMAIN'
+    },
+    postSessionNotes: {
+      es: 'NOTAS POST-SESION',
+      'es-419': 'NOTAS POST-SESION',
+      en: 'POST-SESSION NOTES',
+      pt: 'NOTAS PÓS-SESSÃO',
+      fr: 'NOTES POST-SÉANCE',
+      id: 'CATATAN PASCA-LATIHAN'
+    },
+    notesEmpty: {
+      es: 'Sin notas registradas',
+      'es-419': 'Sin notas registradas',
+      en: 'No notes recorded',
+      pt: 'Sem notas registradas',
+      fr: 'Aucune note enregistrée',
+      id: 'Tidak ada catatan'
+    },
+    myTeam: {
+      es: 'Mi Equipo',
+      'es-419': 'Mi Equipo',
+      en: 'My Team',
+      pt: 'Meu Time',
+      fr: 'Mon Équipe',
+      id: 'Tim Saya'
+    },
+    objectivePrefix: {
+      es: 'Objetivo: ',
+      'es-419': 'Objetivo: ',
+      en: 'Objective: ',
+      pt: 'Objetivo: ',
+      fr: 'Objectif : ',
+      id: 'Tujuan: '
+    },
+    clinicalChip: {
+      es: 'Contenido clínico verificado',
+      'es-419': 'Contenido clínico verificado',
+      en: 'Verified clinical content',
+      pt: 'Conteúdo clínico em espanhol',
+      fr: 'Contenu clinique en espagnol',
+      id: 'Konten klinis dalam bahasa Spanyol'
+    }
+  };
+
+  const entry = PDF_MAP[key];
+  if (!entry) return key;
+  return entry[loc] || entry['es'] || entry['en'] || '';
 };
 
 export const pdfTr = (dict) => {
@@ -33,15 +172,15 @@ export const pdfTr = (dict) => {
 };
 
 const isEnglish = () => getPdfLocale() === 'en';
-const getLocale = () => {
-  const loc = getPdfLocale();
+const getLocale = (forcedLang = null) => {
+  const loc = getPdfLocale(forcedLang);
   if (loc === 'en') return 'en-US';
   if (loc === 'fr') return 'fr-FR';
   if (loc === 'pt') return 'pt-BR';
   if (loc === 'id') return 'id-ID';
   return 'es-ES';
 };
-const formatCurrentDate = () => new Date().toLocaleDateString(getLocale());
+const formatCurrentDate = (forcedLang = null) => new Date().toLocaleDateString(getLocale(forcedLang));
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
@@ -53,6 +192,12 @@ const THEME_COLOR = PDF_COLORS.primary;
 const ACCENT_COLOR = PDF_COLORS.accent;
 const TEXT_COLOR = [255, 255, 255];
 const TEXT_DARK = PDF_COLORS.textDark;
+
+const safeDispatchLoading = (show, message = "") => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("m11-loading", { detail: { show, message } }));
+  }
+};
 
 /**
  * savePdfUniversal – guarda el PDF correctamente en Web Y en APK Android.
@@ -78,7 +223,7 @@ const getImageBase64 = async (url, fallbackInitials = 'M11', isAvatar = false) =
   return await imageUrlToBase64(url, fallbackInitials, isAvatar);
 };
 
-const addHeader = async (doc, title, subtitle, activeTeam = null) => {
+const addHeader = async (doc, title, subtitle, activeTeam = null, lang = 'es') => {
   const pageW = doc.internal.pageSize.getWidth();
   
   doc.setFillColor(...THEME_COLOR);
@@ -86,28 +231,29 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
   doc.setFillColor(...ACCENT_COLOR);
   doc.rect(0, 36, pageW, 2, 'F');
   
-  // Logotipo oficial de Míster11 a la izquierda
+  // Logotipo oficial de Mister11 a la izquierda (Regla PD3: Marca canónica sin tilde MISTER11)
   const mr11LogoData = await getImageBase64('/logo_mister11.png');
   if (mr11LogoData) {
     doc.addImage(mr11LogoData, 'PNG', 14, 5, 18, 18);
     doc.setTextColor(...TEXT_COLOR);
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 36, 16);
+    doc.text('MISTER11', 36, 16);
   } else {
     doc.setTextColor(...TEXT_COLOR);
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 14, 18);
+    doc.text('MISTER11', 14, 18);
   }
   
   // Escudo del equipo a la derecha
-  if (activeTeam) {
+  const teamDisplayName = activeTeam?.nombre || tPdf('myTeam', lang);
+  if (activeTeam || teamDisplayName) {
     const shieldX = pageW - 33;
     const textX = pageW - 24;
     
-    if (activeTeam.escudo) {
-      const logoData = await getImageBase64(activeTeam.escudo, (activeTeam.nombre || 'E'));
+    if (activeTeam && activeTeam.escudo) {
+      const logoData = await getImageBase64(activeTeam.escudo, teamDisplayName);
       if (logoData) {
         doc.addImage(logoData, 'PNG', shieldX, 5, 18, 18);
       } else {
@@ -116,7 +262,7 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
         doc.setTextColor(...THEME_COLOR);
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
-        doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 18);
+        doc.text(teamDisplayName.charAt(0), textX - 2, 18);
       }
     } else {
       doc.setFillColor(255, 255, 255);
@@ -124,13 +270,13 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
       doc.setTextColor(...THEME_COLOR);
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 18);
+      doc.text(teamDisplayName.charAt(0), textX - 2, 18);
     }
     
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'normal');
-    doc.text((activeTeam.nombre || '').slice(0, 18), textX, 32, { align: 'center' });
+    doc.text(teamDisplayName.slice(0, 18), textX, 32, { align: 'center' });
   }
 
   // Título y subtítulo centrados
@@ -147,13 +293,13 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
   }
 };
 
-const addFooter = (doc) => {
+const addFooter = (doc, lang = null) => {
   const pageCount = doc.internal.getNumberOfPages();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    drawPdfFooter(doc, pageW, pageH, i, pageCount);
+    drawPdfFooter(doc, pageW, pageH, i, pageCount, lang);
   }
 };
 
@@ -163,7 +309,7 @@ const addFooter = (doc) => {
  * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)
  */
 export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [], activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Planificación...' } }));
+  safeDispatchLoading(true, 'Generando PDF de Planificación...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -271,7 +417,7 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
     console.error('Error generando Planificación PDF:', err);
     alert(isEnglish() ? 'Error generating planning PDF.' : 'Error al generar el PDF de la planificación.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -318,7 +464,7 @@ const TEST_NAME_MAP = {
  * TESTS - Informe Colectivo
  */
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEnglish() ? 'Generating PDF...' : 'Generando PDF...' } }));
+  safeDispatchLoading(true, isEnglish() ? 'Generating PDF...' : 'Generando PDF...' );
   await new Promise(r => setTimeout(r, 150));
   const jsPDF = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape' });
@@ -469,7 +615,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
 
   addFooter(doc);
   savePdfUniversal(doc, `${isEnglish() ? 'Team_Tests' : 'Tests_Equipo'}_${formatCurrentDate().replace(/\//g, '-')}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  safeDispatchLoading(false);
 };
 
 /**
@@ -477,7 +623,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
  */
 export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, _graficaDataUrl = null) => {
   const isEn = isEnglish();
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating Technical Summary...' : 'Generando Resumen Técnico...' } }));
+  safeDispatchLoading(true, isEn ? 'Generating Technical Summary...' : 'Generando Resumen Técnico...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -735,7 +881,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     console.error('Error generando Informe de Tests:', err);
     alert(isEnglish() ? 'Error generating tests report.' : 'Error al generar el informe de tests.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -745,14 +891,14 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
 const drawInfoCard = (doc, x, y, w, h, label, value, bgColor = [245, 247, 250], labelColor = [100, 120, 110], valueColor = [27, 58, 45]) => {
   doc.setFillColor(...bgColor);
   doc.roundedRect(x, y, w, h, 2, 2, 'F');
-  doc.setFontSize(7);
-  doc.setFont(undefined, 'normal');
+  doc.setFontSize(7.5);
+  doc.setFont('Roboto', 'normal');
   doc.setTextColor(...labelColor);
-  doc.text(label, x + 3, y + 5);
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
+  doc.text(String(label), x + 4, y + 5.5);
+  doc.setFontSize(9.5);
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(...valueColor);
-  doc.text(String(value || '—').slice(0, 22), x + 3, y + 12);
+  doc.text(String(value || '—').slice(0, 22), x + 4, y + 13);
 };
 
 /**
@@ -763,8 +909,8 @@ const drawSectionHeader = (doc, y, title, pageW) => {
   doc.rect(15, y, pageW - 30, 0.5, 'F');
   doc.setFillColor(...ACCENT_COLOR);
   doc.rect(15, y, 4, 7, 'F');
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
+  doc.setFontSize(10.5);
+  doc.setFont('Roboto', 'bold');
   doc.setTextColor(...THEME_COLOR);
   doc.text(title, 22, y + 5.5);
   return y + 12;
@@ -777,9 +923,9 @@ const drawSectionHeader = (doc, y, title, pageW) => {
 export const preloadSessionImages = async (session, pizarras = [], captures = [], exercises = []) => {
   const blocks = session.blocks || session.bloques || [];
 
-  window.dispatchEvent(new CustomEvent('m11-loading', {
-    detail: { show: true, message: `Procesando diagramas e imágenes...` }
-  }));
+  if (typeof window !== 'undefined') {
+    safeDispatchLoading(true, `Procesando diagramas e imágenes...` );
+  }
 
   // Precargar diagrama principal de la sesión si existe (Priorizar ALTA RESOLUCIÓN nativa sobre thumbnail)
   let mainDiagramBase64 = null;
@@ -868,44 +1014,50 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
  * @param {Array} captures - Capturas de la pizarra táctica
  * @param {Array} players - Lista de jugadores del equipo
  */
-export const generateSessionPDF = async (session, activeTeam = null, pizarras = [], captures = [], players = [], exercises = []) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Sesión...' } }));
-  await new Promise(r => setTimeout(r, 150));
+export const generateSessionPDF = async (session, activeTeam = null, pizarras = [], captures = [], players = [], exercises = [], forcedLang = null) => {
+  if (typeof window !== 'undefined') {
+    safeDispatchLoading(true, 'Generando PDF de Sesión...' );
+  }
+  await new Promise(r => setTimeout(r, 50));
   try {
     const jsPDF = await getJsPDF();
     const doc = new jsPDF();
+    // Regla PD2: Incrustar fuente Unicode para acentos legítimos en Carril A y Carril C
+    setupUnicodeFonts(doc);
+    const curLang = getPdfLocale(forcedLang);
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
 
-    // ─── CABECERA PROFESIONAL ─────────────────────────────────────────────────
-    await addHeader(doc, 'FICHA DE ENTRENAMIENTO', session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
+    // ─── CABECERA PROFESIONAL (Carril A: Sistema localizado + Marca canónica MISTER11) ──
+    const defaultSessionTitle = curLang === 'id' ? 'Sesi Tanpa Judul' : curLang === 'fr' ? 'Séance sans titre' : curLang === 'en' ? 'Untitled Session' : curLang === 'pt' ? 'Sessão sem título' : 'Sesión sin nombre';
+    await addHeader(doc, tPdf('trainingSheet', curLang), session.nombre || session.title || session.titulo || defaultSessionTitle, activeTeam, curLang);
 
     // Banda dorada decorativa bajo el header
     doc.setFillColor(...ACCENT_COLOR);
     doc.rect(0, 40, pageW, 2, 'F');
 
-    // ─── TARJETAS DE METADATOS ────────────────────────────────────────────────
+    // ─── TARJETAS DE METADATOS (Carril A: Rejilla alineada y localizada) ──────
     const metaY = 46;
     const cardW = (pageW - 38) / 4;
-    const date = (session.date || session.fecha || formatCurrentDate()).split('-').reverse().join('/');
-    drawInfoCard(doc, 15,          metaY, cardW, 18, 'FECHA',       date);
-    drawInfoCard(doc, 16 + cardW,  metaY, cardW, 18, 'HORA',        session.time || session.hora || '18:00');
-    drawInfoCard(doc, 17 + cardW*2,metaY, cardW, 18, 'DURACIÓN',    `${session.duration || session.duracion || 90} min`);
-    drawInfoCard(doc, 18 + cardW*3,metaY, cardW, 18, 'INTENSIDAD',  session.intensity || session.intensidad || 'Media');
+    const date = (session.date || session.fecha || formatCurrentDate(curLang)).split('-').reverse().join('/');
+    drawInfoCard(doc, 15,            metaY, cardW, 18, tPdf('date', curLang),       date);
+    drawInfoCard(doc, 16 + cardW,    metaY, cardW, 18, tPdf('time', curLang),       session.time || session.hora || '18:00');
+    drawInfoCard(doc, 17 + cardW*2,  metaY, cardW, 18, tPdf('duration', curLang),   `${session.duration || session.duracion || 90} min`);
+    drawInfoCard(doc, 18 + cardW*3,  metaY, cardW, 18, tPdf('intensity', curLang),  session.intensity || session.intensidad || 'Media');
 
     const meta2Y = metaY + 22;
     const cardW2 = (pageW - 32) / 3;
-    drawInfoCard(doc, 15,           meta2Y, cardW2, 18, 'CATEGORÍA', session.category || session.categoria || 'General');
-    drawInfoCard(doc, 17 + cardW2,  meta2Y, cardW2, 18, 'MATERIAL',  (session.materials || session.material || 'Balones, conos').slice(0, 30));
-    drawInfoCard(doc, 19 + cardW2*2,meta2Y, cardW2 - 4, 18, 'BLOQUES', `${(session.blocks || session.bloques || []).length} bloques`);
+    drawInfoCard(doc, 15,            meta2Y, cardW2, 18, tPdf('category', curLang), session.category || session.categoria || 'General');
+    drawInfoCard(doc, 17 + cardW2,   meta2Y, cardW2, 18, tPdf('material', curLang), (session.materials || session.material || 'Balones, conos').slice(0, 30));
+    drawInfoCard(doc, 19 + cardW2*2, meta2Y, cardW2 - 4, 18, tPdf('blocks', curLang), `${(session.blocks || session.bloques || []).length} ${tPdf('blocks', curLang).toLowerCase()}`);
 
-    // Objetivo
+    // Objetivo (Carril A prefijo + Carril C texto del míster INTACTO, sin cleanPdfText)
     if (session.objectives || session.objetivo) {
-      const objText = cleanPdfText(session.objectives || session.objetivo || '');
+      const objText = session.objectives || session.objetivo || '';
       doc.setFontSize(9);
-      doc.setFont(undefined, 'italic');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(60, 80, 70);
-      const objLines = doc.splitTextToSize(`Objetivo: ${objText}`, pageW - 30);
+      const objLines = doc.splitTextToSize(`${tPdf('objectivePrefix', curLang)}${objText}`, pageW - 30);
       doc.text(objLines, 15, meta2Y + 24);
     }
 
@@ -930,10 +1082,10 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       }
     }
 
-    // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
+    // ─── DIAGRAMA TÁCTICO PRINCIPAL (Carril A título) ──────────────────────────
     if (sessionDiagramBase64 && typeof sessionDiagramBase64 === 'string' && sessionDiagramBase64.startsWith('data:')) {
       if (currentY + 80 > pageH - 20) { doc.addPage(); currentY = 20; }
-      currentY = drawSectionHeader(doc, currentY, 'DIAGRAMA TÁCTICO PRINCIPAL', pageW);
+      currentY = drawSectionHeader(doc, currentY, tPdf('mainTacticalDiagram', curLang), pageW);
       doc.setFillColor(248, 250, 248);
       doc.setDrawColor(...THEME_COLOR);
       doc.setLineWidth(0.4);
@@ -948,15 +1100,15 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       currentY += 76;
     }
 
-    // ─── BLOQUES DE LA SESIÓN ─────────────────────────────────────────────────
+    // ─── BLOQUES DE LA SESIÓN (Carril A título) ───────────────────────────────
     if (currentY + 20 > pageH - 20) { doc.addPage(); currentY = 20; }
-    currentY = drawSectionHeader(doc, currentY, 'BLOQUES DE ENTRENAMIENTO', pageW);
+    currentY = drawSectionHeader(doc, currentY, tPdf('trainingBlocks', curLang), pageW);
 
     if (blocks.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(120);
-      doc.setFont(undefined, 'italic');
-      doc.text('No hay bloques definidos para esta sesión.', 15, currentY);
+      doc.setFont('Roboto', 'normal');
+      doc.text(curLang === 'id' ? 'Tidak ada blok latihan yang ditentukan.' : curLang === 'fr' ? 'Aucun bloc défini pour cette séance.' : curLang === 'pt' ? 'Nenhum bloco definido para esta sessão.' : curLang === 'en' ? 'No training blocks defined.' : 'No hay bloques definidos para esta sesión.', 15, currentY);
       currentY += 12;
     } else {
       const blockColors = [
@@ -968,10 +1120,24 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const imgBase64 = (b.resolvedBase64 && typeof b.resolvedBase64 === 'string' && b.resolvedBase64.startsWith('data:')) ? b.resolvedBase64 : null;
         const hasImg = Boolean(imgBase64);
 
-        const rawDesc = cleanPdfText(b.description || b.descripcion || 'Sin descripción');
+        // Carril C: Descripción del míster INTACTA (sin traducir, sin alterar acentos ni typos)
+        let rawDesc = b.description || b.descripcion || '';
+        
+        // Carril B: Cues clínicos de prevención (solo en ES/EN directo; en PT/FR/ID con chip de fallback)
+        const clinicalCue = b.clinicalCue || b.preventionCue || b.prevencion || null;
+        let clinicalChipText = '';
+        if (clinicalCue) {
+          if (curLang === 'pt' || curLang === 'fr' || curLang === 'id') {
+            clinicalChipText = ` [${tPdf('clinicalChip', curLang)}: ${clinicalCue}]`;
+          } else {
+            clinicalChipText = ` [🛡️ ${clinicalCue}]`;
+          }
+          rawDesc = rawDesc ? `${rawDesc} ${clinicalChipText}` : clinicalChipText;
+        }
+
         // Texto a todo el ancho (100% de la tarjeta)
         const textMaxW = pageW - 44;
-        const descLines = doc.splitTextToSize(rawDesc, textMaxW);
+        const descLines = doc.splitTextToSize(rawDesc || (curLang === 'id' ? 'Tanpa deskripsi' : curLang === 'fr' ? 'Sans description' : curLang === 'pt' ? 'Sem descrição' : curLang === 'en' ? 'No description' : 'Sin descripción'), textMaxW);
         const textH = descLines.length * 4.6;
 
         const imgW = hasImg ? 124 : 0;
@@ -980,7 +1146,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         // Calcular altura total del bloque: Header (16) + Texto (textH) + Imagen centrada (si existe)
         const totalBlockH = hasImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
 
-        // Control estricto de salto de página (Evita cortar el bloque o la imagen a la mitad)
+        // Control estricto de salto de página
         if (currentY + totalBlockH > pageH - 20) {
           doc.addPage();
           currentY = 20;
@@ -998,24 +1164,25 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.circle(22, currentY + 7, 4.5, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8.5);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.text(String(bi + 1), 22, currentY + 9.8, { align: 'center' });
 
-        // Título del Bloque
+        // Título del Bloque (Carril C: Texto del míster intacto)
         doc.setTextColor(...THEME_COLOR);
         doc.setFontSize(10.5);
-        doc.setFont(undefined, 'bold');
-        doc.text(cleanPdfText(b.name || b.nombre || b.titulo || `Bloque ${bi + 1}`), 30, currentY + 8.5);
+        doc.setFont('Roboto', 'bold');
+        const defaultBlockName = `${curLang === 'id' ? 'Blok' : curLang === 'fr' ? 'Bloc' : curLang === 'pt' ? 'Bloco' : curLang === 'en' ? 'Block' : 'Bloque'} ${bi + 1}`;
+        doc.text(String(b.name || b.nombre || b.titulo || defaultBlockName), 30, currentY + 8.5);
 
         // Etiquetas (Tipo y Duración)
-        const typeTag = cleanPdfText(b.type || b.tipo || 'General');
+        const typeTag = b.type || b.tipo || 'General';
         const durTag = `${b.duration || b.duracion || b.tiempo || 0} min`;
         doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setTextColor(80, 100, 90);
         doc.text(`[${typeTag}]`, pageW - 48, currentY + 8.5);
         doc.setTextColor(...ACCENT_COLOR);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.text(durTag, pageW - 25, currentY + 8.5);
 
         // Línea divisoria interna
@@ -1023,13 +1190,13 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setLineWidth(0.2);
         doc.line(22, currentY + 12, pageW - 22, currentY + 12);
 
-        // 1. Descripción del Bloque (Texto arriba a todo el ancho, alto contraste #1a2e1a)
-        doc.setFont(undefined, 'normal');
+        // 1. Descripción del Bloque (Texto arriba a todo el ancho, alto contraste)
+        doc.setFont('Roboto', 'normal');
         doc.setFontSize(8.5);
-        doc.setTextColor(26, 46, 26); // #1a2e1a para máximo contraste
+        doc.setTextColor(26, 46, 26);
         doc.text(descLines, 22, currentY + 17);
 
-        // 2. Imagen / Captura del Ejercicio (Directamente DEBAJO de la descripción, centrada)
+        // 2. Imagen / Captura del Ejercicio
         if (hasImg) {
           const imgX = (pageW - imgW) / 2;
           const imgY = currentY + 17 + textH + 3;
@@ -1055,8 +1222,6 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     // ─── CAPTURAS DE PIZARRA TÁCTICA ───────────────────────────────────────────
     const linkedCaptures = (captures || []).filter(c => c.sessionId === session.id);
-    
-    // Resolver imágenes válidas para las capturas vinculadas
     const validCaptures = [];
     if (linkedCaptures.length > 0) {
       for (let ci = 0; ci < linkedCaptures.length; ci++) {
@@ -1072,10 +1237,9 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       }
     }
 
-    // SOLO dibujar la sección si existen capturas válidas cargadas
     if (validCaptures.length > 0) {
       if (currentY + 20 > pageH - 20) { doc.addPage(); currentY = 20; }
-      currentY = drawSectionHeader(doc, currentY, 'CAPTURAS DE PIZARRA TÁCTICA', pageW);
+      currentY = drawSectionHeader(doc, currentY, curLang === 'id' ? 'TANGKAPAN PAPAN TAKTIK' : curLang === 'fr' ? 'CAPTURES DU TABLEAU TACTIQUE' : curLang === 'pt' ? 'CAPTURAS DA PRANCHETA TÁTICA' : curLang === 'en' ? 'TACTICAL BOARD CAPTURES' : 'CAPTURAS DE PIZARRA TÁCTICA', pageW);
 
       const capImgW = (pageW - 42) / 2;
       const capImgH = capImgW * 0.65;
@@ -1105,7 +1269,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         }
 
         doc.setFontSize(7.5);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setTextColor(60, 80, 70);
         let capLabel = cap.title || cap.label || cap.name || (`Captura ${ci + 1}`);
         capLabel = capLabel.slice(0, 45);
@@ -1125,13 +1289,14 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       }
     }
 
-    // CONVOCATORIA
+    // CONVOCATORIA (Carril A: Sistema localizado + Carril C: Nombres intactos)
     const sessionPlayerIds = session.players || session.convocados || [];
     const convocados = (players || []).filter(p => sessionPlayerIds.includes(p.id));
 
     if (convocados.length > 0) {
       if (currentY + 20 > pageH - 25) { doc.addPage(); currentY = 20; }
-      currentY = drawSectionHeader(doc, currentY, 'CONVOCATORIA (' + convocados.length + ' jugadores)', pageW);
+      const playerWord = curLang === 'id' ? 'pemain' : curLang === 'fr' ? 'joueurs' : curLang === 'pt' ? 'atletas' : curLang === 'en' ? 'players' : 'jugadores';
+      currentY = drawSectionHeader(doc, currentY, `${tPdf('convocation', curLang)} (${convocados.length} ${playerWord})`, pageW);
 
       const convCols = 2;
       const convColW = (pageW - 30) / convCols;
@@ -1148,40 +1313,64 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setFillColor(pi % 2 === 0 ? 248 : 255, 248, 248);
         doc.rect(cx, cy, convColW - 3, convRowH - 1, 'F');
         doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setTextColor(...THEME_COLOR);
         doc.text(String(p.number || p.dorsal || '-'), cx + 2, cy + 5.5);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setTextColor(40, 40, 40);
-        doc.text((p.name || p.nombre || 'Jugador').slice(0, 20), cx + 10, cy + 5.5);
+        // Carril C: Nombre del jugador intacto
+        doc.text(String(p.name || p.nombre || (curLang === 'id' ? 'Pemain' : curLang === 'en' ? 'Player' : 'Jugador')).slice(0, 20), cx + 10, cy + 5.5);
         doc.setTextColor(130);
-        doc.text((p.position || p.posicion || ''), cx + convColW - 22, cy + 5.5);
+        doc.text(String(p.position || p.posicion || ''), cx + convColW - 22, cy + 5.5);
       }
       currentY = convStartY + (Math.ceil(convocados.length / convCols)) * convRowH + 6;
     }
 
-    // NOTAS Y OBSERVACIONES
+    // NOTAS Y OBSERVACIONES (Carril A título + estado vacío / Carril C texto del entrenador)
     if (currentY + 40 > pageH - 25) { doc.addPage(); currentY = 20; }
-    currentY = drawSectionHeader(doc, currentY, 'NOTAS POST-SESION', pageW);
+    currentY = drawSectionHeader(doc, currentY, tPdf('postSessionNotes', curLang), pageW);
     doc.setFillColor(252, 252, 248);
     doc.setDrawColor(200, 210, 200);
     doc.setLineWidth(0.3);
     doc.roundedRect(15, currentY, pageW - 30, 38, 2, 2, 'FD');
-    for (let li = 0; li < 4; li++) {
-      doc.setDrawColor(220, 225, 220);
-      doc.setLineWidth(0.2);
-      doc.line(22, currentY + 8 + (li * 8), pageW - 22, currentY + 8 + (li * 8));
+
+    const coachNotes = (session.notes || session.notas || '').trim();
+    if (coachNotes) {
+      // Carril C: Texto del míster intacto (sin traducir ni modificar)
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(40, 50, 45);
+      const noteLines = doc.splitTextToSize(coachNotes, pageW - 44);
+      doc.text(noteLines, 20, currentY + 7);
+    } else {
+      // Carril A: Estado vacío traducido en el idioma activo
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(140, 150, 145);
+      doc.text(tPdf('notesEmpty', curLang), 20, currentY + 10);
+
+      // Líneas suaves para anotaciones manuales
+      for (let li = 1; li < 4; li++) {
+        doc.setDrawColor(225, 230, 225);
+        doc.setLineWidth(0.2);
+        doc.line(22, currentY + 8 + (li * 7), pageW - 22, currentY + 8 + (li * 7));
+      }
     }
 
-    // PIE DE PAGINA
-    addFooter(doc);
+    // PIE DE PÁGINA (Carril A: Paginación y marca sin tilde en el idioma activo)
+    addFooter(doc, curLang);
     const safeTitle = (session.title || session.titulo || 'Sesion').replace(/[^a-z0-9]/gi, '_');
     await savePdfUniversal(doc, 'Sesion_' + safeTitle + '_' + (session.date || 'Hoy').replace(/-/g, '') + '.pdf');
+    return doc;
   } catch (err) {
     console.error('Error al generar PDF de sesion:', err);
-    alert(isEnglish() ? 'Error generating session PDF.' : 'Error al generar el PDF de la sesion.');
+    if (typeof alert === 'function') {
+      alert(isEnglish() ? 'Error generating session PDF.' : 'Error al generar el PDF de la sesion.');
+    }
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    if (typeof window !== 'undefined') {
+      safeDispatchLoading(false);
+    }
   }
 };
 
@@ -1189,7 +1378,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
  * INFORME DE TEMPORADA - Completo con estadísticas de jugadores
  */
 export const generateSeasonReport = async (team, players, matches) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  safeDispatchLoading(true, 'Generando PDF...' );
   await new Promise(r => setTimeout(r, 150));
   const jsPDF = await getJsPDF();
   const doc = new jsPDF();
@@ -1264,14 +1453,14 @@ export const generateSeasonReport = async (team, players, matches) => {
 
   addFooter(doc);
   savePdfUniversal(doc, `Informe_Temporada_${teamName.replace(/\s+/g,'_')}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  safeDispatchLoading(false);
 };
 
 /**
  * HOJA DE CONVOCATORIA - Para un partido con lista de convocados
  */
 export const generateMatchConvocation = async (match, players, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  safeDispatchLoading(true, 'Generando PDF...' );
   await new Promise(r => setTimeout(r, 150));
   const jsPDF = await getJsPDF();
   const doc = new jsPDF();
@@ -1318,7 +1507,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
   addFooter(doc);
   const safeRival = (match.rival || 'Partido').replace(/\s+/g,'_');
   savePdfUniversal(doc, `Convocatoria_${safeRival}_${match.date || match.fecha || 'Hoy'}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  safeDispatchLoading(false);
 };
 
 /**
@@ -1329,7 +1518,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
  * Exporta el cronograma completo de partidos con resumen de competición y tabla detallada.
  */
 export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Calendario Oficial...' } }));
+  safeDispatchLoading(true, 'Generando Calendario Oficial...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -1488,7 +1677,7 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
     console.error('Error generando Calendario PDF:', err);
     alert(isEnglish() ? 'Error generating match schedule PDF.' : 'Error al generar el PDF del calendario de partidos.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -1497,7 +1686,7 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
  * Datos leales y completos de Míster11 y Portal del Jugador, sin emojis corruptos.
  */
 export const generateExpediente = async (player, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Expediente Deportivo Oficial...' } }));
+  safeDispatchLoading(true, 'Generando Expediente Deportivo Oficial...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -1956,7 +2145,7 @@ export const generateExpediente = async (player, activeTeam = null) => {
     console.error('Error generando Expediente PDF:', err);
     alert(isEnglish() ? 'There was an error generating the file PDF.' : 'Hubo un error al generar el expediente en PDF.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -1970,7 +2159,7 @@ export const generatePizarraPDF = async ({
   activeTeam = null,
   fieldType = 'full'
 }) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Pizarra...' } }));
+  safeDispatchLoading(true, 'Generando PDF de Pizarra...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -2028,13 +2217,13 @@ export const generatePizarraPDF = async ({
     console.error('Error generando PDF de Pizarra:', err);
     alert(isEnglish() ? 'Error generating tactical board PDF.' : 'Error al generar el PDF de la pizarra táctica.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
 
 export const generateExercisesReport = async (exercises, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  safeDispatchLoading(true, 'Generando PDF...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -2067,7 +2256,7 @@ export const generateExercisesReport = async (exercises, activeTeam = null) => {
     console.error('Error generating exercises report:', error);
     alert(isEnglish() ? 'Error generating PDF.' : 'Error al generar el PDF.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -2075,7 +2264,7 @@ export const generateExercisesReport = async (exercises, activeTeam = null) => {
  * INFORME POST-PARTIDO - Completo con cuestionario e imágenes
  */
 export const generatePostMatchReportPDF = async (match, players, activeTeam = null, lineupImage = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  safeDispatchLoading(true, 'Generando PDF...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -2309,7 +2498,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
     console.error('Error generating post-match report:', error);
     alert(isEnglish() ? 'Error generating report PDF.' : 'Error al generar el PDF del informe.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -2317,7 +2506,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
  * EJERCICIO IA / GENERADO - Ficha de Ejercicio en PDF
  */
 export const generateExercisePDF = async (exercise, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF del Ejercicio...' } }));
+  safeDispatchLoading(true, 'Generando PDF del Ejercicio...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -2442,7 +2631,7 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
     console.error('Error al generar PDF del ejercicio:', err);
     alert(isEnglish() ? 'Error generating exercise PDF.' : 'Error al generar el PDF del ejercicio.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };
 
@@ -2450,7 +2639,7 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
  * INFORME SEMANAL - Resumen de la semana (entrenamientos, partidos, alertas, RPE)
  */
 export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe Semanal...' } }));
+  safeDispatchLoading(true, 'Generando Informe Semanal...' );
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -2580,6 +2769,6 @@ export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => 
     console.error('Error generating weekly report PDF:', error);
     alert(isEnglish() ? 'Error generating weekly report PDF.' : 'Error al generar el PDF del informe semanal.');
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    safeDispatchLoading(false);
   }
 };

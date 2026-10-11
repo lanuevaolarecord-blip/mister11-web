@@ -20,7 +20,7 @@ const renderMarkdown = (text) => {
 };
 
 const ExerciseLibrary = ({ activeTeamId }) => {
-  const { t, isEn } = useTranslation();
+  const { t, isEn, language } = useTranslation();
   const { exercises, loading, addExercise, removeExercise } = useExercises(activeTeamId);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -116,6 +116,26 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                    ex.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
                    ex.category}
                 </span>
+                {ex.category === 'prevencion' && (!language || (!language.startsWith('es') && language !== 'es' && language !== 'es-419')) && (
+                  <span 
+                    className="clinical-fallback-chip" 
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: '700',
+                      backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                      color: 'var(--m11-oro, #D4A843)',
+                      border: '1px solid rgba(212, 168, 67, 0.4)',
+                      marginLeft: '6px'
+                    }}
+                  >
+                    🛡️ {t('clinical.fallbackChip')}
+                  </span>
+                )}
                 <p>{ex.description || (isEn ? 'No description' : 'Sin descripción')}</p>
                 <div className="exercise-meta">
                   {ex.durationSeconds > 0 && <span>⏱️ {ex.durationSeconds}s</span>}
@@ -203,6 +223,25 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                    activeViewEx.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
                    activeViewEx.category}
                 </span>
+                {activeViewEx.category === 'prevencion' && (!language || (!language.startsWith('es') && language !== 'es' && language !== 'es-419')) && (
+                  <span 
+                    className="clinical-fallback-chip"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      fontWeight: '700',
+                      backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                      color: 'var(--m11-oro, #D4A843)',
+                      border: '1px solid rgba(212, 168, 67, 0.4)'
+                    }}
+                  >
+                    🛡️ {t('clinical.fallbackChip')}
+                  </span>
+                )}
                 {activeViewEx.locale && activeViewEx.locale !== (isEn ? 'en' : 'es') && (
                   <span 
                     className="badge-original-lang" 

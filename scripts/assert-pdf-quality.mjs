@@ -186,6 +186,113 @@ check('jsPDF cuerpo no contiene huecos de kerning en Objetivo ni Mejorar al rend
   assert.ok(!output.includes('Mej orar'), 'El PDF no debe contener "Mej orar"');
 });
 
+// ── 6. AUDITORÍA DE MARCA CANÓNICA SIN TILDE EN HEADERS Y FOOTERS ─────────────
+console.log('\n▶ [6/7] Auditando marca canónica MISTER11 / Mister11 sin tilde en generadores...');
+
+check('addHeader en pdfGenerator.js usa marca canónica MISTER11 sin tilde', () => {
+  assert.ok(pdfGenCode.includes("doc.text('MISTER11', 36, 16);"), 'Debe usar MISTER11 sin tilde con logo');
+  assert.ok(pdfGenCode.includes("doc.text('MISTER11', 14, 18);"), 'Debe usar MISTER11 sin tilde sin logo');
+  assert.ok(!pdfGenCode.includes("doc.text('MÍSTER11'"), 'No debe contener MÍSTER11 con tilde');
+});
+
+check('drawPdfHeader en pdfTheme.js usa marca canónica MISTER11 sin tilde', () => {
+  assert.ok(pdfThemeCode.includes('MISTER11 —'), 'Debe usar MISTER11 sin tilde en el header unificado');
+  assert.ok(!pdfThemeCode.includes('MÍSTER 11 —'), 'No debe contener MÍSTER 11 con tilde');
+});
+
+// ── 7. AUDITORÍA FUNCIONAL DE SESIÓN EN 4 IDIOMAS (CARRILES A, B, C) ──────────
+console.log('\n▶ [7/7] Probando generación de sesión multilingüe en ES, PT, FR e ID por carriles...');
+
+import { generateSessionPDF, tPdf } from '../src/utils/pdfGenerator.js';
+import { PDFParse } from 'pdf-parse';
+
+const sessionMockBurriana = {
+  id: 'sess_burriana_20261006',
+  nombre: 'Sesión Táctica Burriana B',
+  date: '2026-10-06',
+  time: '18:30',
+  duration: 90,
+  intensity: 'Alta',
+  category: 'Juvenil B',
+  materials: 'Conos, balones, petos',
+  objectives: 'Mejorar la trancision ofensiva y la presion tras perdida (texto del míster intacto)',
+  blocks: [
+    {
+      name: 'Rondo 4v2 de presion',
+      type: 'Posesión',
+      duration: 20,
+      description: 'Presion coordinada tras perdida de balon sin giados.',
+      clinicalCue: 'Prevención isquiosurales con desaceleración progresiva'
+    }
+  ],
+  players: ['p1', 'p2'],
+  notes: '' // Estado vacío para probar Carril A
+};
+
+const activeTeamBurriana = {
+  id: 'team_burriana',
+  nombre: 'BURRIANA B',
+  categoria: 'Juvenil B'
+};
+
+const playersMock = [
+  { id: 'p1', name: 'Héctor Gómez', number: 7, position: 'DEL' },
+  { id: 'p2', name: 'Álvaro Ramos', number: 10, position: 'MCO' }
+];
+
+async function extractPdfText(doc) {
+  const buf = Buffer.from(doc.output('arraybuffer'));
+  const parser = new PDFParse({ data: buf });
+  const result = await parser.getText();
+  return result.text;
+}
+
+const testLocales = ['es', 'pt', 'fr', 'id'];
+for (const loc of testLocales) {
+  const doc = await generateSessionPDF(sessionMockBurriana, activeTeamBurriana, [], [], playersMock, [], loc);
+  const text = await extractPdfText(doc);
+
+  check(`PDF generado en [${loc.toUpperCase()}] respeta Carril A localizado`, () => {
+    const expectedSheetTitle = tPdf('trainingSheet', loc);
+    const expectedDateLabel = tPdf('date', loc);
+    const expectedNotesLabel = tPdf('postSessionNotes', loc);
+    const expectedEmptyNotes = tPdf('notesEmpty', loc);
+
+    assert.ok(text.includes(expectedSheetTitle), `Debe contener título ${expectedSheetTitle}`);
+    assert.ok(text.includes(expectedDateLabel), `Debe contener etiqueta fecha ${expectedDateLabel}`);
+    assert.ok(text.includes(expectedNotesLabel), `Debe contener sección notas ${expectedNotesLabel}`);
+    assert.ok(text.includes(expectedEmptyNotes), `Debe contener notas vacías traducidas: ${expectedEmptyNotes}`);
+    assert.ok(!text.includes('[empty]'), 'NO debe contener [empty] en inglés');
+  });
+
+  check(`PDF generado en [${loc.toUpperCase()}] respeta Carril C intacto (texto del míster)`, () => {
+    // Objetivo del míster con typos y acentos intacto
+    assert.ok(text.includes('Mejorar la trancision ofensiva y la presion tras perdida'), 'El objetivo del míster debe conservarse intacto');
+    // Bloque del míster intacto
+    assert.ok(text.includes('Presion coordinada tras perdida de balon sin giados.'), 'La descripción del míster debe conservarse intacta');
+    // Jugador con acento Héctor intacto
+    assert.ok(text.includes('Héctor Gómez'), 'El nombre del jugador Héctor con é debe estar intacto');
+  });
+
+  check(`PDF generado en [${loc.toUpperCase()}] no tiene marcas rotas ("mister11.a pp", "Pá g ina", "•", "MÍSTER11")`, () => {
+    assert.ok(!text.includes('mister11.a pp'), 'No debe contener mister11.a pp');
+    assert.ok(!text.includes('Pá g ina'), 'No debe contener Pá g ina');
+    assert.ok(!text.includes('•'), 'No debe contener bullet •');
+    assert.ok(!text.includes('MÍSTER11'), 'No debe contener MÍSTER11 con tilde');
+    assert.ok(!text.includes('Míster11'), 'No debe contener Míster11 con tilde');
+    assert.ok(text.includes('MISTER11'), 'Debe contener la marca MISTER11');
+    assert.ok(text.includes('Mister11 Platform - mister11.app'), 'Debe contener footer oficial');
+  });
+
+  if (loc === 'pt' || loc === 'fr' || loc === 'id') {
+    check(`PDF generado en [${loc.toUpperCase()}] muestra chip de fallback clínico visible en Carril B`, () => {
+      const chipExpected = tPdf('clinicalChip', loc);
+      assert.ok(text.includes(chipExpected), `Debe incluir el chip visible ${chipExpected}`);
+      assert.ok(/Prevenci[óo]n\s+isquiosurales/.test(text), 'Debe conservar el contenido clínico original');
+    });
+  }
+}
+
 console.log(`\n==============================================================================`);
 console.log(`TODAS LAS PRUEBAS DE CALIDAD PDF (PDF-Q) PASARON EXITOSAMENTE (${passCount}/${passCount})`);
 console.log(`==============================================================================\n`);

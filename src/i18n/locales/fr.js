@@ -2648,7 +2648,25 @@ export const fr = {
   "xg.save_pct": "Enregistrer Effectiveness %",
   "xg.title": "xG-Lite Model & Exposure",
   "xg.totalTeam": "xG Total Équipe",
-  "xg.total_saves": "Total Paradas"
+  "xg.total_saves": "Total Paradas",
+  "clinical.fallbackChip": "contenu clinique en espagnol",
+  "landing.footer.languages": "Langues",
+  "landing.footer.rights": "Tous droits réservés.",
+  "landing.hero.badge": "LE CERVEAU NUMÉRIQUE DE L'ENTRAÎNEUR",
+  "landing.hero.btnPrimary": "ESSAI GRATUIT DE 7 JOURS",
+  "landing.hero.btnSecondary": "VOIR LES FORFAITS ET TARIFS",
+  "landing.hero.desc": "Tableau tactique interactif, enregistrement en direct aux proportions réglementaires FIFA 105:68, prévention des blessures par IA, tests psychométriques validés et rapports officiels en PDF.",
+  "landing.hero.title_highlight": "niveau professionnel",
+  "landing.hero.title_part1": "Portez votre méthodologie d'entraînement au",
+  "landing.nav.login": "CONNEXION",
+  "landing.nav.selectLang": "Sélectionner la langue",
+  "landing.nav.themeToggle": "Changer de thème",
+  "landing.preview.title": "Tableau Tactique Mister11 · Terrain et Jetons",
+  "landing.trust.noCard": "Sans carte bancaire",
+  "landing.trust.platforms": "Web, PWA et Android",
+  "landing.trust.trial": "7 jours d'essai complet",
+  "pricing.toggle.monthly": "Mensuel",
+  "pricing.toggle.season": "Abonnement Saison (Recommandé)",
 };
 
 export default fr;

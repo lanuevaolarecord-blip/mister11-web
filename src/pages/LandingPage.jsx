@@ -18,11 +18,12 @@ import {
 import { PLANS, calcularDesgloseIVA } from '../config/plans';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../context/ThemeContext';
+import { BRAND_NAME, BRAND_NAME_UPPER } from '../utils/brand';
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { t, isEn, language, setLanguage } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const { darkMode, toggleTheme } = useTheme();
   const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
 
@@ -34,31 +35,45 @@ const LandingPage = () => {
     navigate('/login');
   };
 
+  const langKey = (language?.startsWith('pt') ? 'pt'
+    : language?.startsWith('fr') ? 'fr'
+    : language?.startsWith('id') ? 'id'
+    : language?.startsWith('en') ? 'en'
+    : 'es');
+
+  const loc = (esText, enText, ptText, frText, idText) => {
+    if (langKey === 'en') return enText;
+    if (langKey === 'pt') return ptText || esText;
+    if (langKey === 'fr') return frText || enText;
+    if (langKey === 'id') return idText || enText;
+    return esText;
+  };
+
   // Comparativa completa para auditoría detallada
   const comparisonRows = [
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Teams Included' : 'Equipos incluidos', free: isEn ? '1 team' : '1 equipo', pro: isEn ? '3 teams' : '3 equipos', starter: isEn ? '6 teams' : '6 equipos', clubPro: isEn ? '15 teams' : '15 equipos', premium: isEn ? 'Up to 40 teams' : 'Hasta 40 equipos' },
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Players per Team' : 'Jugadores por equipo', free: '23', pro: '23', starter: '23', clubPro: '23', premium: '23' },
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Staff per Team' : 'Staff por equipo', free: isEn ? '1 coach' : '1 entrenador', pro: isEn ? '1 coach' : '1 entrenador', starter: isEn ? 'Up to 4 staff' : 'Hasta 4 staff', clubPro: isEn ? 'Up to 10 staff' : 'Hasta 10 staff', premium: isEn ? 'Unlimited' : 'Ilimitado' },
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Digital GDPR Signatures' : 'Consentimientos RGPD con firma digital', free: true, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Training' : 'Sesiones', feature: isEn ? 'Training Sessions' : 'Sesiones de entrenamiento', free: '10', pro: isEn ? 'Unlimited' : 'Ilimitadas', starter: isEn ? 'Unlimited' : 'Ilimitadas', clubPro: isEn ? 'Unlimited' : 'Ilimitadas', premium: isEn ? 'Unlimited' : 'Ilimitadas' },
-    { category: isEn ? 'Training' : 'Sesiones', feature: isEn ? 'Professional PDF Session Exports' : 'Exportar sesión a PDF profesional', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Training' : 'Sesiones', feature: isEn ? 'Pitch Mode (Live Timer)' : 'Modo Campo con cronómetro real', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Matches' : 'Partidos', feature: isEn ? 'Live Match Tracker & Minutes' : 'Live Stats y minutajes en directo', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Matches' : 'Partidos', feature: isEn ? '7-Page Official PDF Match Report' : 'Acta oficial de 7 páginas en PDF', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Matches' : 'Partidos', feature: isEn ? 'xG-Lite Model (FIFA 105:68)' : 'Modelo xG-Lite y Mapa de Tiros Canónico', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Matches' : 'Partidos', feature: isEn ? 'Goalkeeping Exertion Metrics' : 'Métricas exclusivas de portería (GK)', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Tactics' : 'Pizarra Táctica', feature: isEn ? 'Keyframe Animations & MP4' : 'Animaciones tácticas y exportar MP4/PNG', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'AI' : 'IA Generadora', feature: isEn ? 'AI Drills & Tactical Generator' : 'IA táctica y prevención de lesiones', free: isEn ? '5/mo' : '5/mes', pro: isEn ? 'Unlimited' : 'Ilimitada', starter: isEn ? 'Unlimited' : 'Ilimitada', clubPro: isEn ? 'Unlimited' : 'Ilimitada', premium: isEn ? 'Unlimited' : 'Ilimitada' },
-    { category: isEn ? 'Player' : 'Portal Jugador', feature: isEn ? 'Autonomous Player Portal' : 'Portal autónomo del jugador', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Player' : 'Portal Jugador', feature: isEn ? 'Daily Wellness & Psychological Tests' : 'Wellness diario y tests ACSI-28 / MTQ-10', free: false, pro: true, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Club' : 'Club & Dirección', feature: isEn ? 'Multi-Team Academy Dashboard' : 'Panel de dirección deportiva multi-equipo', free: false, pro: false, starter: true, clubPro: true, premium: true },
-    { category: isEn ? 'Club' : 'Club & Dirección', feature: isEn ? 'Consolidated PDF/CSV Reports' : 'Informes consolidados de cantera', free: false, pro: false, starter: false, clubPro: true, premium: true },
-    { category: isEn ? 'Support' : 'Soporte', feature: isEn ? 'Technical Support Level' : 'Nivel de soporte técnico', free: isEn ? 'Community' : 'Comunitario', pro: isEn ? 'Standard' : 'Estándar', starter: isEn ? 'Priority' : 'Prioritario', clubPro: isEn ? '24/7 Priority' : 'Prioritario 24/7', premium: isEn ? 'VIP Dedicated' : 'VIP Onboarding Dedicado' }
+    { category: loc('Mi Equipo', 'Squad & Staff', 'Meu Time', 'Mon Équipe', 'Tim Saya'), feature: loc('Equipos incluidos', 'Teams Included', 'Times incluídos', 'Équipes incluses', 'Tim termasuk'), free: loc('1 equipo', '1 team', '1 time', '1 équipe', '1 tim'), pro: loc('3 equipos', '3 teams', '3 times', '3 équipes', '3 tim'), starter: loc('6 equipos', '6 teams', '6 times', '6 équipes', '6 tim'), clubPro: loc('15 equipos', '15 teams', '15 times', '15 équipes', '15 tim'), premium: loc('Hasta 40 equipos', 'Up to 40 teams', 'Até 40 times', 'Jusqu\'à 40 équipes', 'Hingga 40 tim') },
+    { category: loc('Mi Equipo', 'Squad & Staff', 'Meu Time', 'Mon Équipe', 'Tim Saya'), feature: loc('Jugadores por equipo', 'Players per Team', 'Jogadores por time', 'Joueurs par équipe', 'Pemain per tim'), free: '23', pro: '23', starter: '23', clubPro: '23', premium: '23' },
+    { category: loc('Mi Equipo', 'Squad & Staff', 'Meu Time', 'Mon Équipe', 'Tim Saya'), feature: loc('Staff por equipo', 'Staff per Team', 'Comissão por time', 'Staff par équipe', 'Staf per tim'), free: loc('1 entrenador', '1 coach', '1 treinador', '1 entraîneur', '1 pelatih'), pro: loc('1 entrenador', '1 coach', '1 treinador', '1 entraîneur', '1 pelatih'), starter: loc('Hasta 4 staff', 'Up to 4 staff', 'Até 4 na comissão', 'Jusqu\'à 4 membres', 'Hingga 4 staf'), clubPro: loc('Hasta 10 staff', 'Up to 10 staff', 'Até 10 na comissão', 'Jusqu\'à 10 membres', 'Hingga 10 staf'), premium: loc('Ilimitado', 'Unlimited', 'Ilimitado', 'Illimité', 'Tak terbatas') },
+    { category: loc('Mi Equipo', 'Squad & Staff', 'Meu Time', 'Mon Équipe', 'Tim Saya'), feature: loc('Consentimientos RGPD con firma digital', 'Digital GDPR Signatures', 'Termos LGPD com assinatura digital', 'Consentements RGPD avec signature digitale', 'Tanda tangan digital GDPR'), free: true, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Sesiones', 'Training', 'Treinos', 'Séances', 'Sesi Latihan'), feature: loc('Sesiones de entrenamiento', 'Training Sessions', 'Sessões de treino', 'Séances d\'entraînement', 'Sesi latihan'), free: '10', pro: loc('Ilimitadas', 'Unlimited', 'Ilimitadas', 'Illimitées', 'Tak terbatas'), starter: loc('Ilimitadas', 'Unlimited', 'Ilimitadas', 'Illimitées', 'Tak terbatas'), clubPro: loc('Ilimitadas', 'Unlimited', 'Ilimitadas', 'Illimitées', 'Tak terbatas'), premium: loc('Ilimitadas', 'Unlimited', 'Ilimitadas', 'Illimitées', 'Tak terbatas') },
+    { category: loc('Sesiones', 'Training', 'Treinos', 'Séances', 'Sesi Latihan'), feature: loc('Exportar sesión a PDF profesional', 'Professional PDF Session Exports', 'Exportar treino para PDF profissional', 'Exportation de séance en PDF professionnel', 'Ekspor sesi PDF profesional'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Sesiones', 'Training', 'Treinos', 'Séances', 'Sesi Latihan'), feature: loc('Modo Campo con cronómetro real', 'Pitch Mode (Live Timer)', 'Modo Campo com cronômetro real', 'Mode Terrain avec chronomètre réel', 'Mode Lapangan dengan stopwatch nyata'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Partidos', 'Matches', 'Jogos', 'Matchs', 'Pertandingan'), feature: loc('Live Stats y minutajes en directo', 'Live Match Tracker & Minutes', 'Live Stats e minutagem ao vivo', 'Live Stats et temps de jeu en direct', 'Live Stats & menit langsung'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Partidos', 'Matches', 'Jogos', 'Matchs', 'Pertandingan'), feature: loc('Acta oficial de 7 páginas en PDF', '7-Page Official PDF Match Report', 'Súmula oficial de 7 páginas em PDF', 'Rapport officiel de match en 7 pages PDF', 'Laporan pertandingan resmi 7 halaman PDF'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Partidos', 'Matches', 'Jogos', 'Matchs', 'Pertandingan'), feature: loc('Modelo xG-Lite y Mapa de Tiros Canónico', 'xG-Lite Model (FIFA 105:68)', 'Modelo xG-Lite e Mapa de Finalizações', 'Modèle xG-Lite et Carte de Tirs Canonique', 'Model xG-Lite & Peta Tembakan Kanonik'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Partidos', 'Matches', 'Jogos', 'Matchs', 'Pertandingan'), feature: loc('Métricas exclusivas de portería (GK)', 'Goalkeeping Exertion Metrics', 'Métricas exclusivas de goleiro (GK)', 'Métriques exclusives de gardien (GK)', 'Metrik khusus penjaga gawang (GK)'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Pizarra Táctica', 'Tactics', 'Prancheta Tática', 'Tableau Tactique', 'Papan Taktik'), feature: loc('Animaciones tácticas y exportar MP4/PNG', 'Keyframe Animations & MP4', 'Animações táticas e exportar MP4/PNG', 'Animations tactiques et export MP4/PNG', 'Animasi taktik dan ekspor MP4/PNG'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('IA Generadora', 'AI', 'IA Geradora', 'Générateur IA', 'Generator AI'), feature: loc('IA táctica y prevención de lesiones', 'AI Drills & Tactical Generator', 'IA tática e prevenção de lesões', 'IA tactique et prévention des blessures', 'AI taktik & pencegahan cedera'), free: loc('5/mes', '5/mo', '5/mês', '5/mois', '5/bln'), pro: loc('Ilimitada', 'Unlimited', 'Ilimitada', 'Illimitée', 'Tak terbatas'), starter: loc('Ilimitada', 'Unlimited', 'Ilimitada', 'Illimitée', 'Tak terbatas'), clubPro: loc('Ilimitada', 'Unlimited', 'Ilimitada', 'Illimitée', 'Tak terbatas'), premium: loc('Ilimitada', 'Unlimited', 'Ilimitada', 'Illimitée', 'Tak terbatas') },
+    { category: loc('Portal Jugador', 'Player', 'Portal Atleta', 'Portail Joueur', 'Portal Pemain'), feature: loc('Portal autónomo del jugador', 'Autonomous Player Portal', 'Portal autônomo do jogador', 'Portail autonome du joueur', 'Portal otonom pemain'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Portal Jugador', 'Player', 'Portal Atleta', 'Portail Joueur', 'Portal Pemain'), feature: loc('Wellness diario y tests ACSI-28 / MTQ-10', 'Daily Wellness & Psychological Tests', 'Wellness diário e testes ACSI-28 / MTQ-10', 'Wellness quotidien et tests ACSI-28 / MTQ-10', 'Wellness harian & tes ACSI-28 / MTQ-10'), free: false, pro: true, starter: true, clubPro: true, premium: true },
+    { category: loc('Club & Dirección', 'Club', 'Clube e Direção', 'Club et Direction', 'Klub & Akademi'), feature: loc('Panel de dirección deportiva multi-equipo', 'Multi-Team Academy Dashboard', 'Painel de direção esportiva multi-times', 'Panneau de direction sportive multi-équipes', 'Dasbor manajemen multi-tim'), free: false, pro: false, starter: true, clubPro: true, premium: true },
+    { category: loc('Club & Dirección', 'Club', 'Clube e Direção', 'Club et Direction', 'Klub & Akademi'), feature: loc('Informes consolidados de cantera', 'Consolidated PDF/CSV Reports', 'Relatórios consolidados de base', 'Rapports consolidés de formation', 'Laporan gabungan akademi'), free: false, pro: false, starter: false, clubPro: true, premium: true },
+    { category: loc('Soporte', 'Support', 'Suporte', 'Support', 'Dukungan'), feature: loc('Nivel de soporte técnico', 'Technical Support Level', 'Nível de suporte técnico', 'Niveau de support technique', 'Tingkat dukungan teknis'), free: loc('Comunitario', 'Community', 'Comunitário', 'Communautaire', 'Komunitas'), pro: loc('Estándar', 'Standard', 'Padrão', 'Standard', 'Standar'), starter: loc('Prioritario', 'Priority', 'Prioritário', 'Prioritaire', 'Prioritas'), clubPro: loc('Prioritario 24/7', '24/7 Priority', 'Prioritário 24/7', 'Prioritaire 24/7', 'Prioritas 24/7'), premium: loc('VIP Dedicado', 'VIP Dedicated', 'VIP Dedicado', 'VIP Dédié', 'VIP Khusus') }
   ];
 
   const renderCell = (val) => {
-    if (val === true) return <span className="cell-check" aria-label={isEn ? 'Included' : 'Incluido'}><Check size={16} /></span>;
-    if (val === false) return <span className="cell-x" aria-label={isEn ? 'Not Included' : 'No incluido'}><X size={16} /></span>;
+    if (val === true) return <span className="cell-check" aria-hidden="true"><Check size={16} /></span>;
+    if (val === false) return <span className="cell-x" aria-hidden="true"><X size={16} /></span>;
     return <span className="cell-text">{val}</span>;
   };
 
@@ -67,13 +82,13 @@ const LandingPage = () => {
       {/* ── 1. NAVBAR COMPACTA (VISIBLE SIN SCROLL EN 360PX) ─────────────── */}
       <header className="landing-header">
         <div className="landing-logo">
-          <img src="/logo_mister11.png" alt="Míster 11" className="landing-logo-img" />
-          <span className="landing-brand">MÍSTER 11</span>
+          <img src="/logo_mister11.png" alt={BRAND_NAME} className="landing-logo-img" />
+          <span className="landing-brand">{BRAND_NAME_UPPER}</span>
         </div>
 
         <div className="landing-header-actions">
           {/* Selector de idioma accesible con los 6 idiomas Tier 1 y touch target >=48dp */}
-          <div className="landing-lang-selector" title={isEn ? 'Select language' : 'Seleccionar idioma'}>
+          <div className="landing-lang-selector" title={t('landing.nav.selectLang')}>
             <Globe size={16} className="landing-lang-globe" aria-hidden="true" />
             <select
               className="landing-lang-dropdown"
@@ -87,7 +102,7 @@ const LandingPage = () => {
                 : language
               }
               onChange={(e) => setLanguage(e.target.value)}
-              aria-label={isEn ? 'Select language' : 'Seleccionar idioma'}
+              aria-label={t('landing.nav.selectLang')}
             >
               <option value="Español (ES)">Español (ES)</option>
               <option value="Español (Latinoamérica)">Español (Latam)</option>
@@ -103,8 +118,8 @@ const LandingPage = () => {
             type="button" 
             className="landing-theme-toggle" 
             onClick={toggleTheme}
-            title={isEn ? (darkMode ? "Switch to Light Mode" : "Switch to Dark Mode") : (darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")}
-            aria-label={isEn ? "Toggle Theme" : "Cambiar Tema"}
+            title={t('landing.nav.themeToggle')}
+            aria-label={t('landing.nav.themeToggle')}
           >
             {darkMode ? <Sun size={19} color="#D4A843" /> : <Moon size={19} color="#1B3A2D" />}
           </button>
@@ -113,9 +128,9 @@ const LandingPage = () => {
             type="button" 
             className="btn-m11-nav-login" 
             onClick={handleLogin}
-            aria-label={isEn ? 'Log in to your account' : 'Iniciar sesión en tu cuenta'}
+            aria-label={t('landing.nav.login')}
           >
-            {isEn ? 'LOG IN' : 'INICIAR SESIÓN'}
+            {t('landing.nav.login')}
           </button>
         </div>
       </header>
@@ -226,22 +241,16 @@ const LandingPage = () => {
           <div className="badge-promo">
             <span className="badge-icon">⚽</span>
             <span className="badge-text">
-              {isEn ? "THE COACH'S DIGITAL BRAIN" : "EL CEREBRO DIGITAL DEL ENTRENADOR"}
+              {t('landing.hero.badge')}
             </span>
           </div>
 
           <h1 className="hero-title">
-            {isEn ? (
-              <>Elevate your football methodology to a <span className="highlight-text">professional standard</span></>
-            ) : (
-              <>Lleva tu metodología de entrenamiento al <span className="highlight-text">nivel profesional</span></>
-            )}
+            {t('landing.hero.title_part1')} <span className="highlight-text">{t('landing.hero.title_highlight')}</span>
           </h1>
 
           <p className="hero-description">
-            {isEn
-              ? "All-in-one tactical whiteboard, live match capture with FIFA 105:68 pitch frame, injury prevention AI, validated psychometrics, and automated bilingual 7-page PDF reports."
-              : "Pizarra táctica interactiva, registro en vivo con proporción reglamentaria FIFA 105:68, prevención de lesiones con IA, tests psicométricos validados y actas oficiales en PDF."}
+            {t('landing.hero.desc')}
           </p>
 
           <div className="hero-actions">
@@ -250,17 +259,17 @@ const LandingPage = () => {
               className="btn-m11-primary hero-cta" 
               onClick={() => handleStart('pro')}
             >
-              {isEn ? 'START 7-DAY FREE TRIAL' : 'PROBAR 7 DÍAS GRATIS'} <ArrowRight size={18} />
+              {t('landing.hero.btnPrimary')} <ArrowRight size={18} />
             </button>
             <a href="#pricing" className="btn-m11-secondary hero-secondary">
-              {isEn ? 'COMPARE PLANS' : 'VER PLANES Y TARIFAS'}
+              {t('landing.hero.btnSecondary')}
             </a>
           </div>
 
           <div className="hero-trust">
-            <span className="trust-item"><Check size={16} /> {isEn ? '7 days full trial' : '7 días de prueba total'}</span>
-            <span className="trust-item"><Check size={16} /> {isEn ? 'No credit card needed' : 'Sin tarjeta de crédito'}</span>
-            <span className="trust-item"><Check size={16} /> {isEn ? 'Web, PWA & Android' : 'Web, PWA y Android'}</span>
+            <span className="trust-item"><Check size={16} /> {t('landing.trust.trial')}</span>
+            <span className="trust-item"><Check size={16} /> {t('landing.trust.noCard')}</span>
+            <span className="trust-item"><Check size={16} /> {t('landing.trust.platforms')}</span>
           </div>
         </div>
 
@@ -272,7 +281,7 @@ const LandingPage = () => {
               <div className="preview-dot yellow"></div>
               <div className="preview-dot green"></div>
               <span className="preview-title">
-                {isEn ? 'Míster11 Tactical Board · Live Pitch' : 'Pizarra Táctica Míster11 · Campo y Fichas'}
+                {t('landing.preview.title')}
               </span>
             </div>
             <div className="preview-field-canvas">
@@ -354,15 +363,14 @@ const LandingPage = () => {
                 className={`billing-switch-btn ${billingCycle === 'season' ? 'active' : ''}`}
                 onClick={() => setBillingCycle('season')}
               >
-                {t('pricing.billing.season')}
-                <span className="badge-discount">{t('pricing.billing.discountBadge')}</span>
+                {t('pricing.toggle.season')}
               </button>
               <button
                 type="button"
                 className={`billing-switch-btn ${billingCycle === 'monthly' ? 'active' : ''}`}
                 onClick={() => setBillingCycle('monthly')}
               >
-                {t('pricing.billing.monthly')}
+                {t('pricing.toggle.monthly')}
               </button>
             </div>
           </div>
@@ -628,8 +636,8 @@ const LandingPage = () => {
         <div className="footer-content">
           <div className="footer-brand-block">
             <div className="footer-logo">
-              <img src="/logo_mister11.png" alt="Míster 11" className="footer-logo-img" />
-              <span className="footer-brand-name">MÍSTER 11</span>
+              <img src="/logo_mister11.png" alt={BRAND_NAME} className="footer-logo-img" />
+              <span className="footer-brand-name">{BRAND_NAME_UPPER}</span>
             </div>
             <p className="footer-tagline">
               {t('pricing.footer.tagline')}
@@ -651,21 +659,27 @@ const LandingPage = () => {
           </div>
 
           {/* Selector Completo de 6 Idiomas Oficiales Tier 1 */}
-          <div className="footer-lang-selector-block" aria-label={isEn ? 'Language selector' : 'Selector de idiomas'}>
+          <div className="footer-lang-selector-block" aria-label={t('landing.nav.selectLang')}>
             <div className="footer-lang-label">
               <Globe size={14} color="#D4A843" />
-              <span>{isEn ? 'Languages' : 'Idiomas'}:</span>
+              <span>{t('landing.footer.languages')}:</span>
             </div>
             <div className="footer-lang-grid">
               {[
-                { code: 'Español (ES)', label: 'Español', flag: '🇪🇸' },
-                { code: 'Español (Latinoamérica)', label: 'Latam', flag: '🌎' },
-                { code: 'English (EN)', label: 'English', flag: '🇬🇧' },
-                { code: 'Português (Brasil)', label: 'Português', flag: '🇧🇷' },
-                { code: 'Français (FR)', label: 'Français', flag: '🇫🇷' },
-                { code: 'Bahasa Indonesia (ID)', label: 'Bahasa', flag: '🇮🇩' },
+                { code: 'Español (ES)', label: 'Español' },
+                { code: 'Español (Latinoamérica)', label: 'Español (Latam)' },
+                { code: 'English (EN)', label: 'English' },
+                { code: 'Português (Brasil)', label: 'Português' },
+                { code: 'Français (FR)', label: 'Français' },
+                { code: 'Bahasa Indonesia (ID)', label: 'Bahasa' },
               ].map(item => {
-                const isSelected = language === item.code || (language === 'es' && item.code.startsWith('Español (ES)')) || (language === 'en' && item.code.startsWith('English'));
+                const isSelected = language === item.code || 
+                  (language === 'es' && item.code.startsWith('Español (ES)')) || 
+                  (language === 'en' && item.code.startsWith('English')) ||
+                  (language === 'es-419' && item.code.startsWith('Español (Latinoamérica)')) ||
+                  (language === 'pt' && item.code.startsWith('Português')) ||
+                  (language === 'fr' && item.code.startsWith('Français')) ||
+                  (language === 'id' && item.code.startsWith('Bahasa'));
                 return (
                   <button
                     key={item.code}
@@ -673,8 +687,8 @@ const LandingPage = () => {
                     className={`footer-lang-chip ${isSelected ? 'active' : ''}`}
                     onClick={() => setLanguage(item.code)}
                     aria-label={`Cambiar idioma a ${item.label}`}
+                    aria-current={isSelected ? 'true' : undefined}
                   >
-                    <span className="footer-lang-flag">{item.flag}</span>
                     <span className="footer-lang-name">{item.label}</span>
                   </button>
                 );
@@ -683,7 +697,7 @@ const LandingPage = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Míster 11. {t('pricing.footer.rights')}</p>
+          <p>© {new Date().getFullYear()} {BRAND_NAME}. {t('landing.footer.rights') || t('pricing.footer.rights')}</p>
         </div>
       </footer>
     </div>

@@ -2648,7 +2648,25 @@ export const pt = {
   "xg.save_pct": "Salvar Effectiveness %",
   "xg.title": "xG-Lite Model & Exposure",
   "xg.totalTeam": "xG Total do Time",
-  "xg.total_saves": "Total Paradas"
+  "xg.total_saves": "Total Paradas",
+  "clinical.fallbackChip": "conteúdo clínico em espanhol",
+  "landing.footer.languages": "Idiomas",
+  "landing.footer.rights": "Todos os direitos reservados.",
+  "landing.hero.badge": "O CÉREBRO DIGITAL DO TREINADOR",
+  "landing.hero.btnPrimary": "EXPERIMENTAR 7 DIAS GRÁTIS",
+  "landing.hero.btnSecondary": "VER PLANOS E TARIFAS",
+  "landing.hero.desc": "Prancheta tática interativa, registro ao vivo com proporção regulamentar FIFA 105:68, prevenção de lesões com IA, testes psicométricos validados e relatórios oficiais em PDF.",
+  "landing.hero.title_highlight": "nível profissional",
+  "landing.hero.title_part1": "Leve a sua metodologia de treino ao",
+  "landing.nav.login": "INICIAR SESSÃO",
+  "landing.nav.selectLang": "Selecionar idioma",
+  "landing.nav.themeToggle": "Alternar tema",
+  "landing.preview.title": "Prancheta Tática Mister11 · Campo e Peças",
+  "landing.trust.noCard": "Sem cartão de crédito",
+  "landing.trust.platforms": "Web, PWA e Android",
+  "landing.trust.trial": "7 dias de teste total",
+  "pricing.toggle.monthly": "Mensal",
+  "pricing.toggle.season": "Passe de Temporada (Recomendado)",
 };
 
 export default pt;

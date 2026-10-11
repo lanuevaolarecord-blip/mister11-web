@@ -2648,7 +2648,25 @@ export const id = {
   "xg.save_pct": "Simpan Effectiveness %",
   "xg.title": "xG-Lite Model & Exposure",
   "xg.totalTeam": "Total xG Tim",
-  "xg.total_saves": "Total Paradas"
+  "xg.total_saves": "Total Paradas",
+  "clinical.fallbackChip": "konten klinis dalam bahasa Spanyol",
+  "landing.footer.languages": "Bahasa",
+  "landing.footer.rights": "Hak cipta dilindungi undang-undang.",
+  "landing.hero.badge": "OTAK DIGITAL PELATIH",
+  "landing.hero.btnPrimary": "COBA GRATIS 7 HARI",
+  "landing.hero.btnSecondary": "LIHAT PAKET & TARIF",
+  "landing.hero.desc": "Papan taktik interaktif, pencatatan langsung dengan proporsi lapangan regulasi FIFA 105:68, pencegahan cedera dengan AI, tes psikometri tervalidasi, dan lembar pertandingan resmi dalam PDF.",
+  "landing.hero.title_highlight": "tingkat profesional",
+  "landing.hero.title_part1": "Tingkatkan metodologi latihan Anda ke",
+  "landing.nav.login": "MASUK",
+  "landing.nav.selectLang": "Pilih bahasa",
+  "landing.nav.themeToggle": "Beralih tema",
+  "landing.preview.title": "Papan Taktik Mister11 · Lapangan dan Pion",
+  "landing.trust.noCard": "Tanpa kartu kredit",
+  "landing.trust.platforms": "Web, PWA dan Android",
+  "landing.trust.trial": "7 hari uji coba penuh",
+  "pricing.toggle.monthly": "Bulanan",
+  "pricing.toggle.season": "Tiket Musim (Direkomendasikan)",
 };
 
 export default id;

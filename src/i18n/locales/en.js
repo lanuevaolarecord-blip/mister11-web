@@ -2648,7 +2648,25 @@ export const en = {
   "xg.save_pct": "Save Effectiveness %",
   "xg.title": "xG-Lite Model & Exposure",
   "xg.totalTeam": "xG Total do Time",
-  "xg.total_saves": "Total Saves"
+  "xg.total_saves": "Total Saves",
+  "clinical.fallbackChip": "clinical content in Spanish",
+  "landing.footer.languages": "Languages",
+  "landing.footer.rights": "All rights reserved.",
+  "landing.hero.badge": "THE COACH'S DIGITAL BRAIN",
+  "landing.hero.btnPrimary": "START 7-DAY FREE TRIAL",
+  "landing.hero.btnSecondary": "COMPARE PLANS",
+  "landing.hero.desc": "Interactive tactical whiteboard, live recording with FIFA 105:68 regulatory pitch proportion, AI injury prevention, validated psychometric tests, and official PDF match sheets.",
+  "landing.hero.title_highlight": "professional standard",
+  "landing.hero.title_part1": "Elevate your football methodology to a",
+  "landing.nav.login": "LOG IN",
+  "landing.nav.selectLang": "Select language",
+  "landing.nav.themeToggle": "Toggle theme",
+  "landing.preview.title": "Mister11 Tactical Board · Live Pitch & Pieces",
+  "landing.trust.noCard": "No credit card needed",
+  "landing.trust.platforms": "Web, PWA & Android",
+  "landing.trust.trial": "7 days full trial",
+  "pricing.toggle.monthly": "Monthly",
+  "pricing.toggle.season": "Season Pass (Recommended)",
 };
 
 export default en;

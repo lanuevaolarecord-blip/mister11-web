@@ -2648,7 +2648,25 @@ export const es = {
   "xg.save_pct": "% Eficacia Paradas",
   "xg.title": "Modelo xG-Lite & Exposición",
   "xg.totalTeam": "xG Total do Time",
-  "xg.total_saves": "Total Paradas"
+  "xg.total_saves": "Total Paradas",
+  "clinical.fallbackChip": "contenido clínico en español",
+  "landing.footer.languages": "Idiomas",
+  "landing.footer.rights": "Todos los derechos reservados.",
+  "landing.hero.badge": "EL CEREBRO DIGITAL DEL ENTRENADOR",
+  "landing.hero.btnPrimary": "PROBAR 7 DÍAS GRATIS",
+  "landing.hero.btnSecondary": "VER PLANES Y TARIFAS",
+  "landing.hero.desc": "Pizarra táctica interactiva, registro en vivo con proporción reglamentaria FIFA 105:68, prevención de lesiones con IA, tests psicométricos validados y actas oficiales en PDF.",
+  "landing.hero.title_highlight": "nivel profesional",
+  "landing.hero.title_part1": "Lleva tu metodología de entrenamiento al",
+  "landing.nav.login": "INICIAR SESIÓN",
+  "landing.nav.selectLang": "Seleccionar idioma",
+  "landing.nav.themeToggle": "Cambiar tema",
+  "landing.preview.title": "Pizarra Táctica Mister11 · Campo y Fichas",
+  "landing.trust.noCard": "Sin tarjeta de crédito",
+  "landing.trust.platforms": "Web, PWA y Android",
+  "landing.trust.trial": "7 días de prueba total",
+  "pricing.toggle.monthly": "Mensual",
+  "pricing.toggle.season": "Pase de Temporada (Recomendado)",
 };
 
 export default es;

@@ -88,7 +88,7 @@ const LandingPage = () => {
 
         <div className="landing-header-actions">
           {/* Selector de idioma accesible con los 6 idiomas Tier 1 y touch target >=48dp */}
-          <div className="landing-lang-selector" title={t('landing.nav.selectLang')}>
+          <div className="landing-lang-selector landing-lang-toggle" title={t('landing.nav.selectLang')}>
             <Globe size={16} className="landing-lang-globe" aria-hidden="true" />
             <select
               className="landing-lang-dropdown"
@@ -101,7 +101,12 @@ const LandingPage = () => {
                 : (language === 'id' || language === 'id-ID' || language === 'Bahasa Indonesia (ID)') ? 'Bahasa Indonesia (ID)'
                 : language
               }
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'Español (ES)') setLanguage('es');
+                else if (val === 'English (EN)') setLanguage('en');
+                else setLanguage(val);
+              }}
               aria-label={t('landing.nav.selectLang')}
             >
               <option value="Español (ES)">Español (ES)</option>
@@ -604,11 +609,11 @@ const LandingPage = () => {
               <thead>
                 <tr>
                   <th className="th-feature">{t('pricing.comparison.thModule')}</th>
-                  <th className="th-plan">{PLANS.free.nombre}</th>
-                  <th className="th-plan featured-col">{PLANS.pro.nombre}</th>
-                  <th className="th-plan">{PLANS.club_starter.nombre}</th>
-                  <th className="th-plan">{PLANS.club_pro.nombre}</th>
-                  <th className="th-plan">{PLANS.club_premium.nombre}</th>
+                  <th className="th-plan">{t('pricing.plan.free.name') || PLANS.free.nombre}</th>
+                  <th className="th-plan featured-col">{t('pricing.plan.pro.name') || PLANS.pro.nombre}</th>
+                  <th className="th-plan">{t('pricing.plan.clubStarter.name') || PLANS.club_starter.nombre}</th>
+                  <th className="th-plan">{t('pricing.plan.clubPro.name') || PLANS.club_pro.nombre}</th>
+                  <th className="th-plan">{t('pricing.plan.clubPremium.name') || PLANS.club_premium.nombre}</th>
                 </tr>
               </thead>
               <tbody>

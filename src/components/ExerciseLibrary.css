@@ -111,7 +111,7 @@
 
 .cat-prevencion { background: rgba(76, 175, 125, 0.15); color: #1B3A2D; }
 .cat-recuperacion { background: rgba(156, 106, 59, 0.15); color: #9C6A3B; }
-.cat-fortalecimiento { background: rgba(200, 90, 50, 0.15); color: #C85A32; }
+.cat-fortalecimiento { background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); }
 .cat-movilidad { background: rgba(212, 168, 67, 0.18); color: #9C6A3B; }
 
 .exercise-card-body p {

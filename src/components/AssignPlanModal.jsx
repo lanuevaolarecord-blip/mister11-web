@@ -17,7 +17,8 @@ import {
   Home, 
   Check, 
   Ban,
-  ClipboardList 
+  ClipboardList,
+  Star 
 } from 'lucide-react';
 import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
 
@@ -284,6 +285,16 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                                 border: '1px solid rgba(200, 90, 50, 0.25)'
                               }}>
                                 <Eye size={12} /> {t('plans.assignModal.supervisionRequired', 'Supervisión presencial')}
+                              </span>
+                            )}
+                            {(ex.level || ex.difficulty) && (
+                              <span style={{
+                                fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px',
+                                background: 'rgba(212, 168, 67, 0.12)', color: '#9C6A3B', fontWeight: 600,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                border: '1px solid rgba(212, 168, 67, 0.25)'
+                              }}>
+                                <Star size={12} color="#D4A843" /> {t('exercise.level', 'Nivel')} {ex.level || ex.difficulty}
                               </span>
                             )}
                           </div>

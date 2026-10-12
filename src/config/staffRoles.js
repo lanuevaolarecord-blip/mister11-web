@@ -52,7 +52,7 @@ export const STAFF_ROLES = {
     labelEn: 'Team Delegate',
     permissions: ['read', 'edit_attendance', 'edit_communications'],
     canInviteOthers: false,
-    color: '#8B5CF6'
+    color: '#2E7D5C'
   }
 };
 

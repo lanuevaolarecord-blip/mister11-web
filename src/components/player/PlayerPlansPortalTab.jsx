@@ -18,6 +18,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  Shield,
   ShieldCheck,
   Zap,
   Info
@@ -32,86 +33,152 @@ const CANONICAL_EXERCISE_GUIDES = {
   // Tren Inferior & Isquiotibiales
   'nordico': {
     name: 'Curl Nórdico de Isquiotibiales',
+    nameEn: 'Nordic Hamstring Curl',
     category: 'Isquiotibiales / Prevención Lesiones',
+    categoryEn: 'Hamstrings / Injury Prevention',
     sets: '3 series',
+    setsEn: '3 sets',
     reps: '6-8 repeticiones',
+    repsEn: '6-8 repetitions',
     steps: [
       'De rodillas con los tobillos firmemente sujetos en el suelo.',
       'Mantén el tronco y las caderas completamente alineados en línea recta.',
       'Desciende el cuerpo hacia adelante de manera muy lenta y controlada (fase excéntrica).',
       'Frena la caída con las manos sobre el suelo y empuja suavemente para volver a la posición inicial.'
     ],
+    stepsEn: [
+      'Kneel with ankles securely anchored to the floor.',
+      'Keep torso and hips in a straight line.',
+      'Lower body forward slowly and controlled (eccentric phase).',
+      'Catch yourself with hands on the floor and push back up gently.'
+    ],
     postureTips: 'No flexiones la cadera hacia atrás. El movimiento debe ser desde la articulación de la rodilla.',
+    postureTipsEn: 'Do not bend at the hips. The movement must come from the knee joint.',
     preventionValue: 'Reduce hasta un 51% el riesgo de rotura de fibras en isquiotibiales según estudios FIFA 11+.'
   },
   'puente_gluteo': {
     name: 'Puente de Glúteos Unilateral Isométrico',
+    nameEn: 'Single-Leg Isometric Glute Bridge',
     category: 'Glúteos y Cadera',
+    categoryEn: 'Glutes and Hips',
     sets: '3 series',
+    setsEn: '3 sets',
     reps: '10 reps por pierna (mantener 3s arriba)',
+    repsEn: '10 reps per leg (hold 3s at top)',
     steps: [
       'Tumbado boca arriba con rodillas flexionadas a 90 grados y pies apoyados.',
       'Eleva una pierna extendida hacia el techo.',
       'Empuja con el talón de la pierna apoyada elevando la cadera hasta formar una línea recta desde el hombro a la rodilla.',
       'Aprieta el glúteo en el punto más alto durante 3 segundos antes de bajar lentamente.'
     ],
+    stepsEn: [
+      'Lie on back with knees bent at 90 degrees and feet flat.',
+      'Extend one leg toward the ceiling.',
+      'Drive through planted heel to raise hips in a straight line.',
+      'Squeeze glute at highest point for 3 seconds before lowering slowly.'
+    ],
     postureTips: 'Evita arquear excesivamente la zona lumbar; la fuerza proviene del glúteo y la cadera.',
+    postureTipsEn: 'Avoid hyperextending lumbar spine; drive power from glute and hip.',
     preventionValue: 'Mejora la estabilidad de la pelvis y previene sobrecargas en pubis y aductores.'
   },
   'sentadilla_bulgara': {
     name: 'Sentadilla Búlgara Unilateral',
+    nameEn: 'Bulgarian Split Squat',
     category: 'Fuerza Unilateral / Cuádriceps',
+    categoryEn: 'Unilateral Strength / Quadriceps',
     sets: '3 series',
+    setsEn: '3 sets',
     reps: '8-10 reps por pierna',
+    repsEn: '8-10 reps per leg',
     steps: [
       'Coloca un pie apoyado atrás sobre un banco o cajón bajo.',
       'Da un paso adelante con la pierna delantera y desciende verticalmente la cadera.',
       'La rodilla delantera debe alinearse con la punta del pie sin sobrepasarla excesivamente.',
       'Empuja con el mediopié para regresar arriba manteniendo el pecho erguido.'
     ],
+    stepsEn: [
+      'Place rear foot on a low bench or box behind you.',
+      'Step forward with front leg and descend hips vertically.',
+      'Front knee aligns with toes without collapsing inward.',
+      'Drive through midfoot to return to top with chest tall.'
+    ],
     postureTips: 'Mantén el abdomen firme y la mirada al frente para evitar que el tronco se incline en exceso.',
+    postureTipsEn: 'Keep core engaged and eyes forward to avoid excessive forward lean.',
     preventionValue: 'Corrige asimetrías de fuerza entre ambas piernas y estabiliza el ligamento cruzado anterior (LCA).'
   },
   'plancha_frontal': {
     name: 'Plancha Frontal Isométrica con Elevación',
+    nameEn: 'Isometric Front Plank with Leg Lift',
     category: 'Core / Estabilidad Lumbo-Pélvica',
+    categoryEn: 'Core / Lumbo-Pelvic Stability',
     sets: '3-4 series',
+    setsEn: '3-4 sets',
     reps: '40-45 segundos',
+    repsEn: '40-45 seconds',
     steps: [
       'Apoya los antebrazos y las puntas de los pies en el suelo, codos bajo los hombros.',
       'Contrae fuertemente glúteos y abdomen para mantener la columna en posición neutra.',
       'Opcional: realiza pequeñas elevaciones alternas de pierna (3 segundos cada una) sin rotar la pelvis.',
       'Respira de forma fluida y constante sin contener el aire.'
     ],
+    stepsEn: [
+      'Rest forearms and toes on floor with elbows beneath shoulders.',
+      'Squeeze glutes and core to keep spine in neutral alignment.',
+      'Optional: perform small alternating leg lifts (3s each) without pelvic rotation.',
+      'Breathe smoothly and continuously without holding breath.'
+    ],
     postureTips: 'Evita que la cadera caiga hacia el suelo o se eleve en forma de pirámide.',
+    postureTipsEn: 'Avoid sagging hips or piking up into a pyramid position.',
     preventionValue: 'Base fundamental de transferencia de fuerza en carrera, salto y golpeo de balón.'
   },
   'deadbug': {
     name: 'Dead Bug (Bicho Muerto) Anti-Extensión',
+    nameEn: 'Dead Bug Anti-Extension',
     category: 'Core y Coordinación Lumbar',
+    categoryEn: 'Core and Lumbar Coordination',
     sets: '3 series',
+    setsEn: '3 sets',
     reps: '12 repeticiones alternas',
+    repsEn: '12 alternating reps',
     steps: [
       'Tumbado boca arriba con brazos apuntando al techo y rodillas flexionadas a 90 grados.',
       'Pega firmemente la zona lumbar contra el suelo.',
       'Extiende el brazo derecho hacia atrás y la pierna izquierda hacia adelante de forma simultánea.',
       'Vuelve al centro de forma controlada y repite con el brazo y pierna contrarios.'
     ],
+    stepsEn: [
+      'Lie on back with arms pointing to ceiling and knees bent at 90 degrees.',
+      'Press lower back flat against floor.',
+      'Extend right arm back and left leg forward simultaneously.',
+      'Return to center under control and repeat with opposite limbs.'
+    ],
     postureTips: 'La zona lumbar NUNCA debe despegarse del suelo durante el movimiento.',
+    postureTipsEn: 'Lower back must NEVER lose contact with the floor during movement.',
     preventionValue: 'Protege contra pubalgias y lumbalgias provocadas por aceleraciones y golpeos potentes.'
   },
   'movilidad_tobillo': {
     name: 'Movilidad de Dorsiflexión de Tobillo en Pared',
+    nameEn: 'Wall Ankle Dorsiflexion Mobility',
     category: 'Movilidad Articular y Prevención',
+    categoryEn: 'Joint Mobility and Injury Prevention',
     sets: '2 series',
+    setsEn: '2 sets',
     reps: '15 oscilaciones por pie',
+    repsEn: '15 oscillations per foot',
     steps: [
       'Colócate de pie a 10 cm de una pared con una rodilla adelantada.',
       'Lleva la rodilla hacia la pared sin que el talón se levante del suelo.',
       'Mantén la tensión 2 segundos al llegar al rango máximo y regresa suavemente.',
       'Aumenta la distancia a la pared gradualmente a medida que ganes rango.'
     ],
+    stepsEn: [
+      'Stand 10 cm away from wall with front knee forward.',
+      'Drive knee toward wall keeping heel planted on floor.',
+      'Hold tension for 2 seconds at end range and return smoothly.',
+      'Gradually increase distance from wall as range improves.'
+    ],
     postureTips: 'La rodilla debe proyectarse recta hacia el segundo dedo del pie, sin colapsar hacia adentro.',
+    postureTipsEn: 'Knee must track straight toward second toe without collapsing inward.',
     preventionValue: 'Fundamental para prevenir esguinces de tobillo y tendinopatías rotulianas en giros y frenadas.'
   }
 };
@@ -252,16 +319,31 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const fallbackList = Object.values(CANONICAL_EXERCISE_GUIDES);
     const defaultCanonical = fallbackList[idx % fallbackList.length];
 
-    const isEnglishLocale = (language || '').toLowerCase().startsWith('en');
-    const name = (isEnglishLocale ? (catMatch?.nameEn || foundInTeam?.nameEn) : (catMatch?.nameEs || foundInTeam?.nameEs)) || directName || canonical?.name || defaultCanonical.name;
-    const category = ex.category || catMatch?.category || foundInTeam?.category || canonical?.category || defaultCanonical.category;
-    const sets = directSets || canonical?.sets || defaultCanonical.sets;
-    const reps = directReps || canonical?.reps || defaultCanonical.reps;
+    const loc = (language || 'es').toLowerCase();
+    const isEnglishLocale = loc.startsWith('en');
+    const isNonSpanish = ['pt', 'fr', 'id'].includes(loc.slice(0, 2));
+
+    const name = (isEnglishLocale 
+      ? (catMatch?.nameEn || foundInTeam?.nameEn || canonical?.nameEn || defaultCanonical.nameEn) 
+      : (catMatch?.nameEs || foundInTeam?.nameEs || canonical?.name || defaultCanonical.name)) || directName || defaultCanonical.name;
+    const category = (isEnglishLocale
+      ? (canonical?.categoryEn || defaultCanonical.categoryEn)
+      : (ex.category || catMatch?.category || foundInTeam?.category || canonical?.category || defaultCanonical.category)) || defaultCanonical.category;
+    const sets = directSets || (isEnglishLocale ? (canonical?.setsEn || defaultCanonical.setsEn) : (canonical?.sets || defaultCanonical.sets));
+    const reps = directReps || (isEnglishLocale ? (canonical?.repsEn || defaultCanonical.repsEn) : (canonical?.reps || defaultCanonical.reps));
     const cue = (isEnglishLocale ? (catMatch?.descriptionEn || foundInTeam?.descriptionEn) : (catMatch?.descriptionEs || foundInTeam?.descriptionEs)) || directDesc || '';
     const coachingPoints = (isEnglishLocale ? (catMatch?.coachingPointsEn || catMatch?.coachingPoints) : (catMatch?.coachingPointsEs || catMatch?.coachingPoints)) || [];
-    const steps = ex.steps || foundInTeam?.steps || canonical?.steps || defaultCanonical.steps;
-    const postureTips = ex.postureTips || foundInTeam?.postureTips || canonical?.postureTips || defaultCanonical.postureTips;
-    const preventionValue = canonical?.preventionValue || defaultCanonical.preventionValue;
+    const steps = ex.steps || foundInTeam?.steps || (isEnglishLocale ? (canonical?.stepsEn || defaultCanonical.stepsEn) : (canonical?.steps || defaultCanonical.steps));
+    const postureTips = ex.postureTips || foundInTeam?.postureTips || (isEnglishLocale ? (canonical?.postureTipsEn || defaultCanonical.postureTipsEn) : (canonical?.postureTips || defaultCanonical.postureTips));
+    
+    // Carril B: Cues clínicos de prevención (solo en ES/EN directo; en PT/FR/ID con chip de fallback clínico traducido)
+    const rawPrevention = canonical?.preventionValue || defaultCanonical.preventionValue;
+    const isClinical = category === 'prevencion' || String(category).toLowerCase().includes('prevenci') || !!canonical;
+    const isClinicalFallback = isNonSpanish && isClinical;
+    const preventionValue = (isClinicalFallback && rawPrevention)
+      ? `[${t('clinical.fallbackChip')}: ${rawPrevention}]`
+      : rawPrevention;
+
     const illustration = ex.illustration || catMatch?.illustration || foundInTeam?.illustration || {
       type: 'pendiente',
       url: null,
@@ -278,6 +360,8 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       steps,
       postureTips,
       preventionValue,
+      rawPrevention,
+      isClinicalFallback,
       illustration
     };
   };
@@ -424,6 +508,26 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 <div className="exercise-badges-row">
                                   <span className="exercise-dos-pill">{details.sets} · {details.reps}</span>
                                   <span className="exercise-cat-pill">{details.category}</span>
+                                  {details.isClinicalFallback && (
+                                    <span 
+                                      className="clinical-fallback-chip"
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: '700',
+                                        backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                                        color: 'var(--m11-oro, #D4A843)',
+                                        border: '1px solid rgba(212, 168, 67, 0.4)',
+                                        marginLeft: '4px'
+                                      }}
+                                    >
+                                      <Shield size={12} /> {t('clinical.fallbackChip')}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
@@ -506,9 +610,17 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                     <p>{details.preventionValue}</p>
                                   </div>
 
-                                  <div className="guide-verification-chip">
-                                    <span className="guide-verification-dot" />
-                                    <span>{t('exerciseCatalog.clinicalFallbackNotice')}</span>
+                                  <div className="guide-verification-chip${details.isClinicalFallback ? ' clinical-fallback-chip' : ''}">
+                                    {details.isClinicalFallback ? (
+                                      <Shield size={13} color="var(--m11-oro, #D4A843)" />
+                                    ) : (
+                                      <span className="guide-verification-dot" />
+                                    )}
+                                    <span>
+                                      {details.isClinicalFallback
+                                        ? `[${t('clinical.fallbackChip')}: ${details.rawPrevention || details.preventionValue}]`
+                                        : t('exerciseCatalog.clinicalFallbackNotice')}
+                                    </span>
                                   </div>
                                 </div>
 

@@ -84,69 +84,19 @@ for (const [k, v] of Object.entries(en)) {
     frUpdated++;
     idUpdated++;
   } else {
-    // Si aún coincide con EN, traducimos usando heurística de palabra clave desde español
-    if (pt[k] === v) {
-      if (vEs !== v) {
-        pt[k] = vEs
-          .replace(/Sesión/g, 'Sessão')
-          .replace(/sesión/g, 'sessão')
-          .replace(/Partido/g, 'Partida')
-          .replace(/partido/g, 'partida')
-          .replace(/Jugador/g, 'Jogador')
-          .replace(/jugador/g, 'jogador')
-          .replace(/Equipo/g, 'Time')
-          .replace(/equipo/g, 'time')
-          .replace(/Guardar/g, 'Salvar')
-          .replace(/guardar/g, 'salvar')
-          .replace(/Eliminar/g, 'Excluir')
-          .replace(/eliminar/g, 'excluir')
-          .replace(/Ver/g, 'Ver')
-          .replace(/Total/g, 'Total')
-          .replace(/Media/g, 'Média');
-        ptUpdated++;
-      }
+    // MODIFICACIÓN OLEADA 6.3b: Prohibido find-replace de subcadenas sueltas.
+    // Toda traducción debe definirse explícitamente en TERM_MAP por clave o diccionario canónico.
+    if (pt[k] === v && vEs !== v && TERM_MAP[vEs]?.pt) {
+      pt[k] = TERM_MAP[vEs].pt;
+      ptUpdated++;
     }
-    if (fr[k] === v) {
-      if (vEs !== v) {
-        fr[k] = vEs
-          .replace(/Sesión/g, 'Séance')
-          .replace(/sesión/g, 'séance')
-          .replace(/Partido/g, 'Match')
-          .replace(/partido/g, 'match')
-          .replace(/Jugador/g, 'Joueur')
-          .replace(/jugador/g, 'joueur')
-          .replace(/Equipo/g, 'Équipe')
-          .replace(/equipo/g, 'équipe')
-          .replace(/Guardar/g, 'Enregistrer')
-          .replace(/guardar/g, 'enregistrer')
-          .replace(/Eliminar/g, 'Supprimer')
-          .replace(/eliminar/g, 'supprimer')
-          .replace(/Ver/g, 'Voir')
-          .replace(/Total/g, 'Total')
-          .replace(/Media/g, 'Moyenne');
-        frUpdated++;
-      }
+    if (fr[k] === v && vEs !== v && TERM_MAP[vEs]?.fr) {
+      fr[k] = TERM_MAP[vEs].fr;
+      frUpdated++;
     }
-    if (id[k] === v) {
-      if (vEs !== v) {
-        id[k] = vEs
-          .replace(/Sesión/g, 'Sesi')
-          .replace(/sesión/g, 'sesi')
-          .replace(/Partido/g, 'Pertandingan')
-          .replace(/partido/g, 'pertandingan')
-          .replace(/Jugador/g, 'Pemain')
-          .replace(/jugador/g, 'pemain')
-          .replace(/Equipo/g, 'Tim')
-          .replace(/equipo/g, 'tim')
-          .replace(/Guardar/g, 'Simpan')
-          .replace(/guardar/g, 'simpan')
-          .replace(/Eliminar/g, 'Hapus')
-          .replace(/eliminar/g, 'hapus')
-          .replace(/Ver/g, 'Lihat')
-          .replace(/Total/g, 'Total')
-          .replace(/Media/g, 'Rata-rata');
-        idUpdated++;
-      }
+    if (id[k] === v && vEs !== v && TERM_MAP[vEs]?.id) {
+      id[k] = TERM_MAP[vEs].id;
+      idUpdated++;
     }
   }
 }

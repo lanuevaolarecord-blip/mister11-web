@@ -44,7 +44,7 @@ export const STAFF_ROLES = {
     labelEn: 'Tactical Analyst',
     permissions: ['read', 'write', 'edit_stats'],
     canInviteOthers: false,
-    color: '#2E7D5C'
+    color: '#2E7D52'
   },
   DELEGATE: {
     id: 'delegate',
@@ -52,7 +52,7 @@ export const STAFF_ROLES = {
     labelEn: 'Team Delegate',
     permissions: ['read', 'edit_attendance', 'edit_communications'],
     canInviteOthers: false,
-    color: '#2E7D5C'
+    color: '#2E7D52'
   }
 };
 

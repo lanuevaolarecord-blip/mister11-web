@@ -351,7 +351,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                         padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700,
                         background: 'rgba(27, 58, 45, 0.08)', color: '#1B3A2D', border: '1px solid rgba(27, 58, 45, 0.2)'
                       }}>
-                        <Baby size={14} /> {t('exercise.minSafeAge', 'Edad mín. segura')}: {minAgeSafe} {isEn ? 'years' : 'años'}
+                        <Baby size={14} /> {t('exercise.minSafeAge', 'Edad mín. segura')}: {minAgeSafe} {isEn ? 'years' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : language === 'id' ? 'tahun' : 'años')}
                       </span>
                     )}
 

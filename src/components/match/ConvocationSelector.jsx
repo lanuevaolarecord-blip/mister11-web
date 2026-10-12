@@ -70,7 +70,7 @@ const getRoleBadgeColor = (roleId) => {
     case 'gk_coach':
       return { bg: 'rgba(16, 185, 129, 0.18)', border: '#10B981', text: '#34D399' };
     case 'analyst':
-      return { bg: 'rgba(46, 125, 92, 0.18)', border: '#2E7D5C', text: '#4CAF7D' };
+      return { bg: 'rgba(46, 125, 82, 0.18)', border: '#2E7D52', text: '#4CAF7D' };
     case 'physio':
       return { bg: 'rgba(239, 68, 68, 0.18)', border: '#EF4444', text: '#F87171' };
     default:

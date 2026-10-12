@@ -264,7 +264,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                                 display: 'inline-flex', alignItems: 'center', gap: '4px',
                                 border: '1px solid rgba(200, 90, 50, 0.3)'
                               }}>
-                                <Ban size={12} /> {t('plans.assignModal.ageBlocked', 'No apto para edad')} ({minAge} {isEn ? 'yrs' : 'años'})
+                                <Ban size={12} /> {t('plans.assignModal.ageBlocked', 'No apto para edad')} ({minAge} {isEn ? 'yrs' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : language === 'id' ? 'tahun' : 'años')})
                               </span>
                             )}
                             {!isBlocked && minAge > 0 && (
@@ -274,7 +274,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                                 display: 'inline-flex', alignItems: 'center', gap: '4px',
                                 border: '1px solid rgba(27, 58, 45, 0.2)'
                               }}>
-                                <Baby size={12} /> {t('plans.assignModal.minAge', 'Edad mín.')}: {minAge} {isEn ? 'yrs' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : 'años')}
+                                <Baby size={12} /> {t('plans.assignModal.minAge', 'Edad mín.')}: {minAge} {isEn ? 'yrs' : (language === 'pt' ? 'anos' : language === 'fr' ? 'ans' : language === 'id' ? 'tahun' : 'años')}
                               </span>
                             )}
                             {reqSupervision && (

@@ -539,7 +539,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                         marginLeft: '4px'
                                       }}
                                     >
-                                      ⛔ {t('player.plans.notAgeSafe')}
+                                      <Ban size={12} /> {t('player.plans.notAgeSafe')}
                                     </span>
                                   )}
                                   {details.isClinicalFallback && (

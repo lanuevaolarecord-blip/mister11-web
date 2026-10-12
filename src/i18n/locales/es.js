@@ -2856,7 +2856,10 @@ export const es = {
   "player.stats.sleepQuality": "CALIDAD SUEÑO",
   "player.stats.energyMood": "ENERGÍA / ÁNIMO",
   "player.stats.muscleStatus": "ESTADO MUSCULAR",
-  "player.profile.sectionsAria": "Secciones del perfil de jugador"
+  "player.profile.sectionsAria": "Secciones del perfil de jugador",
+  "player.banner.viewFullAnalytics": "Ver analíticas completas",
+  "player.banner.techSummary": "Resumen técnico",
+  "player.banner.renewTests": "Renovar cuestionarios y tests",
 };
 
 export default es;

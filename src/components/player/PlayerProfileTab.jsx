@@ -125,7 +125,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const { matches } = usePlayerSeasonStats(effectiveTeamId);
   const playerSeasonStats = useMemo(() => calculatePlayerMatchStats(player?.id, matches), [player?.id, matches]);
 
-  // Evaluaciones y tests en tiempo real 100% sincronizados con Míster11
+  // Evaluaciones y tests en tiempo real 100% sincronizados con Mister11
   const [evaluations, setEvaluations] = useState([]);
   const effectivePlayerId = player?.id || 'player-self';
   const cleanTeamPath = (teamPath || (effectiveTeamId ? `equipos/${effectiveTeamId}` : '')).replace(/^\/+|\/+$/g, '');

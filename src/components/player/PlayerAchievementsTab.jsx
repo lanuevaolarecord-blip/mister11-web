@@ -131,7 +131,9 @@ export const PlayerAchievementsTab = ({
           </div>
           <div className="stat-divider" />
           <div className="stat-box">
-            <span className="stat-num xp-gold">✨ {totalXP} XP</span>
+            <span className="stat-num xp-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Sparkles size={14} /> {totalXP} XP
+            </span>
             <span className="stat-lbl" style={{ fontWeight: 800 }}>{t('player.achievements.xpTitle')}</span>
             <span style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>
               {t('player.achievements.xpSubtitle')}
@@ -146,8 +148,9 @@ export const PlayerAchievementsTab = ({
           type="button"
           className={`tier-filter-btn ${selectedTier === 'ALL' ? 'active' : ''}`}
           onClick={() => setSelectedTier('ALL')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          🏆 {t('player.achievements.filterAll', { count: achievements.length })}
+          <Trophy size={14} /> {t('player.achievements.filterAll', { count: achievements.length })}
         </button>
         {Object.entries(ACHIEVEMENT_TIERS).map(([key, tier]) => {
           const count = achievements.filter(a => a.tier === key).length;

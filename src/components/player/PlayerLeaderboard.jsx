@@ -20,7 +20,7 @@ import './PlayerLeaderboard.css';
 
 /**
  * PlayerLeaderboard.jsx
- * Sistema de Clasificación y Rendimiento Gaming para jugadores de Míster11.
+ * Sistema de Clasificación y Rendimiento Gaming para jugadores de Mister11.
  * Gamificación basada 100% en datos reales del entrenador (minutos, asistencia, actas oficiales).
  */
 export const PlayerLeaderboard = ({ 
@@ -112,13 +112,13 @@ export const PlayerLeaderboard = ({
       const matchesXP = xpBreakdown.matchXP;
 
       // Determinación de Rango / Nivel Gaming Real
-      let tier = { name: 'BRONCE', color: '#CD7F32', icon: '🥉', minXP: 0 };
+      let tier = { name: 'BRONCE', color: '#CD7F32', minXP: 0 };
       if (totalXP >= 500) {
-        tier = { name: 'DIAMANTE', color: '#60A5FA', icon: '💎', minXP: 500 };
+        tier = { name: 'DIAMANTE', color: '#60A5FA', minXP: 500 };
       } else if (totalXP >= 300) {
-        tier = { name: 'ORO', color: '#C9A84C', icon: '🥇', minXP: 300 };
+        tier = { name: 'ORO', color: '#C9A84C', minXP: 300 };
       } else if (totalXP >= 150) {
-        tier = { name: 'PLATA', color: '#94A3B8', icon: '🥈', minXP: 150 };
+        tier = { name: 'PLATA', color: '#94A3B8', minXP: 150 };
       }
 
       return {
@@ -285,7 +285,7 @@ export const PlayerLeaderboard = ({
                 )}
               </div>
               <div className="podium-medal-pill silver">
-                <span>🥈 2º</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><Medal size={12} color="#94A3B8" /> 2º</span>
               </div>
             </div>
             <div className="podium-info-box">
@@ -293,7 +293,7 @@ export const PlayerLeaderboard = ({
               <span className="podium-stat-val">
                 {activeFilter === 'ATTENDANCE' ? `${top2.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top2.totalMinutes}'` :
-                 activeFilter === 'ACHIEVEMENTS' ? `${top2.achievementsCount} 🏆` :
+                 activeFilter === 'ACHIEVEMENTS' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>{top2.achievementsCount} <Award size={12} color="#C9A84C" /></span> :
                  `${top2.totalXP} XP`}
               </span>
             </div>
@@ -306,7 +306,7 @@ export const PlayerLeaderboard = ({
         {top1 && (
           <div className={`podium-column rank-1 ${top1.isCurrent ? 'is-me' : ''}`}>
             <div className="podium-avatar-container">
-              <span className="crown-icon">👑</span>
+              <span className="crown-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Crown size={20} color="#C9A84C" /></span>
               <div className="podium-dorsal gold-ring">
                 {top1.photoUrl ? (
                   <img src={top1.photoUrl} alt={top1.firstName} className="podium-avatar-img" />
@@ -315,7 +315,7 @@ export const PlayerLeaderboard = ({
                 )}
               </div>
               <div className="podium-medal-pill gold">
-                <span>🥇 1º</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><Trophy size={12} color="#C9A84C" /> 1º</span>
               </div>
             </div>
             <div className="podium-info-box">
@@ -323,7 +323,7 @@ export const PlayerLeaderboard = ({
               <span className="podium-stat-val gold-stat">
                 {activeFilter === 'ATTENDANCE' ? `${top1.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top1.totalMinutes}'` :
-                 activeFilter === 'ACHIEVEMENTS' ? `${top1.achievementsCount} 🏆` :
+                 activeFilter === 'ACHIEVEMENTS' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>{top1.achievementsCount} <Award size={12} color="#C9A84C" /></span> :
                  `${top1.totalXP} XP`}
               </span>
             </div>
@@ -345,7 +345,7 @@ export const PlayerLeaderboard = ({
                 )}
               </div>
               <div className="podium-medal-pill bronze">
-                <span>🥉 3º</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><Medal size={12} color="#CD7F32" /> 3º</span>
               </div>
             </div>
             <div className="podium-info-box">
@@ -353,7 +353,7 @@ export const PlayerLeaderboard = ({
               <span className="podium-stat-val">
                 {activeFilter === 'ATTENDANCE' ? `${top3.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top3.totalMinutes}'` :
-                 activeFilter === 'ACHIEVEMENTS' ? `${top3.achievementsCount} 🏆` :
+                 activeFilter === 'ACHIEVEMENTS' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>{top3.achievementsCount} <Award size={12} color="#CD7F32" /></span> :
                  `${top3.totalXP} XP`}
               </span>
             </div>
@@ -380,9 +380,9 @@ export const PlayerLeaderboard = ({
         {sortedPlayers.map((p) => {
           const isTop3 = p.rank <= 3;
           let rankBadge = `#${p.rank}`;
-          if (p.rank === 1) rankBadge = '🥇';
-          if (p.rank === 2) rankBadge = '🥈';
-          if (p.rank === 3) rankBadge = '🥉';
+          if (p.rank === 1) rankBadge = <Trophy size={14} color="#C9A84C" />;
+          if (p.rank === 2) rankBadge = <Medal size={14} color="#94A3B8" />;
+          if (p.rank === 3) rankBadge = <Medal size={14} color="#CD7F32" />;
 
           return (
             <div 

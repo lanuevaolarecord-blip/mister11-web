@@ -1,6 +1,6 @@
 /**
  * src/components/player/PlayerChatTab.jsx
- * Míster11 — Canal Directo y Chat 1:1 en Tiempo Real (Míster ↔ Jugador/Padre)
+ * Mister11 — Canal Directo y Chat 1:1 en Tiempo Real (Mister ↔ Jugador/Padre)
  * Cumplimiento Política UGC Google Play: Denunciar y Bloquear usuarios
  */
 
@@ -39,18 +39,18 @@ import { SpellCheckedInput } from '../ui/SpellCheckedInput';
 import './PlayerChatTab.css';
 
 const PLAYER_QUICK_REPLIES = [
-  '🏃 Llego 10 min tarde',
-  '🩺 Tengo molestia muscular',
-  '❓ Míster, ¿puedo hablar contigo?',
-  '✅ Todo listo para el partido',
-  '🚗 Necesito transporte para el desplazamiento'
+  'Llego 10 min tarde',
+  'Tengo molestia muscular',
+  'Mister, ¿puedo hablar contigo?',
+  'Todo listo para el partido',
+  'Necesito transporte para el desplazamiento'
 ];
 
 const COACH_QUICK_REPLIES = [
-  '👍 Recibido, nos vemos en el campo',
-  '⏰ Acuérdate de llegar 15 min antes',
-  '🩺 Descansa y avísame si persiste el dolor',
-  '📋 Convocatoria confirmada, ¡a por todas!'
+  'Recibido, nos vemos en el campo',
+  'Acuérdate de llegar 15 min antes',
+  'Descansa y avísame si persiste el dolor',
+  'Convocatoria confirmada, ¡a por todas!'
 ];
 
 export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, isCoachView = false }) => {

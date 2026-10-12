@@ -34,11 +34,11 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
   ];
 
   const OFFICIAL_STATUS_CONFIG = {
-    present:   { label: 'Presente',   labelEn: 'Present',   color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', icon: '✅' },
+    present:   { label: 'Presente',   labelEn: 'Present',   color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', icon: '' },
     late:      { label: 'Tarde',      labelEn: 'Late',      color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', icon: '⏱️' },
-    justified: { label: 'Justificado',labelEn: 'Justified', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '📝' },
-    absent:    { label: 'Ausente',    labelEn: 'Absent',    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', icon: '❌' },
-    injured:   { label: 'Lesionado',  labelEn: 'Injured',   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '🚑' },
+    justified: { label: 'Justificado',labelEn: 'Justified', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '' },
+    absent:    { label: 'Ausente',    labelEn: 'Absent',    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', icon: '' },
+    injured:   { label: 'Lesionado',  labelEn: 'Injured',   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '' },
   };
 
   const effectivePlayerId = player?.id || user?.uid;
@@ -342,7 +342,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
               <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'schedule-session-card'}`}>
                 <div className="event-card-top">
                   <div className="event-type-badge">
-                    {isMatch ? `🏆 ${t('player.schedule.match')}` : `⚽ ${t('player.schedule.training')}`}
+                    {isMatch ? t('player.schedule.match') : t('player.schedule.training')}
                   </div>
                   <div className="event-date-pill">
                     {dateDisplay}
@@ -413,7 +413,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                            {isStarter ? `⭐ ${t('player.schedule.starter', {}, 'Titular')}` : isSub ? `🔄 ${t('player.schedule.substitute', {}, 'Suplente')}` : isCalled ? `📋 ${t('player.schedule.calledUp', {}, 'Convocado')}` : t('player.schedule.noMinutes', {}, 'Sin minutos')}
+                            {isStarter ? t('player.schedule.starter', {}, 'Titular') : isSub ? t('player.schedule.substitute', {}, 'Suplente') : isCalled ? t('player.schedule.calledUp', {}, 'Convocado') : t('player.schedule.noMinutes', {}, 'Sin minutos')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>
                             ⏱️ {playerStats?.minutesPlayed || 0} min {t('player.schedule.played', {}, 'jugados')}
@@ -421,7 +421,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                         </div>
                         {playerStats?.coachRating && (
                           <div style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 700 }}>
-                            {t('player.schedule.coachRating', {}, 'Nota del Míster:')} {playerStats.coachRating} / 10
+                            {t('player.schedule.coachRating', {}, 'Nota del Mister:')} {playerStats.coachRating} / 10
                           </div>
                         )}
                         {(() => {
@@ -442,10 +442,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                               color: '#60A5FA',
                               fontWeight: 700
                             }}>
-                              <span>🧤 {t('gk.saves')}: {gkMatch.saves || 0}</span>
-                              <span>🥅 {t('gk.conceded')}: {gkMatch.conceded || 0}</span>
-                              <span>🧼 {t('gk.cleanSheets')}: {gkMatch.cleanSheet ? t('common.yes', {}, 'Sí') : t('common.no', {}, 'No')}</span>
-                              {(gkMatch.penaltySaves || 0) > 0 && <span>🛡️ {t('gk.penaltySaves')}: {gkMatch.penaltySaves}</span>}
+                              <span>{t('gk.saves')}: {gkMatch.saves || 0}</span>
+                              <span>{t('gk.conceded')}: {gkMatch.conceded || 0}</span>
+                              <span>{t('gk.cleanSheets')}: {gkMatch.cleanSheet ? t('common.yes', {}, 'Sí') : t('common.no', {}, 'No')}</span>
+                              {(gkMatch.penaltySaves || 0) > 0 && <span>{t('gk.penaltySaves')}: {gkMatch.penaltySaves}</span>}
                             </div>
                           );
                         })()}
@@ -468,7 +468,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                         alignItems: 'center',
                         gap: '8px',
                       }}>
-                        <span style={{ fontSize: '18px' }}>📋</span>
+                        <FileText size={18} color="#4CAF7D" />
                         <div>
                           <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10B981' }}>
                             {t('player.schedule.sheetClosed', {}, 'Acta oficial cerrada')}
@@ -641,7 +641,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                  (evt.photos || evt.fotos || evt.capturas || evt.images).length > 0 && (
                   <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-light, rgba(255,255,255,0.08))', paddingTop: '10px' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
-                      📸 {t('player.schedule.photosCaptures', {}, 'Fotos y Capturas del Evento')} ({(evt.photos || evt.fotos || evt.capturas || evt.images).length})
+                      {t('player.schedule.photosCaptures', {}, 'Fotos y Capturas del Evento')} ({(evt.photos || evt.fotos || evt.capturas || evt.images).length})
                     </span>
                     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
                       {(evt.photos || evt.fotos || evt.capturas || evt.images).map((photoUrl, pIdx) => (

@@ -77,7 +77,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         const matches = rawMatches.map(d => ({
           id: d.id,
           type: 'match',
-          title: `🏆 Partido vs ${d.rival || d.opponent || 'Rival'}`,
+          title: `${t('player.schedule.match', {}, 'Partido')} vs ${d.rival || d.opponent || 'Rival'}`,
           date: d.fecha || d.date,
           time: d.hora || d.time || '11:00',
           duration: 90,
@@ -226,7 +226,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         </div>
         <div className="player-header-text">
           <span className="player-team-pill">
-            ⚽ {team?.nombre || team?.name || t('nav.equipo')} · {player?.position || t('player.home.defaultRole', {}, 'Jugador')}
+            {team?.nombre || team?.name || t('nav.equipo')} · {player?.position || t('player.home.defaultRole', {}, 'Jugador')}
           </span>
           <h2 className="player-greeting">
             {t('player.home.greeting', { name: player?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || t('player.home.defaultCrack', {}, 'Crack') })}
@@ -326,7 +326,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
           </div>
           <div className="stat-content">
             <span className="stat-label">{t('player.home.goals')}</span>
-            <span className="stat-number mono">{seasonPerformance.goals} ⚽</span>
+            <span className="stat-number mono">{seasonPerformance.goals}</span>
             <span className="stat-sub">
               {t('player.home.goalsSummary', {
                 goals: seasonPerformance.goals,
@@ -358,7 +358,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.2rem' }}>{closestAchievement.tierInfo?.icon || '🏆'}</span>
+              <Trophy size={20} color="#C9A84C" />
               <div>
                 <span style={{ fontSize: '0.7rem', color: darkMode ? '#D4A843' : '#B45309', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {closestAchievement.tier === 'GOLD' 
@@ -406,7 +406,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             {announcements.map((ann) => (
               <div key={ann.id} className="announcement-item">
                 <div className="ann-header">
-                  <span className="ann-author">⚽ {ann.authorName || t('player.home.staffAuthor', {}, 'Cuerpo Técnico')}</span>
+                  <span className="ann-author">{ann.authorName || t('player.home.staffAuthor', {}, 'Cuerpo Técnico')}</span>
                   <span className="ann-date">
                     {(() => {
                       if (!ann.createdAt) return t('player.home.recent', {}, 'Reciente');

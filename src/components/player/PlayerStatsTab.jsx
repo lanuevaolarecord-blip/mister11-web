@@ -148,7 +148,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     return { ts, isoDate, displayDate };
   };
 
-  // 1. Escuchar evaluaciones canónicas de Míster11 y test_results de múltiples fuentes
+  // 1. Escuchar evaluaciones canónicas de Mister11 y test_results de múltiples fuentes
   useEffect(() => {
     if (!cleanPath || !effectivePlayerId) return;
 
@@ -158,7 +158,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
     const rebuildEvaluations = () => {
       const allCombined = [...evalsList, ...testResultsList, ...playerDirectTests];
-      // Consolidar usando el motor unificado de Míster11 idéntico al portal del entrenador
+      // Consolidar usando el motor unificado de Mister11 idéntico al portal del entrenador
       const playerEvals = consolidatePlayerEvaluations(allCombined, effectivePlayerId);
 
       const enrichedEvals = [];
@@ -444,7 +444,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     };
   }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, team]);
 
-  // 5. Radar de Habilidades 100% Real (Evaluado por el Míster o Asistencia)
+  // 5. Radar de Habilidades 100% Real (Evaluado por el Mister o Asistencia)
   const avgSleep = wellnessHistory.length > 0 
     ? (wellnessHistory.reduce((s, w) => s + (Number(w.sleep) || 0), 0) / wellnessHistory.length).toFixed(1)
     : '--';
@@ -549,13 +549,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           {isGk ? (
             <div className="summary-metric-box">
               <span className="metric-label">{t('gk.saves')}</span>
-              <div className="metric-value green" style={{ color: '#3B82F6' }}>🧤 {playerMatchStats.gkStats?.saves ?? 0}</div>
+              <div className="metric-value green" style={{ color: '#3B82F6' }}>{playerMatchStats.gkStats?.saves ?? 0}</div>
               <span className="metric-sub">{playerMatchStats.gkStats?.cleanSheets ?? 0} {t('gk.cleanSheetsShort')}</span>
             </div>
           ) : (
             <div className="summary-metric-box">
               <span className="metric-label">{t('player.stats.goals')}</span>
-              <div className="metric-value green">⚽ {playerMatchStats.goals}</div>
+              <div className="metric-value green">{playerMatchStats.goals}</div>
               <span className="metric-sub">
                 {playerMatchStats.matchesPlayed === 1 
                   ? t('player.stats.inMatch', { count: playerMatchStats.matchesPlayed }) 
@@ -573,7 +573,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           ) : (
             <div className="summary-metric-box">
               <span className="metric-label">{t('player.stats.assists')}</span>
-              <div className="metric-value gold">👟 {playerMatchStats.assists}</div>
+              <div className="metric-value gold">{playerMatchStats.assists}</div>
               <span className="metric-sub">{t('player.stats.keyPasses')}</span>
             </div>
           )}
@@ -587,7 +587,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           <div className="summary-metric-box">
             <span className="metric-label">{t('player.stats.cards')}</span>
             <div className="metric-value yellow">
-              🟨 {playerMatchStats.yellowCards} &middot; 🟥 {playerMatchStats.redCards}
+              {playerMatchStats.yellowCards} &middot; {playerMatchStats.redCards}
             </div>
             <span className="metric-sub">{t('player.stats.disciplinarySanctions')}</span>
           </div>
@@ -613,7 +613,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.cards')}</span>
             <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: 'var(--text-primary)' }}>
-              🟨 {playerMatchStats.yellowCards} · 🟥 {playerMatchStats.redCards}
+              {playerMatchStats.yellowCards} · {playerMatchStats.redCards}
             </div>
           </div>
         </div>
@@ -624,7 +624,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         <div className="hud-card" style={{ marginBottom: '20px', padding: '16px', border: '1.5px solid rgba(59, 130, 246, 0.4)' }}>
           <div className="hud-header" style={{ marginBottom: '14px' }}>
             <span className="hud-badge" style={{ color: '#3B82F6', borderColor: 'rgba(59, 130, 246, 0.35)', background: 'rgba(59, 130, 246, 0.1)' }}>
-              🧤 {t('gk.title')}
+              {t('gk.title')}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
               {t('gk.roleBadge')}
@@ -635,7 +635,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.saves')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#22C55E' }}>
-                🧤 {playerMatchStats.gkStats?.saves ?? 0}
+                {playerMatchStats.gkStats?.saves ?? 0}
               </div>
               <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
                 {playerMatchStats.matchesPlayed > 0 ? ((playerMatchStats.gkStats?.saves || 0) / playerMatchStats.matchesPlayed).toFixed(1) : '0.0'} {t('gk.perMatch')}
@@ -645,7 +645,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.conceded')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#EF4444' }}>
-                🥅 {playerMatchStats.gkStats?.conceded ?? 0}
+                {playerMatchStats.gkStats?.conceded ?? 0}
               </div>
               <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
                 {playerMatchStats.matchesPlayed > 0 ? ((playerMatchStats.gkStats?.conceded || 0) / playerMatchStats.matchesPlayed).toFixed(1) : '0.0'} {t('gk.perMatch')}
@@ -662,14 +662,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.cleanSheets')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#10B981' }}>
-                🧼 {playerMatchStats.gkStats?.cleanSheets ?? 0}
+                {playerMatchStats.gkStats?.cleanSheets ?? 0}
               </div>
             </div>
 
             <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.penaltySaves')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#D4A843' }}>
-                🛡️ {playerMatchStats.gkStats?.penaltySaves ?? 0}
+                {playerMatchStats.gkStats?.penaltySaves ?? 0}
               </div>
             </div>
 
@@ -710,7 +710,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             return (
               <div style={{ marginTop: '12px', background: darkMode ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.5)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', color: '#4CAF7D', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  📈 {t('gk.evolution')}
+                  {t('gk.evolution')}
                 </div>
                 <div style={{ width: '100%', overflowX: 'auto' }}>
                   <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxHeight: '140px', display: 'block' }}>
@@ -775,10 +775,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
               // KPI "mejor dato" automático
               const allKpis = [
-                { label: 'Goles', val: mItem.goals || 0, icon: '⚽', color: '#4CAF7D' },
-                { label: 'Tiros a puerta', val: tiros_puerta, icon: '🎯', color: '#3B82F6' },
-                { label: 'Duelos ganados', val: duelos_ganados, icon: '✊', color: '#D4A843' },
-                { label: 'Recuperaciones', val: recuperaciones, icon: '🔄', color: '#0D9488' },
+                { label: 'Goles', val: mItem.goals || 0, color: '#4CAF7D' },
+                { label: 'Tiros a puerta', val: tiros_puerta, color: '#3B82F6' },
+                { label: 'Duelos ganados', val: duelos_ganados, color: '#D4A843' },
+                { label: 'Recuperaciones', val: recuperaciones, color: '#0D9488' },
               ];
               const bestKpi = allKpis.reduce((best, k) => (k.val > (best?.val || 0) ? k : best), null);
 
@@ -845,11 +845,11 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)', flexWrap: 'wrap', gap: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>📅 {mItem.date}</span>
+                        <span>{mItem.date}</span>
                         <span>&middot;</span>
                         {mItem.actaClosed ? (
                           <span style={{ color: '#10B981', fontWeight: '700' }}>
-                            📋 {mItem.isTitular ? t('player.stats.starter', {}, 'Titular') : t('player.stats.sub', {}, 'Suplente')} ({mItem.minutesPlayed}')
+                            {mItem.isTitular ? t('player.stats.starter', {}, 'Titular') : t('player.stats.sub', {}, 'Suplente')} ({mItem.minutesPlayed}')
                           </span>
                         ) : (
                           <span style={{ color: '#F59E0B', fontWeight: '700' }}>
@@ -860,14 +860,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                       <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
                         {isGk && mItem.gk && (
                           <>
-                            <span style={{ color: '#2563EB' }}>🧤 {mItem.gk.saves || 0}</span>
-                            {mItem.gk.cleanSheet ? <span style={{ color: '#10B981' }}>🧼</span> : null}
+                            <span style={{ color: '#2563EB' }}>{mItem.gk.saves || 0}</span>
+                            {mItem.gk.cleanSheet ? <CheckCircle2 size={12} color="#10B981" /> : null}
                           </>
                         )}
-                        {!isGk && mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
-                        {!isGk && mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>💟 {mItem.assists}</span>}
-                        {mItem.yellowCards > 0 && <span>🟨</span>}
-                        {mItem.redCards > 0 && <span>🟥</span>}
+                        {!isGk && mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>{mItem.goals}</span>}
+                        {!isGk && mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>{mItem.assists}</span>}
+                        {mItem.yellowCards > 0 && <span style={{ color: '#F59E0B', fontWeight: 800 }}>Y</span>}
+                        {mItem.redCards > 0 && <span style={{ color: '#EF4444', fontWeight: 800 }}>R</span>}
                         {mItem.rating && mItem.rating !== '-' && <span style={{ color: '#C9A84C' }}>⭐ {mItem.rating}</span>}
                       </div>
                     </div>
@@ -914,11 +914,11 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                         }}>
                           <div>
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.saves')}</span>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#2563EB' }}>🧤 {mItem.gk.saves || 0}</div>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#2563EB' }}>{mItem.gk.saves || 0}</div>
                           </div>
                           <div>
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.conceded')}</span>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#EF4444' }}>🥅 {mItem.gk.conceded || 0}</div>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#EF4444' }}>{mItem.gk.conceded || 0}</div>
                           </div>
                           <div>
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.cleanSheets')}</span>
@@ -936,10 +936,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                           {/* BLOQUE 1: KPIs clave */}
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                             {[
-                              { icon: '⚽', label: t('stats.goles', {}, 'Goles'), val: mItem.goals || 0, color: '#4CAF7D' },
-                              { icon: '💟', label: t('stats.asistencias', {}, 'Asist.'), val: mItem.assists || 0, color: '#3B82F6' },
+                              { label: t('stats.goles', {}, 'Goles'), val: mItem.goals || 0, color: '#4CAF7D' },
+                              { label: t('stats.asistencias', {}, 'Asist.'), val: mItem.assists || 0, color: '#3B82F6' },
                               { icon: '⏱️', label: t('stats.minutos', {}, 'Minutos'), val: mItem.minutesPlayed || 0, color: '#D4A843' },
-                              { icon: '📈', label: 'xG', val: xG, color: '#A855F7' },
+                              { label: 'xG', val: xG, color: '#A855F7' },
                             ].map(k => (
                               <div key={k.label} style={{
                                 background: darkMode ? 'rgba(0,0,0,0.4)' : '#FFFFFF',
@@ -969,7 +969,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{ fontSize: '24px', fontWeight: '900', color: '#C9A84C' }}>⭐ {Number(mItem.misterNote).toFixed(1)}</span>
                                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '700' }}>
-                                  {t('player.stats.coachRating', {}, 'Nota del Míster')}
+                                  {t('player.stats.coachRating', {}, 'Nota del Mister')}
                                 </span>
                                 {/* Estrellas de actitud */}
                                 {mItem.actitudStars != null && (
@@ -1000,24 +1000,24 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               padding: '12px 14px',
                             }}>
                               <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                🎯 {t('player.stats.hitsVsMisses', {}, 'Aciertos vs Desaciertos')}
+                                {t('player.stats.hitsVsMisses', {}, 'Aciertos vs Desaciertos')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {[
                                   {
                                     label: t('player.stats.shotsOnTarget', {}, 'Tiros a puerta / total'),
                                     good: tiros_puerta, total: tiros_total,
-                                    icon: '🎯', goodColor: '#4CAF7D', badColor: '#EF4444'
+                                    icon: 'target', goodColor: '#4CAF7D', badColor: '#EF4444'
                                   },
                                   {
                                     label: t('player.stats.duelsWon', {}, 'Duelos ganados / total'),
                                     good: duelos_ganados, total: duelos_total,
-                                    icon: '✊', goodColor: '#D4A843', badColor: '#94A3B8'
+                                    icon: 'duels', goodColor: '#D4A843', badColor: '#94A3B8'
                                   },
                                   {
                                     label: t('player.stats.recoveriesLosses', {}, 'Recuperaciones vs Pérdidas'),
                                     good: recuperaciones, total: recuperaciones + perdidas,
-                                    icon: '🔄', goodColor: '#0D9488', badColor: '#F97316'
+                                    icon: 'recoveries', goodColor: '#0D9488', badColor: '#F97316'
                                   },
                                 ].map(row => {
                                   const pct = row.total > 0 ? Math.round((row.good / row.total) * 100) : 0;
@@ -1038,7 +1038,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                                 {/* Faltas y pases clave */}
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: '11px', fontWeight: '800', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
-                                    ⚡ {faltas_cometidas} {t('player.stats.fouls', {}, 'faltas')}
+                                    {faltas_cometidas} {t('player.stats.fouls', {}, 'faltas')}
                                   </span>
                                   {pases_clave > 0 && (
                                     <span style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', background: 'rgba(59,130,246,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
@@ -1061,7 +1061,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               alignItems: 'center',
                               gap: '10px'
                             }}>
-                              <span style={{ fontSize: '20px' }}>🏆</span>
+                              <Trophy size={20} color="#C9A84C" />
                               <div>
                                 <div style={{ fontSize: '11px', fontWeight: '700', color: '#C9A84C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                   {t('player.stats.bestStat', {}, 'Tu mejor dato del partido')}
@@ -1081,7 +1081,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                             padding: '12px 14px',
                           }}>
                             <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              📈 {t('player.stats.youVsAverage', {}, 'Tú vs tu media de temporada')}
+                              {t('player.stats.youVsAverage', {}, 'Tú vs tu media de temporada')}
                             </div>
                             {[
                               {
@@ -1142,7 +1142,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <MessageSquare size={18} color="#3B82F6" style={{ flexShrink: 0, marginTop: '2px' }} />
                               <div>
                                 <div style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                                  {t('player.stats.coachMessage', {}, 'Mensaje del Míster')}
+                                  {t('player.stats.coachMessage', {}, 'Mensaje del Mister')}
                                 </div>
                                 <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.55', fontStyle: 'italic' }}>
                                   "{mItem.misterComment}"
@@ -1165,8 +1165,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                                 {t('player.stats.discipline', {}, 'Disciplina')}
                               </span>
-                              {mItem.yellowCards > 0 && <span style={{ fontSize: '15px' }}>🟨 ×{mItem.yellowCards}</span>}
-                              {mItem.redCards > 0 && <span style={{ fontSize: '15px' }}>🟥 ×{mItem.redCards}</span>}
+                              {mItem.yellowCards > 0 && <span>Y ×{mItem.yellowCards}</span>}
+                              {mItem.redCards > 0 && <span style={{ fontSize: '15px' }}>R ×{mItem.redCards}</span>}
                             </div>
                           )}
 
@@ -1535,7 +1535,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#F59E0B' }}>
-                💡 {t('player.stats.areasPending', {}, 'Áreas pendientes de medición')} ({zeroMetrics.map(z => getAxisLabel(z.label)).join(', ')})
+                {t('player.stats.areasPending', {}, 'Áreas pendientes de medición')} ({zeroMetrics.map(z => getAxisLabel(z.label)).join(', ')})
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
                 {t('player.stats.areasInZeroDesc')}
@@ -1791,13 +1791,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.energyMood', {}, 'ENERGÍA / ÁNIMO')}</span>
-            <div style={{ fontSize: '20px', fontWeight: '800', color: '#F59E0B', marginTop: '4px' }}>{avgMood} / 5 ⚡</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#F59E0B', marginTop: '4px' }}>{avgMood} / 5</div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.muscleStatus', {}, 'ESTADO MUSCULAR')}</span>
             <div style={{ fontSize: '14px', fontWeight: '800', color: hasDiscomfortActive ? '#EF4444' : '#10B981', marginTop: '6px' }}>
-              {hasDiscomfortActive ? `⚠️ ${t('player.stats.activeDiscomfort', {}, 'Molestia activa')}` : `✅ ${t('player.stats.available100', {}, '100% Disponible')}`}
+              {hasDiscomfortActive ? t('player.stats.activeDiscomfort', {}, 'Molestia activa') : t('player.stats.available100', {}, '100% Disponible')}
             </div>
           </div>
         </div>
@@ -1806,7 +1806,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         {wellnessHistory.length > 0 && (
           <div style={{ marginTop: '16px', borderTop: '1px dashed var(--border-light, rgba(255,255,255,0.1))', paddingTop: '14px' }}>
             <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>
-              📊 {t('player.stats.dailyProgression', {}, 'Evolución Diaria (Últimos 7 check-ins)')}
+              {t('player.stats.dailyProgression', {}, 'Evolución Diaria (Últimos 7 check-ins)')}
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(75px, 1fr))', gap: '8px' }}>
               {[...wellnessHistory].reverse().map((w, idx) => {
@@ -1827,13 +1827,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                       {shortDate}
                     </span>
                     <div style={{ fontSize: '11px', fontWeight: '800', color: '#10B981' }}>
-                      💤 {w.sleep || '-'}/5
+                      {w.sleep || '-'}/5
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: '800', color: '#F59E0B' }}>
-                      ⚡ {w.mood || '-'}/5
+                      {w.mood || '-'}/5
                     </div>
                     <div style={{ fontSize: '10px', fontWeight: '700', color: w.hasDiscomfort ? '#EF4444' : '#10B981' }}>
-                      {w.hasDiscomfort ? `🔴 ${t('player.stats.pain', {}, 'Dolor')}` : `🟢 ${t('player.stats.ok', {}, 'OK')}`}
+                      {w.hasDiscomfort ? t('player.stats.pain', {}, 'Dolor') : t('player.stats.ok', {}, 'OK')}
                     </div>
                   </div>
                 );

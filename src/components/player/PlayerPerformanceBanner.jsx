@@ -6,6 +6,7 @@ import { SvgRadar } from '../PlayerAnalyticsModal';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from '../../utils/testScoreEngine';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
+import { BarChart2, Award, TrendingUp, FileText, RefreshCw } from 'lucide-react';
 import './PlayerPerformanceBanner.css';
 
 export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpenSummary }) => {
@@ -17,7 +18,7 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const effectivePlayerId = player?.id || 'player-self';
 
-  // 1. Escuchar evaluaciones en tiempo real sincronizadas con Míster11 (Tests.jsx)
+  // 1. Escuchar evaluaciones en tiempo real sincronizadas con Mister11 (Tests.jsx)
   useEffect(() => {
     if (!cleanPath || !effectivePlayerId) {
       setLoading(false);
@@ -124,14 +125,14 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
             </div>
           ) : (
             <div className="empty-radar-box">
-              <div style={{ fontSize: 36, filter: 'grayscale(1)' }}>📊</div>
+              <div style={{ display: 'flex', justifyContent: 'center', opacity: 0.4 }}><BarChart2 size={36} color="var(--text-secondary)" /></div>
               <p style={{ fontSize: 13, marginTop: 6, fontWeight: 600, color: 'var(--text-secondary)' }}>
                 {t('player.banner.noTestData', {}, 'Sin evaluaciones aún')}.
               </p>
             </div>
           )}
           <div className="pitch-medal-badge">
-            <span style={{ fontSize: '14px' }}>🎖️</span>
+            <Award size={14} color="#C9A84C" />
             <span>{t('player.banner.perfMedal', {}, 'MEDALLA DE RENDIMIENTO')}</span>
           </div>
         </div>
@@ -150,21 +151,21 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
               className="btn-pitch-gold"
               onClick={() => onNavigateTab ? onNavigateTab('stats') : null}
             >
-              📈 Ver Analíticas Completas
+              {t('player.banner.viewFullAnalytics', {}, 'Ver Analíticas Completas')}
             </button>
             
             <button
               className="btn-pitch-gold"
               onClick={() => onOpenSummary ? onOpenSummary() : null}
             >
-              📄 Resumen Técnico
+              {t('player.banner.techSummary', {}, 'Resumen Técnico')}
             </button>
 
             <button
               className="btn-pitch-outline"
               onClick={() => onNavigateTab ? onNavigateTab('tests') : null}
             >
-              🔄 Renovar Cuestionarios y Tests
+              {t('player.banner.renewTests', {}, 'Renovar Cuestionarios y Tests')}
             </button>
           </div>
         </div>

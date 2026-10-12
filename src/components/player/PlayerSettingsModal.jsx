@@ -147,12 +147,12 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
             {[
-              { code: 'Español (ES)', label: 'Español (ES)', flag: '🇪🇸' },
-              { code: 'Español (Latinoamérica)', label: 'Español (Latam)', flag: '🌎' },
-              { code: 'English (EN)', label: 'English (EN)', flag: '🇬🇧' },
-              { code: 'Português (Brasil)', label: 'Português', flag: '🇧🇷' },
-              { code: 'Français (FR)', label: 'Français', flag: '🇫🇷' },
-              { code: 'Bahasa Indonesia (ID)', label: 'Bahasa', flag: '🇮🇩' }
+              { code: 'Español (ES)', label: 'Español (ES)' },
+              { code: 'Español (Latinoamérica)', label: 'Español (Latam)' },
+              { code: 'English (EN)', label: 'English (EN)' },
+              { code: 'Português (Brasil)', label: 'Português' },
+              { code: 'Français (FR)', label: 'Français' },
+              { code: 'Bahasa Indonesia (ID)', label: 'Bahasa' }
             ].map(loc => {
               const isSelected = language === loc.code || (language === 'es' && loc.code.startsWith('Español (ES)')) || (language === 'en' && loc.code.startsWith('English'));
               return (
@@ -177,7 +177,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span>{loc.flag}</span> <span>{loc.label}</span> {isSelected && <Check size={14} />}
+                  <span>{loc.label}</span> {isSelected && <Check size={14} />}
                 </button>
               );
             })}

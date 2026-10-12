@@ -2856,7 +2856,10 @@ export const id = {
   "player.stats.sleepQuality": "KUALITAS TIDUR",
   "player.stats.energyMood": "ENERGI / SUASANA HATI",
   "player.stats.muscleStatus": "STATUS OTOT",
-  "player.profile.sectionsAria": "Bagian profil pemain"
+  "player.profile.sectionsAria": "Bagian profil pemain",
+  "player.banner.viewFullAnalytics": "Lihat analitik lengkap",
+  "player.banner.techSummary": "Ringkasan teknis",
+  "player.banner.renewTests": "Perbarui kuesioner dan tes",
 };
 
 export default id;

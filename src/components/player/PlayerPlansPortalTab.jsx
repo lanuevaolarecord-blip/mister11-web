@@ -30,7 +30,7 @@ import { assertAgeSafe } from '../../utils/exerciseSafety';
 import { calcularEdad } from '../../utils/calcularEdad';
 import './PlayerPlansPortalTab.css';
 
-// Catálogo enriquecido de Ejercicios Preventivos y de Preparación Física de Míster11
+// Catálogo enriquecido de Ejercicios Preventivos y de Preparación Física de Mister11
 const CANONICAL_EXERCISE_GUIDES = {
   // Tren Inferior & Isquiotibiales
   'nordico': {
@@ -313,7 +313,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       (he.nameEn && he.nameEn.toLowerCase() === (directName || '').toLowerCase())
     );
 
-    // Buscar en catálogo canónico de Míster11
+    // Buscar en catálogo canónico de Mister11
     const exKey = (ex.exerciseId || directName || '').toLowerCase();
     let canonical = null;
     for (const [key, val] of Object.entries(CANONICAL_EXERCISE_GUIDES)) {
@@ -470,7 +470,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                   <div className="coach-feedback-box">
                     <div className="feedback-title">
                       <MessageSquare size={14} color="#4CAF7D" />
-                      <span>{t('player.plans.coachInstructions', {}, 'Instrucciones del Míster:')}</span>
+                      <span>{t('player.plans.coachInstructions', {}, 'Instrucciones del Mister:')}</span>
                     </div>
                     <p className="feedback-text">"{plan.coachNotes}"</p>
                   </div>

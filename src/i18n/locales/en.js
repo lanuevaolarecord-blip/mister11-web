@@ -2856,7 +2856,10 @@ export const en = {
   "player.stats.sleepQuality": "SLEEP QUALITY",
   "player.stats.energyMood": "ENERGY / MOOD",
   "player.stats.muscleStatus": "MUSCLE STATUS",
-  "player.profile.sectionsAria": "Player profile sections"
+  "player.profile.sectionsAria": "Player profile sections",
+  "player.banner.viewFullAnalytics": "View full analytics",
+  "player.banner.techSummary": "Technical summary",
+  "player.banner.renewTests": "Renew questionnaires and tests",
 };
 
 export default en;

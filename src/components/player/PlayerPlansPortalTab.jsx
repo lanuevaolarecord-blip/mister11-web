@@ -26,6 +26,8 @@ import {
 import { useTranslation } from '../../hooks/useTranslation';
 import { HOME_EXERCISES_107 } from '../../data/homeExercisesCatalog';
 import ExerciseIllustrationBlock from '../ExerciseIllustrationBlock';
+import { assertAgeSafe } from '../../utils/exerciseSafety';
+import { calcularEdad } from '../../utils/calcularEdad';
 import './PlayerPlansPortalTab.css';
 
 // Catálogo enriquecido de Ejercicios Preventivos y de Preparación Física de Míster11
@@ -214,6 +216,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
   const [loading, setLoading] = useState(true);
 
   const todayStr = new Date().toISOString().slice(0, 10);
+  const playerAge = calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.edad || player?.age)?.years;
 
   // 1. Escuchar planes del jugador
   useEffect(() => {
@@ -260,6 +263,11 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
 
     try {
       const exercise = plan.exercises[exIndex];
+      const ageCheck = assertAgeSafe(playerAge, exercise);
+      if (!ageCheck.safe) {
+        showToast(t('player.plans.notAgeSafe'), 'warning');
+        return;
+      }
       const completedDates = exercise.completedDates || [];
       const isDoneToday = completedDates.includes(todayStr);
 
@@ -484,6 +492,8 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                         const guideKey = `${plan.id}-${idx}`;
                         const isGuideOpen = !!expandedGuides[guideKey];
                         const details = resolveExerciseDetails(ex, idx);
+                        const ageCheck = assertAgeSafe(playerAge, ex);
+                        const isAgeBlocked = !ageCheck.safe;
 
                         return (
                           <div key={idx} className="exercise-card-wrapper">
@@ -492,22 +502,46 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                             <div className={`exercise-check-row ${isDone ? 'done' : ''}`}>
                               <button 
                                 type="button" 
-                                className="check-btn"
-                                onClick={() => toggleExerciseDay(plan.id, idx)}
-                                title={isDone ? t('player.plans.markPending', {}, 'Marcar como pendiente') : t('player.plans.completeExercise', {}, 'Completar')}
+                                className={`check-btn ${isAgeBlocked ? 'blocked' : ''}`}
+                                onClick={() => !isAgeBlocked && toggleExerciseDay(plan.id, idx)}
+                                disabled={isAgeBlocked}
+                                title={isAgeBlocked ? t('player.plans.notAgeSafe') : isDone ? t('player.plans.markPending', {}, 'Marcar como pendiente') : t('player.plans.completeExercise', {}, 'Completar')}
+                                style={isAgeBlocked ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                               >
-                                {isDone ? (
+                                {isAgeBlocked ? (
+                                  <Ban size={22} color="#C85A32" />
+                                ) : isDone ? (
                                   <CheckCircle2 size={22} color="#4CAF7D" />
                                 ) : (
                                   <Circle size={22} color="rgba(128,128,128,0.4)" />
                                 )}
                               </button>
 
-                              <div className="exercise-info-block" onClick={() => toggleExerciseDay(plan.id, idx)}>
-                                <span className="exercise-name-txt">{details.name}</span>
+                              <div className="exercise-info-block" onClick={() => !isAgeBlocked && toggleExerciseDay(plan.id, idx)} style={isAgeBlocked ? { cursor: 'default' } : {}}>
+                                <span className="exercise-name-txt" style={isAgeBlocked ? { color: '#94a3b8' } : {}}>{details.name}</span>
                                 <div className="exercise-badges-row">
                                   <span className="exercise-dos-pill">{details.sets} · {details.reps}</span>
                                   <span className="exercise-cat-pill">{details.category}</span>
+                                  {isAgeBlocked && (
+                                    <span 
+                                      className="not-age-safe-badge"
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: '700',
+                                        backgroundColor: 'rgba(200, 90, 50, 0.12)',
+                                        color: '#C85A32',
+                                        border: '1px solid rgba(200, 90, 50, 0.3)',
+                                        marginLeft: '4px'
+                                      }}
+                                    >
+                                      ⛔ {t('player.plans.notAgeSafe')}
+                                    </span>
+                                  )}
                                   {details.isClinicalFallback && (
                                     <span 
                                       className="clinical-fallback-chip"

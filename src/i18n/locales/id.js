@@ -2860,6 +2860,8 @@ export const id = {
   "player.banner.viewFullAnalytics": "Lihat analitik lengkap",
   "player.banner.techSummary": "Ringkasan teknis",
   "player.banner.renewTests": "Perbarui kuesioner dan tes",
+  "player.wellness.synced": "Tersinkronisasi",
+  "player.wellness.offlinePending": "Menunggu sinkronisasi",
 };
 
 export default id;

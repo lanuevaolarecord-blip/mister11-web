@@ -2860,6 +2860,8 @@ export const fr = {
   "player.banner.viewFullAnalytics": "Voir les analyses complètes",
   "player.banner.techSummary": "Résumé technique",
   "player.banner.renewTests": "Renouveler questionnaires et tests",
+  "player.wellness.synced": "Synchronisé",
+  "player.wellness.offlinePending": "En attente de synchronisation",
 };
 
 export default fr;

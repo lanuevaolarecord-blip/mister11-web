@@ -186,7 +186,110 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   });
   const [wellnessSubmitted, setWellnessSubmitted] = useState(false);
   const [savingWellness, setSavingWellness] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'saving' | 'synced' | 'pending'
   const isSubmittingWellnessRef = useRef(false);
+  const autoSaveTimerRef = useRef(null);
+
+  // Línea Maestra B: Cola local con estado 'pending' -> 'synced' y reintento offline
+  const syncWellnessPayload = async (payload) => {
+    const effId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
+    setSyncStatus('saving');
+    setSavingWellness(true);
+
+    // Guardar en cola local con estado 'pending'
+    const queueItem = {
+      ...payload,
+      date: todayStr,
+      playerName: player?.name || user?.displayName || 'Jugador',
+      playerId: effId,
+      playerNumber: player?.number || '',
+      status: 'pending',
+      queuedAt: Date.now()
+    };
+
+    try {
+      localStorage.setItem(`m11_wellness_${effId}_${todayStr}`, JSON.stringify(queueItem));
+      localStorage.setItem('m11_wellness_queue', JSON.stringify(queueItem));
+    } catch (_) {}
+
+    try {
+      if (cleanTeamPath) {
+        const firestorePayload = {
+          ...payload,
+          date: todayStr,
+          playerName: player?.name || user?.displayName || 'Jugador',
+          playerId: effId,
+          playerNumber: player?.number || '',
+          updatedAt: serverTimestamp()
+        };
+
+        const wDocRef = doc(db, `${cleanTeamPath}/players/${effId}/wellness`, todayStr);
+        await setDoc(wDocRef, firestorePayload, { merge: true });
+
+        try {
+          const teamWellnessRef = doc(db, `${cleanTeamPath}/wellness`, `${effId}_${todayStr}`);
+          await setDoc(teamWellnessRef, firestorePayload, { merge: true });
+        } catch (teamErr) {
+          console.warn('Advertencia guardando en team wellness:', teamErr);
+        }
+      }
+
+      // Éxito: marcar como 'synced' en la cola local
+      queueItem.status = 'synced';
+      try {
+        localStorage.setItem(`m11_wellness_${effId}_${todayStr}`, JSON.stringify(queueItem));
+        localStorage.setItem('m11_wellness_queue', JSON.stringify(queueItem));
+      } catch (_) {}
+
+      setSyncStatus('synced');
+      setWellnessSubmitted(true);
+      setTimeout(() => {
+        setSyncStatus(prev => prev === 'synced' ? 'idle' : prev);
+      }, 3000);
+    } catch (err) {
+      console.warn('Auto-guardado offline o error de red; retenido en cola local:', err);
+      setSyncStatus('pending');
+      setWellnessSubmitted(true);
+    } finally {
+      setSavingWellness(false);
+      isSubmittingWellnessRef.current = false;
+    }
+  };
+
+  const handleUpdateWellnessField = (field, val, extraField = null, extraVal = null) => {
+    setWellnessData(prev => {
+      const next = { ...prev, [field]: val };
+      if (extraField) next[extraField] = extraVal;
+      
+      // Auto-guardado B con debounce de 300ms
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+      setSyncStatus('saving');
+      autoSaveTimerRef.current = setTimeout(() => {
+        syncWellnessPayload(next);
+      }, 350);
+
+      return next;
+    });
+  };
+
+  // Reintento silencioso al recuperar conexión (evento online)
+  useEffect(() => {
+    const handleOnline = () => {
+      try {
+        const effId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
+        const queuedRaw = localStorage.getItem('m11_wellness_queue');
+        if (queuedRaw) {
+          const item = JSON.parse(queuedRaw);
+          if (item && item.status === 'pending' && item.playerId === effId) {
+            syncWellnessPayload(item);
+          }
+        }
+      } catch (_) {}
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [cleanTeamPath, player?.id, todayStr, user?.uid]);
 
   // Estados de Consentimiento Parental
   const [consents, setConsents] = useState(player?.consents || {
@@ -374,52 +477,13 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
     setHasDrawn(false);
   };
 
-  // Enviar Check-in de Bienestar (DEF-M04-01: bloqueo sincrónico inmediato anti doble pulsación)
+  // Enviar / Confirmar Check-in de Bienestar (DEF-M04-01 + Auto-guardado B)
   const handleSubmitWellness = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (isSubmittingWellnessRef.current || savingWellness) return;
     isSubmittingWellnessRef.current = true;
-    setSavingWellness(true);
-    const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
-    try {
-      const wellnessPayload = {
-        ...wellnessData,
-        date: todayStr,
-        playerName: player?.name || user?.displayName || 'Jugador',
-        playerId: effectivePlayerId,
-        playerNumber: player?.number || '',
-        updatedAt: serverTimestamp(),
-      };
-
-      // Guardar en local storage para respaldo instantáneo
-      try {
-        localStorage.setItem(`m11_wellness_${effectivePlayerId}_${todayStr}`, JSON.stringify(wellnessPayload));
-      } catch (_) {}
-
-      if (cleanTeamPath) {
-        // 1. Guardar en subcolección del jugador
-        const wDocRef = doc(db, `${cleanTeamPath}/players/${effectivePlayerId}/wellness`, todayStr);
-        await setDoc(wDocRef, wellnessPayload, { merge: true });
-
-        // 2. Guardar en colección de wellness general del equipo (para que el cuerpo técnico lo vea)
-        try {
-          const teamWellnessRef = doc(db, `${cleanTeamPath}/wellness`, `${effectivePlayerId}_${todayStr}`);
-          await setDoc(teamWellnessRef, wellnessPayload, { merge: true });
-        } catch (teamErr) {
-          console.warn('Advertencia guardando en team wellness:', teamErr);
-        }
-      }
-
-      setWellnessSubmitted(true);
-      showToast(t('player.profile.wellness_saved'), 'success');
-    } catch (err) {
-      console.warn('Error guardando wellness en nube, guardado localmente:', err);
-      setWellnessSubmitted(true);
-      showToast(t('player.profile.wellness_saved'), 'success');
-    } finally {
-      setSavingWellness(false);
-      isSubmittingWellnessRef.current = false;
-    }
+    await syncWellnessPayload(wellnessData);
+    showToast(t('player.profile.wellness_saved'), 'success');
   };
 
   // Guardar Consentimiento Parental Granular
@@ -777,7 +841,39 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               <div className="hud-badge">
                 <Heart size={15} color="#EF4444" /> {t('player.profile.wellnessCheckin')}
               </div>
-              <span className="hud-status-live">{todayStr}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {syncStatus === 'saving' && (
+                  <span className="wellness-micro-indicator saving" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    fontSize: '0.72rem', fontWeight: 800, color: '#D97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)', padding: '2px 8px', borderRadius: '10px'
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#D97706', display: 'inline-block' }} />
+                    {t('player.wellness.saving', {}, 'Guardando...')}
+                  </span>
+                )}
+                {syncStatus === 'synced' && (
+                  <span className="wellness-micro-indicator synced" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    fontSize: '0.72rem', fontWeight: 800, color: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '10px'
+                  }}>
+                    <Check size={12} color="#10B981" />
+                    {t('player.wellness.synced', {}, 'Sincronizado')}
+                  </span>
+                )}
+                {syncStatus === 'pending' && (
+                  <span className="wellness-micro-indicator pending" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    fontSize: '0.72rem', fontWeight: 800, color: '#D97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.12)', padding: '2px 8px', borderRadius: '10px'
+                  }}>
+                    <Clock size={12} color="#D97706" />
+                    {t('player.wellness.offlinePending', {}, 'Pendiente de sincronizar')}
+                  </span>
+                )}
+                <span className="hud-status-live">{todayStr}</span>
+              </div>
             </div>
 
             <form onSubmit={handleSubmitWellness} className="wellness-form">
@@ -797,7 +893,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                       key={val}
                       type="button"
                       className={`scale-btn ${wellnessData.sleep === val ? 'selected' : ''}`}
-                      onClick={() => setWellnessData(prev => ({ ...prev, sleep: val }))}
+                      onClick={() => handleUpdateWellnessField('sleep', val)}
                     >
                       {val}
                     </button>
@@ -812,14 +908,14 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                   <button
                     type="button"
                     className={`discomfort-pill ${!wellnessData.hasDiscomfort ? 'active no-pain' : ''}`}
-                    onClick={() => setWellnessData(prev => ({ ...prev, hasDiscomfort: false, discomfortZone: 'Ninguna' }))}
+                    onClick={() => handleUpdateWellnessField('hasDiscomfort', false, 'discomfortZone', 'Ninguna')}
                   >
                     {t('player.profile.noDiscomfort')}
                   </button>
                   <button
                     type="button"
                     className={`discomfort-pill ${wellnessData.hasDiscomfort ? 'active with-pain' : ''}`}
-                    onClick={() => setWellnessData(prev => ({ ...prev, hasDiscomfort: true }))}
+                    onClick={() => handleUpdateWellnessField('hasDiscomfort', true)}
                   >
                     {t('player.profile.hasDiscomfort')}
                   </button>
@@ -830,7 +926,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                     <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('player.profile.discomfortZone')}</label>
                     <select
                       value={wellnessData.discomfortZone}
-                      onChange={(e) => setWellnessData(prev => ({ ...prev, discomfortZone: e.target.value }))}
+                      onChange={(e) => handleUpdateWellnessField('discomfortZone', e.target.value)}
                       className="zone-select"
                     >
                       {BODY_ZONES.map(z => (
@@ -850,7 +946,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                       key={val}
                       type="button"
                       className={`scale-btn ${wellnessData.mood === val ? 'selected' : ''}`}
-                      onClick={() => setWellnessData(prev => ({ ...prev, mood: val }))}
+                      onClick={() => handleUpdateWellnessField('mood', val)}
                     >
                       {val}
                     </button>
@@ -861,10 +957,14 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               <button
                 type="submit"
                 className="btn-submit-auth"
-                disabled={savingWellness}
+                disabled={syncStatus === 'saving'}
                 style={{ background: '#10B981', minHeight: '48px', fontWeight: 800 }}
               >
-                {savingWellness ? t('player.wellness.saving', {}, 'Guardando...') : (wellnessSubmitted ? t('player.wellness.updateCheckin', {}, 'ACTUALIZAR ESTADO GENERAL') : t('player.wellness.saveCheckin', {}, 'ENVIAR CHECK-IN DIARIO'))}
+                {syncStatus === 'saving' 
+                  ? t('player.wellness.saving', {}, 'Guardando...') 
+                  : (syncStatus === 'synced'
+                      ? t('player.wellness.synced', {}, 'Sincronizado')
+                      : (wellnessSubmitted ? t('player.wellness.updateCheckin', {}, 'ACTUALIZAR ESTADO GENERAL') : t('player.wellness.saveCheckin', {}, 'ENVIAR CHECK-IN DIARIO')))}
               </button>
             </form>
           </div>

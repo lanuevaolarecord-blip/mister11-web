@@ -2860,6 +2860,8 @@ export const pt = {
   "player.banner.viewFullAnalytics": "Ver análises completas",
   "player.banner.techSummary": "Resumo técnico",
   "player.banner.renewTests": "Renovar questionários e testes",
+  "player.wellness.synced": "Sincronizado",
+  "player.wellness.offlinePending": "Sincronização pendente",
 };
 
 export default pt;

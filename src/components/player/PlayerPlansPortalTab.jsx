@@ -140,7 +140,7 @@ const formatSafeDate = (dateVal) => {
 
 export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
-  const { t, isEn, formatDate } = useTranslation();
+  const { t, language, formatDate } = useTranslation();
   const [plans, setPlans] = useState([]);
   const [teamExercises, setTeamExercises] = useState([]);
   const [expandedGuides, setExpandedGuides] = useState({});
@@ -252,12 +252,13 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const fallbackList = Object.values(CANONICAL_EXERCISE_GUIDES);
     const defaultCanonical = fallbackList[idx % fallbackList.length];
 
-    const name = (isEn ? (catMatch?.nameEn || foundInTeam?.nameEn) : (catMatch?.nameEs || foundInTeam?.nameEs)) || directName || canonical?.name || defaultCanonical.name;
+    const isEnglishLocale = (language || '').toLowerCase().startsWith('en');
+    const name = (isEnglishLocale ? (catMatch?.nameEn || foundInTeam?.nameEn) : (catMatch?.nameEs || foundInTeam?.nameEs)) || directName || canonical?.name || defaultCanonical.name;
     const category = ex.category || catMatch?.category || foundInTeam?.category || canonical?.category || defaultCanonical.category;
     const sets = directSets || canonical?.sets || defaultCanonical.sets;
     const reps = directReps || canonical?.reps || defaultCanonical.reps;
-    const cue = (isEn ? (catMatch?.descriptionEn || foundInTeam?.descriptionEn) : (catMatch?.descriptionEs || foundInTeam?.descriptionEs)) || directDesc || '';
-    const coachingPoints = (isEn ? (catMatch?.coachingPointsEn || catMatch?.coachingPoints) : (catMatch?.coachingPointsEs || catMatch?.coachingPoints)) || [];
+    const cue = (isEnglishLocale ? (catMatch?.descriptionEn || foundInTeam?.descriptionEn) : (catMatch?.descriptionEs || foundInTeam?.descriptionEs)) || directDesc || '';
+    const coachingPoints = (isEnglishLocale ? (catMatch?.coachingPointsEn || catMatch?.coachingPoints) : (catMatch?.coachingPointsEs || catMatch?.coachingPoints)) || [];
     const steps = ex.steps || foundInTeam?.steps || canonical?.steps || defaultCanonical.steps;
     const postureTips = ex.postureTips || foundInTeam?.postureTips || canonical?.postureTips || defaultCanonical.postureTips;
     const preventionValue = canonical?.preventionValue || defaultCanonical.preventionValue;
@@ -282,13 +283,13 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
   };
 
   const formatSafeDate = (d) => {
-    if (!d) return isEn ? 'Active' : 'Activo';
+    if (!d) return t('player.plans.active', {}, 'Activo');
     try {
       if (d.toDate) return formatDate(d.toDate());
       if (d.seconds) return formatDate(new Date(d.seconds * 1000));
       return formatDate(d);
     } catch (_) {
-      return isEn ? 'Active' : 'Activo';
+      return t('player.plans.active', {}, 'Activo');
     }
   };
 
@@ -310,10 +311,10 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       <div className="hud-card plan-summary-card">
         <div className="hud-header">
           <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-            <TrendingUp size={14} /> {isEn ? 'PROGRESSION & HABIT' : 'EVOLUCIÓN Y CONSTANCIA'}
+            <TrendingUp size={14} /> {t('player.plans.progressionHabit', {}, 'EVOLUCIÓN Y CONSTANCIA')}
           </span>
           <span className="plan-count-badge">
-            {plans.length} {plans.length === 1 ? (isEn ? 'Active Plan' : 'Plan Activo') : (isEn ? 'Active Plans' : 'Planes Activos')}
+            {plans.length} {plans.length === 1 ? t('player.plans.activePlan', {}, 'Plan Activo') : t('player.plans.activePlans', {}, 'Planes Activos')}
           </span>
         </div>
 
@@ -323,25 +324,25 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
             <span className="stat-label">{t('player.profile.position')}</span>
           </div>
           <div className="plan-stat-item">
-            <span className="stat-value">{player?.category || team?.categoria || (isEn ? 'Youth' : 'Juvenil')}</span>
+            <span className="stat-value">{player?.category || team?.categoria || t('player.plans.youth', {}, 'Juvenil')}</span>
             <span className="stat-label">{t('player.profile.category')}</span>
           </div>
           <div className="plan-stat-item">
-            <span className="stat-value" style={{ color: '#4CAF7D' }}>{isEn ? 'Active' : 'Activo'}</span>
-            <span className="stat-label">{isEn ? 'Monitoring' : 'Seguimiento'}</span>
+            <span className="stat-value" style={{ color: '#4CAF7D' }}>{t('player.plans.active', {}, 'Activo')}</span>
+            <span className="stat-label">{t('player.plans.monitoring', {}, 'Seguimiento')}</span>
           </div>
         </div>
       </div>
 
       {/* LISTADO DE PLANES Y RUTINAS */}
       {loading ? (
-        <div className="plans-loading">{isEn ? 'Loading training plans...' : 'Cargando tus planes de entrenamiento...'}</div>
+        <div className="plans-loading">{t('player.plans.loading', {}, 'Cargando tus planes de entrenamiento...')}</div>
       ) : plans.length === 0 ? (
         <div className="hud-card empty-plans-card">
           <div className="empty-icon-wrap">
             <Award size={32} color="#C9A84C" />
           </div>
-          <h3>{isEn ? 'Up to date with your preparation!' : '¡Todo al día con tu preparación!'}</h3>
+          <h3>{t('player.plans.upToDate', {}, '¡Todo al día con tu preparación!')}</h3>
           <p>
             {t('player.plans.noPlans')}
           </p>
@@ -359,14 +360,14 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                 {/* Cabecera del Plan */}
                 <div className="plan-item-top">
                   <div className="plan-type-pill">
-                    <Dumbbell size={14} /> {plan.type || plan.reason || (isEn ? 'Technical Routine' : 'Rutina Técnica y Preventiva')}
+                    <Dumbbell size={14} /> {plan.type || plan.reason || t('player.plans.techRoutine', {}, 'Rutina Técnica y Preventiva')}
                   </div>
                   <span className="plan-date-tag">
                     <Calendar size={12} /> {formattedDate}
                   </span>
                 </div>
 
-                <h3 className="plan-item-title">{plan.title || plan.name || (isEn ? 'Individual Training Plan' : 'Plan de Desarrollo Individual')}</h3>
+                <h3 className="plan-item-title">{plan.title || plan.name || t('player.plans.defaultPlanTitle', {}, 'Plan de Desarrollo Individual')}</h3>
                 
                 {plan.description && (
                   <p className="plan-item-desc">{plan.description}</p>
@@ -377,7 +378,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                   <div className="coach-feedback-box">
                     <div className="feedback-title">
                       <MessageSquare size={14} color="#4CAF7D" />
-                      <span>{isEn ? 'Coach Instructions:' : 'Instrucciones del Míster:'}</span>
+                      <span>{t('player.plans.coachInstructions', {}, 'Instrucciones del Míster:')}</span>
                     </div>
                     <p className="feedback-text">"{plan.coachNotes}"</p>
                   </div>
@@ -387,9 +388,9 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                 {exercises.length > 0 && (
                   <div className="plan-exercises-section">
                     <div className="exercises-header-row">
-                      <span className="exercises-title">{isEn ? "Today's Exercises:" : "Ejercicios para Hoy:"}</span>
+                      <span className="exercises-title">{t('player.plans.todayExercises', {}, "Ejercicios para Hoy:")}</span>
                       <span className="exercises-counter">
-                        {completedCount} / {exercises.length} {isEn ? 'done' : 'hechos'}
+                        {completedCount} / {exercises.length} {t('player.plans.doneCount', {}, 'hechos')}
                       </span>
                     </div>
 
@@ -409,7 +410,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 type="button" 
                                 className="check-btn"
                                 onClick={() => toggleExerciseDay(plan.id, idx)}
-                                title={isDone ? (isEn ? "Mark as pending" : "Marcar como pendiente") : t('player.plans.completeExercise')}
+                                title={isDone ? t('player.plans.markPending', {}, 'Marcar como pendiente') : t('player.plans.completeExercise', {}, 'Completar')}
                               >
                                 {isDone ? (
                                   <CheckCircle2 size={22} color="#4CAF7D" />
@@ -434,10 +435,10 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                   e.stopPropagation();
                                   toggleGuide(plan.id, idx);
                                 }}
-                                title={isEn ? "View technical guide" : "Ver guía de ejecución técnica"}
+                                title={t('player.plans.viewGuide', {}, 'Ver guía de ejecución técnica')}
                               >
                                 <BookOpen size={15} />
-                                <span>{isEn ? 'Guide' : 'Guía'}</span>
+                                <span>{t('player.plans.guide', {}, 'Guía')}</span>
                                 {isGuideOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                               </button>
                             </div>

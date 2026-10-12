@@ -14,7 +14,7 @@ import { pluralize } from '../../utils/pluralize';
 export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false, closestAchievement = null }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
-  const { t, locale, isEn, formatDate } = useTranslation();
+  const { t, locale, formatDate } = useTranslation();
 
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
@@ -226,10 +226,10 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         </div>
         <div className="player-header-text">
           <span className="player-team-pill">
-            ⚽ {team?.nombre || team?.name || t('nav.equipo')} · {player?.position || (isEn ? 'Player' : 'Jugador')}
+            ⚽ {team?.nombre || team?.name || t('nav.equipo')} · {player?.position || t('player.home.defaultRole', {}, 'Jugador')}
           </span>
           <h2 className="player-greeting">
-            {t('player.home.greeting', { name: player?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || (isEn ? 'Star' : 'Crack') })}
+            {t('player.home.greeting', { name: player?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || t('player.home.defaultCrack', {}, 'Crack') })}
           </h2>
           <p className="player-status-sub">
             {t('player.home.subtitle')}
@@ -262,7 +262,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               }}>
                 <ShieldCheck size={18} color="#10B981" />
                 <span style={{ fontSize: '12px', fontWeight: '800', color: '#10B981' }}>
-                  {isEn ? '📋 You are in the official match squad!' : '📋 ¡Estás en la convocatoria oficial de este partido!'}
+                  {t('player.home.calledUpSquad', {}, '¡Estás en la convocatoria oficial de este partido!')}
                 </span>
               </div>
             )}
@@ -282,7 +282,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               </div>
               <div className="hud-meta-item full-width">
                 <MapPin size={16} className="hud-icon" />
-                <span>{nextEvent.lugar || nextEvent.location || (isEn ? 'Training Ground' : 'Campo de Entrenamiento')}</span>
+                <span>{nextEvent.lugar || nextEvent.location || t('player.home.defaultLocation', {}, 'Campo de Entrenamiento')}</span>
               </div>
             </div>
 
@@ -331,8 +331,8 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               {t('player.home.goalsSummary', {
                 goals: seasonPerformance.goals,
                 matches: seasonPerformance.matches === 1 
-                  ? (isEn ? '1 match' : '1 partido') 
-                  : (isEn ? `${seasonPerformance.matches} matches` : `${seasonPerformance.matches} partidos`),
+                  ? t('stats.singleMatch', {}, '1 partido') 
+                  : `${seasonPerformance.matches} ${t('stats.partidos', {}, 'partidos')}`,
                 minutes: seasonPerformance.minutes
               })}
             </span>
@@ -406,12 +406,12 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             {announcements.map((ann) => (
               <div key={ann.id} className="announcement-item">
                 <div className="ann-header">
-                  <span className="ann-author">⚽ {ann.authorName || (isEn ? 'Coaching Staff' : 'Cuerpo Técnico')}</span>
+                  <span className="ann-author">⚽ {ann.authorName || t('player.home.staffAuthor', {}, 'Cuerpo Técnico')}</span>
                   <span className="ann-date">
                     {(() => {
-                      if (!ann.createdAt) return isEn ? 'Recent' : 'Reciente';
+                      if (!ann.createdAt) return t('player.home.recent', {}, 'Reciente');
                       const ms = typeof ann.createdAt.toMillis === 'function' ? ann.createdAt.toMillis() : (ann.createdAt.seconds ? ann.createdAt.seconds * 1000 : new Date(ann.createdAt).getTime());
-                      return !isNaN(ms) && ms > 0 ? formatDate(ms, { day: 'numeric', month: 'short' }) : (isEn ? 'Recent' : 'Reciente');
+                      return !isNaN(ms) && ms > 0 ? formatDate(ms, { day: 'numeric', month: 'short' }) : t('player.home.recent', {}, 'Reciente');
                     })()}
                   </span>
                 </div>

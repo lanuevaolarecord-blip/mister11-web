@@ -49,7 +49,7 @@ export const PlayerAchievementsTab = ({
   team = null,
   teamPath = ''
 }) => {
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState('vitrina'); // 'vitrina' | 'juegos' | 'ranking'
   const [selectedTier, setSelectedTier] = useState('ALL'); // 'ALL' | 'BRONZE' | 'SILVER' | 'GOLD'
 

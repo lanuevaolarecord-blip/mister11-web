@@ -65,7 +65,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const { user, logout, switchMode, userProfile, activeTeamId } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState('GENERAL'); // 'GENERAL' | 'FÍSICO' | 'SALUD' | 'PLANES' | 'ESTS.' | 'ASISTENCIA'
 
-  const { t, isEn, locale } = useTranslation();
+  const { t, locale } = useTranslation();
 
   // Estados para edición de datos físicos (Feature 1)
   const [editableHeight, setEditableHeight] = useState(player?.height || '');
@@ -272,9 +272,9 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
     } catch (err) {
       console.error('Error al eliminar cuenta:', err);
       if (err.code === 'auth/requires-recent-login') {
-        alert(isEn ? 'For security reasons, you must log out and sign in again before deleting your account.' : 'Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
+        alert(t('player.profile.securityReauth', {}, 'Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.'));
       } else {
-        alert(isEn ? 'Could not delete account. Please contact us or try again after restarting session.' : 'No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
+        alert(t('player.profile.deleteAccountError', {}, 'No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.'));
       }
     } finally {
       setIsDeletingAccount(false);
@@ -545,7 +545,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                 </div>
                 <div>
                   <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.matches')}</span>
-                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {isEn ? 'MP' : 'PJ'}</div>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {t('player.profile.matchesPlayedShort', {}, 'PJ')}</div>
                 </div>
               </div>
             );
@@ -555,15 +555,15 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
           <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.category')}</span>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{team?.categoria || team?.category || player?.category || (isEn ? 'Youth' : 'Juvenil')}</strong>
+              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{team?.categoria || team?.category || player?.category || t('player.profile.defaultCategory', {}, 'Juvenil')}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.foot')}</span>
               <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-                {player?.foot === 'Derecho' || player?.foot === 'Right' ? (isEn ? 'Right' : 'Derecho') :
-                 player?.foot === 'Izquierdo' || player?.foot === 'Left' ? (isEn ? 'Left' : 'Izquierdo') :
-                 player?.foot === 'Ambidiestro' || player?.foot === 'Both' ? (isEn ? 'Both' : 'Ambidiestro') : (player?.foot || (isEn ? 'Right' : 'Derecho'))}
+                {player?.foot === 'Derecho' || player?.foot === 'Right' ? t('player.profile.rightFoot', {}, 'Derecho') :
+                 player?.foot === 'Izquierdo' || player?.foot === 'Left' ? t('player.profile.leftFoot', {}, 'Izquierdo') :
+                 player?.foot === 'Ambidiestro' || player?.foot === 'Both' ? t('player.profile.ambidextrous', {}, 'Ambidiestro') : (player?.foot || t('player.profile.rightFoot', {}, 'Derecho'))}
               </strong>
             </div>
 
@@ -577,7 +577,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                 fontSize: '12px',
                 fontWeight: 'bold'
               }}>
-                {(player?.position === 'POR' || player?.posicion === 'POR') ? '🧤 POR' : playerPosition}
+                {(player?.position === 'POR' || player?.posicion === 'POR') ? 'POR' : playerPosition}
               </span>
             </div>
 
@@ -586,7 +586,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                 {(() => {
                   const calc = calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.age);
-                  return calc.years ? `${calc.years} ${isEn ? 'years old' : 'años'}` : calc.text;
+                  return calc.years ? `${calc.years} ${t('player.profile.years', {}, 'años')}` : calc.text;
                 })()}
               </strong>
             </div>
@@ -595,7 +595,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.account')}</span>
               <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Mail size={13} /> {user?.email || player?.email || (isEn ? 'Player Account' : 'Cuenta de Jugador')}
+                <Mail size={13} /> {user?.email || player?.email || t('player.profile.accountFallback', {}, 'Cuenta de Jugador')}
               </span>
             </div>
           </div>
@@ -864,7 +864,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                 disabled={savingWellness}
                 style={{ background: '#10B981', minHeight: '48px', fontWeight: 800 }}
               >
-                {savingWellness ? (isEn ? 'Saving...' : 'Guardando...') : (wellnessSubmitted ? (isEn ? 'UPDATE CHECK-IN' : 'ACTUALIZAR CHECK-IN') : (isEn ? 'SAVE HEALTH CHECK-IN' : 'ENVIAR CHECK-IN DIARIO'))}
+                {savingWellness ? t('player.wellness.saving', {}, 'Guardando...') : (wellnessSubmitted ? t('player.wellness.updateCheckin', {}, 'ACTUALIZAR ESTADO GENERAL') : t('player.wellness.saveCheckin', {}, 'ENVIAR CHECK-IN DIARIO'))}
               </button>
             </form>
           </div>
@@ -994,7 +994,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                       {blocked.displayName || blocked.name || blocked.id}
                     </span>
                     <span style={{ fontSize: '11px', color: '#64748B' }}>
-                      {blocked.blockedAt ? new Date(blocked.blockedAt.toDate ? blocked.blockedAt.toDate() : blocked.blockedAt).toLocaleDateString(locale || (isEn ? 'en-US' : 'es-ES')) : ''}
+                      {blocked.blockedAt ? new Date(blocked.blockedAt.toDate ? blocked.blockedAt.toDate() : blocked.blockedAt).toLocaleDateString(locale || 'es-ES') : ''}
                     </span>
                   </div>
                   <button
@@ -1142,7 +1142,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                   type="text"
                   value={parentName}
                   onChange={(e) => setParentName(e.target.value)}
-                  placeholder={isEn ? "e.g. Carlos Caicedo Perez" : "Ej. Carlos Caicedo Pérez"}
+                  placeholder={t('player.consent.parentPlaceholder', {}, 'Ej. Carlos Caicedo Pérez')}
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}
                 />
               </div>

@@ -196,7 +196,7 @@ export const AUTONOMOUS_TESTS = [
 
 export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
-  const { t, isEn, formatDate } = useTranslation();
+  const { t, formatDate } = useTranslation();
 
   const [selectedTest, setSelectedTest] = useState(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);

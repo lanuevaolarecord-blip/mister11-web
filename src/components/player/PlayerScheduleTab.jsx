@@ -19,7 +19,7 @@ import {
 
 export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false }) => {
   const { user } = useAuth();
-  const { t, locale, isEn } = useTranslation();
+  const { t, locale } = useTranslation();
   const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState({});
   const [officialRecords, setOfficialRecords] = useState({});
@@ -281,7 +281,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
       
       {/* Selector de Mes */}
       <div className="schedule-month-selector">
-        <button className="month-nav-btn" onClick={prevMonth} aria-label={isEn ? 'Previous month' : 'Mes anterior'}>
+        <button className="month-nav-btn" onClick={prevMonth} aria-label={t('player.schedule.prevMonth', {}, 'Mes anterior')}>
           <ChevronLeft size={20} />
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -308,7 +308,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
             </button>
           )}
         </div>
-        <button className="month-nav-btn" onClick={nextMonth} aria-label={isEn ? 'Next month' : 'Mes siguiente'}>
+        <button className="month-nav-btn" onClick={nextMonth} aria-label={t('player.schedule.nextMonth', {}, 'Mes siguiente')}>
           <ChevronRight size={20} />
         </button>
       </div>
@@ -376,10 +376,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <ShieldCheck size={18} color="#10B981" />
                             <div>
                               <strong style={{ color: '#10B981', fontSize: '0.88rem', display: 'block' }}>
-                                {isEn ? 'Called up for the match!' : '¡Convocado para el partido!'}
+                                {t('player.schedule.calledUpTitle', {}, '¡Convocado para el partido!')}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                                {isEn ? 'You have been selected by the coaching staff.' : 'Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!'}
+                                {t('player.schedule.calledUpDesc', {}, 'Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!')}
                               </span>
                             </div>
                           </>
@@ -388,10 +388,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <AlertTriangle size={18} color="#F59E0B" />
                             <div>
                               <strong style={{ color: '#F59E0B', fontSize: '0.88rem', display: 'block' }}>
-                                {isEn ? 'Standby / Reserve list' : 'Reserva / Convocatoria en espera'}
+                                {t('player.schedule.reserveTitle', {}, 'Reserva / Convocatoria en espera')}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                                {isEn ? 'Stay tuned in case of last minute updates.' : 'Mantente atento por si se produce alguna vacante de última hora.'}
+                                {t('player.schedule.reserveDesc', {}, 'Mantente atento por si se produce alguna vacante de última hora.')}
                               </span>
                             </div>
                           </>
@@ -400,10 +400,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <HelpCircle size={18} color="var(--text-secondary)" />
                             <div>
                               <strong style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', display: 'block' }}>
-                                {isEn ? 'Not called up for this match' : 'No convocado para esta jornada'}
+                                {t('player.schedule.notCalledTitle', {}, 'No convocado para esta jornada')}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                                {isEn ? 'Keep working hard in training!' : '¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!'}
+                                {t('player.schedule.notCalledDesc', {}, '¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!')}
                               </span>
                             </div>
                           </>
@@ -413,15 +413,15 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                            {isStarter ? (isEn ? '⭐ Starter' : '⭐ Titular') : isSub ? (isEn ? '🔄 Substitute' : '🔄 Suplente') : isCalled ? (isEn ? '📋 Called up' : '📋 Convocado') : (isEn ? 'No minutes' : 'Sin minutos')}
+                            {isStarter ? `⭐ ${t('player.schedule.starter', {}, 'Titular')}` : isSub ? `🔄 ${t('player.schedule.substitute', {}, 'Suplente')}` : isCalled ? `📋 ${t('player.schedule.calledUp', {}, 'Convocado')}` : t('player.schedule.noMinutes', {}, 'Sin minutos')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>
-                            ⏱️ {playerStats?.minutesPlayed || 0} min {isEn ? 'played' : 'jugados'}
+                            ⏱️ {playerStats?.minutesPlayed || 0} min {t('player.schedule.played', {}, 'jugados')}
                           </span>
                         </div>
                         {playerStats?.coachRating && (
                           <div style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 700 }}>
-                            {isEn ? 'Coach Rating:' : 'Nota del Míster:'} {playerStats.coachRating} / 10
+                            {t('player.schedule.coachRating', {}, 'Nota del Míster:')} {playerStats.coachRating} / 10
                           </div>
                         )}
                         {(() => {
@@ -444,7 +444,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             }}>
                               <span>🧤 {t('gk.saves')}: {gkMatch.saves || 0}</span>
                               <span>🥅 {t('gk.conceded')}: {gkMatch.conceded || 0}</span>
-                              <span>🧼 {t('gk.cleanSheets')}: {gkMatch.cleanSheet ? (isEn ? 'Yes' : 'Sí') : 'No'}</span>
+                              <span>🧼 {t('gk.cleanSheets')}: {gkMatch.cleanSheet ? t('common.yes', {}, 'Sí') : t('common.no', {}, 'No')}</span>
                               {(gkMatch.penaltySaves || 0) > 0 && <span>🛡️ {t('gk.penaltySaves')}: {gkMatch.penaltySaves}</span>}
                             </div>
                           );
@@ -471,12 +471,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                         <span style={{ fontSize: '18px' }}>📋</span>
                         <div>
                           <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10B981' }}>
-                            {isEn ? 'Official match sheet closed' : 'Acta oficial cerrada'}
+                            {t('player.schedule.sheetClosed', {}, 'Acta oficial cerrada')}
                           </div>
                           <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                            {officialMinutes !== null
-                              ? (isEn ? `Official minutes: ${officialMinutes}'` : `Minutos oficiales: ${officialMinutes}'`)
-                              : (isEn ? 'Did not play (DNP)' : 'No jugaste en este partido')}
+                            {officialMinutes !== null ? t('player.schedule.officialMinutes', { min: officialMinutes }, `Minutos oficiales: ${officialMinutes}'`) : t('player.schedule.dnp', {}, 'No jugaste en este partido')}
                             {officialStatus && (
                               <span style={{ marginLeft: '6px', opacity: 0.7 }}>
                                 &middot; {officialStatus}
@@ -489,9 +487,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                       // Acta abierta: mostrar RSVP normal
                       <>
                         <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
-                          {isParentView 
-                            ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
-                            : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
+                          {isParentView ? t('player.schedule.parentPrompt', { name: player?.name || 'tu hijo' }, `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) : t('player.schedule.playerPrompt', {}, '¿Asistirás a esta sesión?')}
                         </span>
                         <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                           {RSVP_OPTIONS.map((opt) => {
@@ -552,10 +548,19 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <span style={{ fontSize: '20px' }}>{cfg.icon}</span>
                             <div>
                               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: cfg.color }}>
-                                {isEn ? cfg.labelEn : cfg.label} {rawStatus === 'late' && staffRecord.lateMinutes ? `(${staffRecord.lateMinutes} min)` : ''}
+                                {(() => {
+                                  const statusMap = {
+                                    present: t('attendance.status.present', {}, 'Presente'),
+                                    late: t('attendance.status.late', {}, 'Retraso'),
+                                    absent: t('attendance.status.absent', {}, 'Ausente'),
+                                    justified: t('attendance.status.justified', {}, 'Justificado'),
+                                    injured: t('attendance.status.injured', {}, 'Lesionado')
+                                  };
+                                  return statusMap[rawStatus] || cfg.label;
+                                })()} {rawStatus === 'late' && staffRecord.lateMinutes ? `(${staffRecord.lateMinutes} min)` : ''}
                               </div>
                               <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                {isEn ? 'Official attendance recorded by coaching staff' : 'Asistencia oficial registrada por el cuerpo técnico'}
+                                {t('player.schedule.officialRecorded', {}, 'Asistencia oficial registrada por el cuerpo técnico')}
                               </div>
                             </div>
                           </div>
@@ -579,7 +584,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                                 {t('player.schedule.pendingVerification')}
                               </div>
                               <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                {isEn ? 'Session held, pending coach verification' : 'Sesión realizada, pendiente de verificación del cuerpo técnico'}
+                                {t('player.schedule.pendingVerificationDesc', {}, 'Sesión realizada, pendiente de verificación del cuerpo técnico')}
                               </div>
                             </div>
                           </div>
@@ -590,9 +595,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                       return (
                         <>
                           <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
-                            {isParentView 
-                              ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este entrenamiento?`) 
-                              : (isEn ? 'Will you attend this training session?' : '¿Asistirás a este entrenamiento?')}
+                            {isParentView ? t('player.schedule.parentTrainingPrompt', { name: player?.name || 'tu hijo' }, `¿Asistirá ${player?.name || 'tu hijo'} a este entrenamiento?`) : t('player.schedule.playerTrainingPrompt', {}, '¿Asistirás a este entrenamiento?')}
                           </span>
                           <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                             {RSVP_OPTIONS.map((opt) => {
@@ -638,7 +641,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                  (evt.photos || evt.fotos || evt.capturas || evt.images).length > 0 && (
                   <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-light, rgba(255,255,255,0.08))', paddingTop: '10px' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
-                      📸 {isEn ? 'Photos & Captures' : 'Fotos y Capturas del Evento'} ({(evt.photos || evt.fotos || evt.capturas || evt.images).length})
+                      📸 {t('player.schedule.photosCaptures', {}, 'Fotos y Capturas del Evento')} ({(evt.photos || evt.fotos || evt.capturas || evt.images).length})
                     </span>
                     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
                       {(evt.photos || evt.fotos || evt.capturas || evt.images).map((photoUrl, pIdx) => (
@@ -669,7 +672,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
           <CalendarIcon size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px auto', opacity: 0.7 }} />
           <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800 }}>{t('player.schedule.noEvents')}</h4>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {isEn ? 'Your coach has not scheduled sessions or matches for this month yet.' : 'Tu entrenador aún no ha programado sesiones o partidos en este mes.'}
+            {t('player.schedule.noEventsDesc', {}, 'Tu entrenador aún no ha programado sesiones o partidos en este mes.')}
           </p>
         </div>
       )}

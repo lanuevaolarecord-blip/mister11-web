@@ -24,7 +24,7 @@ import { requestNotificationPermission } from '../../hooks/useLocalNotifications
 import { isDeveloperEmail } from '../../config/admins';
 
 export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
-  const { t, language, setLanguage, isEn } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const { darkMode, toggleTheme } = useTheme();
   const { user, userProfile, logout, switchMode } = useAuth();
   const { deferredPrompt, isInstalled, installApp } = usePWA();
@@ -45,20 +45,20 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
     if (nextVal && Capacitor.isNativePlatform()) {
       const granted = await requestNotificationPermission();
       if (!granted) {
-        showToast(isEn ? 'Notification permissions denied.' : 'No se concedieron permisos de notificación.', 'warning');
+        showToast(t('player.settings.notifDenied', {}, 'No se concedieron permisos de notificación.'), 'warning');
       } else {
-        showToast(isEn ? 'Reminders activated.' : 'Recordatorios activados.', 'success');
+        showToast(t('player.settings.remindersActivated', {}, 'Recordatorios activados.'), 'success');
       }
     }
   };
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    showToast(newLang === 'English (EN)' ? 'Language changed to English' : 'Idioma cambiado a Español', 'success');
+    showToast(t('player.settings.languageUpdated', {}, 'Idioma actualizado'), 'success');
   };
 
   const handleLogout = async () => {
-    if (window.confirm(isEn ? 'Do you want to log out?' : '¿Deseas cerrar sesión?')) {
+    if (window.confirm(t('player.settings.confirmLogout', {}, '¿Deseas cerrar sesión?'))) {
       try {
         await logout();
         window.location.href = '/';
@@ -205,7 +205,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
                 transition: 'background-color 0.2s ease',
                 padding: '2px'
               }}
-              aria-label={isEn ? "Toggle dark/light theme" : "Toggle tema oscuro/claro"}
+              aria-label={t('player.settings.toggleTheme', {}, 'Alternar tema claro/oscuro')}
             >
               <div style={{
                 width: '26px',
@@ -241,7 +241,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
                 transition: 'background-color 0.2s ease',
                 padding: '2px'
               }}
-              aria-label={isEn ? "Toggle notifications" : "Toggle notificaciones"}
+              aria-label={t('player.settings.toggleNotif', {}, 'Alternar notificaciones')}
             >
               <div style={{
                 width: '26px',

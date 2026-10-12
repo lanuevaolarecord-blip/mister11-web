@@ -10,7 +10,7 @@ import './PlayerPerformanceBanner.css';
 
 export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpenSummary }) => {
   const { darkMode } = useTheme();
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const [evaluations, setEvaluations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -117,7 +117,7 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
 
         {/* Columna Izquierda: Radar Perfil de Rendimiento */}
         <div className="pitch-radar-block">
-          <span className="pitch-block-title">{isEn ? 'PERFORMANCE PROFILE' : 'PERFIL DE RENDIMIENTO'}</span>
+          <span className="pitch-block-title">{t('player.banner.perfProfile', {}, 'PERFIL DE RENDIMIENTO')}</span>
           {testCount > 0 || validDimensions.length > 0 ? (
             <div className="radar-wrapper">
               <SvgRadar data={radarData} size={220} />
@@ -126,13 +126,13 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
             <div className="empty-radar-box">
               <div style={{ fontSize: 36, filter: 'grayscale(1)' }}>📊</div>
               <p style={{ fontSize: 13, marginTop: 6, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                {isEn ? 'No test data yet' : 'Sin evaluaciones aún'}.
+                {t('player.banner.noTestData', {}, 'Sin evaluaciones aún')}.
               </p>
             </div>
           )}
           <div className="pitch-medal-badge">
             <span style={{ fontSize: '14px' }}>🎖️</span>
-            <span>{isEn ? 'PERFORMANCE MEDAL' : 'MEDALLA DE RENDIMIENTO'}</span>
+            <span>{t('player.banner.perfMedal', {}, 'MEDALLA DE RENDIMIENTO')}</span>
           </div>
         </div>
 

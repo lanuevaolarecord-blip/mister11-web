@@ -43,7 +43,7 @@ import { PlayerLeaderboard } from './PlayerLeaderboard';
 import { useTranslation } from '../../hooks/useTranslation';
 
 export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, achievements = [], onNavigateTests }) => {
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { darkMode } = useTheme();
   const { isPro, isProActive } = usePlan();
@@ -80,26 +80,26 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   // Catálogo canónico de pruebas físicas y cuestionarios para enriquecer datos de Firestore
   const CANONICAL_TESTS_MAP = useMemo(() => ({
-    't1': { name: isEn ? 'Cooper Test' : 'Test de Cooper', category: isEn ? 'Physical · Endurance' : 'Físico · Resistencia', unit: 'm', isTime: false },
-    't2': { name: isEn ? 'Beep Test (Course Navette)' : 'Course Navette', category: isEn ? 'Physical · Endurance' : 'Físico · Resistencia', unit: 'nivel', isTime: false },
-    't3': { name: isEn ? '10m Sprint' : 'Sprint 10m', category: isEn ? 'Physical · Speed' : 'Físico · Velocidad', unit: 'seg', isTime: true },
-    't4': { name: isEn ? '30m Sprint' : 'Sprint 30m', category: isEn ? 'Physical · Speed' : 'Físico · Velocidad', unit: 'seg', isTime: true },
-    't5': { name: isEn ? 'T-Test Agility' : 'T-Test (Agilidad)', category: isEn ? 'Physical · Agility' : 'Físico · Agilidad', unit: 'seg', isTime: true },
-    't6': { name: isEn ? 'CMJ Jump' : 'Salto CMJ', category: isEn ? 'Physical · Power' : 'Físico · Fuerza', unit: 'cm', isTime: false },
-    't7': { name: isEn ? 'Cone Dribbling' : 'Conducción conos', category: isEn ? 'Technical · Ball Control' : 'Técnica · Control', unit: 'seg', isTime: true },
-    't8': { name: isEn ? 'Goal Shooting' : 'Pase a portería', category: isEn ? 'Technical · Accuracy' : 'Técnica · Precisión', unit: 'pts', isTime: false },
-    'psi1': { name: isEn ? 'ACSI-28 Coping Skills' : 'ACSI-28 (Afrontamiento)', category: isEn ? 'Mental · Pressure' : 'Mental · Presión', unit: 'pts', isTime: false },
-    'psi2': { name: isEn ? 'MTQ-10 Mental Toughness' : 'MTQ-10 (Fortaleza Mental)', category: isEn ? 'Mental · Resilience' : 'Mental · Resiliencia', unit: 'pts', isTime: false },
-    'psi3': { name: isEn ? 'Goal Setting Scale' : 'Establecimiento de Metas', category: isEn ? 'Mental · Goals' : 'Mental · Objetivos', unit: 'pts', isTime: false },
-    'psi4': { name: isEn ? 'Leadership & Communication' : 'Liderazgo y Comunicación', category: isEn ? 'Mental · Leadership' : 'Mental · Liderazgo', unit: 'pts', isTime: false },
-    'soc1': { name: isEn ? 'GEQ Team Cohesion' : 'GEQ (Cohesión de Equipo)', category: isEn ? 'Social · Cohesion' : 'Social · Cohesión', unit: 'pts', isTime: false },
-    'soc2': { name: isEn ? 'MHC-SF Mental Well-being' : 'Escala Bienestar Mental', category: isEn ? 'Mental · Well-being' : 'Mental · Bienestar', unit: 'pts', isTime: false },
-    'soc3': { name: isEn ? 'Emotional Awareness' : 'Autoconciencia Emocional', category: isEn ? 'Mental · Emotions' : 'Mental · Emociones', unit: 'pts', isTime: false },
-    'psi_acsi28_auto': { name: isEn ? 'ACSI-28 Coping Skills' : 'ACSI-28 (Afrontamiento)', category: isEn ? 'Mental · Pressure' : 'Mental · Presión', unit: 'pts', isTime: false },
-    'psi_mtq10_auto': { name: isEn ? 'MTQ-10 Mental Toughness' : 'MTQ-10 (Fortaleza Mental)', category: isEn ? 'Mental · Resilience' : 'Mental · Resiliencia', unit: 'pts', isTime: false },
-    'soc_geq_auto': { name: isEn ? 'GEQ Team Cohesion' : 'GEQ (Cohesión de Equipo)', category: isEn ? 'Social · Cohesion' : 'Social · Cohesión', unit: 'pts', isTime: false },
-    'psi_metas_auto': { name: isEn ? 'Goal Setting Scale' : 'Establecimiento de Metas', category: isEn ? 'Mental · Goals' : 'Mental · Objetivos', unit: 'pts', isTime: false },
-  }), [isEn]);
+    't1': { name: t('test.name.cooper', {}, 'Test de Cooper'), category: t('test.cat.endurance', {}, 'Físico · Resistencia'), unit: 'm', isTime: false },
+    't2': { name: t('test.name.navette', {}, 'Course Navette'), category: t('test.cat.endurance', {}, 'Físico · Resistencia'), unit: 'nivel', isTime: false },
+    't3': { name: t('test.name.sprint10', {}, 'Sprint 10m'), category: t('test.cat.speed', {}, 'Físico · Velocidad'), unit: 'seg', isTime: true },
+    't4': { name: t('test.name.sprint30', {}, 'Sprint 30m'), category: t('test.cat.speed', {}, 'Físico · Velocidad'), unit: 'seg', isTime: true },
+    't5': { name: t('test.name.ttest', {}, 'T-Test (Agilidad)'), category: t('test.cat.agility', {}, 'Físico · Agilidad'), unit: 'seg', isTime: true },
+    't6': { name: t('test.name.cmj', {}, 'Salto CMJ'), category: t('test.cat.power', {}, 'Físico · Fuerza'), unit: 'cm', isTime: false },
+    't7': { name: t('test.name.cones', {}, 'Conducción conos'), category: t('test.cat.ballControl', {}, 'Técnica · Control'), unit: 'seg', isTime: true },
+    't8': { name: t('test.name.shooting', {}, 'Pase a portería'), category: t('test.cat.accuracy', {}, 'Técnica · Precisión'), unit: 'pts', isTime: false },
+    'psi1': { name: t('test.name.acsi28', {}, 'ACSI-28 (Afrontamiento)'), category: t('test.cat.pressure', {}, 'Mental · Presión'), unit: 'pts', isTime: false },
+    'psi2': { name: t('test.name.mtq10', {}, 'MTQ-10 (Fortaleza Mental)'), category: t('test.cat.resilience', {}, 'Mental · Resiliencia'), unit: 'pts', isTime: false },
+    'psi3': { name: t('test.name.goals', {}, 'Establecimiento de Metas'), category: t('test.cat.goals', {}, 'Mental · Objetivos'), unit: 'pts', isTime: false },
+    'psi4': { name: t('test.name.leadership', {}, 'Liderazgo y Comunicación'), category: t('test.cat.leadership', {}, 'Mental · Liderazgo'), unit: 'pts', isTime: false },
+    'soc1': { name: t('test.name.geq', {}, 'GEQ (Cohesión de Equipo)'), category: t('test.cat.cohesion', {}, 'Social · Cohesión'), unit: 'pts', isTime: false },
+    'soc2': { name: t('test.name.mhc', {}, 'Escala Bienestar Mental'), category: t('test.cat.wellbeing', {}, 'Mental · Bienestar'), unit: 'pts', isTime: false },
+    'soc3': { name: t('test.name.emotions', {}, 'Autoconciencia Emocional'), category: t('test.cat.emotions', {}, 'Mental · Emociones'), unit: 'pts', isTime: false },
+    'psi_acsi28_auto': { name: t('test.name.acsi28', {}, 'ACSI-28 (Afrontamiento)'), category: t('test.cat.pressure', {}, 'Mental · Presión'), unit: 'pts', isTime: false },
+    'psi_mtq10_auto': { name: t('test.name.mtq10', {}, 'MTQ-10 (Fortaleza Mental)'), category: t('test.cat.resilience', {}, 'Mental · Resiliencia'), unit: 'pts', isTime: false },
+    'soc_geq_auto': { name: t('test.name.geq', {}, 'GEQ (Cohesión de Equipo)'), category: t('test.cat.cohesion', {}, 'Social · Cohesión'), unit: 'pts', isTime: false },
+    'psi_metas_auto': { name: t('test.name.goals', {}, 'Establecimiento de Metas'), category: t('test.cat.goals', {}, 'Mental · Objetivos'), unit: 'pts', isTime: false },
+  }), [t]);
 
   // Función segura para parsear y normalizar fechas y timestamps
   const parseSafeDate = (d, rawItem) => {
@@ -166,9 +166,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       playerEvals.forEach(e => {
         const testId = String(e.testId || e.rawTestId || 'test_general');
         const canonical = CANONICAL_TESTS_MAP[testId] || CANONICAL_TESTS_MAP[e.rawTestId] || {};
-        const testName = e.testName || canonical.name || e.nombre || (isEn ? 'Evaluation' : 'Evaluación');
+        const testName = e.testName || canonical.name || e.nombre || t('player.stats.evaluation', {}, 'Evaluación');
         const unit = e.unit || canonical.unit || 'pts';
-        const rawCat = String(e.category || canonical.category || e.categoria || (isEn ? 'General' : 'General'));
+        const rawCat = String(e.category || canonical.category || e.categoria || t('player.stats.general', {}, 'General'));
         const category = rawCat;
         const type = e.type || canonical.type || e.tipo || (
           rawCat.toLowerCase().includes('físic') || rawCat.toLowerCase().includes('resistencia') || rawCat.toLowerCase().includes('velocidad') || rawCat.toLowerCase().includes('fuerza') || rawCat.toLowerCase().includes('agilidad') || testId.startsWith('t1') || testId.startsWith('t2') || testId.startsWith('t3') || testId.startsWith('t4') || testId.startsWith('t5') || testId.startsWith('t6') ? 'fisico' :
@@ -263,7 +263,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       unsubTestResults();
       unsubPlayerDirect();
     };
-  }, [cleanPath, effectivePlayerId, CANONICAL_TESTS_MAP, isEn]);
+  }, [cleanPath, effectivePlayerId, CANONICAL_TESTS_MAP, t]);
 
   // 2. Escuchar histórico de Wellness / Bienestar
   useEffect(() => {
@@ -348,7 +348,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 const data = ratingDoc.data();
                 ratings.push({
                   sessionId: sess.id,
-                  sessionTitle: sess.title || sess.titulo || (isEn ? 'Session' : 'Sesión'),
+                  sessionTitle: sess.title || sess.titulo || t('player.stats.session', {}, 'Sesión'),
                   date: sess.date || sess.fecha || '',
                   rating: Number(data.rating || 0),
                   comment: data.comment || ''
@@ -376,7 +376,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     return () => {
       isMounted = false;
     };
-  }, [cleanPath, effectivePlayerId, allSessions, isEn]);
+  }, [cleanPath, effectivePlayerId, allSessions, t]);
 
   // 4. Comparativa Privada con Promedios del Equipo (FASE 4)
   const teamComparison = useMemo(() => {
@@ -495,12 +495,12 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   const getAxisLabel = (axis) => {
     const norm = String(axis || '').toUpperCase();
-    if (norm.includes('FÍS') || norm.includes('FIS')) return t('player.stats.axis.physical', {}, isEn ? 'PHYSICAL' : 'FÍSICO');
-    if (norm.includes('TÉC') || norm.includes('TEC')) return t('player.stats.axis.technical', {}, isEn ? 'TECHNICAL' : 'TÉCNICA');
-    if (norm.includes('TÁC') || norm.includes('TAC')) return t('player.stats.axis.tactical', {}, isEn ? 'TACTICAL' : 'TÁCTICA');
-    if (norm.includes('MEN') || norm.includes('PSI')) return t('player.stats.axis.mental', {}, isEn ? 'MENTAL' : 'MENTAL');
-    if (norm.includes('ASIS') || norm.includes('ATT')) return t('player.stats.axis.attendance', {}, isEn ? 'ATTENDANCE' : 'ASISTENCIA');
-    if (norm.includes('ENTREN') || norm.includes('TRAIN')) return t('sessionRating.radarAxisTraining', {}, isEn ? 'TRAINING' : 'ENTRENAMIENTO');
+    if (norm.includes('FÍS') || norm.includes('FIS')) return t('player.stats.axis.physical', {}, 'FÍSICO');
+    if (norm.includes('TÉC') || norm.includes('TEC')) return t('player.stats.axis.technical', {}, 'TÉCNICA');
+    if (norm.includes('TÁC') || norm.includes('TAC')) return t('player.stats.axis.tactical', {}, 'TÁCTICA');
+    if (norm.includes('MEN') || norm.includes('PSI')) return t('player.stats.axis.mental', {}, 'MENTAL');
+    if (norm.includes('ASIS') || norm.includes('ATT')) return t('player.stats.axis.attendance', {}, 'ASISTENCIA');
+    if (norm.includes('ENTREN') || norm.includes('TRAIN')) return t('sessionRating.radarAxisTraining', {}, 'ENTRENAMIENTO');
     return axis;
   };
 
@@ -849,11 +849,11 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                         <span>&middot;</span>
                         {mItem.actaClosed ? (
                           <span style={{ color: '#10B981', fontWeight: '700' }}>
-                            📋 {mItem.isTitular ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Sub' : 'Suplente')} ({mItem.minutesPlayed}')
+                            📋 {mItem.isTitular ? t('player.stats.starter', {}, 'Titular') : t('player.stats.sub', {}, 'Suplente')} ({mItem.minutesPlayed}')
                           </span>
                         ) : (
                           <span style={{ color: '#F59E0B', fontWeight: '700' }}>
-                            ⏳ {isEn ? 'Pending official sheet' : 'Pendiente de acta'}
+                            ⏳ {t('player.stats.pendingSheet', {}, 'Pendiente de acta')}
                           </span>
                         )}
                       </div>
@@ -896,9 +896,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                           fontWeight: '800',
                           fontSize: '13px'
                         }}>
-                          ⏳ {isEn
-                            ? 'Pending official confirmation — Stats will appear once the match sheet is closed.'
-                            : 'Pendiente de confirmación oficial — Los datos aparecerán cuando el míster cierre el acta.'}
+                          ⏳ {t('player.stats.pendingOfficialSheet', {}, 'Pendiente de confirmación oficial — Los datos aparecerán cuando el míster cierre el acta.')}
                         </div>
                       )}
 
@@ -924,7 +922,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                           </div>
                           <div>
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.cleanSheets')}</span>
-                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#10B981' }}>{mItem.gk.cleanSheet ? (isEn ? 'Yes' : 'Sí') : 'No'}</div>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#10B981' }}>{mItem.gk.cleanSheet ? t('common.yes', {}, 'Sí') : t('common.no', {}, 'No')}</div>
                           </div>
                           <div>
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.savePercentage')}</span>
@@ -938,9 +936,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                           {/* BLOQUE 1: KPIs clave */}
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                             {[
-                              { icon: '⚽', label: isEn ? 'Goals' : 'Goles', val: mItem.goals || 0, color: '#4CAF7D' },
-                              { icon: '💟', label: isEn ? 'Assists' : 'Asist.', val: mItem.assists || 0, color: '#3B82F6' },
-                              { icon: '⏱️', label: isEn ? 'Minutes' : 'Minutos', val: mItem.minutesPlayed || 0, color: '#D4A843' },
+                              { icon: '⚽', label: t('stats.goles', {}, 'Goles'), val: mItem.goals || 0, color: '#4CAF7D' },
+                              { icon: '💟', label: t('stats.asistencias', {}, 'Asist.'), val: mItem.assists || 0, color: '#3B82F6' },
+                              { icon: '⏱️', label: t('stats.minutos', {}, 'Minutos'), val: mItem.minutesPlayed || 0, color: '#D4A843' },
                               { icon: '📈', label: 'xG', val: xG, color: '#A855F7' },
                             ].map(k => (
                               <div key={k.label} style={{
@@ -971,7 +969,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{ fontSize: '24px', fontWeight: '900', color: '#C9A84C' }}>⭐ {Number(mItem.misterNote).toFixed(1)}</span>
                                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '700' }}>
-                                  {isEn ? "Coach's rating" : 'Nota del Míster'}
+                                  {t('player.stats.coachRating', {}, 'Nota del Míster')}
                                 </span>
                                 {/* Estrellas de actitud */}
                                 {mItem.actitudStars != null && (
@@ -985,7 +983,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                                       />
                                     ))}
                                     <span style={{ fontSize: '10px', color: '#C9A84C', fontWeight: '700', marginLeft: '4px' }}>
-                                      {isEn ? 'Attitude' : 'Actitud'}
+                                      {t('player.stats.attitude', {}, 'Actitud')}
                                     </span>
                                   </div>
                                 )}
@@ -1002,22 +1000,22 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               padding: '12px 14px',
                             }}>
                               <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                🎯 {isEn ? 'Hits vs Misses' : 'Aciertos vs Desaciertos'}
+                                🎯 {t('player.stats.hitsVsMisses', {}, 'Aciertos vs Desaciertos')}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {[
                                   {
-                                    label: isEn ? 'Shots on target / total' : 'Tiros a puerta / total',
+                                    label: t('player.stats.shotsOnTarget', {}, 'Tiros a puerta / total'),
                                     good: tiros_puerta, total: tiros_total,
                                     icon: '🎯', goodColor: '#4CAF7D', badColor: '#EF4444'
                                   },
                                   {
-                                    label: isEn ? 'Duels won / total' : 'Duelos ganados / total',
+                                    label: t('player.stats.duelsWon', {}, 'Duelos ganados / total'),
                                     good: duelos_ganados, total: duelos_total,
                                     icon: '✊', goodColor: '#D4A843', badColor: '#94A3B8'
                                   },
                                   {
-                                    label: isEn ? 'Recoveries vs Losses' : 'Recuperaciones vs Pérdidas',
+                                    label: t('player.stats.recoveriesLosses', {}, 'Recuperaciones vs Pérdidas'),
                                     good: recuperaciones, total: recuperaciones + perdidas,
                                     icon: '🔄', goodColor: '#0D9488', badColor: '#F97316'
                                   },
@@ -1040,11 +1038,11 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                                 {/* Faltas y pases clave */}
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: '11px', fontWeight: '800', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
-                                    ⚡ {faltas_cometidas} {isEn ? 'fouls' : 'faltas'}
+                                    ⚡ {faltas_cometidas} {t('player.stats.fouls', {}, 'faltas')}
                                   </span>
                                   {pases_clave > 0 && (
                                     <span style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', background: 'rgba(59,130,246,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
-                                      ⭐ {pases_clave} {isEn ? 'key passes' : 'pases clave'}
+                                      ⭐ {pases_clave} {t('player.stats.keyPasses', {}, 'pases clave')}
                                     </span>
                                   )}
                                 </div>
@@ -1066,7 +1064,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <span style={{ fontSize: '20px' }}>🏆</span>
                               <div>
                                 <div style={{ fontSize: '11px', fontWeight: '700', color: '#C9A84C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                  {isEn ? 'Your best stat this match' : 'Tu mejor dato del partido'}
+                                  {t('player.stats.bestStat', {}, 'Tu mejor dato del partido')}
                                 </div>
                                 <div style={{ fontSize: '15px', fontWeight: '900', color: bestKpi.color }}>
                                   {bestKpi.icon} {bestKpi.val} {bestKpi.label}
@@ -1083,17 +1081,17 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                             padding: '12px 14px',
                           }}>
                             <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              📈 {isEn ? 'You vs Your Season Average' : 'Tú vs tu media de temporada'}
+                              📈 {t('player.stats.youVsAverage', {}, 'Tú vs tu media de temporada')}
                             </div>
                             {[
                               {
-                                label: isEn ? 'Goals this match' : 'Goles este partido',
+                                label: t('player.stats.goalsThisMatch', {}, 'Goles este partido'),
                                 val: mItem.goals || 0,
                                 avg: seasonAvgGoals,
                                 color: '#4CAF7D'
                               },
                               {
-                                label: isEn ? 'Minutes this match' : 'Minutos este partido',
+                                label: t('player.stats.minutesThisMatch', {}, 'Minutos este partido'),
                                 val: mItem.minutesPlayed || 0,
                                 avg: seasonAvgMinutes,
                                 color: '#D4A843'
@@ -1108,18 +1106,18 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px' }}>
                                     <span style={{ color: 'var(--text-secondary)' }}>{row.label}</span>
                                     <span style={{ color: arrowColor(arr) }}>
-                                      {arr} {row.val} vs {isEn ? 'avg' : 'media'} {row.avg}
+                                      {arr} {row.val} vs {t('player.stats.avgShort', {}, 'media')} {row.avg}
                                     </span>
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                     <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px' }}>
-                                      <span style={{ width: '36px', textAlign: 'right', color: row.color, fontWeight: '700' }}>{isEn ? 'You' : 'Tú'}</span>
+                                      <span style={{ width: '36px', textAlign: 'right', color: row.color, fontWeight: '700' }}>{t('player.stats.you', {}, 'Tú')}</span>
                                       <div style={{ flex: 1, height: '5px', background: darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
                                         <div style={{ width: `${myPct}%`, height: '100%', background: row.color }} />
                                       </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px' }}>
-                                      <span style={{ width: '36px', textAlign: 'right', color: '#94A3B8', fontWeight: '700' }}>{isEn ? 'Avg' : 'Media'}</span>
+                                      <span style={{ width: '36px', textAlign: 'right', color: '#94A3B8', fontWeight: '700' }}>{t('player.stats.avgLabel', {}, 'Media')}</span>
                                       <div style={{ flex: 1, height: '5px', background: darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
                                         <div style={{ width: `${avgPct}%`, height: '100%', background: '#94A3B8' }} />
                                       </div>
@@ -1144,7 +1142,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               <MessageSquare size={18} color="#3B82F6" style={{ flexShrink: 0, marginTop: '2px' }} />
                               <div>
                                 <div style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                                  {isEn ? "Coach's Message" : 'Mensaje del Míster'}
+                                  {t('player.stats.coachMessage', {}, 'Mensaje del Míster')}
                                 </div>
                                 <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.55', fontStyle: 'italic' }}>
                                   "{mItem.misterComment}"
@@ -1165,7 +1163,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                               alignItems: 'center'
                             }}>
                               <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                                {isEn ? 'Discipline' : 'Disciplina'}
+                                {t('player.stats.discipline', {}, 'Disciplina')}
                               </span>
                               {mItem.yellowCards > 0 && <span style={{ fontSize: '15px' }}>🟨 ×{mItem.yellowCards}</span>}
                               {mItem.redCards > 0 && <span style={{ fontSize: '15px' }}>🟥 ×{mItem.redCards}</span>}
@@ -1362,7 +1360,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             </span>
             {latestEvalDate && (
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', padding: '3px 8px', borderRadius: '6px' }}>
-                <Clock size={12} /> {isEn ? 'Last eval:' : 'Última evaluación:'} <strong style={{ color: 'var(--text-primary)' }}>{latestEvalDate}</strong>
+                <Clock size={12} /> {t('player.stats.lastEval', {}, 'Última evaluación:')} <strong style={{ color: 'var(--text-primary)' }}>{latestEvalDate}</strong>
               </span>
             )}
           </div>
@@ -1407,12 +1405,12 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             </strong>
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
               <li><strong>{t('player.tab.physical')} ({rawFisico}):</strong> {t('player.stats.radarPhys')}</li>
-              <li><strong>{isEn ? 'Technical' : 'Técnica'} ({rawTecnica}):</strong> {t('player.stats.radarTech')}</li>
-              <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {t('player.stats.radarTact')}</li>
+              <li><strong>{t('player.tab.technical', {}, 'Técnica')} ({rawTecnica}):</strong> {t('player.stats.radarTech')}</li>
+              <li><strong>{t('player.tab.tactical', {}, 'Táctica')} ({rawTactica}):</strong> {t('player.stats.radarTact')}</li>
               <li><strong>Mental ({rawMental}):</strong> {t('player.stats.radarMental')}</li>
               <li><strong>{t('player.leaderboard.tabAttendance')} ({rawAsistencia}):</strong> {t('player.stats.radarAtt')}</li>
               {rawEntrenamiento > 0 && (
-                <li><strong>{t('sessionRating.radarAxisTraining')} ({rawEntrenamiento}):</strong> {isEn ? 'Rating from coach in training sessions' : 'Calificación técnica en sesiones de entrenamiento'}</li>
+                <li><strong>{t('sessionRating.radarAxisTraining')} ({rawEntrenamiento}):</strong> {t('player.stats.trainingRatingDesc', {}, 'Calificación técnica en sesiones de entrenamiento')}</li>
               )}
             </ul>
           </div>
@@ -1537,7 +1535,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#F59E0B' }}>
-                💡 {isEn ? 'Areas pending measurement' : 'Áreas pendientes de medición'} ({zeroMetrics.map(z => getAxisLabel(z.label)).join(', ')})
+                💡 {t('player.stats.areasPending', {}, 'Áreas pendientes de medición')} ({zeroMetrics.map(z => getAxisLabel(z.label)).join(', ')})
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
                 {t('player.stats.areasInZeroDesc')}
@@ -1602,7 +1600,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 borderRadius: '6px'
               }}
             >
-              {isEn ? 'Pending ratings' : 'Pendiente de calificaciones'}
+              {t('player.stats.pendingRatings', {}, 'Pendiente de calificaciones')}
             </span>
           )}
         </div>
@@ -1633,12 +1631,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               <TrendingUp size={22} />
             </div>
             <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
-              {isEn ? 'No training session ratings yet' : 'Sin calificaciones de entrenamiento aún'}
+              {t('player.stats.noRatingsYet', {}, 'Sin calificaciones de entrenamiento aún')}
             </h4>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '360px', marginInline: 'auto', lineHeight: 1.5 }}>
-              {isEn
-                ? 'Your coaching staff can rate performance and leave tactical feedback after every training session from the Sessions module.'
-                : 'El cuerpo técnico puede calificar el rendimiento y registrar notas técnicas tras cada entrenamiento desde el módulo de Sesiones.'}
+              {t('player.stats.ratingsInfoDesc', {}, 'El cuerpo técnico puede calificar el rendimiento y registrar notas técnicas tras cada entrenamiento desde el módulo de Sesiones.')}
             </p>
           </div>
         ) : (
@@ -1780,28 +1776,28 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       <div className="hud-card" style={{ marginBottom: '24px', padding: '16px' }}>
         <div className="hud-header">
           <span className="hud-badge" style={{ color: '#EC4899', borderColor: 'rgba(236, 72, 153, 0.3)' }}>
-            <Heart size={14} /> {isEn ? 'WEEKLY WELLNESS & RECOVERY' : 'BIENESTAR Y RECUPERACIÓN SEMANAL'}
+            <Heart size={14} /> {t('player.stats.weeklyWellness', {}, 'BIENESTAR Y RECUPERACIÓN SEMANAL')}
           </span>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-            {isEn ? 'Last 7 days' : 'Últimos 7 días'}
+            {t('player.stats.last7Days', {}, 'Últimos 7 días')}
           </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginTop: '12px' }}>
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'SLEEP QUALITY' : 'CALIDAD SUEÑO'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.sleepQuality', {}, 'CALIDAD SUEÑO')}</span>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#10B981', marginTop: '4px' }}>{avgSleep} / 5 ⭐</div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'ENERGY / MOOD' : 'ENERGÍA / ÁNIMO'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.energyMood', {}, 'ENERGÍA / ÁNIMO')}</span>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#F59E0B', marginTop: '4px' }}>{avgMood} / 5 ⚡</div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'MUSCLE STATUS' : 'ESTADO MUSCULAR'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.muscleStatus', {}, 'ESTADO MUSCULAR')}</span>
             <div style={{ fontSize: '14px', fontWeight: '800', color: hasDiscomfortActive ? '#EF4444' : '#10B981', marginTop: '6px' }}>
-              {hasDiscomfortActive ? (isEn ? '⚠️ Active discomfort' : '⚠️ Molestia activa') : (isEn ? '✅ 100% Available' : '✅ 100% Disponible')}
+              {hasDiscomfortActive ? `⚠️ ${t('player.stats.activeDiscomfort', {}, 'Molestia activa')}` : `✅ ${t('player.stats.available100', {}, '100% Disponible')}`}
             </div>
           </div>
         </div>
@@ -1810,7 +1806,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         {wellnessHistory.length > 0 && (
           <div style={{ marginTop: '16px', borderTop: '1px dashed var(--border-light, rgba(255,255,255,0.1))', paddingTop: '14px' }}>
             <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>
-              📊 {isEn ? 'Daily Check-in Progression (Last 7 days)' : 'Evolución Diaria (Últimos 7 check-ins)'}
+              📊 {t('player.stats.dailyProgression', {}, 'Evolución Diaria (Últimos 7 check-ins)')}
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(75px, 1fr))', gap: '8px' }}>
               {[...wellnessHistory].reverse().map((w, idx) => {
@@ -1837,7 +1833,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                       ⚡ {w.mood || '-'}/5
                     </div>
                     <div style={{ fontSize: '10px', fontWeight: '700', color: w.hasDiscomfort ? '#EF4444' : '#10B981' }}>
-                      {w.hasDiscomfort ? (isEn ? '🔴 Pain' : '🔴 Dolor') : '🟢 OK'}
+                      {w.hasDiscomfort ? `🔴 ${t('player.stats.pain', {}, 'Dolor')}` : `🟢 ${t('player.stats.ok', {}, 'OK')}`}
                     </div>
                   </div>
                 );

@@ -71,7 +71,7 @@ export default function CsvPlayerImportModal({
   onImportSuccess,
   userId
 }) {
-  const { t, isEn } = useTranslation();
+  const { t, language } = useTranslation();
   const fileInputRef = useRef(null);
 
   const [step, setStep] = useState(1); // 1: Upload, 2: Mapping, 3: Preview
@@ -96,7 +96,8 @@ export default function CsvPlayerImportModal({
   if (!isOpen) return null;
 
   const handleDownloadTemplate = () => {
-    const templateContent = isEn
+    const isEnLanguage = (language || '').toLowerCase().startsWith('en');
+    const templateContent = isEnLanguage
       ? "Name,Number,Position,Date of Birth,Email\nCharles Smith,1,GK,2008-03-15,charles@example.com\nAlex Jones,4,DEF,2007-08-22,alex@example.com\nMark Taylor,8,CM,2008-01-10,mark@example.com\nLuke Brown,9,ST,2007-11-05,luke@example.com\n"
       : "Nombre,Dorsal,Posición,Fecha Nacimiento,Email\nCarlos Pérez,1,POR,2008-03-15,carlos@ejemplo.com\nAlejandro Ruiz,4,DEF,2007-08-22,alejandro@ejemplo.com\nMarcos Silva,8,MC,2008-01-10,marcos@ejemplo.com\nLucas Gómez,9,DEL,2007-11-05,lucas@ejemplo.com\n";
 
@@ -104,7 +105,7 @@ export default function CsvPlayerImportModal({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', isEn ? 'template_squad_en.csv' : 'plantilla_jugadores_es.csv');
+    link.setAttribute('download', isEnLanguage ? 'template_squad_en.csv' : 'plantilla_jugadores_es.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

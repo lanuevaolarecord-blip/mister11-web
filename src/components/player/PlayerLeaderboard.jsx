@@ -33,7 +33,7 @@ export const PlayerLeaderboard = ({
   team = null,
   darkMode = true 
 }) => {
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('GLOBAL'); // 'GLOBAL' | 'ATTENDANCE' | 'MATCHES' | 'ACHIEVEMENTS'
 
   // Si el míster ha desactivado el ranking para su equipo

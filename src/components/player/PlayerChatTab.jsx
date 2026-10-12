@@ -55,7 +55,7 @@ const COACH_QUICK_REPLIES = [
 
 export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, isCoachView = false }) => {
   const { user, getTeamPath } = useAuth();
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [threadMeta, setThreadMeta] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -562,7 +562,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           placeholder={isBlocked 
             ? t('player.chat.blocked.banner') 
             : isCoachView 
-              ? t('player.chat.placeholderCoach', { name: player?.name || (isEn ? 'this player' : 'este jugador') }) 
+              ? t('player.chat.placeholderCoach', { name: player?.name || t('player.chat.defaultPlayerName', {}, 'este jugador') }) 
               : t('player.chat.placeholder')
           }
           value={inputText}

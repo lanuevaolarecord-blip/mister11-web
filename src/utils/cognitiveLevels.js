@@ -24,11 +24,11 @@ export function getCategoria(birthDate) {
 export const NIVELES = ['bronce', 'plata', 'oro', 'diamante', 'leyenda'];
 
 export const NIVEL_LABELS = {
-  bronce: { es: 'Bronce', en: 'Bronze', badge: '🥉', color: '#CD7F32' },
-  plata: { es: 'Plata', en: 'Silver', badge: '🥈', color: '#9E9E9E' },
-  oro: { es: 'Oro', en: 'Gold', badge: '🥇', color: '#F1C40F' },
-  diamante: { es: 'Diamante', en: 'Diamond', badge: '💎', color: '#00BCD4' },
-  leyenda: { es: 'Leyenda', en: 'Legend', badge: '👑', color: '#9C27B0' },
+  bronce: { es: 'Bronce', en: 'Bronze', badge: '', color: '#CD7F32' },
+  plata: { es: 'Plata', en: 'Silver', badge: '', color: '#9E9E9E' },
+  oro: { es: 'Oro', en: 'Gold', badge: '', color: '#F1C40F' },
+  diamante: { es: 'Diamante', en: 'Diamond', badge: '', color: '#00BCD4' },
+  leyenda: { es: 'Leyenda', en: 'Legend', badge: '', color: '#9C27B0' },
 };
 
 /* Umbrales REALISTAS por categoría (para subir al siguiente nivel) */

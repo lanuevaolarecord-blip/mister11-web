@@ -15,7 +15,8 @@ import {
   ClipboardCheck, 
   Calendar,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { ACHIEVEMENT_TIERS } from '../../config/achievements';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -162,7 +163,7 @@ export const PlayerAchievementsTab = ({
               className={`tier-filter-btn tier-${key.toLowerCase()} ${selectedTier === key ? 'active' : ''}`}
               onClick={() => setSelectedTier(key)}
             >
-              <span>{tier.icon}</span> {tierLabel} ({count})
+              <Award size={14} color={tier.color} /> {tierLabel} ({count})
             </button>
           );
         })}
@@ -194,7 +195,7 @@ export const PlayerAchievementsTab = ({
                   <IconComp size={24} color={isUnlocked ? tier.color : '#94A3B8'} />
                 </div>
                 <div className="ach-tier-badge">
-                  <span>{tier.icon} {tierLabel}</span>
+                  <Award size={12} color={tier.color} /> <span>{tierLabel}</span>
                   <span className="ach-xp-tag">+{ach.xp} XP</span>
                 </div>
               </div>
@@ -236,7 +237,7 @@ export const PlayerAchievementsTab = ({
                     </span>
                   ) : ach.isPendingActa ? (
                     <span className="ach-status-pending" style={{ color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}>
-                      ⏳ {t('player.achievements.pendingActa')}
+                      <Clock size={13} color="#F59E0B" /> {t('player.achievements.pendingActa')}
                     </span>
                   ) : (
                     <span className="ach-status-locked">

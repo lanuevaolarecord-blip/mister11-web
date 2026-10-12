@@ -14,11 +14,11 @@ import { MemoriaConos } from './MemoriaConos';
 import { Respiracion44 } from './Respiracion44';
 import { DecisionSegundo } from './DecisionSegundo';
 import { RetosCasaCatalog } from './retos/RetosCasaCatalog';
-import { Lock, Sparkles, Brain, ShieldAlert, Award } from 'lucide-react';
+import { Lock, Sparkles, Brain, ShieldAlert, Award, Activity, Octagon, Eye, Layers, Wind, Zap, Trophy, Target } from 'lucide-react';
 import './Games.css';
 
 export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const playerId = player?.id;
 
@@ -101,17 +101,14 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       const levelRes = await processSessionProgression(code, sessionData.metrics);
       if (levelRes.subio) {
         const lvlInfo = NIVEL_LABELS[levelRes.nivel] || NIVEL_LABELS.bronce;
+        const translatedLvl = t(`games.level.${levelRes.nivel}`, {}, lvlInfo.es);
         showToast(
-          isEn
-            ? `🎉 You leveled up to ${lvlInfo.en || lvlInfo.es}! ${lvlInfo.badge} (+10 XP)`
-            : `🎉 ¡Subiste a nivel ${lvlInfo.es}! ${lvlInfo.badge} (+10 XP)`,
+          t('games.levelUp', { level: translatedLvl }),
           'success'
         );
         if (levelRes.techo) {
           showToast(
-            isEn
-              ? '👑 You reached the Legend ceiling! You are awesome!'
-              : '👑 ¡Alcanzaste el techo de Leyenda! ¡Eres un crack!',
+            t('games.levelCeiling'),
             'success'
           );
         }
@@ -275,15 +272,17 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           type="button"
           className={`games-cat-btn ${activeCategory === 'cognitive' ? 'active' : ''}`}
           onClick={() => setActiveCategory('cognitive')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>🧠</span> {t('games.tabs.cognitive', {}, 'Juegos Cognitivos (6)')}
+          <Brain size={16} /> {t('games.tabs.cognitive', {}, 'Juegos Cognitivos (6)')}
         </button>
         <button
           type="button"
           className={`games-cat-btn ${activeCategory === 'retos' ? 'active' : ''}`}
           onClick={() => setActiveCategory('retos')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>⚽</span> {t('games.tabs.retos', {}, 'Retos en Casa (8)')}
+          <Target size={16} /> {t('games.tabs.retos', {}, 'Retos en Casa (8)')}
         </button>
       </div>
 
@@ -294,15 +293,16 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {(() => {
             const lvl = getGameLevel('semaforo') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
+            const lvlName = t(`games.level.${lvl}`, {}, info.es);
             return (
               <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
-                  <div className="game-card-icon">🚦</div>
+                  <div className="game-card-icon"><Activity size={24} color="#10B981" /></div>
                   <div className="game-card-meta">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g1.title', {}, 'Semáforo Pro')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {isEn ? info.en : info.es}
+                        {lvlName}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g1.skill', {}, 'Velocidad de reacción')}</span>
@@ -332,15 +332,16 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {(() => {
             const lvl = getGameLevel('freno') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
+            const lvlName = t(`games.level.${lvl}`, {}, info.es);
             return (
               <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
-                  <div className="game-card-icon">🛑</div>
+                  <div className="game-card-icon"><Octagon size={24} color="#C85A32" /></div>
                   <div className="game-card-meta">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g2.title', {}, 'Freno Impulsivo')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {isEn ? info.en : info.es}
+                        {lvlName}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g2.skill', {}, 'Autocontrol y decisión')}</span>
@@ -370,15 +371,16 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {(() => {
             const lvl = getGameLevel('ojo') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
+            const lvlName = t(`games.level.${lvl}`, {}, info.es);
             return (
               <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
-                  <div className="game-card-icon">👁️</div>
+                  <div className="game-card-icon"><Eye size={24} color="#3B82F6" /></div>
                   <div className="game-card-meta">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g3.title', {}, 'Ojo Táctico')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {isEn ? info.en : info.es}
+                        {lvlName}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g3.skill', {}, 'Escaneo visual y percepción')}</span>
@@ -408,15 +410,16 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {(() => {
             const lvl = getGameLevel('memoria') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
+            const lvlName = t(`games.level.${lvl}`, {}, info.es);
             return (
               <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
-                  <div className="game-card-icon">🔺</div>
+                  <div className="game-card-icon"><Layers size={24} color="#D4A843" /></div>
                   <div className="game-card-meta">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g4.title', {}, 'Memoria de Conos')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {isEn ? info.en : info.es}
+                        {lvlName}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g4.skill', {}, 'Memoria de trabajo')}</span>
@@ -445,7 +448,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {/* G5: Respiración 4-4 (SIN NIVELES) */}
           <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
             <div className="game-card-top">
-              <div className="game-card-icon">🌬️</div>
+              <div className="game-card-icon"><Wind size={24} color="#4CAF7D" /></div>
               <div className="game-card-meta">
                 <h4 className="game-card-title">{t('games.g5.title', {}, 'Respiración 4-4')}</h4>
                 <span className="game-card-skill">{t('games.g5.skill', {}, 'Calma y autocontrol')}</span>
@@ -455,8 +458,8 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
               {t('games.g5.what', {}, 'Calmar los nervios y enfocar la mente antes de jugar.')}
             </p>
             <div className="game-card-footer">
-              <span className="game-card-best" style={{ color: '#0284c7' }}>
-                🧘 {t('games.g5.zenBadge', {}, '6 ciclos de calma')}
+              <span className="game-card-best" style={{ color: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Sparkles size={14} color="#0284c7" /> {t('games.g5.zenBadge', {}, '6 ciclos de calma')}
               </span>
               <button
                 type="button"
@@ -473,15 +476,16 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           {(() => {
             const lvl = getGameLevel('decision') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
+            const lvlName = t(`games.level.${lvl}`, {}, info.es);
             return (
               <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
-                  <div className="game-card-icon">⚡</div>
+                  <div className="game-card-icon"><Zap size={24} color="#10B981" /></div>
                   <div className="game-card-meta">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g6.title', {}, 'Decisión 1 Segundo')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {isEn ? info.en : info.es}
+                        {lvlName}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g6.skill', {}, 'Lectura táctica')}</span>

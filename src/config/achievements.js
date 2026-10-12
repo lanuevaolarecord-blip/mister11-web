@@ -12,7 +12,7 @@ export const ACHIEVEMENT_TIERS = {
     color: '#CD7F32',
     bg: 'rgba(205, 127, 50, 0.12)',
     border: 'rgba(205, 127, 50, 0.35)',
-    icon: '🥉',
+    icon: '',
     resetPeriod: 'weekly', // Lunes 00:00
     periodLabel: 'Esta semana',
     periodKey: 'player.achievements.thisWeek'
@@ -24,7 +24,7 @@ export const ACHIEVEMENT_TIERS = {
     color: '#B0BEC5',
     bg: 'rgba(176, 190, 197, 0.12)',
     border: 'rgba(176, 190, 197, 0.35)',
-    icon: '🥈',
+    icon: '',
     resetPeriod: 'biweekly', // 14 días
     periodLabel: 'Esta quincena',
     periodKey: 'player.achievements.thisFortnight'
@@ -36,7 +36,7 @@ export const ACHIEVEMENT_TIERS = {
     color: '#C9A84C',
     bg: 'rgba(201, 168, 76, 0.15)',
     border: 'rgba(201, 168, 76, 0.45)',
-    icon: '🥇',
+    icon: '',
     resetPeriod: 'season', // Al finalizar la temporada (30 junio)
     periodLabel: 'Temporada 2026-27',
     periodKey: 'player.achievements.seasonPeriod'

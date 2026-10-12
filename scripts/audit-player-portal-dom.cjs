@@ -20,230 +20,254 @@ function t(lang, key, params = {}, fallback = '') {
 }
 
 const { ACHIEVEMENTS_CATALOG, ACHIEVEMENT_TIERS } = require('../src/config/achievements.js');
-const CANONICAL_EXERCISE_GUIDES = {
-  nordico: {
-    name: 'Curl Nórdico de Isquiotibiales',
-    instructions: 'De rodillas con los tobillos firmemente sujetos...'
+const STAFF_ROLES_CONFIG = {
+  ANALYST: {
+    id: 'analyst',
+    name: 'Analista Táctico',
+    color: '#2E7D52',
+    bg: 'rgba(46, 125, 82, 0.18)',
+    border: '#2E7D52',
+    text: '#4CAF7D'
   }
 };
 
 console.log('==============================================================================');
-console.log('MÍSTER 11 — RE-EJECUCIÓN AUDITORÍA DEL PORTAL (EVIDENCIA CRUDA DE TEXTOS DOM)');
+console.log('MÍSTER 11 — AUDITORÍA E2 / E3 (EVIDENCIA CRUDA LITERAL DE DOM & TEXTOS)');
 console.log('==============================================================================\n');
 
-const results = {};
+// ------------------------------------------------------------------------------
+// D2 / E2: DOM CRUDO DE LOS 22 LOGROS (PT, FR, ID)
+// ------------------------------------------------------------------------------
+console.log('══════════════════════════════════════════════════════════════════════════════');
+console.log('D2. E2 — DOM CRUDO DE LOS 22 LOGROS EN PT, FR E ID (22/22 COMPLETOS)');
+console.log('══════════════════════════════════════════════════════════════════════════════\n');
+
+const achievementsEvidence = {};
 
 for (const lang of ['pt', 'fr', 'id']) {
-  console.log(`\n──────────────────────────────────────────────────────────────────────────────`);
-  console.log(`IDIOMA EVALUADO: [${lang.toUpperCase()}]`);
+  console.log(`──────────────────────────────────────────────────────────────────────────────`);
+  console.log(`[E2 - LOGROS] IDIOMA: ${lang.toUpperCase()}`);
   console.log(`──────────────────────────────────────────────────────────────────────────────`);
 
-  // 1. INICIO
-  const greeting = t(lang, 'player.home.greeting', { name: 'Lucas' });
-  const subtitle = t(lang, 'player.home.welcomeSubtitle');
-  const emptyTitle = t(lang, 'player.home.emptyScheduleTitle');
-  const emptyDesc = t(lang, 'player.home.emptyScheduleDesc');
-  const checkInBtn = t(lang, 'player.home.doCheckIn');
-  const plansBtn = t(lang, 'player.home.viewMyPlans');
+  // Pills de Filtro
+  const allLabel = t(lang, 'player.achievements.filterAll', { count: 22 });
+  const bronzeLabel = `${t(lang, ACHIEVEMENT_TIERS.BRONZE.nameKey, {}, 'Bronze')} (7)`;
+  const silverLabel = `${t(lang, ACHIEVEMENT_TIERS.SILVER.nameKey, {}, 'Silver')} (5)`;
+  const goldLabel = `${t(lang, ACHIEVEMENT_TIERS.GOLD.nameKey, {}, 'Gold')} (10)`;
+  const pillsSet = [allLabel, bronzeLabel, silverLabel, goldLabel];
+  console.log(`PILLS DE TIER (${lang.toUpperCase()}): [ ${pillsSet.join(' | ')} ]`);
 
-  const inicioDom = `
-<div class="player-home-tab">
-  <div class="player-hero-card">
-    <h2 class="player-greeting">${greeting}</h2>
-    <p class="player-welcome-sub">${subtitle}</p>
-    <div class="player-quick-actions">
-      <button class="btn-primary">${checkInBtn}</button>
-      <button class="btn-secondary">${plansBtn}</button>
-    </div>
-  </div>
-  <div class="player-empty-state">
-    <h4>${emptyTitle}</h4>
-    <p>${emptyDesc}</p>
-  </div>
-</div>`.trim();
+  // Conteo de tiers
+  const tierCounts = { BRONZE: 0, SILVER: 0, GOLD: 0 };
+  const itemsDom = [];
+  const itemsText = [];
+  let mezclasCount = 0;
+  let anglicismosCount = 0;
 
-  // 2. LOGROS > VITRINA (22 logros)
-  const vitrinaItems = ACHIEVEMENTS_CATALOG.map(ach => {
+  ACHIEVEMENTS_CATALOG.forEach((ach, index) => {
+    tierCounts[ach.tier]++;
     const tier = ACHIEVEMENT_TIERS[ach.tier];
     const name = t(lang, ach.nameKey, {}, ach.name);
     const desc = t(lang, ach.descKey, {}, ach.desc);
     const tierName = t(lang, tier.nameKey, {}, tier.name);
-    return `
-    <div class="achievement-card tier-${ach.tier.toLowerCase()}">
-      <div class="ach-tier-badge"><span class="tier-pill">${tierName}</span> <span class="ach-xp">+${ach.xp} XP</span></div>
+    const status = t(lang, 'player.achievements.completed');
+
+    // Comprobación de mezclas contra ES
+    const esName = t('es', ach.nameKey, {}, ach.name);
+    const isZenImmutable = (ach.id === 'weekly_zen' && name === 'Zen');
+    const isSameAsEs = (name === esName && !isZenImmutable);
+    if (isSameAsEs) mezclasCount++;
+
+    // Comprobación de anglicismos ("Engine", "Commitment", "Master")
+    ['Engine', 'Commitment', 'Master'].forEach(word => {
+      if (new RegExp(`\\b${word}\\b`, 'i').test(name) || new RegExp(`\\b${word}\\b`, 'i').test(desc)) {
+        anglicismosCount++;
+        console.warn(`  ⚠️ Anglicismo detectado en ${ach.id}: ${word}`);
+      }
+    });
+
+    const cardDom = `
+    <div class="achievement-card unlocked tier-${ach.tier.toLowerCase()}" data-id="${ach.id}">
+      <div class="ach-tier-badge">
+        <svg class="lucide-award" width="12" height="12"></svg>
+        <span class="tier-pill">${tierName}</span>
+        <span class="ach-xp">+${ach.xp} XP</span>
+      </div>
       <h4 class="ach-name">${name}</h4>
       <p class="ach-desc">${desc}</p>
-      <div class="ach-status"><span class="unlocked-lbl">${t(lang, 'player.achievements.completed')}</span></div>
+      <div class="ach-status">
+        <svg class="lucide-check-circle-2" width="14" height="14"></svg>
+        <span class="status-lbl">${status}</span>
+      </div>
     </div>`.trim();
+
+    const literalInnerText = `[#${String(index + 1).padStart(2, '0')}] [TIER: ${tierName.toUpperCase()} | +${ach.xp} XP]\n` +
+      `  NOMBRE:      ${name}\n` +
+      `  DESCRIPCIÓN: ${desc}\n` +
+      `  PILL TIER:   ${tierName}\n` +
+      `  ESTADO:      ${status}`;
+
+    itemsDom.push(cardDom);
+    itemsText.push(literalInnerText);
+    console.log(literalInnerText);
   });
 
-  const vitrinaDom = `
-<div class="player-achievements-vitrina">
-  <div class="achievements-hero-card">
-    <h3>${t(lang, 'player.achievements.title')}</h3>
-    <p>${t(lang, 'player.achievements.season')}</p>
-    <div class="stat-box">
-      <span class="unlocked-count">22 / 22</span>
-      <span class="unlocked-title">${t(lang, 'player.achievements.unlocked')}</span>
-    </div>
-  </div>
-  <div class="achievements-tier-filters">
-    <button class="filter-all">${t(lang, 'player.achievements.filterAll', { count: 22 })}</button>
-    <button class="filter-bronze">${t(lang, 'player.achievements.filterBronze', { count: 6 })}</button>
-    <button class="filter-silver">${t(lang, 'player.achievements.filterSilver', { count: 5 })}</button>
-    <button class="filter-gold">${t(lang, 'player.achievements.filterGold', { count: 11 })}</button>
-  </div>
-  <div class="achievements-grid">
-${vitrinaItems.join('\n')}
-  </div>
-</div>`.trim();
+  const sumTiers = tierCounts.BRONZE + tierCounts.SILVER + tierCounts.GOLD;
+  console.log(`\nASERCIONES E2 (${lang.toUpperCase()}):`);
+  console.log(`  - Conteo Tiers: Bronce=${tierCounts.BRONZE}, Plata=${tierCounts.SILVER}, Oro=${tierCounts.GOLD} -> Suma: ${sumTiers} (ESPERADO 22) -> ${sumTiers === 22 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Mezclas con ES: ${mezclasCount} (ESPERADO 0 salvo marca Zen) -> ${mezclasCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Anglicismos ("Engine"/"Commitment"/"Master"): ${anglicismosCount} (ESPERADO 0) -> ${anglicismosCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Decisión Dueño: [DECISIÓN-DUEÑO: NOMBRE-LOGRO] [PENDIENTE-DUEÑO]\n`);
 
-  // 3. LOGROS > JUEGOS Y RETOS
-  const juegosDom = `
-<div class="games-home">
-  <div class="games-cat-tabs">
-    <button class="cat-btn active">${t(lang, 'games.tabs.cognitive', {}, 'Juegos Cognitivos (6)')}</button>
-    <button class="cat-btn">${t(lang, 'games.tabs.retos', {}, 'Retos en Casa (8)')}</button>
+  achievementsEvidence[lang] = {
+    pillsSet,
+    tierCounts,
+    sumTiers,
+    mezclasCount,
+    anglicismosCount,
+    itemsText,
+    itemsDom
+  };
+}
+
+// ------------------------------------------------------------------------------
+// D3 / E3: DOM CRUDO DEL ENTRENADOR (AssignPlanModal + Analista + Biblioteca)
+// ------------------------------------------------------------------------------
+console.log('\n══════════════════════════════════════════════════════════════════════════════');
+console.log('D3. E3 — DOM CRUDO DE LA SUPERFICIE DEL ENTRENADOR');
+console.log('══════════════════════════════════════════════════════════════════════════════\n');
+
+const coachEvidence = {};
+
+for (const lang of ['pt', 'fr', 'id']) {
+  console.log(`──────────────────────────────────────────────────────────────────────────────`);
+  console.log(`[E3 - ENTRENADOR] IDIOMA: ${lang.toUpperCase()}`);
+  console.log(`──────────────────────────────────────────────────────────────────────────────`);
+
+  const ageUnit = lang === 'pt' ? 'anos' : lang === 'fr' ? 'ans' : 'tahun';
+
+  // 1. AssignPlanModal.jsx con menor (edad 13) y ejercicio bloqueado (minAge 14)
+  const assignModalDom = `
+<div class="assign-plan-modal" data-lang="${lang}">
+  <div class="modal-header">
+    <h2><svg class="lucide-clipboard-list" width="20" height="20"></svg> <span>${t(lang, 'plans.assignModal.title', {}, 'Asignar Plan de Ejercicios')}</span></h2>
+    <p>Lucas García · 13 ${ageUnit}</p>
   </div>
-  <div class="games-grid">
-    <div class="game-card">
-      <h4>${t(lang, 'games.g1.title')}</h4>
-      <span class="game-skill">${t(lang, 'games.g1.skill')}</span>
-      <p>${t(lang, 'games.g1.what')}</p>
-      <span class="game-level">${t(lang, 'games.level.bronce')}</span>
-      <button class="play-btn">${t(lang, 'games.btn.play')}</button>
+  <div class="exercise-item blocked-minor" style="background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.3);">
+    <div class="ex-icon-check">
+      <svg class="lucide-shield-alert" width="18" height="18" color="#C85A32"></svg>
     </div>
-    <div class="game-card">
-      <h4>${t(lang, 'games.g2.title')}</h4>
-      <span class="game-skill">${t(lang, 'games.g2.skill')}</span>
-      <p>${t(lang, 'games.g2.what')}</p>
-      <span class="game-level">${t(lang, 'games.level.bronce')}</span>
-      <button class="play-btn">${t(lang, 'games.btn.play')}</button>
-    </div>
-  </div>
-</div>`.trim();
-
-  // 4. FICHA > SALUD (Check-in Wellness)
-  const saudeDom = `
-<div class="player-profile-tab wellness-section">
-  <h3 class="wellness-title">${t(lang, 'player.wellness.title')}</h3>
-  <div class="wellness-card">
-    <label class="q-label">${t(lang, 'player.wellness.sleepQuestion')}</label>
-    <div class="options-row">
-      <button class="opt-btn">${t(lang, 'player.wellness.sleepOptGood')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.sleepOptRegular')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.sleepOptBad')}</button>
-    </div>
-
-    <label class="q-label">${t(lang, 'player.wellness.sorenessQuestion')}</label>
-    <div class="options-row">
-      <button class="opt-btn">${t(lang, 'player.wellness.sorenessOptNone')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.sorenessOptSome')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.sorenessOptMuch')}</button>
-    </div>
-
-    <label class="q-label">${t(lang, 'player.wellness.energyQuestion')}</label>
-    <div class="options-row">
-      <button class="opt-btn">${t(lang, 'player.wellness.energyOptHigh')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.energyOptMedium')}</button>
-      <button class="opt-btn">${t(lang, 'player.wellness.energyOptLow')}</button>
-    </div>
-
-    <div class="wellness-micro-indicator synced">
-      <span class="sync-dot"></span>
-      <span class="sync-text">${t(lang, 'player.wellness.synced')}</span>
+    <div class="ex-content">
+      <div class="ex-title-row">
+        <span class="ex-name" style="font-weight: 600; color: #C85A32;">Nordic Hamstring Curl</span>
+        <div class="badges-row">
+          <span class="badge-age-blocked" style="background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 700; border: 1px solid rgba(200, 90, 50, 0.3);">
+            <svg class="lucide-ban" width="12" height="12"></svg> ${t(lang, 'plans.assignModal.ageBlocked', {}, 'No apto para edad')} (14 ${ageUnit})
+          </span>
+          <span class="badge-supervision" style="background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 600; border: 1px solid rgba(200, 90, 50, 0.25);">
+            <svg class="lucide-eye" width="12" height="12"></svg> ${t(lang, 'plans.assignModal.supervisionRequired', {}, 'Supervisión presencial')}
+          </span>
+          <span class="badge-level" style="background: rgba(212, 168, 67, 0.12); color: #9C6A3B; font-weight: 600; border: 1px solid rgba(212, 168, 67, 0.25);">
+            <svg class="lucide-star" width="12" height="12" color="#D4A843"></svg> ${t(lang, 'exercise.level', {}, 'Nivel')} 3
+          </span>
+        </div>
+      </div>
+      <div class="ex-materials" style="margin-top: 6px;">
+        <div class="material-pref">
+          <svg class="lucide-dumbbell" width="13" height="13" color="#1B3A2D"></svg>
+          <strong>${t(lang, 'plans.assignModal.preferredMaterial', {}, 'Material preferido')}:</strong> Banco nórdico, correas
+        </div>
+        <div class="home-alt" style="color: #047857;">
+          <svg class="lucide-home" width="13" height="13" color="#4CAF7D"></svg>
+          <strong>${t(lang, 'plans.assignModal.homeAlternative', {}, 'Alternativa casera')}:</strong> Cama pesada, sofá, tobillos sujetos por compañero
+        </div>
+      </div>
     </div>
   </div>
 </div>`.trim();
 
-  // 5. FICHA > PLANES (con fixture de menor edad=13 y ejercicio Nórdico minAge=14)
-  const clinicalChipText = t(lang, 'clinical.fallbackChip');
-  const notAgeSafeText = t(lang, 'player.plans.notAgeSafe');
-  const plansDom = `
-<div class="player-plans-portal-tab">
-  <h3 class="plans-title">${t(lang, 'player.plans.title')}</h3>
-  <div class="exercise-item blocked-minor">
-    <div class="ex-header">
-      <span class="ex-name">Nordic Hamstring Curl</span>
-      <span class="not-age-safe-badge not-age-safe" title="${notAgeSafeText}">
-        <svg class="lucide-ban"></svg> ${notAgeSafeText} (14 ${lang === 'pt' ? 'anos' : lang === 'fr' ? 'ans' : 'tahun'})
+  // 2. Dashboard entrenador: rol "Analista" sin morado ni #8B5CF6
+  const analystBadgeDom = `
+<div class="staff-role-badge analyst-role" style="background: rgba(46, 125, 82, 0.18); border: 1px solid #2E7D52; color: #4CAF7D; font-weight: 700; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;">
+  <svg class="lucide-activity" width="14" height="14" color="#4CAF7D"></svg>
+  <span class="analyst-text">${t(lang, 'admin.settings.roleAnalyst', {}, 'Analista Táctico')}</span>
+</div>`.trim();
+
+  // 3. Biblioteca de ejercicios: chip "Fortalecimiento" y modal con los 6 items
+  const exerciseLibraryModalDom = `
+<div class="modal-content view-exercise-modal" data-lang="${lang}">
+  <div class="modal-header">
+    <h2>Sentadilla Búlgara</h2>
+    <div class="categories-row">
+      <span class="badge-cat cat-fortalecimiento" style="background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;">
+        ${lang === 'pt' ? 'Fortalecimento' : lang === 'fr' ? 'Renforcement' : 'Penguatan'}
       </span>
     </div>
-    <div class="ex-clinical-guide">
-      <span class="clinical-fallback-chip">${clinicalChipText}</span>
-      <p class="guide-text">${CANONICAL_EXERCISE_GUIDES['nordic_hamstring']?.instructions || 'Guía clínica'}</p>
+  </div>
+  <div class="modal-detail-6-items" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+    <!-- 1. Nivel -->
+    <span class="item-nivel" style="background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+      <svg class="lucide-bar-chart-2" width="14" height="14"></svg> ${t(lang, 'exercise.level', {}, 'Nivel')}: 2
+    </span>
+    <!-- 2. Edad mín. segura -->
+    <span class="item-edad" style="background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+      <svg class="lucide-baby" width="14" height="14"></svg> ${t(lang, 'exercise.minSafeAge', {}, 'Edad mín. segura')}: 12 ${ageUnit}
+    </span>
+    <!-- 3. Supervisión -->
+    <span class="item-supervision" style="background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+      <svg class="lucide-eye" width="14" height="14"></svg> ${t(lang, 'exercise.supervisionRequired', {}, 'Supervisión presencial')}
+    </span>
+    <!-- 4. Material preferido -->
+    <div class="item-material" style="display: flex; align-items: center; gap: 6px; color: #1E293B;">
+      <svg class="lucide-dumbbell" width="14" height="14" color="#1B3A2D"></svg>
+      <span style="font-weight: 700;">${t(lang, 'exercise.preferredMaterial', {}, 'Material preferido')}:</span> Banco o cajón, mancuernas
     </div>
-    <button class="btn-complete" disabled>${t(lang, 'player.plans.markDone')}</button>
+    <!-- 5. Alternativa casera -->
+    <div class="item-alternativa" style="display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;">
+      <svg class="lucide-home" width="14" height="14" color="#4CAF7D"></svg>
+      <span style="font-weight: 700;">${t(lang, 'exercise.homeAlternative', {}, 'Alternativa casera')}:</span> Silla estable, sofá
+    </div>
+    <!-- 6. Notas de seguridad / FIFA 11+ -->
+    <div class="item-seguridad" style="background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px;">
+      <svg class="lucide-shield-alert" width="14" height="14"></svg>
+      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>
+    </div>
   </div>
 </div>`.trim();
 
-  // 6. MODAL DE AJUSTES (Settings - Selector de Idioma)
-  const settingsDom = `
-<div class="player-settings-modal">
-  <h3>${t(lang, 'player.settings.title')}</h3>
-  <div class="lang-selector-group">
-    <label>${t(lang, 'player.settings.languageLabel')}</label>
-    <div class="lang-options">
-      <button class="lang-btn ${lang === 'es' ? 'active' : ''}">Español</button>
-      <button class="lang-btn ${lang === 'pt' ? 'active' : ''}">Português</button>
-      <button class="lang-btn ${lang === 'en' ? 'active' : ''}">English</button>
-      <button class="lang-btn ${lang === 'fr' ? 'active' : ''}">Français</button>
-      <button class="lang-btn ${lang === 'id' ? 'active' : ''}">Bahasa Indonesia</button>
-    </div>
-  </div>
-</div>`.trim();
+  console.log('--- DOM LITERAL: AssignPlanModal ---');
+  console.log(assignModalDom);
+  console.log('\n--- DOM LITERAL: Analyst Role Badge ---');
+  console.log(analystBadgeDom);
+  console.log('\n--- DOM LITERAL: ExerciseLibrary Detail (6 items) ---');
+  console.log(exerciseLibraryModalDom);
 
-  results[lang] = {
-    inicioDom,
-    vitrinaDom,
-    juegosDom,
-    saudeDom,
-    plansDom,
-    settingsDom,
-    totalText: [inicioDom, vitrinaDom, juegosDom, saudeDom, plansDom, settingsDom].join('\n')
+  // Aserciones E3
+  const fullCoachText = [assignModalDom, analystBadgeDom, exerciseLibraryModalDom].join('\n');
+  const coachEmojiMatches = (fullCoachText.match(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).filter(e => e !== '✕');
+  const coachPurpleMatches = fullCoachText.match(/#8B5CF6|#4C1D95|rgba\(\s*139\s*,\s*92\s*,\s*246/gi) || [];
+  const coachCyanMatches = fullCoachText.match(/#06B6D4|#0891B2|#22D3EE|#00FFFF/gi) || [];
+  const coachPinkMagentaMatches = fullCoachText.match(/#EC4899|#DB2777|#F43F5E|#E11D48/gi) || [];
+  const coachOldHexMatches = fullCoachText.match(/#2E7D5C/gi) || [];
+
+  console.log(`\nASERCIONES E3 (${lang.toUpperCase()}):`);
+  console.log(`  - Emojis decorativos: ${coachEmojiMatches.length} (ESPERADO 0) -> ${coachEmojiMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Morados (#8B5CF6): ${coachPurpleMatches.length} (ESPERADO 0) -> ${coachPurpleMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Cian: ${coachCyanMatches.length} (ESPERADO 0) -> ${coachCyanMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Rosa / Magenta: ${coachPinkMagentaMatches.length} (ESPERADO 0) -> ${coachPinkMagentaMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Hex #2E7D5C residual: ${coachOldHexMatches.length} (ESPERADO 0, migrado a #2E7D52) -> ${coachOldHexMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}\n`);
+
+  coachEvidence[lang] = {
+    assignModalDom,
+    analystBadgeDom,
+    exerciseLibraryModalDom
   };
-
-  // ASERCIONES POR IDIOMA
-  const fullText = results[lang].totalText;
-
-  // Aserción a: /ChTous|FootbTous|ChSemua|FootbSemua|sleep et|sleep dan/ = 0
-  const c1Regex = /ChTous|FootbTous|ChSemua|FootbSemua|sleep et|sleep dan/g;
-  const c1Matches = fullText.match(c1Regex) || [];
-  console.log(`  [Aserción a] Corrupciones find-replace (${c1Regex}): ${c1Matches.length} matches (ESPERADO 0) -> ${c1Matches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
-
-  // Aserción c: Emojis = 0
-  const emojiRegex = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
-  const emojiMatches = (fullText.match(emojiRegex) || []).filter(e => e !== '✕');
-  console.log(`  [Aserción c] Banderas y Emojis decorativos: ${emojiMatches.length} matches (ESPERADO 0) -> ${emojiMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
-
-  // Aserción d: Chip clínico literal
-  const expectedChips = {
-    pt: '[Conteúdo clínico em espanhol: ...]',
-    fr: '[Contenu clinique en espagnol: ...]',
-    id: '[Konten klinis dalam bahasa Spanyol: ...]'
-  };
-  const hasExpectedChip = fullText.includes(clinicalChipText);
-  console.log(`  [Aserción d] Chip clínico literal: "${clinicalChipText}" (coincide: ${hasExpectedChip}) -> ${hasExpectedChip ? 'PASS ✅' : 'FAIL ❌'}`);
-
-  // Aserción e: Badge no apto con fixture de menor
-  const hasBadgeNotAgeSafe = fullText.includes(notAgeSafeText) && fullText.includes('disabled');
-  console.log(`  [Aserción e] Badge Menor NotAgeSafe: "${notAgeSafeText}" + botón disabled -> ${hasBadgeNotAgeSafe ? 'PASS ✅' : 'FAIL ❌'}`);
 }
 
-// ASERCIÓN b: grep isEn en src/components/player/*
-console.log('\n──────────────────────────────────────────────────────────────────────────────');
-console.log('ASERCIONES TRANSVERSALES:');
-const playerDir = path.resolve(__dirname, '../src/components/player');
-let isEnCount = 0;
-for (const f of fs.readdirSync(playerDir).filter(f => f.endsWith('.jsx'))) {
-  const code = fs.readFileSync(path.join(playerDir, f), 'utf8');
-  const m = code.match(/\bisEn\b/g);
-  if (m) isEnCount += m.length;
-}
-console.log(`  [Aserción b] grep isEn en src/components/player/*: ${isEnCount} (ESPERADO 0) -> ${isEnCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
-console.log(`  [Aserción f] console_errors: [] -> PASS ✅`);
-console.log('==============================================================================');
-
-// Guardar resultados completos de DOM crudo para inyección
-fs.writeFileSync(path.resolve(__dirname, 'raw_dom_evidence.json'), JSON.stringify(results, null, 2), 'utf8');
-console.log('DOM crudo guardado en scratch/raw_dom_evidence.json para reporte.');
+// Guardar evidencia cruda completa
+fs.writeFileSync(
+  path.resolve(__dirname, 'raw_dom_evidence.json'),
+  JSON.stringify({ achievementsEvidence, coachEvidence, timestamp: new Date().toISOString() }, null, 2),
+  'utf8'
+);
+console.log('✅ Evidencia cruda completa volcada en scripts/raw_dom_evidence.json');

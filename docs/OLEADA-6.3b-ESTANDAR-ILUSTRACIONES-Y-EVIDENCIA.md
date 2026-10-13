@@ -558,16 +558,26 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
 </div>
 ```
 
-### 3.3 Biblioteca de Ejercicios: Chip Fortalecimiento y Modal de 6 Items
+### 3.3 Biblioteca de Ejercicios: Chip Fortalecimiento, Modal de 6 Items y Cierre R1/R2/R3
 - **Chip Fortalecimiento:** La clase `.cat-fortalecimiento` en `ExerciseLibrary.css` aplica `background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25);` — cero rosa, cero magenta.
 - **Botón Ver Ejercicio:** Limpiado de cian (`#E0F2FE`, `#0284C7`) a `background: rgba(76, 175, 125, 0.12); color: #1B3A2D; border: 1px solid rgba(76, 175, 125, 0.25);`.
+- **R1 — Alternativa Casera Localizada (Carril A):**
+  - **PT:** `"Cadeira estável, sofá"`
+  - **FR:** `"Chaise stable, canapé"`
+  - **ID:** `"Kursi stabil, sofa"`
+  - **ES:** `"Silla estable, sofá"`
+- **R2 — Chip Clínico en Nota de Seguridad (Salud Prioridad 1):**
+  - La nota clínica de FIFA 11+ en español no se muestra desnuda en lenguas no-ES. Al estar caídas las fuentes federativas locales, se envuelve de forma no silenciosa con `.clinical-fallback-chip` (`conteúdo clínico em espanhol`, `contenu clinique en espagnol`, `konten klinis dalam bahasa Spanyol`), con icono `<Shield />` y borde oro.
+- **R3 — Nombre de Ejercicio [DECISIÓN-DUEÑO: NOMBRE-EJERCICIO]:**
+  - Revertido el flip no documentado a la versión localizada previa: `"Agachamento Búlgaro"` (PT), `"Squat Bulgare"` (FR), `"Squat Bulgaria"` (ID).
+  - Marcado formalmente como **`[PENDIENTE-DUEÑO]`** para definir si los nombres propios de ejercicios se localizan sistemáticamente (Carril A) o se preservan como identificador de catálogo (Carril C).
 - **Modal de Detalle (6 items obligatorios):**
   1. **Nivel:** `<BarChart2 />` (`Nivel 2` / `Niveau 2` / `Tingkat 2`).
   2. **Edad:** `<Baby />` (`Edad mín. segura: 12 años` / `12 anos` / `12 ans` / `12 tahun`).
   3. **Supervisión:** `<Eye />` (`Supervisión presencial` / `Supervisão presencial` / `Supervision en présentiel` / `Memerlukan pengawasan langsung`).
-  4. **Material Preferido:** `<Dumbbell />` (`Material preferido` / `Matériel préféré` / `Peralatan utama`, con texto canónico `#1B3A2D` erradicando `#1E293B`).
-  5. **Alternativa Casera:** `<Home />` (`Alternativa casera` / `Alternativa em casa` / `Alternative maison` / `Alternatif rumahan`).
-  6. **Notas FIFA 11+ / Seguridad:** `<ShieldAlert />` (Alineación articular y prevención de valgo dinámico).
+  4. **Material Preferido:** `<Dumbbell />` (`Material preferido` / `Matériel préféré` / `Peralatan utama`, texto canónico `#1B3A2D`, Carril C fijo en ES).
+  5. **Alternativa Casera:** `<Home />` (`Alternativa casera` / `Alternativa em casa` / `Alternative maison` / `Alternatif rumahan`, localizado en Carril A).
+  6. **Notas FIFA 11+ / Seguridad con Chip Clínico:** `<ShieldAlert />` + `.clinical-fallback-chip` cuando `lang !== 'es'`.
 
 ---
 
@@ -582,10 +592,15 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
 | **D3-1: AssignPlanModal .home-alt** | **#2E7D52** | Reemplazado `#047857` (emerald) por tinte oficial `#2E7D52` coherente con icono `#4CAF7D`. |
 | **D3-2: ExerciseLibrary .item-material** | **#1B3A2D** | Reemplazado `#1E293B` (slate-800 azul-frío) por verde selva canónico `#1B3A2D`. |
 | **D3-3: Traducción ID en .home-alt** | **ID NATIVO** | Traducido a "Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan" (Carril A). Material queda en ES (Carril C). |
+| **R1: Library item-alternativa valor** | **LOCALIZADO** | PT "Cadeira estável, sofá", FR "Chaise stable, canapé", ID "Kursi stabil, sofa" (Carril A). |
+| **R2: Library item-seguridad chip clínico** | **VISIBLE** | `.clinical-fallback-chip` renderizado en lenguas no-ES (salud, no silencioso). |
+| **R3: Library h2 nombre ejercicio** | **LOCALIZADO** | Revertido a localizado ("Agachamento Búlgaro", etc.). Marcado `[DECISIÓN-DUEÑO: NOMBRE-EJERCICIO]` como `[PENDIENTE-DUEÑO]`. |
+| **Escáner Superficie-Wide** | **FALLA-BUILD** | Generalizado a AssignPlan, ExerciseLibrary, Portal y PDF; 0 fugas-ES en campos clínicos/alternativa. |
 | **Linter CI: check-chart-palette** | **ALLOWLIST EXACTA** | Bloqueo garantizado de casi-colores (#047857, #1E293B, #10B981, #2E7D5C) y suite de regresión 6/6 verde. |
 | **Consola y Linters** | **0 ERRORES** | `ci-i18n-gate.mjs` (7/7 gates) y `check-chart-palette.mjs` (100% verde). |
 
 ### Integridad de Límites del Proyecto
 - Pricing, exportaciones PDF, Portal del Jugador E1, Pizarra Táctica Núcleo, LiveStats, SCORE, Staff Heredado, lógica de planes (`plans.js`), Firestore y reloj Android Build 95 permanecen **completamente intactos**.
 - Oleada 7 permanece **bloqueada**.
+
 

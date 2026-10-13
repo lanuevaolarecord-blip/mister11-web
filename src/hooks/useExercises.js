@@ -234,6 +234,9 @@ export const SYSTEM_CORE_EXERCISES = [
     name: 'Sentadilla Búlgara', 
     nameEs: 'Sentadilla Búlgara',
     nameEn: 'Bulgarian Split Squat',
+    namePt: 'Agachamento Búlgaro',
+    nameFr: 'Squat Bulgare',
+    nameId: 'Squat Bulgaria',
     category: 'fortalecimiento',
     targetZones: ['rodilla', 'cuadriceps'], injuryTypes: ['lca'], difficulty: 2,
     description: 'Un pie apoyado atrás en un banco. Flexionar la pierna delantera controlando que la rodilla no colapse hacia adentro.',
@@ -459,12 +462,36 @@ import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises } from '../utils
 
 export { assertAgeSafe, canPrescribeAtHome, filterHomeExercises };
 
-export const getLocalizedExercise = (ex, isEnglish) => {
+export const getLocalizedExercise = (ex, isEnglish, lang = 'es') => {
   if (!ex) return ex;
+  let localizedName = ex.name;
+  if (isEnglish) {
+    localizedName = ex.nameEn || ex.name;
+  } else if (lang === 'pt' && ex.namePt) {
+    localizedName = ex.namePt;
+  } else if (lang === 'fr' && ex.nameFr) {
+    localizedName = ex.nameFr;
+  } else if (lang === 'id' && ex.nameId) {
+    localizedName = ex.nameId;
+  } else if (ex.nameEs) {
+    localizedName = ex.nameEs;
+  }
+  let localizedDesc = ex.description;
+  if (isEnglish) {
+    localizedDesc = ex.descriptionEn || ex.description;
+  } else if (lang === 'pt' && ex.descriptionPt) {
+    localizedDesc = ex.descriptionPt;
+  } else if (lang === 'fr' && ex.descriptionFr) {
+    localizedDesc = ex.descriptionFr;
+  } else if (lang === 'id' && ex.descriptionId) {
+    localizedDesc = ex.descriptionId;
+  } else if (ex.descriptionEs) {
+    localizedDesc = ex.descriptionEs;
+  }
   return {
     ...ex,
-    name: isEnglish ? (ex.nameEn || ex.name) : (ex.nameEs || ex.name),
-    description: isEnglish ? (ex.descriptionEn || ex.description) : (ex.descriptionEs || ex.description)
+    name: localizedName,
+    description: localizedDesc
   };
 };
 

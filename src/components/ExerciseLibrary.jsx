@@ -36,6 +36,34 @@ const renderMarkdown = (text) => {
   });
 };
 
+const formatLocalizedAlt = (options, lang) => {
+  if (!options) return null;
+  const altDict = {
+    'silla_estable': { es: 'Silla estable', pt: 'Cadeira estável', fr: 'Chaise stable', id: 'Kursi stabil', en: 'Stable chair' },
+    'sofa': { es: 'Sofá', pt: 'Sofá', fr: 'Canapé', id: 'Sofa', en: 'Sofa' },
+    'cama_pesada': { es: 'Cama pesada', pt: 'Cama pesada', fr: 'Lit lourd', id: 'Tempat tidur kokoh', en: 'Heavy bed' },
+    'escalon': { es: 'Escalón', pt: 'Degrau', fr: 'Marche', id: 'Anak tangga', en: 'Step' },
+    'suelo': { es: 'Suelo', pt: 'Chão', fr: 'Sol', id: 'Lantai', en: 'Floor' },
+    'pared': { es: 'Pared', pt: 'Parede', fr: 'Mur', id: 'Dinding', en: 'Wall' },
+    'toalla': { es: 'Toalla', pt: 'Toalha', fr: 'Serviette', id: 'Handuk', en: 'Towel' }
+  };
+  const l = lang || 'es';
+  if (Array.isArray(options)) {
+    return options.map(opt => {
+      const k = String(opt).toLowerCase().trim().replace(/\s+/g, '_');
+      return altDict[k]?.[l] || altDict[k]?.['es'] || opt;
+    }).join(', ');
+  }
+  if (typeof options === 'string') {
+    const parts = options.split(',').map(p => p.trim());
+    return parts.map(p => {
+      const k = p.toLowerCase().replace(/\s+/g, '_');
+      return altDict[k]?.[l] || altDict[k]?.['es'] || p;
+    }).join(', ');
+  }
+  return options;
+};
+
 const ExerciseLibrary = ({ activeTeamId }) => {
   const { t, isEn, language } = useTranslation();
   const { exercises, loading, addExercise, removeExercise } = useExercises(activeTeamId);
@@ -107,7 +135,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
       ) : (
         <div className="exercises-grid">
           {filteredExercises.map(rawEx => {
-            const ex = getLocalizedExercise(rawEx, isEn);
+            const ex = getLocalizedExercise(rawEx, isEn, language);
             return (
             <div key={ex.id} className="exercise-card">
               <div className="exercise-card-header">
@@ -231,7 +259,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
       )}
 
       {viewExercise && (() => {
-        const activeViewEx = getLocalizedExercise(viewExercise, isEn);
+        const activeViewEx = getLocalizedExercise(viewExercise, isEn, language);
         return (
         <div className="modal-overlay" onClick={() => setViewExercise(null)}>
           <div className="modal-content view-exercise-modal" onClick={e => e.stopPropagation()}>
@@ -323,8 +351,8 @@ const ExerciseLibrary = ({ activeTeamId }) => {
               const preferredMaterial = Array.isArray(activeViewEx.material_preferido) && activeViewEx.material_preferido.length > 0
                 ? activeViewEx.material_preferido.join(', ')
                 : (activeViewEx.material || (Array.isArray(activeViewEx.materials) ? activeViewEx.materials.join(', ') : null));
-              const altOptions = Array.isArray(activeViewEx.alternativa_casa?.option) && activeViewEx.alternativa_casa.option.length > 0
-                ? activeViewEx.alternativa_casa.option.join(', ')
+              const altOptions = activeViewEx.alternativa_casa?.option
+                ? formatLocalizedAlt(activeViewEx.alternativa_casa.option, language)
                 : null;
               const altNota = activeViewEx.alternativa_casa?.nota?.[language] ||
                               activeViewEx.alternativa_casa?.nota?.es ||
@@ -391,8 +419,27 @@ const ExerciseLibrary = ({ activeTeamId }) => {
 
                   {/* 6. NOTA DE SEGURIDAD CLÍNICA */}
                   {safetyNote && (
-                    <div style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(200, 90, 50, 0.08)', border: '1px solid rgba(200, 90, 50, 0.2)', fontSize: '0.78rem', color: '#C85A32', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="item-seguridad" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(200, 90, 50, 0.08)', border: '1px solid rgba(200, 90, 50, 0.2)', fontSize: '0.78rem', color: '#C85A32', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <ShieldAlert size={14} style={{ flexShrink: 0 }} />
+                      {language && !language.startsWith('es') && (
+                        <span 
+                          className="clinical-fallback-chip"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: '700',
+                            backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                            color: '#D4A843',
+                            border: '1px solid rgba(212, 168, 67, 0.4)'
+                          }}
+                        >
+                          <Shield size={12} /> {t('clinical.fallbackChip')}
+                        </span>
+                      )}
                       <span>{safetyNote}</span>
                     </div>
                   )}

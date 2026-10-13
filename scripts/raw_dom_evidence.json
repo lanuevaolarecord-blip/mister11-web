@@ -1,195 +1,717 @@
 {
   "achievementsEvidence": {
     "pt": {
-      "pillsSet": [
+      "pills": [
         "Todas (22)",
         "Bronze (7)",
         "Prata (5)",
         "Ouro (10)"
       ],
-      "tierCounts": {
+      "counts": {
+        "bronze": 0,
+        "silver": 0,
+        "gold": 0,
         "BRONZE": 7,
         "SILVER": 5,
         "GOLD": 10
       },
-      "sumTiers": 22,
-      "mezclasCount": 0,
-      "anglicismosCount": 0,
-      "itemsText": [
-        "[#01] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Semana Perfeita\n  DESCRIPCIÓN: Compareça a 100% das sessões de treino programadas para esta semana.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#02] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Check-in de Saúde\n  DESCRIPCIÓN: Registre seu descanso e dores nos dias de treino.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#03] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Mente Forte\n  DESCRIPCIÓN: Complete pelo menos 1 teste psicológico ou avaliação no portal.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#04] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Trabalho Invisível\n  DESCRIPCIÓN: Complete os exercícios do seu plano individual atribuído.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#05] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Sempre Atento\n  DESCRIPCIÓN: Confira os detalhes da próxima partida ou treino antes da convocação.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#06] [TIER: PRATA | +50 XP]\n  NOMBRE:      Jogador de Ferro\n  DESCRIPCIÓN: 100% de presença durante 14 dias consecutivos.\n  PILL TIER:   Prata\n  ESTADO:      Concluído!",
-        "[#07] [TIER: PRATA | +50 XP]\n  NOMBRE:      Hábito Saudável\n  DESCRIPCIÓN: Envie seu check-in de bem-estar em pelo menos 80% dos dias.\n  PILL TIER:   Prata\n  ESTADO:      Concluído!",
-        "[#08] [TIER: PRATA | +50 XP]\n  NOMBRE:      Resiliência de Competição\n  DESCRIPCIÓN: Realize 3 testes psicológicos de enfrentamento ou força mental.\n  PILL TIER:   Prata\n  ESTADO:      Concluído!",
-        "[#09] [TIER: PRATA | +50 XP]\n  NOMBRE:      Evolução Física\n  DESCRIPCIÓN: Registre ou supere sua melhor marca nos testes físicos da equipe.\n  PILL TIER:   Prata\n  ESTADO:      Concluído!",
-        "[#10] [TIER: PRATA | +50 XP]\n  NOMBRE:      Compromisso com o Grupo\n  DESCRIPCIÓN: Confirme sua presença (RSVP) em todos os eventos com antecedência.\n  PILL TIER:   Prata\n  ESTADO:      Concluído!",
-        "[#11] [TIER: OURO | +100 XP]\n  NOMBRE:      Veterano da Temporada\n  DESCRIPCIÓN: Participe ou seja convocado para pelo menos 80% das partidas do ano.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#12] [TIER: OURO | +100 XP]\n  NOMBRE:      Artilheiro da Temporada\n  DESCRIPCIÓN: Atinja a meta de gols marcados em competições oficiais.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#13] [TIER: OURO | +100 XP]\n  NOMBRE:      Motor da Equipe\n  DESCRIPCIÓN: Dê assistências decisivas para gol aos seus companheiros.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#14] [TIER: OURO | +100 XP]\n  NOMBRE:      Sequência Imparável\n  DESCRIPCIÓN: Mantenha uma sequência ativa de 21 dias de constância esportiva.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#15] [TIER: OURO | +100 XP]\n  NOMBRE:      Mestre Tático e Psicológico\n  DESCRIPCIÓN: Complete todos os questionários e avaliações do catálogo.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#16] [TIER: OURO | +100 XP]\n  NOMBRE:      Espírito de Capitão\n  DESCRIPCIÓN: 100% de presença em treinos e partidas durante um mês completo.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#17] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Mente Ativa\n  DESCRIPCIÓN: Complete pelo menos 3 sessões de treino cognitivo ou desafios esta semana.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#18] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Zen\n  DESCRIPCIÓN: Complete a Respiração 4-4 em pelo menos 3 dias diferentes durante a semana.\n  PILL TIER:   Bronze\n  ESTADO:      Concluído!",
-        "[#19] [TIER: OURO | +50 XP]\n  NOMBRE:      Freio de Ouro\n  DESCRIPCIÓN: Alcance 90% ou mais de precisão no jogo Freio Impulsivo.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#20] [TIER: OURO | +50 XP]\n  NOMBRE:      Olho de Falcão\n  DESCRIPCIÓN: Acerte 5 de 5 no Olho Tático encontrando o companheiro livre.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#21] [TIER: OURO | +50 XP]\n  NOMBRE:      Memória de Campeonato\n  DESCRIPCIÓN: Lembre-se e reproduza uma sequência de pelo menos 6 cones na Memória de Cones.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!",
-        "[#22] [TIER: OURO | +75 XP]\n  NOMBRE:      Equipe Mental\n  DESCRIPCIÓN: Conquista coletiva: o time acumula 20 ou mais sessões cognitivas concluídas.\n  PILL TIER:   Ouro\n  ESTADO:      Concluído!"
-      ],
-      "itemsDom": [
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_perfect_week\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Semana Perfeita</h4>\n      <p class=\"ach-desc\">Compareça a 100% das sessões de treino programadas para esta semana.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_wellness\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Check-in de Saúde</h4>\n      <p class=\"ach-desc\">Registre seu descanso e dores nos dias de treino.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_scholar\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Mente Forte</h4>\n      <p class=\"ach-desc\">Complete pelo menos 1 teste psicológico ou avaliação no portal.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_committed\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Trabalho Invisível</h4>\n      <p class=\"ach-desc\">Complete os exercícios do seu plano individual atribuído.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_attentive\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Sempre Atento</h4>\n      <p class=\"ach-desc\">Confira os detalhes da próxima partida ou treino antes da convocação.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_iron\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Prata</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Jogador de Ferro</h4>\n      <p class=\"ach-desc\">100% de presença durante 14 dias consecutivos.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_self_care\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Prata</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Hábito Saudável</h4>\n      <p class=\"ach-desc\">Envie seu check-in de bem-estar em pelo menos 80% dos dias.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_strong_mind\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Prata</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Resiliência de Competição</h4>\n      <p class=\"ach-desc\">Realize 3 testes psicológicos de enfrentamento ou força mental.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_fit\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Prata</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Evolução Física</h4>\n      <p class=\"ach-desc\">Registre ou supere sua melhor marca nos testes físicos da equipe.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_teammate\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Prata</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Compromisso com o Grupo</h4>\n      <p class=\"ach-desc\">Confirme sua presença (RSVP) em todos os eventos com antecedência.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_veteran\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Veterano da Temporada</h4>\n      <p class=\"ach-desc\">Participe ou seja convocado para pelo menos 80% das partidas do ano.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_scorer\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Artilheiro da Temporada</h4>\n      <p class=\"ach-desc\">Atinja a meta de gols marcados em competições oficiais.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_assist\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Motor da Equipe</h4>\n      <p class=\"ach-desc\">Dê assistências decisivas para gol aos seus companheiros.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_unstoppable\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Sequência Imparável</h4>\n      <p class=\"ach-desc\">Mantenha uma sequência ativa de 21 dias de constância esportiva.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_analyst\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Mestre Tático e Psicológico</h4>\n      <p class=\"ach-desc\">Complete todos os questionários e avaliações do catálogo.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_captain\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Espírito de Capitão</h4>\n      <p class=\"ach-desc\">100% de presença em treinos e partidas durante um mês completo.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_mind_active\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Mente Ativa</h4>\n      <p class=\"ach-desc\">Complete pelo menos 3 sessões de treino cognitivo ou desafios esta semana.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_zen\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Zen</h4>\n      <p class=\"ach-desc\">Complete a Respiração 4-4 em pelo menos 3 dias diferentes durante a semana.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_impulse_brake\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Freio de Ouro</h4>\n      <p class=\"ach-desc\">Alcance 90% ou mais de precisão no jogo Freio Impulsivo.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_tactical_eye\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Olho de Falcão</h4>\n      <p class=\"ach-desc\">Acerte 5 de 5 no Olho Tático encontrando o companheiro livre.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_cone_memory\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Memória de Campeonato</h4>\n      <p class=\"ach-desc\">Lembre-se e reproduza uma sequência de pelo menos 6 cones na Memória de Cones.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_mental_squad\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Ouro</span>\n        <span class=\"ach-xp\">+75 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Equipe Mental</h4>\n      <p class=\"ach-desc\">Conquista coletiva: o time acumula 20 ou mais sessões cognitivas concluídas.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Concluído!</span>\n      </div>\n    </div>"
+      "items": [
+        {
+          "num": "01",
+          "id": "weekly_perfect_week",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Semana Perfeita",
+          "desc": "Compareça a 100% das sessões de treino programadas para esta semana.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "02",
+          "id": "weekly_wellness",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Check-in de Saúde",
+          "desc": "Registre seu descanso e dores nos dias de treino.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "03",
+          "id": "weekly_scholar",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Mente Forte",
+          "desc": "Complete pelo menos 1 teste psicológico ou avaliação no portal.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "04",
+          "id": "weekly_committed",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Trabalho Invisível",
+          "desc": "Complete os exercícios do seu plano individual atribuído.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "05",
+          "id": "weekly_attentive",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Sempre Atento",
+          "desc": "Confira os detalhes da próxima partida ou treino antes da convocação.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "06",
+          "id": "biweekly_iron",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Jogador de Ferro",
+          "desc": "100% de presença durante 14 dias consecutivos.",
+          "tierName": "Prata",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "07",
+          "id": "biweekly_self_care",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Hábito Saudável",
+          "desc": "Envie seu check-in de bem-estar em pelo menos 80% dos dias.",
+          "tierName": "Prata",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "08",
+          "id": "biweekly_strong_mind",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Resiliência de Competição",
+          "desc": "Realize 3 testes psicológicos de enfrentamento ou força mental.",
+          "tierName": "Prata",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "09",
+          "id": "biweekly_fit",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Evolução Física",
+          "desc": "Registre ou supere sua melhor marca nos testes físicos da equipe.",
+          "tierName": "Prata",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "10",
+          "id": "biweekly_teammate",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Compromisso com o Grupo",
+          "desc": "Confirme sua presença (RSVP) em todos os eventos com antecedência.",
+          "tierName": "Prata",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "11",
+          "id": "season_veteran",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Veterano da Temporada",
+          "desc": "Participe ou seja convocado para pelo menos 80% das partidas do ano.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "12",
+          "id": "season_scorer",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Artilheiro da Temporada",
+          "desc": "Atinja a meta de gols marcados em competições oficiais.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "13",
+          "id": "season_assist",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Motor da Equipe",
+          "desc": "Dê assistências decisivas para gol aos seus companheiros.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "14",
+          "id": "season_unstoppable",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Sequência Imparável",
+          "desc": "Mantenha uma sequência ativa de 21 dias de constância esportiva.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "15",
+          "id": "season_analyst",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Mestre Tático e Psicológico",
+          "desc": "Complete todos os questionários e avaliações do catálogo.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "16",
+          "id": "season_captain",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Espírito de Capitão",
+          "desc": "100% de presença em treinos e partidas durante um mês completo.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "17",
+          "id": "weekly_mind_active",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Mente Ativa",
+          "desc": "Complete pelo menos 3 sessões de treino cognitivo ou desafios esta semana.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "18",
+          "id": "weekly_zen",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Zen",
+          "desc": "Complete a Respiração 4-4 em pelo menos 3 dias diferentes durante a semana.",
+          "tierName": "Bronze",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "19",
+          "id": "gold_impulse_brake",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Freio de Ouro",
+          "desc": "Alcance 90% ou mais de precisão no jogo Freio Impulsivo.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "20",
+          "id": "gold_tactical_eye",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Olho de Falcão",
+          "desc": "Acerte 5 de 5 no Olho Tático encontrando o companheiro livre.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "21",
+          "id": "gold_cone_memory",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Memória de Campeonato",
+          "desc": "Lembre-se e reproduza uma sequência de pelo menos 6 cones na Memória de Cones.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        },
+        {
+          "num": "22",
+          "id": "season_mental_squad",
+          "tier": "GOLD",
+          "xp": 75,
+          "name": "Equipe Mental",
+          "desc": "Conquista coletiva: o time acumula 20 ou mais sessões cognitivas concluídas.",
+          "tierName": "Ouro",
+          "completedBadge": "Concluído!"
+        }
       ]
     },
     "fr": {
-      "pillsSet": [
+      "pills": [
         "Toutes (22)",
         "Bronze (7)",
         "Argent (5)",
         "Or (10)"
       ],
-      "tierCounts": {
+      "counts": {
+        "bronze": 0,
+        "silver": 0,
+        "gold": 0,
         "BRONZE": 7,
         "SILVER": 5,
         "GOLD": 10
       },
-      "sumTiers": 22,
-      "mezclasCount": 0,
-      "anglicismosCount": 0,
-      "itemsText": [
-        "[#01] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Semaine Parfaite\n  DESCRIPCIÓN: Participez à 100% des séances d'entraînement prévues cette semaine.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#02] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Bilan Santé\n  DESCRIPCIÓN: Enregistrez votre sommeil et votre fatigue les jours d'entraînement.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#03] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Esprit Fort\n  DESCRIPCIÓN: Complétez au moins 1 test psychologique ou évaluation sur le portail.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#04] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Travail de l'Ombre\n  DESCRIPCIÓN: Réalisez les exercices de votre programme individuel assigné.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#05] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Toujours Attentif\n  DESCRIPCIÓN: Consultez les détails du prochain match ou entraînement avant la convocation.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#06] [TIER: ARGENT | +50 XP]\n  NOMBRE:      Joueur de Fer\n  DESCRIPCIÓN: 100% de présence pendant 14 jours consécutifs.\n  PILL TIER:   Argent\n  ESTADO:      Terminé !",
-        "[#07] [TIER: ARGENT | +50 XP]\n  NOMBRE:      Habitude Saine\n  DESCRIPCIÓN: Envoyez votre bilan de bien-être sur au moins 80% des jours.\n  PILL TIER:   Argent\n  ESTADO:      Terminé !",
-        "[#08] [TIER: ARGENT | +50 XP]\n  NOMBRE:      Résilience de Compétition\n  DESCRIPCIÓN: Réalisez 3 tests psychologiques de gestion du stress ou force mentale.\n  PILL TIER:   Argent\n  ESTADO:      Terminé !",
-        "[#09] [TIER: ARGENT | +50 XP]\n  NOMBRE:      Évolution Physique\n  DESCRIPCIÓN: Enregistrez ou battez votre record personnel lors des tests physiques.\n  PILL TIER:   Argent\n  ESTADO:      Terminé !",
-        "[#10] [TIER: ARGENT | +50 XP]\n  NOMBRE:      Engagement Collectif\n  DESCRIPCIÓN: Confirmez votre présence (RSVP) à tous les événements à l'avance.\n  PILL TIER:   Argent\n  ESTADO:      Terminé !",
-        "[#11] [TIER: OR | +100 XP]\n  NOMBRE:      Vétéran de la Saison\n  DESCRIPCIÓN: Participez ou soyez convoqué à au moins 80% des matchs de la saison.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#12] [TIER: OR | +100 XP]\n  NOMBRE:      Buteur de la Saison\n  DESCRIPCIÓN: Atteignez l'objectif de buts marqués en compétition officielle.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#13] [TIER: OR | +100 XP]\n  NOMBRE:      Moteur de l'Équipe\n  DESCRIPCIÓN: Délivrez des passes décisives à vos coéquipiers.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#14] [TIER: OR | +100 XP]\n  NOMBRE:      Série Imbattable\n  DESCRIPCIÓN: Maintenez une série active de 21 jours de régularité sportive.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#15] [TIER: OR | +100 XP]\n  NOMBRE:      Maître Tactique & Mental\n  DESCRIPCIÓN: Complétez tous les questionnaires et évaluations du catalogue.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#16] [TIER: OR | +100 XP]\n  NOMBRE:      Esprit de Capitaine\n  DESCRIPCIÓN: 100% d'assiduité aux entraînements et aux matchs pendant un mois complet.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#17] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Esprit Actif\n  DESCRIPCIÓN: Complétez au moins 3 séances d'entraînement cognitif ou défis cette semaine.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#18] [TIER: BRONZE | +25 XP]\n  NOMBRE:      Zen\n  DESCRIPCIÓN: Pratiquez la Respiration 4-4 sur au moins 3 jours différents dans la semaine.\n  PILL TIER:   Bronze\n  ESTADO:      Terminé !",
-        "[#19] [TIER: OR | +50 XP]\n  NOMBRE:      Frein d'Or\n  DESCRIPCIÓN: Atteignez 90% de précision ou plus au jeu Frein Impulsif.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#20] [TIER: OR | +50 XP]\n  NOMBRE:      Œil de Faucon\n  DESCRIPCIÓN: Réussissez un 5/5 dans Œil Tactique en trouvant le coéquipier démarqué.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#21] [TIER: OR | +50 XP]\n  NOMBRE:      Mémoire de Championnat\n  DESCRIPCIÓN: Mémorisez et reproduisez une séquence d'au moins 6 cônes dans Mémoire de Cônes.\n  PILL TIER:   Or\n  ESTADO:      Terminé !",
-        "[#22] [TIER: OR | +75 XP]\n  NOMBRE:      Équipe Mentale\n  DESCRIPCIÓN: Succès collectif : l'équipe cumule 20 séances cognitives ou plus.\n  PILL TIER:   Or\n  ESTADO:      Terminé !"
-      ],
-      "itemsDom": [
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_perfect_week\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Semaine Parfaite</h4>\n      <p class=\"ach-desc\">Participez à 100% des séances d'entraînement prévues cette semaine.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_wellness\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Bilan Santé</h4>\n      <p class=\"ach-desc\">Enregistrez votre sommeil et votre fatigue les jours d'entraînement.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_scholar\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Esprit Fort</h4>\n      <p class=\"ach-desc\">Complétez au moins 1 test psychologique ou évaluation sur le portail.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_committed\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Travail de l'Ombre</h4>\n      <p class=\"ach-desc\">Réalisez les exercices de votre programme individuel assigné.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_attentive\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Toujours Attentif</h4>\n      <p class=\"ach-desc\">Consultez les détails du prochain match ou entraînement avant la convocation.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_iron\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Argent</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Joueur de Fer</h4>\n      <p class=\"ach-desc\">100% de présence pendant 14 jours consécutifs.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_self_care\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Argent</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Habitude Saine</h4>\n      <p class=\"ach-desc\">Envoyez votre bilan de bien-être sur au moins 80% des jours.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_strong_mind\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Argent</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Résilience de Compétition</h4>\n      <p class=\"ach-desc\">Réalisez 3 tests psychologiques de gestion du stress ou force mentale.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_fit\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Argent</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Évolution Physique</h4>\n      <p class=\"ach-desc\">Enregistrez ou battez votre record personnel lors des tests physiques.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_teammate\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Argent</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Engagement Collectif</h4>\n      <p class=\"ach-desc\">Confirmez votre présence (RSVP) à tous les événements à l'avance.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_veteran\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Vétéran de la Saison</h4>\n      <p class=\"ach-desc\">Participez ou soyez convoqué à au moins 80% des matchs de la saison.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_scorer\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Buteur de la Saison</h4>\n      <p class=\"ach-desc\">Atteignez l'objectif de buts marqués en compétition officielle.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_assist\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Moteur de l'Équipe</h4>\n      <p class=\"ach-desc\">Délivrez des passes décisives à vos coéquipiers.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_unstoppable\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Série Imbattable</h4>\n      <p class=\"ach-desc\">Maintenez une série active de 21 jours de régularité sportive.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_analyst\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Maître Tactique & Mental</h4>\n      <p class=\"ach-desc\">Complétez tous les questionnaires et évaluations du catalogue.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_captain\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Esprit de Capitaine</h4>\n      <p class=\"ach-desc\">100% d'assiduité aux entraînements et aux matchs pendant un mois complet.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_mind_active\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Esprit Actif</h4>\n      <p class=\"ach-desc\">Complétez au moins 3 séances d'entraînement cognitif ou défis cette semaine.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_zen\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Bronze</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Zen</h4>\n      <p class=\"ach-desc\">Pratiquez la Respiration 4-4 sur au moins 3 jours différents dans la semaine.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_impulse_brake\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Frein d'Or</h4>\n      <p class=\"ach-desc\">Atteignez 90% de précision ou plus au jeu Frein Impulsif.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_tactical_eye\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Œil de Faucon</h4>\n      <p class=\"ach-desc\">Réussissez un 5/5 dans Œil Tactique en trouvant le coéquipier démarqué.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_cone_memory\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Mémoire de Championnat</h4>\n      <p class=\"ach-desc\">Mémorisez et reproduisez une séquence d'au moins 6 cônes dans Mémoire de Cônes.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_mental_squad\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Or</span>\n        <span class=\"ach-xp\">+75 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Équipe Mentale</h4>\n      <p class=\"ach-desc\">Succès collectif : l'équipe cumule 20 séances cognitives ou plus.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Terminé !</span>\n      </div>\n    </div>"
+      "items": [
+        {
+          "num": "01",
+          "id": "weekly_perfect_week",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Semaine Parfaite",
+          "desc": "Participez à 100% des séances d'entraînement prévues cette semaine.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "02",
+          "id": "weekly_wellness",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Bilan Santé",
+          "desc": "Enregistrez votre sommeil et votre fatigue les jours d'entraînement.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "03",
+          "id": "weekly_scholar",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Esprit Fort",
+          "desc": "Complétez au moins 1 test psychologique ou évaluation sur le portail.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "04",
+          "id": "weekly_committed",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Travail de l'Ombre",
+          "desc": "Réalisez les exercices de votre programme individuel assigné.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "05",
+          "id": "weekly_attentive",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Toujours Attentif",
+          "desc": "Consultez les détails du prochain match ou entraînement avant la convocation.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "06",
+          "id": "biweekly_iron",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Joueur de Fer",
+          "desc": "100% de présence pendant 14 jours consécutifs.",
+          "tierName": "Argent",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "07",
+          "id": "biweekly_self_care",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Habitude Saine",
+          "desc": "Envoyez votre bilan de bien-être sur au moins 80% des jours.",
+          "tierName": "Argent",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "08",
+          "id": "biweekly_strong_mind",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Résilience de Compétition",
+          "desc": "Réalisez 3 tests psychologiques de gestion du stress ou force mentale.",
+          "tierName": "Argent",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "09",
+          "id": "biweekly_fit",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Évolution Physique",
+          "desc": "Enregistrez ou battez votre record personnel lors des tests physiques.",
+          "tierName": "Argent",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "10",
+          "id": "biweekly_teammate",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Engagement Collectif",
+          "desc": "Confirmez votre présence (RSVP) à tous les événements à l'avance.",
+          "tierName": "Argent",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "11",
+          "id": "season_veteran",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Vétéran de la Saison",
+          "desc": "Participez ou soyez convoqué à au moins 80% des matchs de la saison.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "12",
+          "id": "season_scorer",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Buteur de la Saison",
+          "desc": "Atteignez l'objectif de buts marqués en compétition officielle.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "13",
+          "id": "season_assist",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Moteur de l'Équipe",
+          "desc": "Délivrez des passes décisives à vos coéquipiers.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "14",
+          "id": "season_unstoppable",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Série Imbattable",
+          "desc": "Maintenez une série active de 21 jours de régularité sportive.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "15",
+          "id": "season_analyst",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Maître Tactique & Mental",
+          "desc": "Complétez tous les questionnaires et évaluations du catalogue.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "16",
+          "id": "season_captain",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Esprit de Capitaine",
+          "desc": "100% d'assiduité aux entraînements et aux matchs pendant un mois complet.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "17",
+          "id": "weekly_mind_active",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Esprit Actif",
+          "desc": "Complétez au moins 3 séances d'entraînement cognitif ou défis cette semaine.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "18",
+          "id": "weekly_zen",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Zen",
+          "desc": "Pratiquez la Respiration 4-4 sur au moins 3 jours différents dans la semaine.",
+          "tierName": "Bronze",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "19",
+          "id": "gold_impulse_brake",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Frein d'Or",
+          "desc": "Atteignez 90% de précision ou plus au jeu Frein Impulsif.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "20",
+          "id": "gold_tactical_eye",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Œil de Faucon",
+          "desc": "Réussissez un 5/5 dans Œil Tactique en trouvant le coéquipier démarqué.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "21",
+          "id": "gold_cone_memory",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Mémoire de Championnat",
+          "desc": "Mémorisez et reproduisez une séquence d'au moins 6 cônes dans Mémoire de Cônes.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        },
+        {
+          "num": "22",
+          "id": "season_mental_squad",
+          "tier": "GOLD",
+          "xp": 75,
+          "name": "Équipe Mentale",
+          "desc": "Succès collectif : l'équipe cumule 20 séances cognitives ou plus.",
+          "tierName": "Or",
+          "completedBadge": "Terminé !"
+        }
       ]
     },
     "id": {
-      "pillsSet": [
+      "pills": [
         "Semua (22)",
         "Perunggu (7)",
         "Perak (5)",
         "Emas (10)"
       ],
-      "tierCounts": {
+      "counts": {
+        "bronze": 0,
+        "silver": 0,
+        "gold": 0,
         "BRONZE": 7,
         "SILVER": 5,
         "GOLD": 10
       },
-      "sumTiers": 22,
-      "mezclasCount": 0,
-      "anglicismosCount": 0,
-      "itemsText": [
-        "[#01] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Minggu Sempurna\n  DESCRIPCIÓN: Hadiri 100% sesi latihan yang dijadwalkan minggu ini.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#02] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Pemeriksaan Kesehatan\n  DESCRIPCIÓN: Catat tidur dan rasa pegal Anda pada hari latihan.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#03] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Pikiran Tangguh\n  DESCRIPCIÓN: Selesaikan setidaknya 1 tes psikologis atau evaluasi di portal.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#04] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Kerja Senyap\n  DESCRIPCIÓN: Selesaikan latihan dari rencana individu yang ditugaskan.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#05] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Selalu Waspada\n  DESCRIPCIÓN: Periksa detail pertandingan dan latihan sebelum waktu pemanggilan.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#06] [TIER: PERAK | +50 XP]\n  NOMBRE:      Pemain Besi\n  DESCRIPCIÓN: 100% kehadiran selama 14 hari berturut-turut.\n  PILL TIER:   Perak\n  ESTADO:      Selesai!",
-        "[#07] [TIER: PERAK | +50 XP]\n  NOMBRE:      Kebiasaan Sehat\n  DESCRIPCIÓN: Kirimkan check-in kebugaran Anda setidaknya pada 80% hari.\n  PILL TIER:   Perak\n  ESTADO:      Selesai!",
-        "[#08] [TIER: PERAK | +50 XP]\n  NOMBRE:      Ketahanan Kompetisi\n  DESCRIPCIÓN: Selesaikan 3 tes psikologis ketahanan atau kekuatan mental.\n  PILL TIER:   Perak\n  ESTADO:      Selesai!",
-        "[#09] [TIER: PERAK | +50 XP]\n  NOMBRE:      Evolusi Fisik\n  DESCRIPCIÓN: Catat atau lewati rekor pribadi Anda dalam tes fisik tim.\n  PILL TIER:   Perak\n  ESTADO:      Selesai!",
-        "[#10] [TIER: PERAK | +50 XP]\n  NOMBRE:      Komitmen Bersama\n  DESCRIPCIÓN: Konfirmasikan kehadiran Anda (RSVP) ke semua acara sebelumnya.\n  PILL TIER:   Perak\n  ESTADO:      Selesai!",
-        "[#11] [TIER: EMAS | +100 XP]\n  NOMBRE:      Veteran Musim Ini\n  DESCRIPCIÓN: Berpartisipasi atau dipanggil ke setidaknya 80% laga musim ini.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#12] [TIER: EMAS | +100 XP]\n  NOMBRE:      Pencetak Gol Musim Ini\n  DESCRIPCIÓN: Capai target gol yang dicetak dalam kompetisi resmi.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#13] [TIER: EMAS | +100 XP]\n  NOMBRE:      Penggerak Tim\n  DESCRIPCIÓN: Berikan umpan gol penentu kepada rekan setim Anda.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#14] [TIER: EMAS | +100 XP]\n  NOMBRE:      Rentetan Tak Terhentikan\n  DESCRIPCIÓN: Pertahankan konsistensi olahraga selama 21 hari berturut-turut.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#15] [TIER: EMAS | +100 XP]\n  NOMBRE:      Pakar Taktis & Mental\n  DESCRIPCIÓN: Selesaikan semua kuesioner dan evaluasi dalam katalog.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#16] [TIER: EMAS | +100 XP]\n  NOMBRE:      Jiwa Kapten\n  DESCRIPCIÓN: 100% kehadiran pada latihan dan pertandingan selama sebulan penuh.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#17] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Pikiran Aktif\n  DESCRIPCIÓN: Selesaikan setidaknya 3 sesi latihan kognitif atau tantangan minggu ini.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#18] [TIER: PERUNGGU | +25 XP]\n  NOMBRE:      Zen\n  DESCRIPCIÓN: Selesaikan Pernapasan 4-4 setidaknya pada 3 hari berbeda minggu ini.\n  PILL TIER:   Perunggu\n  ESTADO:      Selesai!",
-        "[#19] [TIER: EMAS | +50 XP]\n  NOMBRE:      Rem Emas\n  DESCRIPCIÓN: Capai akurasi 90% atau lebih pada permainan Rem Impulsif.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#20] [TIER: EMAS | +50 XP]\n  NOMBRE:      Mata Elang\n  DESCRIPCIÓN: Dapatkan 5/5 jawaban tepat di Mata Taktis dengan menemukan rekan bebas.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#21] [TIER: EMAS | +50 XP]\n  NOMBRE:      Memori Kejuaraan\n  DESCRIPCIÓN: Ingat dan ulangi urutan setidaknya 6 kerucut di Memori Kerucut.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!",
-        "[#22] [TIER: EMAS | +75 XP]\n  NOMBRE:      Skuad Mental\n  DESCRIPCIÓN: Pencapaian kolektif: tim mengumpulkan 20 atau lebih sesi kognitif.\n  PILL TIER:   Emas\n  ESTADO:      Selesai!"
-      ],
-      "itemsDom": [
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_perfect_week\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Minggu Sempurna</h4>\n      <p class=\"ach-desc\">Hadiri 100% sesi latihan yang dijadwalkan minggu ini.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_wellness\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pemeriksaan Kesehatan</h4>\n      <p class=\"ach-desc\">Catat tidur dan rasa pegal Anda pada hari latihan.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_scholar\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pikiran Tangguh</h4>\n      <p class=\"ach-desc\">Selesaikan setidaknya 1 tes psikologis atau evaluasi di portal.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_committed\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Kerja Senyap</h4>\n      <p class=\"ach-desc\">Selesaikan latihan dari rencana individu yang ditugaskan.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_attentive\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Selalu Waspada</h4>\n      <p class=\"ach-desc\">Periksa detail pertandingan dan latihan sebelum waktu pemanggilan.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_iron\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perak</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pemain Besi</h4>\n      <p class=\"ach-desc\">100% kehadiran selama 14 hari berturut-turut.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_self_care\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perak</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Kebiasaan Sehat</h4>\n      <p class=\"ach-desc\">Kirimkan check-in kebugaran Anda setidaknya pada 80% hari.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_strong_mind\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perak</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Ketahanan Kompetisi</h4>\n      <p class=\"ach-desc\">Selesaikan 3 tes psikologis ketahanan atau kekuatan mental.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_fit\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perak</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Evolusi Fisik</h4>\n      <p class=\"ach-desc\">Catat atau lewati rekor pribadi Anda dalam tes fisik tim.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-silver\" data-id=\"biweekly_teammate\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perak</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Komitmen Bersama</h4>\n      <p class=\"ach-desc\">Konfirmasikan kehadiran Anda (RSVP) ke semua acara sebelumnya.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_veteran\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Veteran Musim Ini</h4>\n      <p class=\"ach-desc\">Berpartisipasi atau dipanggil ke setidaknya 80% laga musim ini.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_scorer\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pencetak Gol Musim Ini</h4>\n      <p class=\"ach-desc\">Capai target gol yang dicetak dalam kompetisi resmi.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_assist\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Penggerak Tim</h4>\n      <p class=\"ach-desc\">Berikan umpan gol penentu kepada rekan setim Anda.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_unstoppable\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Rentetan Tak Terhentikan</h4>\n      <p class=\"ach-desc\">Pertahankan konsistensi olahraga selama 21 hari berturut-turut.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_analyst\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pakar Taktis & Mental</h4>\n      <p class=\"ach-desc\">Selesaikan semua kuesioner dan evaluasi dalam katalog.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_captain\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+100 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Jiwa Kapten</h4>\n      <p class=\"ach-desc\">100% kehadiran pada latihan dan pertandingan selama sebulan penuh.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_mind_active\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Pikiran Aktif</h4>\n      <p class=\"ach-desc\">Selesaikan setidaknya 3 sesi latihan kognitif atau tantangan minggu ini.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-bronze\" data-id=\"weekly_zen\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Perunggu</span>\n        <span class=\"ach-xp\">+25 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Zen</h4>\n      <p class=\"ach-desc\">Selesaikan Pernapasan 4-4 setidaknya pada 3 hari berbeda minggu ini.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_impulse_brake\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Rem Emas</h4>\n      <p class=\"ach-desc\">Capai akurasi 90% atau lebih pada permainan Rem Impulsif.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_tactical_eye\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Mata Elang</h4>\n      <p class=\"ach-desc\">Dapatkan 5/5 jawaban tepat di Mata Taktis dengan menemukan rekan bebas.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"gold_cone_memory\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+50 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Memori Kejuaraan</h4>\n      <p class=\"ach-desc\">Ingat dan ulangi urutan setidaknya 6 kerucut di Memori Kerucut.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>",
-        "<div class=\"achievement-card unlocked tier-gold\" data-id=\"season_mental_squad\">\n      <div class=\"ach-tier-badge\">\n        <svg class=\"lucide-award\" width=\"12\" height=\"12\"></svg>\n        <span class=\"tier-pill\">Emas</span>\n        <span class=\"ach-xp\">+75 XP</span>\n      </div>\n      <h4 class=\"ach-name\">Skuad Mental</h4>\n      <p class=\"ach-desc\">Pencapaian kolektif: tim mengumpulkan 20 atau lebih sesi kognitif.</p>\n      <div class=\"ach-status\">\n        <svg class=\"lucide-check-circle-2\" width=\"14\" height=\"14\"></svg>\n        <span class=\"status-lbl\">Selesai!</span>\n      </div>\n    </div>"
+      "items": [
+        {
+          "num": "01",
+          "id": "weekly_perfect_week",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Minggu Sempurna",
+          "desc": "Hadiri 100% sesi latihan yang dijadwalkan minggu ini.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "02",
+          "id": "weekly_wellness",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Pemeriksaan Kesehatan",
+          "desc": "Catat tidur dan rasa pegal Anda pada hari latihan.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "03",
+          "id": "weekly_scholar",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Pikiran Tangguh",
+          "desc": "Selesaikan setidaknya 1 tes psikologis atau evaluasi di portal.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "04",
+          "id": "weekly_committed",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Kerja Senyap",
+          "desc": "Selesaikan latihan dari rencana individu yang ditugaskan.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "05",
+          "id": "weekly_attentive",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Selalu Waspada",
+          "desc": "Periksa detail pertandingan dan latihan sebelum waktu pemanggilan.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "06",
+          "id": "biweekly_iron",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Pemain Besi",
+          "desc": "100% kehadiran selama 14 hari berturut-turut.",
+          "tierName": "Perak",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "07",
+          "id": "biweekly_self_care",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Kebiasaan Sehat",
+          "desc": "Kirimkan check-in kebugaran Anda setidaknya pada 80% hari.",
+          "tierName": "Perak",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "08",
+          "id": "biweekly_strong_mind",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Ketahanan Kompetisi",
+          "desc": "Selesaikan 3 tes psikologis ketahanan atau kekuatan mental.",
+          "tierName": "Perak",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "09",
+          "id": "biweekly_fit",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Evolusi Fisik",
+          "desc": "Catat atau lewati rekor pribadi Anda dalam tes fisik tim.",
+          "tierName": "Perak",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "10",
+          "id": "biweekly_teammate",
+          "tier": "SILVER",
+          "xp": 50,
+          "name": "Komitmen Bersama",
+          "desc": "Konfirmasikan kehadiran Anda (RSVP) ke semua acara sebelumnya.",
+          "tierName": "Perak",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "11",
+          "id": "season_veteran",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Veteran Musim Ini",
+          "desc": "Berpartisipasi atau dipanggil ke setidaknya 80% laga musim ini.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "12",
+          "id": "season_scorer",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Pencetak Gol Musim Ini",
+          "desc": "Capai target gol yang dicetak dalam kompetisi resmi.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "13",
+          "id": "season_assist",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Penggerak Tim",
+          "desc": "Berikan umpan gol penentu kepada rekan setim Anda.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "14",
+          "id": "season_unstoppable",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Rentetan Tak Terhentikan",
+          "desc": "Pertahankan konsistensi olahraga selama 21 hari berturut-turut.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "15",
+          "id": "season_analyst",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Pakar Taktis & Mental",
+          "desc": "Selesaikan semua kuesioner dan evaluasi dalam katalog.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "16",
+          "id": "season_captain",
+          "tier": "GOLD",
+          "xp": 100,
+          "name": "Jiwa Kapten",
+          "desc": "100% kehadiran pada latihan dan pertandingan selama sebulan penuh.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "17",
+          "id": "weekly_mind_active",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Pikiran Aktif",
+          "desc": "Selesaikan setidaknya 3 sesi latihan kognitif atau tantangan minggu ini.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "18",
+          "id": "weekly_zen",
+          "tier": "BRONZE",
+          "xp": 25,
+          "name": "Zen",
+          "desc": "Selesaikan Pernapasan 4-4 setidaknya pada 3 hari berbeda minggu ini.",
+          "tierName": "Perunggu",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "19",
+          "id": "gold_impulse_brake",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Rem Emas",
+          "desc": "Capai akurasi 90% atau lebih pada permainan Rem Impulsif.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "20",
+          "id": "gold_tactical_eye",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Mata Elang",
+          "desc": "Dapatkan 5/5 jawaban tepat di Mata Taktis dengan menemukan rekan bebas.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "21",
+          "id": "gold_cone_memory",
+          "tier": "GOLD",
+          "xp": 50,
+          "name": "Memori Kejuaraan",
+          "desc": "Ingat dan ulangi urutan setidaknya 6 kerucut di Memori Kerucut.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        },
+        {
+          "num": "22",
+          "id": "season_mental_squad",
+          "tier": "GOLD",
+          "xp": 75,
+          "name": "Skuad Mental",
+          "desc": "Pencapaian kolektif: tim mengumpulkan 20 atau lebih sesi kognitif.",
+          "tierName": "Emas",
+          "completedBadge": "Selesai!"
+        }
       ]
     }
   },
@@ -197,18 +719,18 @@
     "pt": {
       "assignModalDom": "<div class=\"assign-plan-modal\" data-lang=\"pt\">\n  <div class=\"modal-header\">\n    <h2><svg class=\"lucide-clipboard-list\" width=\"20\" height=\"20\"></svg> <span>Atribuir Plano de Exercícios</span></h2>\n    <p>Lucas García · 13 anos</p>\n  </div>\n  <div class=\"exercise-item blocked-minor\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.3);\">\n    <div class=\"ex-icon-check\">\n      <svg class=\"lucide-shield-alert\" width=\"18\" height=\"18\" color=\"#C85A32\"></svg>\n    </div>\n    <div class=\"ex-content\">\n      <div class=\"ex-title-row\">\n        <span class=\"ex-name\" style=\"font-weight: 600; color: #C85A32;\">Nordic Hamstring Curl</span>\n        <div class=\"badges-row\">\n          <span class=\"badge-age-blocked\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 700; border: 1px solid rgba(200, 90, 50, 0.3);\">\n            <svg class=\"lucide-ban\" width=\"12\" height=\"12\"></svg> Não adequado para a idade do jogador (14 anos)\n          </span>\n          <span class=\"badge-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 600; border: 1px solid rgba(200, 90, 50, 0.25);\">\n            <svg class=\"lucide-eye\" width=\"12\" height=\"12\"></svg> Requer supervisão presencial\n          </span>\n          <span class=\"badge-level\" style=\"background: rgba(212, 168, 67, 0.12); color: #9C6A3B; font-weight: 600; border: 1px solid rgba(212, 168, 67, 0.25);\">\n            <svg class=\"lucide-star\" width=\"12\" height=\"12\" color=\"#D4A843\"></svg> Nível 3\n          </span>\n        </div>\n      </div>\n      <div class=\"ex-materials\" style=\"margin-top: 6px;\">\n        <div class=\"material-pref\">\n          <svg class=\"lucide-dumbbell\" width=\"13\" height=\"13\" color=\"#1B3A2D\"></svg>\n          <strong>Material preferido:</strong> Banco nórdico, correas\n        </div>\n        <div class=\"home-alt\" style=\"color: #2E7D52;\">\n          <svg class=\"lucide-home\" width=\"13\" height=\"13\" color=\"#4CAF7D\"></svg>\n          <strong>Alternativa caseira:</strong> Cama pesada, sofá, tornozelos seguros por parceiro\n        </div>\n      </div>\n    </div>\n  </div>\n</div>",
       "analystBadgeDom": "<div class=\"staff-role-badge analyst-role\" style=\"background: rgba(46, 125, 82, 0.18); border: 1px solid #2E7D52; color: #4CAF7D; font-weight: 700; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;\">\n  <svg class=\"lucide-activity\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n  <span class=\"analyst-text\">Analista Tático</span>\n</div>",
-      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"pt\">\n  <div class=\"modal-header\">\n    <h2>Sentadilla Búlgara</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Fortalecimento\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Nível: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Idade mín. segura: 12 anos\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Requer supervisão presencial\n    </span>\n    <!-- 4. Material preferido -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Material preferido:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternativa caseira:</span> Silla estable, sofá\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
+      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"pt\">\n  <div class=\"modal-header\">\n    <h2>Agachamento Búlgaro</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Fortalecimento\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Nível: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Idade mín. segura: 12 anos\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Requer supervisão presencial\n    </span>\n    <!-- 4. Material preferido (Carril C - Fijo ES) -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Material preferido:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera (Carril A - Localizado) -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternativa caseira:</span> Cadeira estável, sofá\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ con Chip Clínico Obligatorio -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span class=\"clinical-fallback-chip\" style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);\">\n        <svg class=\"lucide-shield\" width=\"12\" height=\"12\"></svg> conteúdo clínico em espanhol\n      </span>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
     },
     "fr": {
       "assignModalDom": "<div class=\"assign-plan-modal\" data-lang=\"fr\">\n  <div class=\"modal-header\">\n    <h2><svg class=\"lucide-clipboard-list\" width=\"20\" height=\"20\"></svg> <span>Assigner un Plan d'Exercices</span></h2>\n    <p>Lucas García · 13 ans</p>\n  </div>\n  <div class=\"exercise-item blocked-minor\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.3);\">\n    <div class=\"ex-icon-check\">\n      <svg class=\"lucide-shield-alert\" width=\"18\" height=\"18\" color=\"#C85A32\"></svg>\n    </div>\n    <div class=\"ex-content\">\n      <div class=\"ex-title-row\">\n        <span class=\"ex-name\" style=\"font-weight: 600; color: #C85A32;\">Nordic Hamstring Curl</span>\n        <div class=\"badges-row\">\n          <span class=\"badge-age-blocked\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 700; border: 1px solid rgba(200, 90, 50, 0.3);\">\n            <svg class=\"lucide-ban\" width=\"12\" height=\"12\"></svg> Non adapté à l'âge du joueur (14 ans)\n          </span>\n          <span class=\"badge-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 600; border: 1px solid rgba(200, 90, 50, 0.25);\">\n            <svg class=\"lucide-eye\" width=\"12\" height=\"12\"></svg> Supervision en présentiel requise\n          </span>\n          <span class=\"badge-level\" style=\"background: rgba(212, 168, 67, 0.12); color: #9C6A3B; font-weight: 600; border: 1px solid rgba(212, 168, 67, 0.25);\">\n            <svg class=\"lucide-star\" width=\"12\" height=\"12\" color=\"#D4A843\"></svg> Niveau 3\n          </span>\n        </div>\n      </div>\n      <div class=\"ex-materials\" style=\"margin-top: 6px;\">\n        <div class=\"material-pref\">\n          <svg class=\"lucide-dumbbell\" width=\"13\" height=\"13\" color=\"#1B3A2D\"></svg>\n          <strong>Matériel préféré:</strong> Banco nórdico, correas\n        </div>\n        <div class=\"home-alt\" style=\"color: #2E7D52;\">\n          <svg class=\"lucide-home\" width=\"13\" height=\"13\" color=\"#4CAF7D\"></svg>\n          <strong>Alternative maison:</strong> Lit lourd, canapé, chevilles tenues par un partenaire\n        </div>\n      </div>\n    </div>\n  </div>\n</div>",
       "analystBadgeDom": "<div class=\"staff-role-badge analyst-role\" style=\"background: rgba(46, 125, 82, 0.18); border: 1px solid #2E7D52; color: #4CAF7D; font-weight: 700; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;\">\n  <svg class=\"lucide-activity\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n  <span class=\"analyst-text\">Analyste Tactique</span>\n</div>",
-      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"fr\">\n  <div class=\"modal-header\">\n    <h2>Sentadilla Búlgara</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Renforcement\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Niveau: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Âge min. sécurisé: 12 ans\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Supervision en présentiel requise\n    </span>\n    <!-- 4. Material preferido -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Matériel préféré:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternative maison:</span> Silla estable, sofá\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
+      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"fr\">\n  <div class=\"modal-header\">\n    <h2>Squat Bulgare</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Renforcement\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Niveau: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Âge min. sécurisé: 12 ans\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Supervision en présentiel requise\n    </span>\n    <!-- 4. Material preferido (Carril C - Fijo ES) -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Matériel préféré:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera (Carril A - Localizado) -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternative maison:</span> Chaise stable, canapé\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ con Chip Clínico Obligatorio -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span class=\"clinical-fallback-chip\" style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);\">\n        <svg class=\"lucide-shield\" width=\"12\" height=\"12\"></svg> contenu clinique en espagnol\n      </span>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
     },
     "id": {
       "assignModalDom": "<div class=\"assign-plan-modal\" data-lang=\"id\">\n  <div class=\"modal-header\">\n    <h2><svg class=\"lucide-clipboard-list\" width=\"20\" height=\"20\"></svg> <span>Tetapkan Rencana Latihan</span></h2>\n    <p>Lucas García · 13 tahun</p>\n  </div>\n  <div class=\"exercise-item blocked-minor\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.3);\">\n    <div class=\"ex-icon-check\">\n      <svg class=\"lucide-shield-alert\" width=\"18\" height=\"18\" color=\"#C85A32\"></svg>\n    </div>\n    <div class=\"ex-content\">\n      <div class=\"ex-title-row\">\n        <span class=\"ex-name\" style=\"font-weight: 600; color: #C85A32;\">Nordic Hamstring Curl</span>\n        <div class=\"badges-row\">\n          <span class=\"badge-age-blocked\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 700; border: 1px solid rgba(200, 90, 50, 0.3);\">\n            <svg class=\"lucide-ban\" width=\"12\" height=\"12\"></svg> Tidak cocok untuk usia pemain (14 tahun)\n          </span>\n          <span class=\"badge-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 600; border: 1px solid rgba(200, 90, 50, 0.25);\">\n            <svg class=\"lucide-eye\" width=\"12\" height=\"12\"></svg> Memerlukan pengawasan langsung\n          </span>\n          <span class=\"badge-level\" style=\"background: rgba(212, 168, 67, 0.12); color: #9C6A3B; font-weight: 600; border: 1px solid rgba(212, 168, 67, 0.25);\">\n            <svg class=\"lucide-star\" width=\"12\" height=\"12\" color=\"#D4A843\"></svg> Tingkat 3\n          </span>\n        </div>\n      </div>\n      <div class=\"ex-materials\" style=\"margin-top: 6px;\">\n        <div class=\"material-pref\">\n          <svg class=\"lucide-dumbbell\" width=\"13\" height=\"13\" color=\"#1B3A2D\"></svg>\n          <strong>Peralatan utama:</strong> Banco nórdico, correas\n        </div>\n        <div class=\"home-alt\" style=\"color: #2E7D52;\">\n          <svg class=\"lucide-home\" width=\"13\" height=\"13\" color=\"#4CAF7D\"></svg>\n          <strong>Alternatif rumahan:</strong> Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan\n        </div>\n      </div>\n    </div>\n  </div>\n</div>",
       "analystBadgeDom": "<div class=\"staff-role-badge analyst-role\" style=\"background: rgba(46, 125, 82, 0.18); border: 1px solid #2E7D52; color: #4CAF7D; font-weight: 700; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;\">\n  <svg class=\"lucide-activity\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n  <span class=\"analyst-text\">Analis Taktis</span>\n</div>",
-      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"id\">\n  <div class=\"modal-header\">\n    <h2>Sentadilla Búlgara</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Penguatan\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Tingkat: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Usia min. aman: 12 tahun\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Memerlukan pengawasan langsung\n    </span>\n    <!-- 4. Material preferido -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Peralatan utama:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternatif rumahan:</span> Silla estable, sofá\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
+      "exerciseLibraryModalDom": "<div class=\"modal-content view-exercise-modal\" data-lang=\"id\">\n  <div class=\"modal-header\">\n    <h2>Squat Bulgaria</h2>\n    <div class=\"categories-row\">\n      <span class=\"badge-cat cat-fortalecimiento\" style=\"background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25); font-weight: 600; padding: 4px 10px; border-radius: 12px;\">\n        Penguatan\n      </span>\n    </div>\n  </div>\n  <div class=\"modal-detail-6-items\" style=\"display: flex; flex-direction: column; gap: 10px; margin-top: 12px;\">\n    <!-- 1. Nivel -->\n    <span class=\"item-nivel\" style=\"background: rgba(212, 168, 67, 0.15); color: #9C6A3B; border: 1px solid rgba(212, 168, 67, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-bar-chart-2\" width=\"14\" height=\"14\"></svg> Tingkat: 2\n    </span>\n    <!-- 2. Edad mín. segura -->\n    <span class=\"item-edad\" style=\"background: rgba(27, 58, 45, 0.08); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.2); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-baby\" width=\"14\" height=\"14\"></svg> Usia min. aman: 12 tahun\n    </span>\n    <!-- 3. Supervisión -->\n    <span class=\"item-supervision\" style=\"background: rgba(200, 90, 50, 0.12); color: #C85A32; border: 1px solid rgba(200, 90, 50, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;\">\n      <svg class=\"lucide-eye\" width=\"14\" height=\"14\"></svg> Memerlukan pengawasan langsung\n    </span>\n    <!-- 4. Material preferido (Carril C - Fijo ES) -->\n    <div class=\"item-material\" style=\"display: flex; align-items: center; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-dumbbell\" width=\"14\" height=\"14\" color=\"#1B3A2D\"></svg>\n      <span style=\"font-weight: 700;\">Peralatan utama:</span> Banco o cajón, mancuernas\n    </div>\n    <!-- 5. Alternativa casera (Carril A - Localizado) -->\n    <div class=\"item-alternativa\" style=\"display: flex; align-items: flex-start; gap: 6px; color: #1B3A2D;\">\n      <svg class=\"lucide-home\" width=\"14\" height=\"14\" color=\"#4CAF7D\"></svg>\n      <span style=\"font-weight: 700;\">Alternatif rumahan:</span> Kursi stabil, sofa\n    </div>\n    <!-- 6. Notas de seguridad / FIFA 11+ con Chip Clínico Obligatorio -->\n    <div class=\"item-seguridad\" style=\"background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;\">\n      <svg class=\"lucide-shield-alert\" width=\"14\" height=\"14\"></svg>\n      <span class=\"clinical-fallback-chip\" style=\"display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);\">\n        <svg class=\"lucide-shield\" width=\"12\" height=\"12\"></svg> konten klinis dalam bahasa Spanyol\n      </span>\n      <span>Protocolo FIFA 11+: Mantener rodilla alineada con el segundo dedo del pie sin valgo dinámico.</span>\n    </div>\n  </div>\n</div>"
     }
   },
-  "timestamp": "2026-10-13T16:15:03.059Z"
+  "timestamp": "2026-10-13T19:25:44.242Z"
 }

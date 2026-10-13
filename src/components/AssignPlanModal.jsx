@@ -315,13 +315,13 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                         {(preferredMaterial || altOptions) && (
                           <div style={{ fontSize: '0.75rem', color: '#4B5563', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {preferredMaterial && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div className="material-pref" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <Dumbbell size={13} color="#1B3A2D" />
                                 <span style={{ fontWeight: 600 }}>{t('plans.assignModal.preferredMaterial', 'Material preferido')}:</span> {preferredMaterial}
                               </div>
                             )}
                             {altOptions && (
-                              <div style={{ color: '#2E7D52', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                              <div className="home-alt" style={{ color: '#2E7D52', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                                 <Home size={13} color="#4CAF7D" style={{ marginTop: '2px', flexShrink: 0 }} />
                                 <div>
                                   <span style={{ fontWeight: 600 }}>{t('plans.assignModal.homeAlternative', 'Alternativa casera')}:</span> {altOptions}

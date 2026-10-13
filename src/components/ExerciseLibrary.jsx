@@ -370,14 +370,14 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                   {(preferredMaterial || altOptions) && (
                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {preferredMaterial && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1B3A2D' }}>
+                        <div className="item-material" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1B3A2D' }}>
                           <Dumbbell size={14} color="#1B3A2D" />
                           <span style={{ fontWeight: 700 }}>{t('exercise.preferredMaterial', 'Material preferido')}:</span>
                           <span>{preferredMaterial}</span>
                         </div>
                       )}
                       {altOptions && (
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#1B3A2D' }}>
+                        <div className="item-alternativa" style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#1B3A2D' }}>
                           <Home size={14} color="#4CAF7D" style={{ marginTop: '2px', flexShrink: 0 }} />
                           <div>
                             <span style={{ fontWeight: 700 }}>{t('exercise.homeAlternative', 'Alternativa casera')}:</span>

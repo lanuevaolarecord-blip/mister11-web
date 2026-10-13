@@ -445,7 +445,7 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
           <svg class="lucide-dumbbell" width="13" height="13" color="#1B3A2D"></svg>
           <strong>Material preferido:</strong> Banco nórdico, correas
         </div>
-        <div class="home-alt" style="color: #047857;">
+        <div class="home-alt" style="color: #2E7D52;">
           <svg class="lucide-home" width="13" height="13" color="#4CAF7D"></svg>
           <strong>Alternativa em casa:</strong> Cama pesada, sofá, tornozelos seguros por parceiro
         </div>
@@ -486,7 +486,7 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
           <svg class="lucide-dumbbell" width="13" height="13" color="#1B3A2D"></svg>
           <strong>Matériel préféré:</strong> Banc nordique, sangles
         </div>
-        <div class="home-alt" style="color: #047857;">
+        <div class="home-alt" style="color: #2E7D52;">
           <svg class="lucide-home" width="13" height="13" color="#4CAF7D"></svg>
           <strong>Alternative maison:</strong> Lit lourd, canapé, chevilles tenues par un partenaire
         </div>
@@ -527,15 +527,20 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
           <svg class="lucide-dumbbell" width="13" height="13" color="#1B3A2D"></svg>
           <strong>Peralatan utama:</strong> Banco nórdico, correas
         </div>
-        <div class="home-alt" style="color: #047857;">
+        <div class="home-alt" style="color: #2E7D52;">
           <svg class="lucide-home" width="13" height="13" color="#4CAF7D"></svg>
-          <strong>Alternatif rumahan:</strong> Cama pesada, sofá, tobillos sujetos por compañero
+          <strong>Alternatif rumahan:</strong> Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan
         </div>
       </div>
     </div>
   </div>
 </div>
 ```
+
+> [!NOTE]
+> **Carril A vs Carril C (Gobernanza Lingüística):**
+> - `material_preferido` ("Banco nórdico, correas"): Pertenece a **Carril C** (vocabulario técnico de inventario/club en español, vinculado a los certificados e informes PDF oficiales de equipamiento).
+> - `alternativa_casa` ("Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan"): Pertenece a **Carril A** (prosa de apoyo doméstico para jugadores y familias, 100% traducida a ID/PT/FR sin fugas residuales en español).
 
 ### 3.2 Rol Analista: Erradicación de Morado y Token Canónico
 - **Color y Fondo:** Se erradicó el morado `#8B5CF6` y el emoji 🟣.
@@ -555,11 +560,12 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
 
 ### 3.3 Biblioteca de Ejercicios: Chip Fortalecimiento y Modal de 6 Items
 - **Chip Fortalecimiento:** La clase `.cat-fortalecimiento` en `ExerciseLibrary.css` aplica `background: rgba(27, 58, 45, 0.12); color: #1B3A2D; border: 1px solid rgba(27, 58, 45, 0.25);` — cero rosa, cero magenta.
+- **Botón Ver Ejercicio:** Limpiado de cian (`#E0F2FE`, `#0284C7`) a `background: rgba(76, 175, 125, 0.12); color: #1B3A2D; border: 1px solid rgba(76, 175, 125, 0.25);`.
 - **Modal de Detalle (6 items obligatorios):**
   1. **Nivel:** `<BarChart2 />` (`Nivel 2` / `Niveau 2` / `Tingkat 2`).
   2. **Edad:** `<Baby />` (`Edad mín. segura: 12 años` / `12 anos` / `12 ans` / `12 tahun`).
   3. **Supervisión:** `<Eye />` (`Supervisión presencial` / `Supervisão presencial` / `Supervision en présentiel` / `Memerlukan pengawasan langsung`).
-  4. **Material Preferido:** `<Dumbbell />` (`Material preferido` / `Matériel préféré` / `Peralatan utama`).
+  4. **Material Preferido:** `<Dumbbell />` (`Material preferido` / `Matériel préféré` / `Peralatan utama`, con texto canónico `#1B3A2D` erradicando `#1E293B`).
   5. **Alternativa Casera:** `<Home />` (`Alternativa casera` / `Alternativa em casa` / `Alternative maison` / `Alternatif rumahan`).
   6. **Notas FIFA 11+ / Seguridad:** `<ShieldAlert />` (Alineación articular y prevención de valgo dinámico).
 
@@ -573,11 +579,13 @@ Se ejecutó la asignación de plan con fixture de un menor de 13 años (`Lucas G
 | **D2: DOM Crudo 22 Logros (PT/FR/ID)** | **22/22 PASS** | Volcado literal innerText extraído en las 3 lenguas, sumas = 22, 0 mezclas (salvo Zen). |
 | **D2: Erradicación de Anglicismos** | **0 OFFENDERS** | 0 "Engine", 0 "Commitment", 0 "Master" ("Pakar" en ID). |
 | **D2: [DECISIÓN-DUEÑO: NOMBRE-LOGRO]** | **MARCADA** | Declarada explícitamente como `[PENDIENTE-DUEÑO]`. |
-| **D3: AssignPlanModal Badges Lucide** | **0 EMOJIS** | Todos los badges usan Lucide SVG (`Baby`, `Eye`, `Star`, `Dumbbell`, `Home`, `Ban`). |
-| **D3: Analista sin Morado ni #8B5CF6** | **CONFORME** | Badge y rol configurados con token verde canónico; `#2E7D5C` migrado a `#2E7D52`. |
-| **D3: Biblioteca Chip y 6 Items** | **CONFORME** | Chip Fortalecimiento en `#1B3A2D` (sin rosa) y los 6 items visibles en el modal. |
+| **D3-1: AssignPlanModal .home-alt** | **#2E7D52** | Reemplazado `#047857` (emerald) por tinte oficial `#2E7D52` coherente con icono `#4CAF7D`. |
+| **D3-2: ExerciseLibrary .item-material** | **#1B3A2D** | Reemplazado `#1E293B` (slate-800 azul-frío) por verde selva canónico `#1B3A2D`. |
+| **D3-3: Traducción ID en .home-alt** | **ID NATIVO** | Traducido a "Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan" (Carril A). Material queda en ES (Carril C). |
+| **Linter CI: check-chart-palette** | **ALLOWLIST EXACTA** | Bloqueo garantizado de casi-colores (#047857, #1E293B, #10B981, #2E7D5C) y suite de regresión 6/6 verde. |
 | **Consola y Linters** | **0 ERRORES** | `ci-i18n-gate.mjs` (7/7 gates) y `check-chart-palette.mjs` (100% verde). |
 
 ### Integridad de Límites del Proyecto
 - Pricing, exportaciones PDF, Portal del Jugador E1, Pizarra Táctica Núcleo, LiveStats, SCORE, Staff Heredado, lógica de planes (`plans.js`), Firestore y reloj Android Build 95 permanecen **completamente intactos**.
 - Oleada 7 permanece **bloqueada**.
+

@@ -321,7 +321,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                               </div>
                             )}
                             {altOptions && (
-                              <div style={{ color: '#047857', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                              <div style={{ color: '#2E7D52', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
                                 <Home size={13} color="#4CAF7D" style={{ marginTop: '2px', flexShrink: 0 }} />
                                 <div>
                                   <span style={{ fontWeight: 600 }}>{t('plans.assignModal.homeAlternative', 'Alternativa casera')}:</span> {altOptions}

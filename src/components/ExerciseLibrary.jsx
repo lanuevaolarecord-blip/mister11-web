@@ -370,7 +370,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                   {(preferredMaterial || altOptions) && (
                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {preferredMaterial && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1E293B' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1B3A2D' }}>
                           <Dumbbell size={14} color="#1B3A2D" />
                           <span style={{ fontWeight: 700 }}>{t('exercise.preferredMaterial', 'Material preferido')}:</span>
                           <span>{preferredMaterial}</span>

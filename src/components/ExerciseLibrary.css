@@ -157,22 +157,22 @@
 }
 
 .btn-view-exercise {
-  background: #E0F2FE;
-  color: #0284C7;
-  border: none;
+  background: rgba(76, 175, 125, 0.12);
+  color: #1B3A2D;
+  border: 1px solid rgba(76, 175, 125, 0.25);
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s;
   font-size: 0.85rem;
 }
 
 .btn-view-exercise:hover {
-  background: #BAE6FD;
+  background: rgba(76, 175, 125, 0.22);
 }
 
 /* Fix delete button positioning to be in actions instead of absolute */
@@ -231,7 +231,7 @@
 }
 
 .ia-markdown h3 {
-  color: #2E5C48;
+  color: #2E7D52;
   font-size: 1.1rem;
   margin-top: 1.2rem;
   margin-bottom: 0.5rem;

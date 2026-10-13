@@ -17,7 +17,7 @@ export const CHART_THEME = {
 
     // Series de datos
     teamHome: '#4CAF7D',          // Verde Campo institucional
-    teamHomeLight: '#10B981',     // Verde brillante acento
+    teamHomeLight: '#2E7D52',     // Verde canónico tinte
     teamAway: '#EF4444',          // Rojo deportivo rival
     teamAwayLight: '#F87171',     // Rojo suave
 
@@ -48,7 +48,7 @@ export const CHART_THEME = {
     bgOverlay: 'rgba(242, 237, 228, 0.92)',
 
     // Series de datos
-    teamHome: '#2E7D5C',          // Verde institucional profundo
+    teamHome: '#2E7D52',          // Verde institucional profundo
     teamHomeLight: '#4CAF7D',
     teamAway: '#DC2626',          // Rojo carmesí
     teamAwayLight: '#EF4444',

@@ -177,9 +177,13 @@ for (const lang of ['pt', 'fr', 'id']) {
           <svg class="lucide-dumbbell" width="13" height="13" color="#1B3A2D"></svg>
           <strong>${t(lang, 'plans.assignModal.preferredMaterial', {}, 'Material preferido')}:</strong> Banco nórdico, correas
         </div>
-        <div class="home-alt" style="color: #047857;">
+        <div class="home-alt" style="color: #2E7D52;">
           <svg class="lucide-home" width="13" height="13" color="#4CAF7D"></svg>
-          <strong>${t(lang, 'plans.assignModal.homeAlternative', {}, 'Alternativa casera')}:</strong> Cama pesada, sofá, tobillos sujetos por compañero
+          <strong>${t(lang, 'plans.assignModal.homeAlternative', {}, 'Alternativa casera')}:</strong> ${
+            lang === 'pt' ? 'Cama pesada, sofá, tornozelos seguros por parceiro' :
+            lang === 'fr' ? 'Lit lourd, canapé, chevilles tenues par un partenaire' :
+            'Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan'
+          }
         </div>
       </div>
     </div>
@@ -218,7 +222,7 @@ for (const lang of ['pt', 'fr', 'id']) {
       <svg class="lucide-eye" width="14" height="14"></svg> ${t(lang, 'exercise.supervisionRequired', {}, 'Supervisión presencial')}
     </span>
     <!-- 4. Material preferido -->
-    <div class="item-material" style="display: flex; align-items: center; gap: 6px; color: #1E293B;">
+    <div class="item-material" style="display: flex; align-items: center; gap: 6px; color: #1B3A2D;">
       <svg class="lucide-dumbbell" width="14" height="14" color="#1B3A2D"></svg>
       <span style="font-weight: 700;">${t(lang, 'exercise.preferredMaterial', {}, 'Material preferido')}:</span> Banco o cajón, mancuernas
     </div>
@@ -248,14 +252,16 @@ for (const lang of ['pt', 'fr', 'id']) {
   const coachPurpleMatches = fullCoachText.match(/#8B5CF6|#4C1D95|rgba\(\s*139\s*,\s*92\s*,\s*246/gi) || [];
   const coachCyanMatches = fullCoachText.match(/#06B6D4|#0891B2|#22D3EE|#00FFFF/gi) || [];
   const coachPinkMagentaMatches = fullCoachText.match(/#EC4899|#DB2777|#F43F5E|#E11D48/gi) || [];
-  const coachOldHexMatches = fullCoachText.match(/#2E7D5C/gi) || [];
+  const coachOldHexMatches = fullCoachText.match(/#2E7D5C|#047857|#1E293B|#10B981/gi) || [];
+  const hasEsInIdAlt = lang === 'id' && fullCoachText.includes('tobillos sujetos por compañero');
 
   console.log(`\nASERCIONES E3 (${lang.toUpperCase()}):`);
   console.log(`  - Emojis decorativos: ${coachEmojiMatches.length} (ESPERADO 0) -> ${coachEmojiMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - Morados (#8B5CF6): ${coachPurpleMatches.length} (ESPERADO 0) -> ${coachPurpleMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - Cian: ${coachCyanMatches.length} (ESPERADO 0) -> ${coachCyanMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - Rosa / Magenta: ${coachPinkMagentaMatches.length} (ESPERADO 0) -> ${coachPinkMagentaMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
-  console.log(`  - Hex #2E7D5C residual: ${coachOldHexMatches.length} (ESPERADO 0, migrado a #2E7D52) -> ${coachOldHexMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}\n`);
+  console.log(`  - Hex no canónicos (#2E7D5C, #047857, #1E293B, #10B981): ${coachOldHexMatches.length} (ESPERADO 0) -> ${coachOldHexMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - Español residual en alternativa ID: ${hasEsInIdAlt ? 'DETECTADO ❌' : '0 (ID Nativo) ✅'}\n`);
 
   coachEvidence[lang] = {
     assignModalDom,

@@ -439,6 +439,14 @@ console.log(`- Violaciones de Fuga-ES en Carril A / R1 / Colores: ${totalFugaEsV
 console.log(`- Violaciones de Pertenencia de Nombre (Allowlist):  ${totalMembershipViolations}`);
 console.log(`- Divergencias de Política de Nombre Inter-Superficie: ${totalPolicyDivergences}`);
 
+// Guardar evidencia cruda completa antes de posibles salidas por error
+fs.writeFileSync(
+  path.resolve(__dirname, 'raw_dom_evidence.json'),
+  JSON.stringify({ achievementsEvidence, coachEvidence, timestamp: new Date().toISOString() }, null, 2),
+  'utf8'
+);
+console.log('✅ Evidencia cruda completa volcada en scripts/raw_dom_evidence.json');
+
 if (totalFugaEsViolations > 0 || totalMembershipViolations > 0) {
   console.error('\n🚨 FALLO-BUILD: Violaciones estructurales de fuga-ES o pertenencia detectadas.');
   process.exit(1);
@@ -454,12 +462,4 @@ if (totalPolicyDivergences > 0) {
 }
 
 console.log('\n✅ [PASS SUPERFICIE-WIDE] Cero fugas en alternativa, chip clínico canónico idéntico en las 3 superficies y pertenencia confirmada.');
-
-// Guardar evidencia cruda completa
-fs.writeFileSync(
-  path.resolve(__dirname, 'raw_dom_evidence.json'),
-  JSON.stringify({ achievementsEvidence, coachEvidence, timestamp: new Date().toISOString() }, null, 2),
-  'utf8'
-);
-console.log('✅ Evidencia cruda completa volcada en scripts/raw_dom_evidence.json');
 

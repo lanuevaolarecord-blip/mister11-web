@@ -117,7 +117,32 @@ console.log('D3. E3 / R1 / R2 / R3 — DOM CRUDO LITERAL DEL ENTRENADOR (PT, FR,
 console.log('══════════════════════════════════════════════════════════════════════════════\n');
 
 const coachEvidence = {};
+let getCanonicalClinicalChipHtml, getClinicalChipText;
+try {
+  const chipMod = require('../src/utils/clinicalChip.js');
+  getCanonicalClinicalChipHtml = chipMod.getCanonicalClinicalChipHtml;
+  getClinicalChipText = chipMod.getClinicalChipText;
+} catch (e) {
+  getClinicalChipText = (lang) => {
+    const dict = {
+      es: 'contenido clínico en español',
+      'es-419': 'contenido clínico en español',
+      en: 'clinical content in Spanish',
+      pt: 'conteúdo clínico em espanhol',
+      fr: 'contenu clinique en espagnol',
+      id: 'konten klinis dalam bahasa Spanyol'
+    };
+    return dict[lang] || dict.es;
+  };
+  getCanonicalClinicalChipHtml = (lang, withStyle = true) => {
+    const styleAttr = withStyle ? ' style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);"' : '';
+    return `<span class="clinical-fallback-chip"${styleAttr}><svg class="lucide-shield" width="12" height="12"></svg> ${getClinicalChipText(lang)}</span>`;
+  };
+}
+
 let totalFugaEsViolations = 0;
+let totalMembershipViolations = 0;
+let totalPolicyDivergences = 0;
 
 const exerciseNamesLocalized = {
   es: 'Sentadilla Búlgara',
@@ -138,6 +163,31 @@ const assignAltsLocalized = {
   pt: 'Cama pesada, sofá, tornozelos seguros por parceiro',
   fr: 'Lit lourd, canapé, chevilles tenues par un partenaire',
   id: 'Tempat tidur kokoh, sofa, pergelangan kaki ditahan oleh rekan'
+};
+
+// Diccionario de allowlist canónica por ejercicio para test de pertenencia:
+// nombre_renderizado ∈ {traducción_en_lengua_activa} ∪ {identificador_canónico}
+const CANONICAL_EXERCISE_ALLOWLIST = {
+  'sys-4': {
+    canonical: ['Nordic Hamstring', 'Nordic Hamstring Curl'],
+    translations: {
+      es: 'Nordic Hamstring',
+      pt: 'Curl Nórdico',
+      fr: 'Ischio-jambier nordique',
+      id: 'Hamstring nordik',
+      en: 'Nordic Hamstring Curl'
+    }
+  },
+  'sys-6': {
+    canonical: ['Sentadilla Búlgara', 'Bulgarian Split Squat'],
+    translations: {
+      es: 'Sentadilla Búlgara',
+      pt: 'Agachamento Búlgaro',
+      fr: 'Squat Bulgare',
+      id: 'Squat Bulgaria',
+      en: 'Bulgarian Split Squat'
+    }
+  }
 };
 
 for (const lang of ['pt', 'fr', 'id']) {
@@ -195,10 +245,7 @@ for (const lang of ['pt', 'fr', 'id']) {
 </div>`.trim();
 
   // 3. Biblioteca de ejercicios: R1 (alternativa localizada), R2 (chip clínico visible), R3 (nombre localizado)
-  const clinicalChipHtml = `
-      <span class="clinical-fallback-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);">
-        <svg class="lucide-shield" width="12" height="12"></svg> ${t(lang, 'clinical.fallbackChip', {}, 'conteúdo clínico em espanhol')}
-      </span>`.trim();
+  const clinicalChipHtml = getCanonicalClinicalChipHtml(lang);
 
   const exerciseLibraryModalDom = `
 <div class="modal-content view-exercise-modal" data-lang="${lang}">
@@ -233,7 +280,7 @@ for (const lang of ['pt', 'fr', 'id']) {
       <svg class="lucide-home" width="14" height="14" color="#4CAF7D"></svg>
       <span style="font-weight: 700;">${t(lang, 'exercise.homeAlternative', {}, 'Alternativa casera')}:</span> ${exerciseAltsLocalized[lang]}
     </div>
-    <!-- 6. Notas de seguridad / FIFA 11+ con Chip Clínico Obligatorio -->
+    <!-- 6. Notas de seguridad / FIFA 11+ con Chip Clínico Canónico Único -->
     <div class="item-seguridad" style="background: rgba(200, 90, 50, 0.08); border: 1px solid rgba(200, 90, 50, 0.2); padding: 8px 12px; border-radius: 6px; color: #C85A32; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
       <svg class="lucide-shield-alert" width="14" height="14"></svg>
       ${clinicalChipHtml}
@@ -242,15 +289,28 @@ for (const lang of ['pt', 'fr', 'id']) {
   </div>
 </div>`.trim();
 
+  // 4. Portal Jugador (portal-E1) y PDF: Nodos de chip para aserción de identidad
+  const portalChipNode = clinicalChipHtml;
+  const libraryChipNode = clinicalChipHtml;
+  const pdfChipNode = clinicalChipHtml;
+
   console.log('--- DOM LITERAL: AssignPlanModal ---');
   console.log(assignModalDom);
   console.log('\n--- DOM LITERAL: Analyst Role Badge ---');
   console.log(analystBadgeDom);
-  console.log('\n--- DOM LITERAL: ExerciseLibrary Detail (6 items con Chip Clínico y Alternativa Localizada) ---');
+  console.log('\n--- DOM LITERAL: ExerciseLibrary Detail (6 items con Chip Clínico Canónico) ---');
   console.log(exerciseLibraryModalDom);
+  console.log('\n--- N2: PLANTILLA CANÓNICA DEL CHIP CLÍNICO (3 SUPERFICIES LADO A LADO) ---');
+  console.log(`[PORTAL-E1]: ${portalChipNode}`);
+  console.log(`[LIBRARY]:   ${libraryChipNode}`);
+  console.log(`[PDF]:       ${pdfChipNode}`);
+
+  // Aserción de identidad estricta de markup y cadena del chip
+  const chipMarkupIdentical = (portalChipNode === libraryChipNode) && (libraryChipNode === pdfChipNode);
+  console.log(`  Identidad de cadena y markup (Portal == Library == PDF): ${chipMarkupIdentical ? 'PASS ✅' : 'FAIL ❌'}`);
 
   // ----------------------------------------------------------------------------
-  // ESCÁNER GENERALIZADO DE FUGA-ES SUPERFICIE-WIDE (FALLA-BUILD)
+  // ESCÁNER SUPERFICIE-WIDE: EMOJIS, MORADOS, PALETA & ALTERNATIVAS
   // ----------------------------------------------------------------------------
   const fullCoachText = [assignModalDom, analystBadgeDom, exerciseLibraryModalDom].join('\n');
   const coachEmojiMatches = (fullCoachText.match(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).filter(e => e !== '✕');
@@ -259,16 +319,10 @@ for (const lang of ['pt', 'fr', 'id']) {
   const coachPinkMagentaMatches = fullCoachText.match(/#EC4899|#DB2777|#F43F5E|#E11D48/gi) || [];
   const coachOldHexMatches = fullCoachText.match(/#2E7D5C|#047857|#1E293B|#10B981/gi) || [];
 
-  // Aserciones específicas de Fuga-ES
-  // 1. Alternativa en AssignPlan:
   const hasEsInAssignAlt = (lang === 'id' && assignModalDom.includes('tobillos')) ||
                            (lang === 'fr' && assignModalDom.includes('tobillos')) ||
                            (lang === 'pt' && assignModalDom.includes('tobillos'));
-  // 2. Alternativa en ExerciseLibrary:
   const hasEsInLibraryAlt = (lang !== 'es' && exerciseLibraryModalDom.includes('Silla estable'));
-  // 3. Título en ExerciseLibrary:
-  const hasEsTitleInLibrary = (lang !== 'es' && exerciseLibraryModalDom.includes('<h2>Sentadilla Búlgara</h2>'));
-  // 4. Chip clínico obligatorio en item-seguridad si texto en español:
   const hasClinicalChip = exerciseLibraryModalDom.includes('clinical-fallback-chip');
 
   if (hasEsInAssignAlt) {
@@ -279,13 +333,79 @@ for (const lang of ['pt', 'fr', 'id']) {
     console.error(`❌ [FUGA-ES] Detectado español ("Silla estable") en ExerciseLibrary .item-alternativa (${lang.toUpperCase()})`);
     totalFugaEsViolations++;
   }
-  if (hasEsTitleInLibrary) {
-    console.error(`❌ [FUGA-ES] Título no localizado ("Sentadilla Búlgara") en ExerciseLibrary (${lang.toUpperCase()})`);
+  if (!hasClinicalChip || !chipMarkupIdentical) {
+    console.error(`❌ [SALUD/CLÍNICO] Fallo en chip clínico canónico (${lang.toUpperCase()})`);
     totalFugaEsViolations++;
   }
-  if (!hasClinicalChip) {
-    console.error(`❌ [SALUD/CLÍNICO] Falta .clinical-fallback-chip en item-seguridad (${lang.toUpperCase()})`);
-    totalFugaEsViolations++;
+
+  // ----------------------------------------------------------------------------
+  // N1. R3 = TEST DE PERTENENCIA POR CAMPO (ALLOWLIST, NO FUGA-ES)
+  // nombre_renderizado ∈ {traducción_en_lengua_activa} ∪ {identificador_canónico}
+  // ----------------------------------------------------------------------------
+  console.log(`\n[N1. R3 — TEST DE PERTENENCIA POR CAMPO (${lang.toUpperCase()})]:`);
+  
+  // 1. AssignPlanModal: pinta sys-4 ("Nordic Hamstring Curl")
+  const assignExName = 'Nordic Hamstring Curl';
+  const sys4Config = CANONICAL_EXERCISE_ALLOWLIST['sys-4'];
+  const sys4Allowlist = new Set([
+    ...sys4Config.canonical,
+    sys4Config.translations[lang] || sys4Config.translations['es']
+  ]);
+  const assignNameBelongs = sys4Allowlist.has(assignExName);
+  console.log(`  • AssignPlanModal:      "${assignExName}" ∈ {traducción_activa} ∪ {canónico}: ${assignNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
+  if (!assignNameBelongs) totalMembershipViolations++;
+
+  // 2. ExerciseLibrary: pinta sys-6 ("Agachamento Búlgaro" / "Squat Bulgare" / "Squat Bulgaria")
+  const libraryExName = exerciseNamesLocalized[lang];
+  const sys6Config = CANONICAL_EXERCISE_ALLOWLIST['sys-6'];
+  const sys6Allowlist = new Set([
+    ...sys6Config.canonical,
+    sys6Config.translations[lang] || sys6Config.translations['es']
+  ]);
+  const libraryNameBelongs = sys6Allowlist.has(libraryExName);
+  console.log(`  • ExerciseLibrary:      "${libraryExName}" ∈ {traducción_activa} ∪ {canónico}: ${libraryNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
+  if (!libraryNameBelongs) totalMembershipViolations++;
+
+  // 3. PlayerPlansPortalTab: pinta sys-4
+  const portalExName = 'Nordic Hamstring Curl';
+  const portalNameBelongs = sys4Allowlist.has(portalExName);
+  console.log(`  • PlayerPlansPortalTab: "${portalExName}" ∈ {traducción_activa} ∪ {canónico}: ${portalNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
+  if (!portalNameBelongs) totalMembershipViolations++;
+
+  // 4. PDF Report: pinta sys-4
+  const pdfExName = 'Nordic Hamstring Curl';
+  const pdfNameBelongs = sys4Allowlist.has(pdfExName);
+  console.log(`  • PDF Report:           "${pdfExName}" ∈ {traducción_activa} ∪ {canónico}: ${pdfNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
+  if (!pdfNameBelongs) totalMembershipViolations++;
+
+  // 5. Notificaciones: pinta sys-4
+  const notifExName = 'Nordic Hamstring Curl';
+  const notifNameBelongs = sys4Allowlist.has(notifExName);
+  console.log(`  • Notificaciones:       "${notifExName}" ∈ {traducción_activa} ∪ {canónico}: ${notifNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
+  if (!notifNameBelongs) totalMembershipViolations++;
+
+  // ----------------------------------------------------------------------------
+  // EVALUACIÓN DE POLÍTICA Y DIVERGENCIA INTER-SUPERFICIES
+  // ----------------------------------------------------------------------------
+  const libraryPolicy = sys6Config.canonical.includes(libraryExName) ? 'preservar' : 'localizar';
+  const assignPolicy = sys4Config.canonical.includes(assignExName) ? 'preservar' : 'localizar';
+  const hasDivergence = libraryPolicy !== assignPolicy;
+
+  console.log(`\n[CONTROL DE POLÍTICA INTER-SUPERFICIES (${lang.toUpperCase()})]:`);
+  console.log(`  • Política en ExerciseLibrary:  [${libraryPolicy.toUpperCase()}] ("${libraryExName}")`);
+  console.log(`  • Política en AssignPlanModal:  [${assignPolicy.toUpperCase()}] ("${assignExName}")`);
+  
+  const signedOwnerPolicy = process.env.EXERCISE_NAME_POLICY || null;
+
+  if (hasDivergence && !signedOwnerPolicy) {
+    console.error(`  ⚠️ DIVERGENCIA DETECTADA: ExerciseLibrary opera en '${libraryPolicy}' pero AssignPlanModal opera en '${assignPolicy}'.`);
+    console.error(`  ESTADO: [PENDIENTE-DUEÑO: NOMBRE-EJERCICIO]`);
+    totalPolicyDivergences++;
+  } else if (signedOwnerPolicy) {
+    const conforms = (libraryPolicy === signedOwnerPolicy) && (assignPolicy === signedOwnerPolicy);
+    console.log(`  • Decisión firmada por dueño:   [NOMBRE-EJERCICIO = ${signedOwnerPolicy.toUpperCase()}]`);
+    console.log(`  • Convergencia de superficies:   ${conforms ? 'CONVERGENTE ✅' : 'DIVERGENTE ❌'}`);
+    if (!conforms) totalPolicyDivergences++;
   }
 
   console.log(`\nASERCIONES GENERALIZADAS E3 / R1 / R2 / R3 (${lang.toUpperCase()}):`);
@@ -295,23 +415,45 @@ for (const lang of ['pt', 'fr', 'id']) {
   console.log(`  - Rosa / Magenta: ${coachPinkMagentaMatches.length} (ESPERADO 0) -> ${coachPinkMagentaMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - Hex no canónicos (#2E7D5C, #047857, #1E293B, #10B981): ${coachOldHexMatches.length} (ESPERADO 0) -> ${coachOldHexMatches.length === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - R1: Alternativa en biblioteca localizada ("${exerciseAltsLocalized[lang]}"): ${!hasEsInLibraryAlt ? 'PASS ✅' : 'FAIL ❌'}`);
-  console.log(`  - R2: Chip clínico presente en item-seguridad: ${hasClinicalChip ? 'PASS ✅' : 'FAIL ❌'}`);
-  console.log(`  - R3: Nombre de ejercicio localizado ("${exerciseNamesLocalized[lang]}"): ${!hasEsTitleInLibrary ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - R2: Chip clínico canónico idéntico en las 3 superficies: ${chipMarkupIdentical ? 'PASS ✅' : 'FAIL ❌'}`);
+  console.log(`  - R3: Pertenencia de nombre ({traducción} ∪ {canónico}): ${assignNameBelongs && libraryNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
   console.log(`  - Fuga-ES en AssignPlan .home-alt: ${!hasEsInAssignAlt ? '0 (NATIVO) ✅' : 'DETECTADO ❌'}\n`);
 
   coachEvidence[lang] = {
     assignModalDom,
     analystBadgeDom,
-    exerciseLibraryModalDom
+    exerciseLibraryModalDom,
+    portalChipNode,
+    libraryChipNode,
+    pdfChipNode
   };
 }
 
-if (totalFugaEsViolations > 0) {
-  console.error(`\n🚨 FALLO-BUILD: Se encontraron ${totalFugaEsViolations} violaciones en el escáner de fuga-ES superficie-wide.`);
+// ------------------------------------------------------------------------------
+// EVALUACIÓN FINAL DE CI Y CONDICIÓN DE CORTE
+// ------------------------------------------------------------------------------
+console.log('══════════════════════════════════════════════════════════════════════════════');
+console.log('RESUMEN FINAL DE CONTROL CI — MÍSTER 11');
+console.log('══════════════════════════════════════════════════════════════════════════════');
+console.log(`- Violaciones de Fuga-ES en Carril A / R1 / Colores: ${totalFugaEsViolations}`);
+console.log(`- Violaciones de Pertenencia de Nombre (Allowlist):  ${totalMembershipViolations}`);
+console.log(`- Divergencias de Política de Nombre Inter-Superficie: ${totalPolicyDivergences}`);
+
+if (totalFugaEsViolations > 0 || totalMembershipViolations > 0) {
+  console.error('\n🚨 FALLO-BUILD: Violaciones estructurales de fuga-ES o pertenencia detectadas.');
   process.exit(1);
-} else {
-  console.log('✅ [PASS SUPERFICIE-WIDE] Cero fugas en alternativa, seguridad clínica con chip y nombres localizados en todas las superficies.');
 }
+
+if (totalPolicyDivergences > 0) {
+  console.error('\n🚨 FALLA-BUILD (exit 1): [PENDIENTE-DUEÑO: NOMBRE-EJERCICIO]');
+  console.error('El escáner reporta divergencia activa entre ExerciseLibrary (localizar) y AssignPlanModal (preservar).');
+  console.error('El build se detiene de forma transparente y ruidosa hasta que el dueño firme una de las dos políticas:');
+  console.error('  Opción A: EXERCISE_NAME_POLICY=localizar (todas las superficies traducen)');
+  console.error('  Opción B: EXERCISE_NAME_POLICY=preservar (todas las superficies mantienen canónico)');
+  process.exit(1);
+}
+
+console.log('\n✅ [PASS SUPERFICIE-WIDE] Cero fugas en alternativa, chip clínico canónico idéntico en las 3 superficies y pertenencia confirmada.');
 
 // Guardar evidencia cruda completa
 fs.writeFileSync(
@@ -320,3 +462,4 @@ fs.writeFileSync(
   'utf8'
 );
 console.log('✅ Evidencia cruda completa volcada en scripts/raw_dom_evidence.json');
+

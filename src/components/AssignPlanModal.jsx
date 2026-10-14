@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useExercises } from '../hooks/useExercises';
+import { useExercises, getLocalizedExercise } from '../hooks/useExercises';
 import { usePlayerPlans } from '../hooks/usePlayerPlans';
 import { useTranslation } from '../hooks/useTranslation';
 import { assertAgeSafe } from '../utils/exerciseSafety';
@@ -207,7 +207,8 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
               ) : (
                 filtered.map(ex => {
                   const isSelected = selectedIds.includes(ex.id);
-                  const displayName = (ex.name || ex.titulo || ex.title || ex.nombre || 'Ejercicio').replace(/<\/?think>/gi, '').trim();
+                  const localizedEx = getLocalizedExercise(ex, isEn, language);
+                  const displayName = (localizedEx.name || localizedEx.titulo || localizedEx.title || localizedEx.nombre || 'Ejercicio').replace(/<\/?think>/gi, '').trim();
                   
                   // Seguridad Biomecánica y Prescripción
                   const minAge = ex.edad_minima_segura ?? ex.age_min ?? 0;

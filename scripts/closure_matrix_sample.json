@@ -1,0 +1,489 @@
+{
+  "totalEvaluated": 118,
+  "homeCount": 108,
+  "coreCount": 10,
+  "unknownCount": 0,
+  "divergenceCount": 0,
+  "sampleMatrix": [
+    {
+      "exerciseId": "sys-4",
+      "lengua": "pt",
+      "superficie": "ExerciseLibrary",
+      "valor": "Curl Nórdico",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "pt",
+      "superficie": "AssignPlanModal",
+      "valor": "Curl Nórdico",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "pt",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Curl Nórdico",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "pt",
+      "superficie": "PDF",
+      "valor": "Curl Nórdico",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "pt",
+      "superficie": "Notifications",
+      "valor": "Curl Nórdico",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "fr",
+      "superficie": "ExerciseLibrary",
+      "valor": "Ischio-jambier nordique",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "fr",
+      "superficie": "AssignPlanModal",
+      "valor": "Ischio-jambier nordique",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "fr",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Ischio-jambier nordique",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "fr",
+      "superficie": "PDF",
+      "valor": "Ischio-jambier nordique",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "fr",
+      "superficie": "Notifications",
+      "valor": "Ischio-jambier nordique",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "id",
+      "superficie": "ExerciseLibrary",
+      "valor": "Hamstring nordik",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "id",
+      "superficie": "AssignPlanModal",
+      "valor": "Hamstring nordik",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "id",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Hamstring nordik",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "id",
+      "superficie": "PDF",
+      "valor": "Hamstring nordik",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "id",
+      "superficie": "Notifications",
+      "valor": "Hamstring nordik",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "es",
+      "superficie": "ExerciseLibrary",
+      "valor": "Nordic Hamstring",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "es",
+      "superficie": "AssignPlanModal",
+      "valor": "Nordic Hamstring",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "es",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Nordic Hamstring",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "es",
+      "superficie": "PDF",
+      "valor": "Nordic Hamstring",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "es",
+      "superficie": "Notifications",
+      "valor": "Nordic Hamstring",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "en",
+      "superficie": "ExerciseLibrary",
+      "valor": "Nordic Hamstring Curl",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "en",
+      "superficie": "AssignPlanModal",
+      "valor": "Nordic Hamstring Curl",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "en",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Nordic Hamstring Curl",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "en",
+      "superficie": "PDF",
+      "valor": "Nordic Hamstring Curl",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-4",
+      "lengua": "en",
+      "superficie": "Notifications",
+      "valor": "Nordic Hamstring Curl",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "pt",
+      "superficie": "ExerciseLibrary",
+      "valor": "Agachamento Búlgaro",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "pt",
+      "superficie": "AssignPlanModal",
+      "valor": "Agachamento Búlgaro",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "pt",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Agachamento Búlgaro",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "pt",
+      "superficie": "PDF",
+      "valor": "Agachamento Búlgaro",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "pt",
+      "superficie": "Notifications",
+      "valor": "Agachamento Búlgaro",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "fr",
+      "superficie": "ExerciseLibrary",
+      "valor": "Squat Bulgare",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "fr",
+      "superficie": "AssignPlanModal",
+      "valor": "Squat Bulgare",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "fr",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Squat Bulgare",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "fr",
+      "superficie": "PDF",
+      "valor": "Squat Bulgare",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "fr",
+      "superficie": "Notifications",
+      "valor": "Squat Bulgare",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "id",
+      "superficie": "ExerciseLibrary",
+      "valor": "Squat Bulgaria",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "id",
+      "superficie": "AssignPlanModal",
+      "valor": "Squat Bulgaria",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "id",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Squat Bulgaria",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "id",
+      "superficie": "PDF",
+      "valor": "Squat Bulgaria",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "id",
+      "superficie": "Notifications",
+      "valor": "Squat Bulgaria",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "es",
+      "superficie": "ExerciseLibrary",
+      "valor": "Sentadilla Búlgara",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "es",
+      "superficie": "AssignPlanModal",
+      "valor": "Sentadilla Búlgara",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "es",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Sentadilla Búlgara",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "es",
+      "superficie": "PDF",
+      "valor": "Sentadilla Búlgara",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "es",
+      "superficie": "Notifications",
+      "valor": "Sentadilla Búlgara",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "en",
+      "superficie": "ExerciseLibrary",
+      "valor": "Bulgarian Split Squat",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "en",
+      "superficie": "AssignPlanModal",
+      "valor": "Bulgarian Split Squat",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "en",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Bulgarian Split Squat",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "en",
+      "superficie": "PDF",
+      "valor": "Bulgarian Split Squat",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "sys-6",
+      "lengua": "en",
+      "superficie": "Notifications",
+      "valor": "Bulgarian Split Squat",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-001",
+      "lengua": "pt",
+      "superficie": "ExerciseLibrary",
+      "valor": "Movilidad de Tobillo Dinámica",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-001",
+      "lengua": "pt",
+      "superficie": "AssignPlanModal",
+      "valor": "Movilidad de Tobillo Dinámica",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-001",
+      "lengua": "pt",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Movilidad de Tobillo Dinámica",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-001",
+      "lengua": "pt",
+      "superficie": "PDF",
+      "valor": "Movilidad de Tobillo Dinámica",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-001",
+      "lengua": "pt",
+      "superficie": "Notifications",
+      "valor": "Movilidad de Tobillo Dinámica",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-108",
+      "lengua": "pt",
+      "superficie": "ExerciseLibrary",
+      "valor": "Isométrico Cervical Multidireccional de Portero",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-108",
+      "lengua": "pt",
+      "superficie": "AssignPlanModal",
+      "valor": "Isométrico Cervical Multidireccional de Portero",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-108",
+      "lengua": "pt",
+      "superficie": "PlayerPlansPortalTab",
+      "valor": "Isométrico Cervical Multidireccional de Portero",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-108",
+      "lengua": "pt",
+      "superficie": "PDF",
+      "valor": "Isométrico Cervical Multidireccional de Portero",
+      "clasificacion": "T",
+      "politica": "localizar"
+    },
+    {
+      "exerciseId": "hex-108",
+      "lengua": "pt",
+      "superficie": "Notifications",
+      "valor": "Isométrico Cervical Multidireccional de Portero",
+      "clasificacion": "T",
+      "politica": "localizar"
+    }
+  ]
+}

@@ -23,6 +23,7 @@
     "qa-language-runtime": "node scripts/qa-language-runtime.js",
     "audit-literals": "node scripts/audit-literals.js",
     "test:i18n": "node scripts/ci-i18n-gate.mjs",
+    "closure-gate": "node scripts/closure-gate.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:matrix": "node scripts/qa-cross-device-matrix.mjs",

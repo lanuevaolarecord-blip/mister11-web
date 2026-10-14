@@ -44,6 +44,12 @@
   --input-text: #2D2D2D;
   --input-border: #D4A843;
 
+  /* Clinical Fallback Chip (WCAG AA >= 4.5:1 text, >= 3:1 border/icon) */
+  --clinical-chip-bg: rgba(212, 168, 67, 0.15);
+  --clinical-chip-text: #1B3A2D;
+  --clinical-chip-border: #9C6A3B;
+  --clinical-chip-icon: #9C6A3B;
+
   /* Legacy mappings */
   --title-color: var(--text-primary);
   --body-color: var(--text-secondary);
@@ -79,6 +85,31 @@
   --input-text: #FFFFFF;
   --input-border: #4CAF7D;
   --accent-gold: #D4A843;
+
+  /* Clinical Fallback Chip Dark (WCAG AA >= 4.5:1 text, >= 3:1 border/icon) */
+  --clinical-chip-bg: rgba(212, 168, 67, 0.18);
+  --clinical-chip-text: #F2EDE4;
+  --clinical-chip-border: #D4A843;
+  --clinical-chip-icon: #D4A843;
+}
+
+/* Clinical Fallback Chip Base Component */
+.clinical-fallback-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--clinical-chip-bg, rgba(212, 168, 67, 0.15));
+  color: var(--clinical-chip-text, #1B3A2D);
+  border: 1px solid var(--clinical-chip-border, #9C6A3B);
+}
+
+.clinical-fallback-chip svg {
+  color: var(--clinical-chip-icon, #9C6A3B);
+  flex-shrink: 0;
 }
 
 /* Global Reset & Base Styles */

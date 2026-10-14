@@ -15,7 +15,7 @@ export const CLINICAL_FALLBACK_TEXTS = {
   id: 'konten klinis dalam bahasa Spanyol'
 };
 
-export const CLINICAL_CHIP_STYLE = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);';
+export const CLINICAL_CHIP_STYLE = 'display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #1B3A2D; border: 1px solid #9C6A3B;';
 
 export function getClinicalChipText(lang = 'es') {
   const norm = (lang || 'es').toLowerCase();
@@ -30,7 +30,7 @@ export function getClinicalChipText(lang = 'es') {
 export function getCanonicalClinicalChipHtml(lang = 'es', withStyle = true) {
   const text = getClinicalChipText(lang);
   const styleAttr = withStyle ? ` style="${CLINICAL_CHIP_STYLE}"` : '';
-  return `<span class="clinical-fallback-chip"${styleAttr}><svg class="lucide-shield" width="12" height="12"></svg> ${text}</span>`;
+  return `<span class="clinical-fallback-chip"${styleAttr}><svg class="lucide-shield" width="12" height="12" color="#9C6A3B"></svg> ${text}</span>`;
 }
 
 export default {

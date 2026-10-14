@@ -12,8 +12,8 @@ export const CLINICAL_CHIP_INLINE_STYLE = {
   fontSize: '0.72rem',
   fontWeight: '700',
   backgroundColor: 'rgba(212, 168, 67, 0.15)',
-  color: '#D4A843',
-  border: '1px solid rgba(212, 168, 67, 0.4)'
+  color: '#1B3A2D',
+  border: '1px solid #9C6A3B'
 };
 
 export const ClinicalFallbackChip = ({ lang, style = {}, className = '' }) => {
@@ -26,7 +26,7 @@ export const ClinicalFallbackChip = ({ lang, style = {}, className = '' }) => {
       className={`clinical-fallback-chip ${className}`.trim()}
       style={{ ...CLINICAL_CHIP_INLINE_STYLE, ...style }}
     >
-      <Shield size={12} /> {label}
+      <Shield size={12} color="#9C6A3B" /> {label}
     </span>
   );
 };

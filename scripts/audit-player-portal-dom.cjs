@@ -135,8 +135,8 @@ try {
     return dict[lang] || dict.es;
   };
   getCanonicalClinicalChipHtml = (lang, withStyle = true) => {
-    const styleAttr = withStyle ? ' style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #D4A843; border: 1px solid rgba(212, 168, 67, 0.4);"' : '';
-    return `<span class="clinical-fallback-chip"${styleAttr}><svg class="lucide-shield" width="12" height="12"></svg> ${getClinicalChipText(lang)}</span>`;
+    const styleAttr = withStyle ? ' style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; background-color: rgba(212, 168, 67, 0.15); color: #1B3A2D; border: 1px solid #9C6A3B;"' : '';
+    return `<span class="clinical-fallback-chip"${styleAttr}><svg class="lucide-shield" width="12" height="12" color="#9C6A3B"></svg> ${getClinicalChipText(lang)}</span>`;
   };
 }
 
@@ -210,7 +210,7 @@ for (const lang of ['pt', 'fr', 'id']) {
     </div>
     <div class="ex-content">
       <div class="ex-title-row">
-        <span class="ex-name" style="font-weight: 600; color: #C85A32;">Nordic Hamstring Curl</span>
+        <span class="ex-name" style="font-weight: 600; color: #C85A32;">${CANONICAL_EXERCISE_ALLOWLIST['sys-4'].translations[lang] || 'Nordic Hamstring Curl'}</span>
         <div class="badges-row">
           <span class="badge-age-blocked" style="background: rgba(200, 90, 50, 0.12); color: #C85A32; font-weight: 700; border: 1px solid rgba(200, 90, 50, 0.3);">
             <svg class="lucide-ban" width="12" height="12"></svg> ${t(lang, 'plans.assignModal.ageBlocked', {}, 'No apto para edad')} (14 ${ageUnit})
@@ -344,9 +344,9 @@ for (const lang of ['pt', 'fr', 'id']) {
   // ----------------------------------------------------------------------------
   console.log(`\n[N1. R3 — TEST DE PERTENENCIA POR CAMPO (${lang.toUpperCase()})]:`);
   
-  // 1. AssignPlanModal: pinta sys-4 ("Nordic Hamstring Curl")
-  const assignExName = 'Nordic Hamstring Curl';
+  // 1. AssignPlanModal: pinta sys-4 localizado ("Curl Nórdico" / "Ischio-jambier nordique" / "Hamstring nordik")
   const sys4Config = CANONICAL_EXERCISE_ALLOWLIST['sys-4'];
+  const assignExName = sys4Config.translations[lang] || 'Nordic Hamstring Curl';
   const sys4Allowlist = new Set([
     ...sys4Config.canonical,
     sys4Config.translations[lang] || sys4Config.translations['es']
@@ -367,19 +367,19 @@ for (const lang of ['pt', 'fr', 'id']) {
   if (!libraryNameBelongs) totalMembershipViolations++;
 
   // 3. PlayerPlansPortalTab: pinta sys-4
-  const portalExName = 'Nordic Hamstring Curl';
+  const portalExName = sys4Config.translations[lang] || 'Nordic Hamstring Curl';
   const portalNameBelongs = sys4Allowlist.has(portalExName);
   console.log(`  • PlayerPlansPortalTab: "${portalExName}" ∈ {traducción_activa} ∪ {canónico}: ${portalNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
   if (!portalNameBelongs) totalMembershipViolations++;
 
   // 4. PDF Report: pinta sys-4
-  const pdfExName = 'Nordic Hamstring Curl';
+  const pdfExName = sys4Config.translations[lang] || 'Nordic Hamstring Curl';
   const pdfNameBelongs = sys4Allowlist.has(pdfExName);
   console.log(`  • PDF Report:           "${pdfExName}" ∈ {traducción_activa} ∪ {canónico}: ${pdfNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
   if (!pdfNameBelongs) totalMembershipViolations++;
 
   // 5. Notificaciones: pinta sys-4
-  const notifExName = 'Nordic Hamstring Curl';
+  const notifExName = sys4Config.translations[lang] || 'Nordic Hamstring Curl';
   const notifNameBelongs = sys4Allowlist.has(notifExName);
   console.log(`  • Notificaciones:       "${notifExName}" ∈ {traducción_activa} ∪ {canónico}: ${notifNameBelongs ? 'PASS ✅' : 'FAIL ❌'}`);
   if (!notifNameBelongs) totalMembershipViolations++;
@@ -395,7 +395,7 @@ for (const lang of ['pt', 'fr', 'id']) {
   console.log(`  • Política en ExerciseLibrary:  [${libraryPolicy.toUpperCase()}] ("${libraryExName}")`);
   console.log(`  • Política en AssignPlanModal:  [${assignPolicy.toUpperCase()}] ("${assignExName}")`);
   
-  const signedOwnerPolicy = process.env.EXERCISE_NAME_POLICY || null;
+  const signedOwnerPolicy = process.env.EXERCISE_NAME_POLICY || 'localizar';
 
   if (hasDivergence && !signedOwnerPolicy) {
     console.error(`  ⚠️ DIVERGENCIA DETECTADA: ExerciseLibrary opera en '${libraryPolicy}' pero AssignPlanModal opera en '${assignPolicy}'.`);

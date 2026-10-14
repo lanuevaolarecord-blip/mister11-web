@@ -26,6 +26,7 @@ import {
 import { useTranslation } from '../../hooks/useTranslation';
 import { HOME_EXERCISES_107 } from '../../data/homeExercisesCatalog';
 import ExerciseIllustrationBlock from '../ExerciseIllustrationBlock';
+import { ClinicalFallbackChip } from '../common/ClinicalFallbackChip';
 import { assertAgeSafe } from '../../utils/exerciseSafety';
 import { calcularEdad } from '../../utils/calcularEdad';
 import './PlayerPlansPortalTab.css';
@@ -348,9 +349,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const rawPrevention = canonical?.preventionValue || defaultCanonical.preventionValue;
     const isClinical = category === 'prevencion' || String(category).toLowerCase().includes('prevenci') || !!canonical;
     const isClinicalFallback = isNonSpanish && isClinical;
-    const preventionValue = (isClinicalFallback && rawPrevention)
-      ? `[${t('clinical.fallbackChip')}: ${rawPrevention}]`
-      : rawPrevention;
+    const preventionValue = rawPrevention;
 
     const illustration = ex.illustration || catMatch?.illustration || foundInTeam?.illustration || {
       type: 'pendiente',
@@ -543,24 +542,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                     </span>
                                   )}
                                   {details.isClinicalFallback && (
-                                    <span 
-                                      className="clinical-fallback-chip"
-                                      style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        padding: '2px 8px',
-                                        borderRadius: '6px',
-                                        fontSize: '0.72rem',
-                                        fontWeight: '700',
-                                        backgroundColor: 'rgba(212, 168, 67, 0.15)',
-                                        color: 'var(--m11-oro, #D4A843)',
-                                        border: '1px solid rgba(212, 168, 67, 0.4)',
-                                        marginLeft: '4px'
-                                      }}
-                                    >
-                                      <Shield size={12} /> {t('clinical.fallbackChip')}
-                                    </span>
+                                    <ClinicalFallbackChip style={{ marginLeft: '4px' }} />
                                   )}
                                 </div>
                               </div>
@@ -644,18 +626,17 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                     <p>{details.preventionValue}</p>
                                   </div>
 
-                                  <div className="guide-verification-chip${details.isClinicalFallback ? ' clinical-fallback-chip' : ''}">
-                                    {details.isClinicalFallback ? (
-                                      <Shield size={13} color="var(--m11-oro, #D4A843)" />
-                                    ) : (
+                                  {details.isClinicalFallback ? (
+                                    <div className="item-seguridad-clinical" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', padding: '6px 10px', background: 'rgba(200, 90, 50, 0.08)', borderRadius: '6px' }}>
+                                      <ClinicalFallbackChip />
+                                      <span style={{ fontSize: '0.78rem', color: '#C85A32' }}>{details.rawPrevention}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="guide-verification-chip">
                                       <span className="guide-verification-dot" />
-                                    )}
-                                    <span>
-                                      {details.isClinicalFallback
-                                        ? `[${t('clinical.fallbackChip')}: ${details.rawPrevention || details.preventionValue}]`
-                                        : t('exerciseCatalog.clinicalFallbackNotice')}
-                                    </span>
-                                  </div>
+                                      <span>{t('exerciseCatalog.clinicalFallbackNotice')}</span>
+                                    </div>
+                                  )}
                                 </div>
 
                               </div>

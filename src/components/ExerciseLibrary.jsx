@@ -20,6 +20,7 @@ import { useExercises, getLocalizedExercise } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
+import { ClinicalFallbackChip } from './common/ClinicalFallbackChip';
 import './ExerciseLibrary.css';
 
 const renderMarkdown = (text) => {
@@ -162,24 +163,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                    ex.category}
                 </span>
                 {ex.category === 'prevencion' && (!language || (!language.startsWith('es') && language !== 'es' && language !== 'es-419')) && (
-                  <span 
-                    className="clinical-fallback-chip" 
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      fontSize: '0.72rem',
-                      fontWeight: '700',
-                      backgroundColor: 'rgba(212, 168, 67, 0.15)',
-                      color: 'var(--m11-oro, #D4A843)',
-                      border: '1px solid rgba(212, 168, 67, 0.4)',
-                      marginLeft: '6px'
-                    }}
-                  >
-                    <Shield size={12} /> {t('clinical.fallbackChip')}
-                  </span>
+                  <ClinicalFallbackChip style={{ marginLeft: '6px' }} />
                 )}
                 <p>{ex.description || (isEn ? 'No description' : 'Sin descripción')}</p>
                 <div className="exercise-meta">
@@ -274,23 +258,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                    activeViewEx.category}
                 </span>
                 {activeViewEx.category === 'prevencion' && (!language || (!language.startsWith('es') && language !== 'es' && language !== 'es-419')) && (
-                  <span 
-                    className="clinical-fallback-chip"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: '700',
-                      backgroundColor: 'rgba(212, 168, 67, 0.15)',
-                      color: 'var(--m11-oro, #D4A843)',
-                      border: '1px solid rgba(212, 168, 67, 0.4)'
-                    }}
-                  >
-                    <Shield size={12} /> {t('clinical.fallbackChip')}
-                  </span>
+                  <ClinicalFallbackChip />
                 )}
                 {activeViewEx.locale && activeViewEx.locale !== (isEn ? 'en' : 'es') && (
                   <span 
@@ -422,23 +390,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                     <div className="item-seguridad" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(200, 90, 50, 0.08)', border: '1px solid rgba(200, 90, 50, 0.2)', fontSize: '0.78rem', color: '#C85A32', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <ShieldAlert size={14} style={{ flexShrink: 0 }} />
                       {language && !language.startsWith('es') && (
-                        <span 
-                          className="clinical-fallback-chip"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 8px',
-                            borderRadius: '6px',
-                            fontSize: '0.72rem',
-                            fontWeight: '700',
-                            backgroundColor: 'rgba(212, 168, 67, 0.15)',
-                            color: '#D4A843',
-                            border: '1px solid rgba(212, 168, 67, 0.4)'
-                          }}
-                        >
-                          <Shield size={12} /> {t('clinical.fallbackChip')}
-                        </span>
+                        <ClinicalFallbackChip />
                       )}
                       <span>{safetyNote}</span>
                     </div>

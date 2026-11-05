@@ -1,0 +1,254 @@
+{
+  "auditDate": "2026-11-05T18:35:00.000Z",
+  "auditor": "Senior Systems Engineer & QA Auditor",
+  "repository": "mister11-web",
+  "commitHash": "8b286d5",
+  "verdict": "MVP",
+  "rules": {
+    "rule0": "Pertenencia, no presencia: todo hallazgo cita archivo:linea o comando+salida",
+    "rule1": "Read-only: sin tocar zonas protegidas ni alterar build 95"
+  },
+  "modules": [
+    {
+      "id": "MOD-01",
+      "modulo": "Catálogo de ejercicios casa",
+      "archivos": "src/data/homeExercisesCatalog.js",
+      "lineas": 8642,
+      "estado": "[P]",
+      "evidencia": "src/data/homeExercisesCatalog.js:78 export const HOME_EXERCISES_107; cuenta real hex-001..hex-108 = 108 ejercicios. 100% de ilustraciones en type:'pendiente' y url:null.",
+      "dimension": "Integridad de datos / Contenido clínico",
+      "veredicto": "PARTIAL",
+      "riesgo": "Off-by-one constante (107 vs 108); ilustraciones pendientes obligan a supervisión presencial en riesgo alto."
+    },
+    {
+      "id": "MOD-02",
+      "modulo": "SYSTEM_CORE_EXERCISES",
+      "archivos": "src/hooks/useExercises.js, scripts/closure-gate.mjs",
+      "lineas": 465,
+      "estado": "[P]",
+      "evidencia": "src/hooks/useExercises.js:14 export const SYSTEM_CORE_EXERCISES (10 ejercicios sys-1 a sys-10). Afirmado en testScoreEngine.js pero AUSENTE allí [X].",
+      "dimension": "Arquitectura y separación de capas",
+      "veredicto": "PARTIAL",
+      "riesgo": "Divergencia documental: declarado en testScoreEngine pero implementado en useExercises."
+    },
+    {
+      "id": "MOD-03",
+      "modulo": "Motor de planes (plans.js)",
+      "archivos": "src/config/plans.js",
+      "lineas": 238,
+      "estado": "[E]",
+      "evidencia": "src/config/plans.js:1 definicion de planes Free, Pro, Club y sus limites; src/hooks/usePlayerPlans.js:1",
+      "dimension": "Logica de producto / Entitlements",
+      "veredicto": "PASS",
+      "riesgo": "Lógica acoplada a roles y estado local; cambios requieren validación estricta de entitlements."
+    },
+    {
+      "id": "MOD-04",
+      "modulo": "Portal del jugador (15 componentes)",
+      "archivos": "src/components/player/*.jsx",
+      "lineas": 6565,
+      "estado": "[E]",
+      "evidencia": "src/components/player/PlayerProfileTab.jsx (1218 l), PlayerPlansPortalTab.jsx (613 l), PlayerStatsTab.jsx (1784 l), etc.",
+      "dimension": "UX / Superficie Jugador",
+      "veredicto": "PASS",
+      "riesgo": "Gran volumen de renderizado; depende de fallback offline en localStorage."
+    },
+    {
+      "id": "MOD-05",
+      "modulo": "Superficie entrenador",
+      "archivos": "src/components/AssignPlanModal.jsx, src/components/ExerciseLibrary.jsx, src/config/staffRoles.js",
+      "lineas": 813,
+      "estado": "[E]",
+      "evidencia": "src/components/AssignPlanModal.jsx:66 (assertAgeSafe integrado); src/components/ExerciseLibrary.jsx:1; src/config/staffRoles.js:1",
+      "dimension": "UX / Superficie Entrenador",
+      "veredicto": "PASS",
+      "riesgo": "Depende de permisos de staff y validación de edad en modal."
+    },
+    {
+      "id": "MOD-06",
+      "modulo": "Módulo PARTIDO (7 pestañas)",
+      "archivos": "src/pages/Partidos.jsx, src/components/match/*",
+      "lineas": 4606,
+      "estado": "[E]",
+      "evidencia": "src/pages/Partidos.jsx:71 TABS_CONFIG (7 pestañas). Commit 8b286d5 deriva selectedIds y elimina fallback al roster.",
+      "dimension": "Integridad de datos / UX",
+      "veredicto": "PASS",
+      "riesgo": "Verificación manual en navegador pendiente por bloqueo de login email en entorno local."
+    },
+    {
+      "id": "MOD-07",
+      "modulo": "Pizarra táctica",
+      "archivos": "src/pages/PizarraTactica.jsx, src/lib/mister11-*",
+      "lineas": 3279,
+      "estado": "[E]",
+      "evidencia": "src/pages/PizarraTactica.jsx:1; fabric.js v5.3.0 en package.json; formaciones fútbol 7, 8 y 11.",
+      "dimension": "Capacidades tácticas",
+      "veredicto": "PASS",
+      "riesgo": "Alta carga en memoria por canvas interactivo de Fabric.js."
+    },
+    {
+      "id": "MOD-08",
+      "modulo": "LiveStats / SCORE / Staff Heredado",
+      "archivos": "src/components/LiveStats.jsx, src/hooks/useLiveStats.js, src/components/BadgePlanHeredado.jsx",
+      "lineas": 2890,
+      "estado": "[E]",
+      "evidencia": "src/components/LiveStats.jsx:258; fix 8b286d5 eliminó fallback a 11 ficticios y roster cuando no hay convocados.",
+      "dimension": "Zona protegida / Live tracking",
+      "veredicto": "PASS",
+      "riesgo": "Módulo crítico protegido; captura en tiempo real sensible a eventos en ráfaga."
+    },
+    {
+      "id": "MOD-09",
+      "modulo": "Generador PDF",
+      "archivos": "src/utils/pdfGenerator.js, src/utils/matchPdfReport.js",
+      "lineas": 2524,
+      "estado": "[E]",
+      "evidencia": "src/utils/pdfGenerator.js:1; scripts/closure-gate.mjs paso 6 valida pdftotext con acentos y marca sana.",
+      "dimension": "Exportación / Print",
+      "veredicto": "PASS",
+      "riesgo": "Dependencia de fuentes incrustadas base64 y html2canvas."
+    },
+    {
+      "id": "MOD-10",
+      "modulo": "Pipeline ilustraciones",
+      "archivos": "src/components/ExerciseIllustrationBlock.jsx",
+      "lineas": 105,
+      "estado": "[P]",
+      "evidencia": "ExerciseIllustrationBlock.jsx:8 renders placeholder ImageOff. 108/108 ejercicios en type:'pendiente'. rigVerifiedBy [X] (0 matches).",
+      "dimension": "Contenido clínico-visual",
+      "veredicto": "FAIL",
+      "riesgo": "Sin ilustraciones biomédicas certificadas; G10 bloquea prescripción autónoma en riesgo alto."
+    },
+    {
+      "id": "MOD-11",
+      "modulo": "i18n (6 lenguas: es, es-419, en, pt, fr, id)",
+      "archivos": "src/i18n/locales/*.js, src/i18n/index.js",
+      "lineas": 17506,
+      "estado": "[E]",
+      "evidencia": "scripts/ci-i18n-gate.mjs: 6 lenguas con 2868 claves simétricas, 0 faltantes, 100% paridad certificada.",
+      "dimension": "Internacionalización",
+      "veredicto": "PASS",
+      "riesgo": "Expansión futura requiere mantener simetría estricta de 2868 claves."
+    },
+    {
+      "id": "MOD-12",
+      "modulo": "Linters / Gates de CI",
+      "archivos": "scripts/*.mjs, scripts/*.js",
+      "lineas": 66,
+      "estado": "[E]",
+      "evidencia": "scripts/check-chart-palette.mjs, scripts/check-contrast-guard.mjs, scripts/check-circular-deps.mjs, scripts/closure-gate.mjs.",
+      "dimension": "Calidad / Automatización",
+      "veredicto": "PASS",
+      "riesgo": "Gran parte son scripts locales no cableados al workflow GitHub Actions de producción."
+    },
+    {
+      "id": "MOD-13",
+      "modulo": "Chip clínico canónico",
+      "archivos": "src/utils/clinicalChip.js, src/components/common/ClinicalFallbackChip.jsx",
+      "lineas": 66,
+      "estado": "[E]",
+      "evidencia": "src/utils/clinicalChip.js:1; contrastes WCAG AA: 11.15:1 / 4.15:1 (claro) y 12.73:1 / 6.70:1 (oscuro) certificados por closure-gate.",
+      "dimension": "Accesibilidad y clínica",
+      "veredicto": "PASS",
+      "riesgo": "Ninguno detectado; encapsulado y uniforme."
+    },
+    {
+      "id": "MOD-14",
+      "modulo": "Auto-guardado B (cola local check-in)",
+      "archivos": "src/components/player/PlayerProfileTab.jsx",
+      "lineas": 1218,
+      "estado": "[P]",
+      "evidencia": "PlayerProfileTab.jsx:211 utiliza localStorage ('m11_wellness_queue'), NO IndexedDB. Funciona pero no usa la tecnología afirmada.",
+      "dimension": "Offline / Resiliencia",
+      "veredicto": "PARTIAL",
+      "riesgo": "Límite de 5MB de localStorage si la cola acumula muchas sesiones offline."
+    },
+    {
+      "id": "MOD-15",
+      "modulo": "Firebase / Firestore",
+      "archivos": "firestore.rules, firebase.json, src/firebaseConfig.js",
+      "lineas": 259,
+      "estado": "[P]",
+      "evidencia": "firestore.rules:259 reglas de seguridad basadas en auth; SIN validación de edad o esquema para datos de menores.",
+      "dimension": "Seguridad y privacidad",
+      "veredicto": "PARTIAL",
+      "riesgo": "Defensa en profundidad incompleta: age-gate reside en UI y prescripción, ausente en firestore.rules."
+    },
+    {
+      "id": "MOD-16",
+      "modulo": "Pricing / Comercial",
+      "archivos": "src/config/stripe.js, src/pages/LandingPage.jsx",
+      "lineas": 1200,
+      "estado": "[E]",
+      "evidencia": "scripts/ci-i18n-gate.mjs certifica claves pricing en 6 lenguas; Stripe configurado.",
+      "dimension": "Monetización",
+      "veredicto": "PASS",
+      "riesgo": "Flujo de checkout dependiente de webhook de Stripe."
+    },
+    {
+      "id": "MOD-17",
+      "modulo": "Google Play / Trader status / Build 95",
+      "archivos": "android/app/build.gradle, Play Console",
+      "lineas": 0,
+      "estado": "[A]",
+      "evidencia": "mister11_v1.1.77_build95.aab existe en raíz (17.7 MB). Trader-status es configuración externa de Play Console [A].",
+      "dimension": "Cumplimiento legal / Distribución",
+      "veredicto": "PARTIAL",
+      "riesgo": "Bloqueo regulatorio de Google Play en la UE si el trader-status no está completado en consola."
+    }
+  ],
+  "rubric": {
+    "1_arquitectura": "PASS",
+    "2_tipos_contract_safety": "PARTIAL",
+    "3_tests_cobertura_real": "PARTIAL",
+    "4_ci_cd_deploy_honesto": "PARTIAL",
+    "5_seguridad_menores": "PARTIAL",
+    "6_i18n_paridad_carriles": "PASS",
+    "7_accesibilidad_wcag": "PASS",
+    "8_rendimiento_offline_bundle": "PARTIAL",
+    "9_integridad_datos_catalogo": "PARTIAL",
+    "10_observabilidad_monitoreo": "FAIL",
+    "11_mantenibilidad_deuda": "PARTIAL",
+    "12_cumplimiento_legal": "PARTIAL",
+    "13_ux_coherencia_superficies": "PASS",
+    "14_pipeline_contenido_visual": "FAIL"
+  },
+  "openOwnerDecisions": [
+    {
+      "id": "DEC-01",
+      "nombre": "NOMBRE-LOGRO",
+      "descripcion": "¿Localizado + Zen vs Inmutable global?",
+      "dueno": "DUEÑO"
+    },
+    {
+      "id": "DEC-02",
+      "nombre": "CARRIL-C-MATERIAL",
+      "descripcion": "¿Confirmar fijación definitiva de material en español en todas las lenguas?",
+      "dueno": "DUEÑO"
+    },
+    {
+      "id": "DEC-03",
+      "nombre": "NOMBRE-EJERCICIO",
+      "descripcion": "Firmado localizar: mantener 100% nombres localizados en PT/FR/ID sin fallback a inglés.",
+      "dueno": "DUEÑO"
+    },
+    {
+      "id": "DEC-04",
+      "nombre": "TRADER-STATUS-UE",
+      "descripcion": "Declarar cuenta comercial/operador en Google Play Console para habilitar distribución en Unión Europea.",
+      "dueno": "DUEÑO"
+    },
+    {
+      "id": "DEC-05",
+      "nombre": "RIG-FISIO-ILUSTRACIONES",
+      "descripcion": "Definir e incorporar profesional clínico para certificar rigVerifiedBy y desbloquear ejercicios G10.",
+      "dueno": "FISIO / DUEÑO"
+    },
+    {
+      "id": "DEC-06",
+      "nombre": "VERIFICACION-E2E-PARTIDO",
+      "descripcion": "Proveer credencial activa de prueba para validación visual DOM 0 y 3 convocados en navegador.",
+      "dueno": "DUEÑO"
+    }
+  ]
+}

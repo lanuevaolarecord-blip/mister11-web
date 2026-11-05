@@ -278,7 +278,7 @@ const Partidos = () => {
         // IMPORTANTE: excluir actaOficial del guardado automático para no sobreescribir
         // las correcciones manuales de minutos que el entrenador haya hecho en el panel del acta.
         const { actaOficial: _ignored, ...currentWithoutActa } = current;
-        await updateMatch(current.id, { ...currentWithoutActa, convocados: calledPlayers });
+        await updateMatch(current.id, { ...currentWithoutActa, convocados: (calledPlayers || []).filter(Boolean).map(String) });
       } catch (err) {
         console.error("Error auto-saving match on tab change:", err);
       }
@@ -2048,11 +2048,14 @@ const Partidos = () => {
                   lang={currentGlobalLanguage}
                   currentUserId={user?.uid}
                   onSaveConvocation={async (newConvocados, newConvocadosStaff) => {
-                    const clean = (newConvocados || []).slice(0, 18);
-                    const titulares = clean.slice(0, 11);
-                    const suplentes = clean.slice(11, 18);
+                    // Fuente única: selectedIds -> lineup normalizado de 18 slots (11 + 7) por id.
+                    const selectedIds = Array.from(new Set((newConvocados || []).filter(Boolean).map(String))).slice(0, 18);
+                    const norm = normalizeLineup([], [], selectedIds);
+                    const titulares = norm.titulares;
+                    const suplentes = norm.suplentes;
+                    const clean = norm.convocados;
                     const staffClean = newConvocadosStaff || matchData?.convocadosStaff || [];
-                    setCalledPlayers(clean);
+                    setCalledPlayers([...titulares, ...suplentes]);
                     setMatchData(prev => ({
                       ...prev,
                       titulares,
@@ -2726,7 +2729,7 @@ const Partidos = () => {
                           {(() => {
                             const starterIds = (calledPlayers || []).slice(0, 11).filter(Boolean);
                             const subIds = (calledPlayers || []).slice(11, 18).filter(Boolean);
-                            const hasCalled = starterIds.length > 0 || subIds.length > 0;
+                            const hasCalled = true; // Solo convocados (selectedIds); nunca el roster
 
                             const renderPlayerBtn = (p, roleLabel, roleColor) => (
                               <button
@@ -2792,7 +2795,7 @@ const Partidos = () => {
                             if (hasCalled) {
                               const starters = starterIds.map(id => players.find(pl => pl && pl.id === id)).filter(Boolean);
                               const subs = subIds.map(id => players.find(pl => pl && pl.id === id)).filter(Boolean);
-                              const otherPlayers = (players || []).filter(pl => pl && !starterIds.includes(pl.id) && !subIds.includes(pl.id));
+                              const otherPlayers = [];
 
                               return (
                                 <>
@@ -3443,7 +3446,7 @@ const Partidos = () => {
                             : (calledPlayers || []).slice(11, 18);
                           const titIds = rawTit.filter(Boolean).map(String);
                           const supIds = rawSup.filter(Boolean).map(String);
-                          const allCalled = [...new Set([...titIds, ...supIds, ...Object.keys(matchData.actaOficial?.actual || {})])];
+                          const allCalled = [...new Set([...titIds, ...supIds])];
                           const unifEvts = getUnifiedMatchEvents(matchData);
                           const dur = getEffectiveMatchDuration(matchData);
 

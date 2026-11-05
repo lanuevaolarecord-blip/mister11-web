@@ -130,6 +130,7 @@ export const renderLiveIcon = (type, size = 18) => {
 // ── Textos bilingüe ───────────────────────────────────────────────────────────
 const TEXTS = {
   'live.title': { es: 'Live Stats', en: 'Live Stats' },
+  'live.noSquad': { es: 'Sin jugadores convocados. Define la convocatoria para capturar acciones individuales.', en: 'No players called up. Set the squad to capture individual actions.' },
   'live.noMatch': { es: 'Inicia un partido en Match Day para capturar estadísticas en vivo', en: 'Start a match in Match Day to capture live statistics' },
   'live.half': { es: 'Mitad', en: 'Half' },
   'live.minute': { es: 'Min', en: 'Min' },
@@ -425,13 +426,9 @@ const LiveStats = ({
   const awayScore = matchData?.goalsAgainst ?? matchData?.marcadorVisitante ?? 0;
 
   const playersList = useMemo(() => {
-    const rawList = (calledPlayers && calledPlayers.length > 0)
-      ? calledPlayers
-      : (players && players.length > 0)
-        ? players
-        : (matchData?.players || matchData?.jugadores || matchData?.convocados || []);
-
-    const validList = Array.isArray(rawList) ? rawList.filter(Boolean) : [];
+    // Fuente única: SOLO convocados (selectedIds). Nunca el roster ni datos ficticios.
+    const rawList = Array.isArray(calledPlayers) ? calledPlayers : [];
+    const validList = Array.from(new Set(rawList.filter(Boolean).map(p => (p && typeof p === 'object' ? p.id : p)).filter(Boolean).map(String)));
 
     if (validList.length > 0) {
       return validList.map((p, idx) => {
@@ -469,20 +466,8 @@ const LiveStats = ({
       });
     }
 
-    return [
-      { id: '1', dorsal: 1, nombre: 'Portero', posicion: 'POR' },
-      { id: '2', dorsal: 2, nombre: 'Lateral Der.', posicion: 'DEF' },
-      { id: '3', dorsal: 4, nombre: 'Central Izq.', posicion: 'DEF' },
-      { id: '4', dorsal: 5, nombre: 'Central Der.', posicion: 'DEF' },
-      { id: '5', dorsal: 3, nombre: 'Lateral Izq.', posicion: 'DEF' },
-      { id: '6', dorsal: 6, nombre: 'Pivote', posicion: 'MED' },
-      { id: '7', dorsal: 8, nombre: 'Interior Der.', posicion: 'MED' },
-      { id: '8', dorsal: 10, nombre: 'Mediapunta', posicion: 'MED' },
-      { id: '9', dorsal: 7, nombre: 'Extremo Der.', posicion: 'DEL' },
-      { id: '10', dorsal: 9, nombre: 'Delantero', posicion: 'DEL' },
-      { id: '11', dorsal: 11, nombre: 'Extremo Izq.', posicion: 'DEL' },
-    ];
-  }, [players, calledPlayers, matchData]);
+    return [];
+  }, [players, calledPlayers]);
 
   // ── Jugadores con minutos reales según minutesEngine (Titulares + Sustitutos entrados) ──
   const activePlayersWithMinutes = useMemo(() => {
@@ -1498,6 +1483,11 @@ const LiveStats = ({
                   <span>{isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</span>
                 </button>
               </div>
+              {playersList.length === 0 && (
+                <p id="livestats-empty-squad" style={{ margin: '8px 0', fontSize: '13px', color: darkMode ? '#94A3B8' : '#64748B' }}>
+                  {tx('live.noSquad')}
+                </p>
+              )}
               <PlayerChipRow
                 id="livestats-active-player-chips"
                 players={activePlayersWithMinutes}

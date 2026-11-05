@@ -1,6 +1,12 @@
 // src/utils/toast.js
 if (typeof window !== 'undefined') {
   import('./toast.css');
+  window.addEventListener('m11-language-changed', () => {
+    const container = document.getElementById('m11-toast-container');
+    if (container) {
+      container.remove();
+    }
+  });
 }
 
 export const showToast = (message, type = 'success') => {

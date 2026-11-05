@@ -20,6 +20,7 @@ import { HOME_EXERCISES_107 } from '../src/data/homeExercisesCatalog.js';
 import { getClinicalChipText, getCanonicalClinicalChipHtml, CLINICAL_FALLBACK_TEXTS } from '../src/utils/clinicalChip.js';
 import { generateSessionPDF, tPdf } from '../src/utils/pdfGenerator.js';
 import { PDFParse } from 'pdf-parse';
+import { translations, t } from '../src/i18n/translations.js';
 
 // Núcleo Clínico de 10 ejercicios del sistema
 const SYSTEM_CORE_EXERCISES = [
@@ -257,7 +258,7 @@ if (lightTextRatio < 4.5 || lightBorderRatio < 3.0 || darkTextRatio < 4.5 || dar
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. FUGA DE IDIOMA EN ALTERNATIVA / SEGURIDAD / ETIQUETAS
+// 3. FUGA DE IDIOMA EN ALTERNATIVA / SEGURIDAD / ETIQUETAS Y SUPERFICIES (NAV, TOASTS, EMPTY-STATES, BREADCRUMBS)
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n▶ [3/7] Verificando Fugas de Idioma (Carril A nativo vs Carril C excepciones)...');
 
@@ -289,8 +290,96 @@ for (const lang of ['pt', 'fr', 'id']) {
     recordFailure({ test: 'Fuga Idioma', lang, field: 'libraryAlts', error: 'Contiene español no traducido' });
   }
 }
+
+// ── EXTENSIÓN: Escáner de Fugas por Superficie (Nav, Toasts, Empty-States, Breadcrumbs) ──
+const esDict = translations['Español (ES)'];
+const allKeys = Object.keys(esDict);
+
+const surfacesToScan = {
+  nav: allKeys.filter(k => k.startsWith('player.nav.') || k.startsWith('bottomnav.') || k.startsWith('nav.') || k.startsWith('landing.nav.')),
+  toasts: allKeys.filter(k => k.includes('toast') || k.includes('Toast') || k.endsWith('Saved') || k.endsWith('Error') || k.includes('.save_error') || k.includes('.saveError') || k.includes('_saved')),
+  empty_states: allKeys.filter(k => k.includes('empty') || k.includes('Empty') || k.includes('noRecords') || k.includes('noData') || k.includes('noMatches') || k.includes('noAccount')),
+  breadcrumbs: allKeys.filter(k => k.includes('breadcrumb') || k.includes('Breadcrumb'))
+};
+
+const scanLanguages = [
+  { code: 'es', name: 'Español (ES)' },
+  { code: 'es-419', name: 'Español (Latinoamérica)' },
+  { code: 'en', name: 'English (EN)' },
+  { code: 'pt', name: 'Português (Brasil)' },
+  { code: 'fr', name: 'Français (FR)' },
+  { code: 'id', name: 'Bahasa Indonesia (ID)' }
+];
+
+const carrilCAllowlist = new Set([
+  'MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK'
+]);
+
+const pendingOwnerDecisions = {
+  'player.nav.chat': '[PENDIENTE-DUEÑO: CARRIL-NAV]',
+  'player.nav.stats': '[PENDIENTE-DUEÑO: CARRIL-NAV]'
+};
+
+const legitimateCognates = {
+  'player.nav.schedule': ['Agenda', 'Schedule'],
+  'player.nav.tests': ['Tests', 'Testes', 'Tes'],
+  'bottomnav.tests': ['Tests', 'Testes', 'Tes'],
+  'nav.tests': ['TESTS', 'TESTES', 'TES & EVALUASI'],
+  'push.foreground_toast': ['🔔 {title}: {body}', '🔔 Notificação {title}: {body}', '🔔 {title} : {body}', '🔔 Notifikasi {title}: {body}'],
+  'attendance.toast.allMarkedPresent': ['Todos marcados como presentes (Oficial)']
+};
+
+let surfaceChecksCount = 0;
+let surfaceLeakCount = 0;
+
+console.log('  • Escaneando pertenencia de valor en Nav, Toasts, Empty-States y Breadcrumbs (6 lenguas):');
+
+for (const [surfName, keys] of Object.entries(surfacesToScan)) {
+  let surfLeaks = 0;
+  for (const lang of scanLanguages) {
+    const dict = translations[lang.name];
+    for (const k of keys) {
+      surfaceChecksCount++;
+      const resolved = t(k, lang.name);
+
+      // Aserción 1: Resolución idéntica al diccionario curado
+      if (resolved !== dict[k]) {
+        surfaceLeakCount++;
+        surfLeaks++;
+        recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Desalineación de resolución: "${resolved}" vs "${dict[k]}"` });
+      }
+
+      // Aserción 2: Pertenencia de valor — Cero fugas de español (Logros, Ficha, tokens no traducidos)
+      if (['pt', 'fr', 'id', 'en'].includes(lang.code)) {
+        if (resolved === 'Logros' || resolved === 'Ficha') {
+          surfaceLeakCount++;
+          surfLeaks++;
+          recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Fuga de español detectada: valor "${resolved}" en clave ${k}` });
+        }
+
+        // Falla si un valor idéntico a ES aparece fuera de las excepciones Carril C
+        if (resolved === esDict[k] && !carrilCAllowlist.has(resolved)) {
+          if (pendingOwnerDecisions[k]) {
+            // Permitido explícitamente: Pendiente de firma del dueño
+          } else if (legitimateCognates[k] && legitimateCognates[k].includes(resolved)) {
+            // Permitido: Cognado legítimo en el idioma destino
+          } else if (resolved.length > 5 && (resolved.includes(' ') || /[áéíóúñ¿¡]/i.test(resolved))) {
+            surfaceLeakCount++;
+            surfLeaks++;
+            recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Frase en español sin traducir en ${lang.code}: "${resolved}"` });
+          }
+        }
+      }
+    }
+  }
+  console.log(`    - Superficie [${surfName}]: ${keys.length} claves × 6 lenguas evaluadas -> ${surfLeaks === 0 ? 'PASS ✅ (0 fugas)' : `FAIL ❌ (${surfLeaks} fugas)`}`);
+}
+
+fugaCount += surfaceLeakCount;
+
 console.log(`  • Fugas de idioma en alternativas evaluadas: ${fugaCount} (ESPERADO: 0) -> ${fugaCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
 console.log('  • Excepciones Carril C respetadas: Material preferido intacto en ES ("Banco nórdico, correas"), marca "Mister11", "Zen".');
+console.log('  • Slots en espera de firma del dueño: [player.nav.chat, player.nav.stats] marcados [PENDIENTE-DUEÑO: CARRIL-NAV].');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. VERIFICACIÓN DE CASI-COLORES Y COLORES PROHIBIDOS

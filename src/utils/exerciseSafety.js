@@ -4,6 +4,31 @@
  */
 
 import { DEFAULT_USER_INVENTORY } from '../data/homeExercisesCatalog.js';
+import { CANONICAL_EXERCISE_SAFETY_MAP } from '../data/exerciseSafetyMap.js';
+
+export { CANONICAL_EXERCISE_SAFETY_MAP };
+
+/**
+ * Obtiene el tier de riesgo canónico ('alto' o 'bajo') por ID o ejercicio.
+ */
+export const getExerciseRiskTier = (exerciseOrId) => {
+  const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
+  if (id && CANONICAL_EXERCISE_SAFETY_MAP[id]) {
+    return CANONICAL_EXERCISE_SAFETY_MAP[id].tier_riesgo;
+  }
+  return isHighClinicalRisk(exerciseOrId) ? 'alto' : 'bajo';
+};
+
+/**
+ * Obtiene la edad mínima segura canónica por ID o ejercicio.
+ */
+export const getExerciseMinAge = (exerciseOrId) => {
+  const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
+  if (id && CANONICAL_EXERCISE_SAFETY_MAP[id]) {
+    return CANONICAL_EXERCISE_SAFETY_MAP[id].edadMin;
+  }
+  return exerciseOrId?.edad_minima_segura ?? exerciseOrId?.age_min ?? 0;
+};
 
 /**
  * Validador clínico de edad mínima segura (C2: Bloqueo duro).
@@ -13,7 +38,7 @@ import { DEFAULT_USER_INVENTORY } from '../data/homeExercisesCatalog.js';
  */
 export const assertAgeSafe = (playerAge, exercise) => {
   if (!exercise) return { safe: true, badge: null };
-  const minSafe = exercise.edad_minima_segura ?? exercise.age_min ?? 0;
+  const minSafe = getExerciseMinAge(exercise);
   if (playerAge !== undefined && playerAge !== null && Number(playerAge) < minSafe) {
     return {
       safe: false,
@@ -32,6 +57,10 @@ export const assertAgeSafe = (playerAge, exercise) => {
  */
 export const isHighClinicalRisk = (exercise) => {
   if (!exercise) return false;
+  const id = typeof exercise === 'string' ? exercise : exercise?.id;
+  if (id && CANONICAL_EXERCISE_SAFETY_MAP && CANONICAL_EXERCISE_SAFETY_MAP[id]) {
+    return CANONICAL_EXERCISE_SAFETY_MAP[id].tier_riesgo === 'alto';
+  }
   const name = ((exercise.name || '') + ' ' + (exercise.nameEs || '') + ' ' + (exercise.nameEn || '') + ' ' + (exercise.id || '')).toLowerCase();
   const tz = (exercise.targetZones || []).map(z => String(z).toLowerCase());
   

@@ -75,7 +75,7 @@ export const HOME_EXERCISES_CATEGORIES = {
   }
 };
 
-export const HOME_EXERCISES_107 = [
+export const HOME_EXERCISES_108 = [
   {
     "id": "hex-001",
     "name": "Movilidad de Tobillo Dinámica",
@@ -8640,3 +8640,7 @@ export const HOME_EXERCISES_107 = [
     }
   }
 ];
+
+export const HOME_EXERCISES_CATALOG = HOME_EXERCISES_108;
+export { SYSTEM_CORE_EXERCISES } from './systemCoreExercises.js';
+

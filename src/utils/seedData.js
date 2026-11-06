@@ -12,7 +12,7 @@ import {
   addDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { HOME_EXERCISES_107 } from '../data/homeExercisesCatalog.js';
+import { HOME_EXERCISES_108 } from '../data/homeExercisesCatalog.js';
 
 /**
  * @param {string} teamId - ID del equipo recién creado
@@ -189,7 +189,7 @@ export const seedHomeExercises = async (teamId, userId, customPath = null) => {
 
     if (snap.empty) {
       let inserted = 0;
-      for (const ex of HOME_EXERCISES_107) {
+      for (const ex of HOME_EXERCISES_108) {
         await addDoc(exercisesRef, {
           ...ex,
           createdAt: serverTimestamp()

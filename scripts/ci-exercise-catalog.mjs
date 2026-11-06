@@ -16,7 +16,7 @@
  *   G9. Gobernanza Visual: Cero emojis en icon, colores 100% canónicos Tierra y Campo en categorías.
  */
 
-import { HOME_EXERCISES_107, HOME_EXERCISES_CATEGORIES } from '../src/data/homeExercisesCatalog.js';
+import { HOME_EXERCISES_108, HOME_EXERCISES_CATEGORIES } from '../src/data/homeExercisesCatalog.js';
 import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises, isHighClinicalRisk } from '../src/utils/exerciseSafety.js';
 
 console.log('══════════════════════════════════════════════════════════════════════');
@@ -27,10 +27,10 @@ let failed = false;
 
 // ── G1. TOTAL DE EJERCICIOS ────────────────────────────────────────────────
 console.log('▶ [G1] Verificando total de ejercicios en catálogo...');
-if (HOME_EXERCISES_107.length >= 107) {
-  console.log(`   ✅ Total de ejercicios certificado: ${HOME_EXERCISES_107.length} ejercicios.`);
+if (HOME_EXERCISES_108.length === 108) {
+  console.log(`   ✅ Total de ejercicios certificado: ${HOME_EXERCISES_108.length} ejercicios.`);
 } else {
-  console.error(`   ❌ Fallo: Se esperaban al menos 107 ejercicios pero se encontraron ${HOME_EXERCISES_107.length}.`);
+  console.error(`   ❌ Fallo: Se esperaban exactamente 108 ejercicios pero se encontraron ${HOME_EXERCISES_108.length}.`);
   failed = true;
 }
 
@@ -38,14 +38,14 @@ if (HOME_EXERCISES_107.length >= 107) {
 console.log('\n▶ [G2] Verificando unicidad de identificadores...');
 const ids = new Set();
 const duplicateIds = [];
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (ids.has(ex.id)) {
     duplicateIds.push(ex.id);
   }
   ids.add(ex.id);
 });
 
-if (duplicateIds.length === 0 && ids.size === HOME_EXERCISES_107.length) {
+if (duplicateIds.length === 0 && ids.size === HOME_EXERCISES_108.length) {
   console.log(`   ✅ ${ids.size} IDs únicos certificados sin colisiones.`);
 } else {
   console.error('   ❌ Fallo: IDs duplicados detectados:', duplicateIds);
@@ -62,7 +62,7 @@ const categoryCounts = {
   vuelta_calma: 0
 };
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (categoryCounts[ex.category] !== undefined) {
     categoryCounts[ex.category]++;
   } else {
@@ -88,7 +88,7 @@ const allowedLevels = new Set(['basico', 'intermedio', 'avanzado']);
 const levelCounts = { basico: 0, intermedio: 0, avanzado: 0 };
 let levelsOk = true;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (!allowedLevels.has(ex.level)) {
     console.error(`   ❌ Nivel inválido en ejercicio ${ex.id}: '${ex.level}'`);
     levelsOk = false;
@@ -106,7 +106,7 @@ if (levelsOk) {
 console.log('\n▶ [G5] Verificando dosificación deportiva (series, reps, durationSeconds)...');
 let dosageOk = true;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (typeof ex.series !== 'number' || ex.series < 1) {
     console.error(`   ❌ Series inválidas en ${ex.id}: ${ex.series}`);
     dosageOk = false;
@@ -156,7 +156,7 @@ const MINIMUM_AGE_THRESHOLDS = {
   prevencion_conmocion_cuello_gk: 14
 };
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   // Comprobar si tiene zonas críticas
   const hasCriticalZone = ex.targetZones && ex.targetZones.some(z => CRITICAL_TARGET_ZONES.includes(z));
   
@@ -222,7 +222,7 @@ if (ageSafetyOk) {
 console.log('\n▶ [G6] Verificando bilingüismo (ES/EN) y ausencia de tokens corruptos...');
 let textOk = true;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   const fields = ['nameEs', 'nameEn', 'descriptionEs', 'descriptionEn'];
   for (const f of fields) {
     const val = ex[f];
@@ -259,7 +259,7 @@ const WHITE_LISTED_SOURCE_TYPES = new Set([
 ]);
 let sourceOk = true;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (ex.source === 'system' || ex.source?.type === 'system') {
     console.error(`   ❌ Ejercicio ${ex.id} tiene source: 'system' (bloqueante).`);
     sourceOk = false;
@@ -297,7 +297,7 @@ let materialOk = true;
 
 const SENSITIVE_MATERIALS = ['banda_elastica', 'medicine_ball', 'cajon_bajo', 'wobble_pad', 'bosu'];
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (ex.contexto === 'casa') {
     if (!Array.isArray(ex.material_preferido) || ex.material_preferido.length === 0) {
       console.error(`   ❌ Ejercicio casero ${ex.id} no define material_preferido.`);
@@ -336,7 +336,7 @@ let contextOk = true;
 const validContexts = new Set(['casa', 'gym', 'campo_only']);
 let campoOnlyCount = 0;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   if (!validContexts.has(ex.contexto)) {
     console.error(`   ❌ Ejercicio ${ex.id} tiene contexto inválido: '${ex.contexto}'`);
     contextOk = false;
@@ -350,7 +350,7 @@ HOME_EXERCISES_107.forEach(ex => {
 console.log(`   ℹ️ Ejercicios clasificados como 'campo_only': ${campoOnlyCount}.`);
 
 // Probar que el motor recomendador filtre campo_only estrictamente en casa
-const homePrescribable = filterHomeExercises(HOME_EXERCISES_107, {
+const homePrescribable = filterHomeExercises(HOME_EXERCISES_108, {
   playerAge: 16,
   userInventory: ['peso_corporal', 'toalla', 'silla_estable', 'pared', 'suelo', 'pelota'],
   hasSupervision: true,
@@ -367,7 +367,7 @@ if (leakedCampoOnly.length > 0) {
 }
 
 // Probar bloqueo por edad en recomendador: Jugador U10 (9 años) no debe recibir ejercicios con edad_minima_segura >= 12
-const u10Prescribed = filterHomeExercises(HOME_EXERCISES_107, {
+const u10Prescribed = filterHomeExercises(HOME_EXERCISES_108, {
   playerAge: 9,
   userInventory: ['peso_corporal', 'toalla', 'silla_estable', 'pared', 'suelo', 'pelota'],
   hasSupervision: true
@@ -424,7 +424,7 @@ console.log('\n▶ [G10] Verificando que todo ejercicio de riesgo alto sin ilust
 let g10Ok = true;
 let highRiskCount = 0;
 
-HOME_EXERCISES_107.forEach(ex => {
+HOME_EXERCISES_108.forEach(ex => {
   const isHighRisk = isHighClinicalRisk(ex);
   if (isHighRisk) {
     highRiskCount++;

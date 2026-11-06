@@ -16,42 +16,14 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 // ── Cargar Recursos y Catálogos ─────────────────────────────────────────────
-import { HOME_EXERCISES_107 } from '../src/data/homeExercisesCatalog.js';
+import { HOME_EXERCISES_108 } from '../src/data/homeExercisesCatalog.js';
+import { SYSTEM_CORE_EXERCISES } from '../src/data/systemCoreExercises.js';
 import { getClinicalChipText, getCanonicalClinicalChipHtml, CLINICAL_FALLBACK_TEXTS } from '../src/utils/clinicalChip.js';
 import { generateSessionPDF, tPdf } from '../src/utils/pdfGenerator.js';
 import { PDFParse } from 'pdf-parse';
 import { translations, t } from '../src/i18n/translations.js';
 
-// Núcleo Clínico de 10 ejercicios del sistema
-const SYSTEM_CORE_EXERCISES = [
-  { id: 'sys-1', name: 'Plancha Frontal', nameEs: 'Plancha Frontal', nameEn: 'Front Plank' },
-  { id: 'sys-2', name: 'Puente de Glúteos', nameEs: 'Puente de Glúteos', nameEn: 'Glute Bridge' },
-  { id: 'sys-3', name: 'Plancha Lateral', nameEs: 'Plancha Lateral', nameEn: 'Side Plank' },
-  {
-    id: 'sys-4',
-    name: 'Nordic Hamstring Curl',
-    nameEs: 'Nordic Hamstring',
-    nameEn: 'Nordic Hamstring Curl',
-    namePt: 'Curl Nórdico',
-    nameFr: 'Ischio-jambier nordique',
-    nameId: 'Hamstring nordik'
-  },
-  { id: 'sys-5', name: 'Copenhagen Adduction', nameEs: 'Copenhagen Adduction', nameEn: 'Copenhagen Adduction' },
-  {
-    id: 'sys-6',
-    name: 'Sentadilla Búlgara',
-    nameEs: 'Sentadilla Búlgara',
-    nameEn: 'Bulgarian Split Squat',
-    namePt: 'Agachamento Búlgaro',
-    nameFr: 'Squat Bulgare',
-    nameId: 'Squat Bulgaria'
-  },
-  { id: 'sys-7', name: 'Step Down Excéntrico', nameEs: 'Step Down Excéntrico', nameEn: 'Eccentric Step Down' },
-  { id: 'sys-8', name: 'Dead Bug / Bicho Muerto', nameEs: 'Dead Bug', nameEn: 'Dead Bug' },
-  { id: 'sys-9', name: 'Bird-Dog / Pájaro Perro', nameEs: 'Bird-Dog', nameEn: 'Bird-Dog' },
-  { id: 'sys-10', name: 'Movilidad de Cadera 90/90', nameEs: 'Movilidad de Cadera 90/90', nameEn: '90/90 Hip Mobility' }
-];
-
+// ── Función de Localización Canónica ────────────────────────────────────────
 function getLocalizedExercise(ex, isEnglish, lang = 'es') {
   if (!ex) return ex;
   let localizedName = ex.name;
@@ -99,8 +71,8 @@ const LANGUAGES = ['pt', 'fr', 'id', 'es', 'en'];
 const SURFACES = ['ExerciseLibrary', 'AssignPlanModal', 'PlayerPlansPortalTab', 'PDF', 'Notifications'];
 
 // Catálogo evaluado
-const allPredefined = [...SYSTEM_CORE_EXERCISES, ...HOME_EXERCISES_107];
-const homeCount = HOME_EXERCISES_107.length; // 108
+const allPredefined = [...SYSTEM_CORE_EXERCISES, ...HOME_EXERCISES_108];
+const homeCount = HOME_EXERCISES_108.length; // 108
 const coreCount = SYSTEM_CORE_EXERCISES.length; // 10
 const totalEvaluated = allPredefined.length; // 118
 
@@ -171,7 +143,7 @@ for (const ex of allPredefined) {
 }
 
 console.log(`  • Contador de ejercicios evaluados: ${totalEvaluated} ejercicios.`);
-console.log(`    - 108 ejercicios de HOME_EXERCISES_107 (hex-001 a hex-108).`);
+console.log(`    - 108 ejercicios de HOME_EXERCISES_108 (hex-001 a hex-108).`);
 console.log(`    - 10 ejercicios de SYSTEM_CORE_EXERCISES (sys-1 a sys-10).`);
 console.log(`    - Total combinaciones evaluadas: ${matrixRows.length} (118 ejercicios × 5 lenguas × 5 superficies).`);
 console.log(`  • Desconocidos (U): ${unknownCount} (ESPERADO: 0) -> ${unknownCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);

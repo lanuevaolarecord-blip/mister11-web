@@ -15,7 +15,7 @@
       "archivos": "src/data/homeExercisesCatalog.js",
       "lineas": 8642,
       "estado": "[P]",
-      "evidencia": "src/data/homeExercisesCatalog.js:78 export const HOME_EXERCISES_107; cuenta real hex-001..hex-108 = 108 ejercicios. 100% de ilustraciones en type:'pendiente' y url:null.",
+      "evidencia": "src/data/homeExercisesCatalog.js:78 export const HOME_EXERCISES_108; cuenta real hex-001..hex-108 = 108 ejercicios. 100% de ilustraciones en type:'pendiente' y url:null.",
       "dimension": "Integridad de datos / Contenido clínico",
       "veredicto": "PARTIAL",
       "riesgo": "Off-by-one constante (107 vs 108); ilustraciones pendientes obligan a supervisión presencial en riesgo alto."

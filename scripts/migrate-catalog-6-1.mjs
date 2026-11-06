@@ -82,13 +82,13 @@ catalogContent = catalogContent.replace(/\/\*\*[\s\S]*?export const HOME_EXERCIS
 
 // Ahora importemos dinámicamente los ejercicios existentes
 const moduleUrl = 'file:///' + catalogPath.replace(/\\/g, '/');
-const { HOME_EXERCISES_107: rawArray } = await import(moduleUrl);
-const HOME_EXERCISES_107 = rawArray.filter(e => e.id !== 'hex-108');
+const { HOME_EXERCISES_108: rawArray } = await import(moduleUrl);
+const HOME_EXERCISES_108 = rawArray.filter(e => e.id !== 'hex-108');
 
-console.log(`Cargados ${HOME_EXERCISES_107.length} ejercicios originales.`);
+console.log(`Cargados ${HOME_EXERCISES_108.length} ejercicios originales.`);
 
 // Función transformadora para cada ejercicio
-const transformed = HOME_EXERCISES_107.map(ex => {
+const transformed = HOME_EXERCISES_108.map(ex => {
   const item = { ...ex };
   delete item.source; // eliminamos source primitivo string
 
@@ -434,9 +434,9 @@ const serializedArray = JSON.stringify(transformed, null, 2);
 
 const finalFileContent = `${newHeaderAndCategories}
 
-export const HOME_EXERCISES_107 = ${serializedArray};
+export const HOME_EXERCISES_108 = ${serializedArray};
 
-export default HOME_EXERCISES_107;
+export default HOME_EXERCISES_108;
 `;
 
 fs.writeFileSync(catalogPath, finalFileContent, 'utf8');

@@ -24,7 +24,7 @@ import {
   Info
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
-import { HOME_EXERCISES_107 } from '../../data/homeExercisesCatalog';
+import { HOME_EXERCISES_108 } from '../../data/homeExercisesCatalog';
 import ExerciseIllustrationBlock from '../ExerciseIllustrationBlock';
 import { ClinicalFallbackChip } from '../common/ClinicalFallbackChip';
 import { assertAgeSafe } from '../../utils/exerciseSafety';
@@ -308,7 +308,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const foundInTeam = teamExercises.find(te => te.id === ex.exerciseId || te.name === directName);
 
     // Buscar en catálogo de 108 ejercicios
-    const catMatch = HOME_EXERCISES_107.find(he => 
+    const catMatch = HOME_EXERCISES_108.find(he => 
       he.id === ex.exerciseId || 
       he.id === ex.id || 
       (he.nameEs && he.nameEs.toLowerCase() === (directName || '').toLowerCase()) || 

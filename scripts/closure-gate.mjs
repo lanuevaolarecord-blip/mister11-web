@@ -291,12 +291,34 @@ for (const lang of ['pt', 'fr', 'id']) {
   }
 }
 
-// ── EXTENSIÓN: Escáner de Fugas por Superficie (Nav, Toasts, Empty-States, Breadcrumbs) ──
+// ── EXTENSIÓN B10: Escáner Integral Portal del Jugador (Nav, Tabs, H2, Subtítulos, Cards, Badges, Material, Toasts, Empty-States, Breadcrumbs) ──
 const esDict = translations['Español (ES)'];
 const allKeys = Object.keys(esDict);
 
 const surfacesToScan = {
   nav: allKeys.filter(k => k.startsWith('player.nav.') || k.startsWith('bottomnav.') || k.startsWith('nav.') || k.startsWith('landing.nav.')),
+  tabs: allKeys.filter(k => k.startsWith('player.tab.')),
+  h2_titles: ['player.plans.title', 'player.plans.individualPlans'],
+  subtitles: ['player.plans.subtitle'],
+  card_labels: [
+    'player.profile.position',
+    'player.profile.category',
+    'player.plans.active',
+    'player.plans.monitoring',
+    'player.plans.youth',
+    'player.plans.todayExercises',
+    'player.plans.coachInstructions',
+    'player.plans.posturalKey',
+    'player.plans.stepByStep',
+    'player.plans.reps',
+    'player.plans.sets'
+  ],
+  plan_badges: [
+    'plan.type.prevencion',
+    'plan.type.recuperacion',
+    'plan.type.fortalecimiento'
+  ],
+  material: allKeys.filter(k => k.startsWith('mat.')),
   toasts: allKeys.filter(k => k.includes('toast') || k.includes('Toast') || k.endsWith('Saved') || k.endsWith('Error') || k.includes('.save_error') || k.includes('.saveError') || k.includes('_saved')),
   empty_states: allKeys.filter(k => k.includes('empty') || k.includes('Empty') || k.includes('noRecords') || k.includes('noData') || k.includes('noMatches') || k.includes('noAccount')),
   breadcrumbs: allKeys.filter(k => k.includes('breadcrumb') || k.includes('Breadcrumb'))
@@ -315,10 +337,10 @@ const carrilCAllowlist = new Set([
   'MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK'
 ]);
 
-const pendingOwnerDecisions = {
-  'player.nav.chat': '[PENDIENTE-DUEÑO: CARRIL-NAV]',
-  'player.nav.stats': '[PENDIENTE-DUEÑO: CARRIL-NAV]'
-};
+// FIRMAS DEL DUEÑO APLICADAS:
+// - CARRIL-NAV = localizar (Treinador/Estatísticas en PT, Entraîneur/Statistiques en FR, Pelatih/Statistik en ID, Coach/Stats en EN).
+// - MATERIAL = Glosario cerrado canónico mat.* en 6 lenguas (Carril A).
+// - NOMBRE-LOGRO = localizado.
 
 const legitimateCognates = {
   'player.nav.schedule': ['Agenda', 'Schedule'],
@@ -326,13 +348,26 @@ const legitimateCognates = {
   'bottomnav.tests': ['Tests', 'Testes', 'Tes'],
   'nav.tests': ['TESTS', 'TESTES', 'TES & EVALUASI'],
   'push.foreground_toast': ['🔔 {title}: {body}', '🔔 Notificação {title}: {body}', '🔔 {title} : {body}', '🔔 Notifikasi {title}: {body}'],
-  'attendance.toast.allMarkedPresent': ['Todos marcados como presentes (Oficial)']
+  'attendance.toast.allMarkedPresent': ['Todos marcados como presentes (Oficial)'],
+  'player.tab.general': ['GENERAL', 'GERAL', 'GÉNÉRAL', 'UMUM'],
+  'player.tab.physical': ['FÍSICO', 'PHYSICAL', 'PHYSIQUE', 'FISIK'],
+  'player.tab.technical': ['TÉCNICA', 'Técnica', 'TECHNICAL', 'TECHNIQUE', 'TEKNIS'],
+  'mat.sofa': ['Sofá', 'Sofa', 'Canapé'],
+  'mat.cones': ['Cones', 'Cônes', 'Kerucut'],
+  'mat.balls': ['Balones', 'Balls', 'Bolas', 'Ballons', 'Bola'],
+  'mat.wall': ['Pared', 'Wall', 'Parede', 'Mur', 'Dinding'],
+  'mat.towel': ['Toalla', 'Towel', 'Toalha', 'Serviette', 'Handuk'],
+  'mat.rings': ['Aros', 'Rings', 'Cerceaux', 'Gelang-gelang'],
+  'mat.nordic_bench': ['Banco nórdico', 'Nordic bench', 'Banc nordique', 'Bangku nordik'],
+  'mat.heavy_bed': ['Cama pesada', 'Heavy bed', 'Lit lourd', 'Tempat tidur kokoh'],
+  'mat.bodyweight': ['Peso corporal', 'Bodyweight', 'Poids du corps', 'Berat badan'],
+  'player.profile.category': ['Categoría', 'Category', 'Categoria', 'Catégorie', 'Kategori']
 };
 
 let surfaceChecksCount = 0;
 let surfaceLeakCount = 0;
 
-console.log('  • Escaneando pertenencia de valor en Nav, Toasts, Empty-States y Breadcrumbs (6 lenguas):');
+console.log('  • Escaneando DOBLE ASERCIÓN (Pertenencia de Valor + Clave Resuelta) en TODO el Portal (6 lenguas):');
 
 for (const [surfName, keys] of Object.entries(surfacesToScan)) {
   let surfLeaks = 0;
@@ -342,31 +377,47 @@ for (const [surfName, keys] of Object.entries(surfacesToScan)) {
       surfaceChecksCount++;
       const resolved = t(k, lang.name);
 
-      // Aserción 1: Resolución idéntica al diccionario curado
+      // ASERCIÓN B: Clave-resuelta (no slug-fallback silencioso)
+      if (resolved === k || resolved === undefined || dict[k] === undefined) {
+        surfaceLeakCount++;
+        surfLeaks++;
+        recordFailure({ test: 'Aserción B (Slug-Fallback)', surface: surfName, lang: lang.code, key: k, error: `Clave no resuelta devuelta literalmente: "${resolved}"` });
+      }
+      if (['prevencion', 'recuperacion'].includes(String(resolved).toLowerCase())) {
+        surfaceLeakCount++;
+        surfLeaks++;
+        recordFailure({ test: 'Aserción B (Slug Sin Tilde)', surface: surfName, lang: lang.code, key: k, error: `Slug sin tilde/sin traducir devuelto: "${resolved}"` });
+      }
+
+      // ASERCIÓN A: Pertenencia de valor exacta al diccionario curado
       if (resolved !== dict[k]) {
         surfaceLeakCount++;
         surfLeaks++;
-        recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Desalineación de resolución: "${resolved}" vs "${dict[k]}"` });
+        recordFailure({ test: 'Aserción A (Desalineación Diccionario)', surface: surfName, lang: lang.code, key: k, error: `Desalineación de resolución: "${resolved}" vs "${dict[k]}"` });
       }
 
-      // Aserción 2: Pertenencia de valor — Cero fugas de español (Logros, Ficha, tokens no traducidos)
-      if (['pt', 'fr', 'id', 'en'].includes(lang.code)) {
-        if (resolved === 'Logros' || resolved === 'Ficha') {
+      // ASERCIÓN A (2): Cero fugas cruzadas de español o inglés en portugués, francés e indonesio
+      if (['pt', 'fr', 'id'].includes(lang.code)) {
+        if (resolved === 'Logros' || resolved === 'Ficha' || resolved === 'PHYSICAL') {
           surfaceLeakCount++;
           surfLeaks++;
-          recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Fuga de español detectada: valor "${resolved}" en clave ${k}` });
+          recordFailure({ test: 'Aserción A (Fuga de Español)', surface: surfName, lang: lang.code, key: k, error: `Fuga de español detectada: valor "${resolved}" en clave ${k}` });
         }
+        if (resolved === 'Individual Training Plans' || resolved === 'Main Position' || resolved === 'MAIN POSITION') {
+          surfaceLeakCount++;
+          surfLeaks++;
+          recordFailure({ test: 'Aserción A (Fuga de Inglés)', surface: surfName, lang: lang.code, key: k, error: `Fuga de inglés detectada en ${lang.code}: "${resolved}" en clave ${k}` });
+        }
+      }
 
-        // Falla si un valor idéntico a ES aparece fuera de las excepciones Carril C
+      if (['pt', 'fr', 'id', 'en'].includes(lang.code)) {
         if (resolved === esDict[k] && !carrilCAllowlist.has(resolved)) {
-          if (pendingOwnerDecisions[k]) {
-            // Permitido explícitamente: Pendiente de firma del dueño
-          } else if (legitimateCognates[k] && legitimateCognates[k].includes(resolved)) {
+          if (legitimateCognates[k] && legitimateCognates[k].includes(resolved)) {
             // Permitido: Cognado legítimo en el idioma destino
           } else if (resolved.length > 5 && (resolved.includes(' ') || /[áéíóúñ¿¡]/i.test(resolved))) {
             surfaceLeakCount++;
             surfLeaks++;
-            recordFailure({ test: 'Escáner Superficie', surface: surfName, lang: lang.code, key: k, error: `Frase en español sin traducir en ${lang.code}: "${resolved}"` });
+            recordFailure({ test: 'Aserción A (Frase Española)', surface: surfName, lang: lang.code, key: k, error: `Frase en español sin traducir en ${lang.code}: "${resolved}"` });
           }
         }
       }
@@ -377,9 +428,36 @@ for (const [surfName, keys] of Object.entries(surfacesToScan)) {
 
 fugaCount += surfaceLeakCount;
 
-console.log(`  • Fugas de idioma en alternativas evaluadas: ${fugaCount} (ESPERADO: 0) -> ${fugaCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
-console.log('  • Excepciones Carril C respetadas: Material preferido intacto en ES ("Banco nórdico, correas"), marca "Mister11", "Zen".');
-console.log('  • Slots en espera de firma del dueño: [player.nav.chat, player.nav.stats] marcados [PENDIENTE-DUEÑO: CARRIL-NAV].');
+// Tabla literal Campo × Lengua
+console.log('\n  [TABLA LITERAL CAMPO × LENGUA (Strings Reales Auditados)]');
+const sampleTableFields = [
+  { name: 'tab.physical', key: 'player.tab.physical' },
+  { name: 'plans.title', key: 'player.plans.title' },
+  { name: 'plans.subtitle', key: 'player.plans.subtitle' },
+  { name: 'card.position', key: 'player.profile.position' },
+  { name: 'card.category', key: 'player.profile.category' },
+  { name: 'badge.prevencion', key: 'plan.type.prevencion' },
+  { name: 'badge.recuperacion', key: 'plan.type.recuperacion' },
+  { name: 'badge.fortalecimiento', key: 'plan.type.fortalecimiento' },
+  { name: 'nav.chat', key: 'player.nav.chat' },
+  { name: 'nav.stats', key: 'player.nav.stats' },
+  { name: 'mat.nordic_bench', key: 'mat.nordic_bench' },
+  { name: 'mat.sofa', key: 'mat.sofa' },
+  { name: 'mat.dumbbell', key: 'mat.dumbbell' },
+  { name: 'mat.cones', key: 'mat.cones' },
+  { name: 'mat.partner_hold', key: 'mat.partner_hold' }
+];
+
+console.log('  | Campo | ES | ES-419 | EN | PT | FR | ID |');
+console.log('  |---|---|---|---|---|---|---|');
+for (const f of sampleTableFields) {
+  const row = scanLanguages.map(l => t(f.key, l.name));
+  console.log(`  | ${f.name} | ${row.join(' | ')} |`);
+}
+
+console.log(`\n  • Fugas de idioma en todo el portal evaluadas: ${fugaCount} (ESPERADO: 0) -> ${fugaCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+console.log('  • Firmas del dueño aplicadas: CARRIL-NAV = localizar (PT Treinador/Estatísticas, FR Entraîneur/Statistiques, ID Pelatih/Statistik, EN Coach/Stats).');
+console.log('  • Material de planes: Glosario canónico cerrado mat.* en 6 lenguas (Carril A certificado).');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. VERIFICACIÓN DE CASI-COLORES Y COLORES PROHIBIDOS

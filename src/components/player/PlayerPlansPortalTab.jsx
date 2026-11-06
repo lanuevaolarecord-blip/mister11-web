@@ -28,6 +28,7 @@ import { HOME_EXERCISES_107 } from '../../data/homeExercisesCatalog';
 import ExerciseIllustrationBlock from '../ExerciseIllustrationBlock';
 import { ClinicalFallbackChip } from '../common/ClinicalFallbackChip';
 import { assertAgeSafe } from '../../utils/exerciseSafety';
+import { localizeMaterial } from '../../utils/materialGlossary';
 import { calcularEdad } from '../../utils/calcularEdad';
 import './PlayerPlansPortalTab.css';
 
@@ -357,6 +358,9 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       reviewed_by_human: false
     };
 
+    const rawMaterial = ex.material_preferido || ex.material || catMatch?.material_preferido || null;
+    const preferredMaterial = rawMaterial ? localizeMaterial(rawMaterial, t) : null;
+
     return {
       name,
       category,
@@ -369,8 +373,72 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       preventionValue,
       rawPrevention,
       isClinicalFallback,
-      illustration
+      illustration,
+      preferredMaterial
     };
+  };
+
+  const resolvePlanType = (rawType, rawReason) => {
+    const candidate = rawType || rawReason;
+    if (!candidate) return t('player.plans.techRoutine', {}, 'Rotina Técnica e Preventiva');
+    const slug = String(candidate).toLowerCase().trim().replace(/ó/g, 'o').replace(/é/g, 'e').replace(/á/g, 'a').replace(/í/g, 'i');
+    if (slug === 'prevencion' || slug === 'prevention' || slug === 'prevencao') {
+      return t('plan.type.prevencion', {}, 'Prevenção');
+    }
+    if (slug === 'recuperacion' || slug === 'recovery' || slug === 'recuperacao') {
+      return t('plan.type.recuperacion', {}, 'Recuperação');
+    }
+    if (slug === 'fortalecimiento' || slug === 'strengthening') {
+      return t('plan.type.fortalecimiento', {}, 'Fortalecimento');
+    }
+    const planKey = `plan.type.${slug}`;
+    const tr = t(planKey);
+    if (tr && tr !== planKey) return tr;
+    return candidate;
+  };
+
+  const resolveCategoryLabel = (cat) => {
+    if (!cat) return '';
+    const slug = String(cat).toLowerCase().trim();
+    if (slug === 'prevencion' || slug === 'prevención' || slug === 'prevention' || slug === 'prevencao' || slug === 'prevenção') {
+      return t('plan.type.prevencion', {}, 'Prevenção');
+    }
+    const catKey = `exercise.category.${slug}`;
+    const tr = t(catKey);
+    if (tr && tr !== catKey) return tr;
+    return cat;
+  };
+
+  const resolvePlanTitle = (rawTitle) => {
+    if (!rawTitle) return t('player.plans.defaultPlanTitle', {}, 'Plano de Desenvolvimento Individual');
+    const s = String(rawTitle).trim();
+    const loc = (language || 'es').toLowerCase();
+    if (s.startsWith('Plan de ') || s.startsWith('Plan de desarrollo') || s.startsWith('Plano de ')) {
+      const rest = s.replace(/^Plan(o)? de\s+/i, '');
+      if (loc.startsWith('pt')) {
+        if (/prevenci[oó]n|prevention/i.test(rest)) return 'Plano de Prevenção';
+        if (/recuperaci[oó]n|recovery/i.test(rest)) return 'Plano de Recuperação';
+        if (/fortalecimiento|strengthening/i.test(rest)) return 'Plano de Fortalecimento';
+        return `Plano de ${rest}`;
+      }
+      if (loc.startsWith('en')) {
+        if (/prevenci[oó]n|preven[çc][aã]o/i.test(rest)) return 'Prevention Plan';
+        if (/recuperaci[oó]n|recupera[çc][aã]o/i.test(rest)) return 'Recovery Plan';
+        if (/fortalecimiento|fortalecimento/i.test(rest)) return 'Strengthening Plan';
+        return `Plan for ${rest}`;
+      }
+      if (loc.startsWith('fr')) {
+        if (/prevenci[oó]n|preven[çc][aã]o|prevention/i.test(rest)) return 'Plan de Prévention';
+        if (/recuperaci[oó]n|recupera[çc][aã]o|recovery/i.test(rest)) return 'Plan de Récupération';
+        return `Plan de ${rest}`;
+      }
+      if (loc.startsWith('id')) {
+        if (/prevenci[oó]n|preven[çc][aã]o|prevention/i.test(rest)) return 'Rencana Pencegahan';
+        if (/recuperaci[oó]n|recupera[çc][aã]o|recovery/i.test(rest)) return 'Rencana Pemulihan';
+        return `Rencana ${rest}`;
+      }
+    }
+    return s;
   };
 
   const formatSafeDate = (d) => {
@@ -451,14 +519,14 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                 {/* Cabecera del Plan */}
                 <div className="plan-item-top">
                   <div className="plan-type-pill">
-                    <Dumbbell size={14} /> {plan.type || plan.reason || t('player.plans.techRoutine', {}, 'Rutina Técnica y Preventiva')}
+                    <Dumbbell size={14} /> {resolvePlanType(plan.type, plan.reason)}
                   </div>
                   <span className="plan-date-tag">
                     <Calendar size={12} /> {formattedDate}
                   </span>
                 </div>
 
-                <h3 className="plan-item-title">{plan.title || plan.name || t('player.plans.defaultPlanTitle', {}, 'Plan de Desarrollo Individual')}</h3>
+                <h3 className="plan-item-title">{resolvePlanTitle(plan.title || plan.name)}</h3>
                 
                 {plan.description && (
                   <p className="plan-item-desc">{plan.description}</p>
@@ -520,7 +588,26 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 <span className="exercise-name-txt" style={isAgeBlocked ? { color: '#94a3b8' } : {}}>{details.name}</span>
                                 <div className="exercise-badges-row">
                                   <span className="exercise-dos-pill">{details.sets} · {details.reps}</span>
-                                  <span className="exercise-cat-pill">{details.category}</span>
+                                  <span className="exercise-cat-pill">{resolveCategoryLabel(details.category)}</span>
+                                  {details.preferredMaterial && (
+                                    <span 
+                                      className="exercise-mat-pill" 
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: '600',
+                                        backgroundColor: 'rgba(27, 58, 45, 0.08)',
+                                        color: '#1B3A2D',
+                                        marginLeft: '4px'
+                                      }}
+                                    >
+                                      <Dumbbell size={11} color="#1B3A2D" /> {details.preferredMaterial}
+                                    </span>
+                                  )}
                                   {isAgeBlocked && (
                                     <span 
                                       className="not-age-safe-badge"

@@ -11,6 +11,37 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
+    // ── DEF-B2: Age-Gate de Seguridad Clínica en Persistencia (Menores) ───────
+    // Umbrales canónicos de edad mínima por ejercicio (derivados de B3):
+    //   • 16+ años: hex-064 (Drop Jump), hex-065 (Single-Leg Land), hex-092 (Deep Squat Jump)
+    //   • 14+ años: sys-4 (Nordic), sys-5 (Copenhagen), hex-076 (Copenhagen banco), hex-078 (Nordic asistido), hex-108 (Cervical GK)
+    //   • 12+ años: sys-6 (Sentadilla Búlgara), sys-7 (Peso Muerto Unipodal), hex-057 (Saltos Cruz), hex-077 (Copenhagen suelo)
+
+    function getRestricted16Exercises() {
+      return ['hex-064', 'hex-065', 'hex-092'];
+    }
+
+    function getRestricted14Exercises() {
+      return ['sys-4', 'sys-5', 'hex-076', 'hex-078', 'hex-108'];
+    }
+
+    function getRestricted12Exercises() {
+      return ['sys-6', 'sys-7', 'hex-057', 'hex-077'];
+    }
+
+    function isPlanAgeSafe(data) {
+      let playerAge = 'playerAge' in data ? data.playerAge : 
+                      ('age' in data ? data.age : 
+                      ('edad' in data ? data.edad : 0));
+      
+      let ids = 'exerciseIds' in data ? data.exerciseIds : [];
+
+      return playerAge >= 16 ? true :
+             playerAge >= 14 ? !ids.hasAny(getRestricted16Exercises()) :
+             playerAge >= 12 ? (!ids.hasAny(getRestricted16Exercises()) && !ids.hasAny(getRestricted14Exercises())) :
+             (!ids.hasAny(getRestricted16Exercises()) && !ids.hasAny(getRestricted14Exercises()) && !ids.hasAny(getRestricted12Exercises()));
+    }
+
     // ── PARTE A: BLINDAJE TOTAL DE IDENTIDAD DETERMINISTA ────────────────────
     match /playerIdentity/{uid} {
       allow read: if isAuth() && request.auth.uid == uid;
@@ -48,24 +79,44 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
+    // ── Colecciones compartidas endurecidas (B2: Membresía / Rol de Staff) ───
     match /sharedPlans/{planId} {
-      allow read, create, update: if true;
-      allow delete: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && 
+        (resource.data.coachUid == request.auth.uid || 
+         resource.data.createdBy == request.auth.uid || 
+         !('coachUid' in resource.data));
+      allow delete: if isAuth() && 
+        (resource.data.coachUid == request.auth.uid || 
+         resource.data.createdBy == request.auth.uid);
     }
 
     match /sharedSessions/{shareId} {
-      allow read, create, update: if true;
-      allow delete: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && 
+        (resource.data.coachUid == request.auth.uid || 
+         resource.data.createdBy == request.auth.uid || 
+         !('coachUid' in resource.data));
+      allow delete: if isAuth() && 
+        (resource.data.coachUid == request.auth.uid || 
+         resource.data.createdBy == request.auth.uid);
     }
 
     match /team_codes/{codeId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow create: if isAuth() && request.resource.data.coachUid == request.auth.uid;
+      allow update: if isAuth() && 
+        (resource.data.coachUid == request.auth.uid || request.resource.data.coachUid == request.auth.uid);
+      allow delete: if isAuth() && resource.data.coachUid == request.auth.uid;
     }
 
     match /staff_codes/{codeId} {
       allow read: if true;
-      allow write: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && 
+        (resource.data.ownerId == request.auth.uid || resource.data.coachUid == request.auth.uid);
     }
 
     match /teams/{teamId} {
@@ -75,6 +126,19 @@ service cloud.firestore {
          resource.data.staffMembers[request.auth.uid] != null);
       
       allow write: if isAuth();
+
+      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      match /playerPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
+
+      match /teamPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
 
       match /sessions/{sessionId} {
         allow read, write: if isAuth();
@@ -135,6 +199,19 @@ service cloud.firestore {
         }
       }
 
+      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      match /playerPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
+
+      match /teamPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
+
       // ── Asignaciones de Juegos y Retos recomendados ────────────────
       match /gameAssignments/{assignId} {
         allow read: if isAuth();
@@ -186,6 +263,19 @@ service cloud.firestore {
     match /equipos/{teamId} {
       allow read, write: if isAuth();
 
+      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      match /playerPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
+
+      match /teamPlans/{planId} {
+        allow read: if isAuth();
+        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow delete: if isAuth();
+      }
+
       match /sessions/{sessionId} {
         allow read, write: if isAuth();
 
@@ -222,6 +312,19 @@ service cloud.firestore {
           match /{subcollection=**} {
             allow read, write: if isAuth();
           }
+        }
+
+        // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+        match /playerPlans/{planId} {
+          allow read: if isAuth();
+          allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+          allow delete: if isAuth();
+        }
+
+        match /teamPlans/{planId} {
+          allow read: if isAuth();
+          allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+          allow delete: if isAuth();
         }
 
         match /gameAssignments/{assignId} {

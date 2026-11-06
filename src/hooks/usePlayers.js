@@ -4,6 +4,31 @@ import { subscribeToCollection, addDocument, updateDocument, deleteDocument, cre
 import { increment } from 'firebase/firestore';
 import { t, isEn } from '../i18n/index.js';
 
+/**
+ * [PENDIENTE-DUEÑO: CONSENTIMIENTO]
+ * Gancho técnico de gobernanza GDPR-K / COPPA para condicionar el alta de menores
+ * a la existencia previa de un documento firmado en /consents o en el perfil del jugador.
+ * NO activo por defecto (espera firma explícita del Dueño + Asesoría Legal).
+ */
+export const validateUnderageConsent = (playerData, strictEnforced = false) => {
+  if (!strictEnforced) return { allowed: true };
+  const birth = playerData.fechaNacimiento || playerData.birthDate;
+  if (!birth) return { allowed: true };
+  const age = typeof birth === 'number' ? birth : parseInt(birth, 10);
+  const isMinor = !isNaN(age) ? age < 18 : true;
+  if (isMinor) {
+    const signed = Boolean(playerData.consentStatus === 'firmado' || playerData.consentimientoFirmado || playerData.hasSignedConsent);
+    if (!signed) {
+      return { 
+        allowed: false, 
+        reason: 'parental_consent_missing',
+        message: 'Consentimiento parental pendiente de firma digital antes de dar de alta al menor' 
+      };
+    }
+  }
+  return { allowed: true };
+};
+
 export const usePlayers = (teamId) => {
   const { user, getTeamPath } = useAuth();
   const [players, setPlayers] = useState([]);

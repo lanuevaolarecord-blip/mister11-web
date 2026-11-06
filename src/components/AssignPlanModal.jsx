@@ -94,6 +94,8 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
     setSaving(true);
     await addPlayerPlan({
       playerId: player.id,
+      playerAge: Number(playerAge) || 0,
+      exerciseIds: selectedIds,
       teamId: activeTeamId,
       name: planName || `Plan de ${reason} — ${player.name || player.nombre}`,
       reason,

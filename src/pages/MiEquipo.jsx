@@ -446,6 +446,27 @@ const MiEquipo = () => {
       return;
     }
 
+    // ── GANCHO TÉCNICO: ALTA CONDICIONADA A FIRMA DE CONSENTIMIENTO (GDPR-K / COPPA) ──
+    // [PENDIENTE-DUEÑO: CONSENTIMIENTO] - DECISIÓN DUEÑO + LEGAL:
+    // Actualmente en modo aviso declarativo. Cuando el DUEÑO y ASESORÍA LEGAL confirmen
+    // la obligatoriedad estricta antes de guardar datos sensibles de salud/lesiones de menores,
+    // cambiar STRICT_PARENTAL_CONSENT_REQUIRED a true para bloquear el alta si no existe firma.
+    const STRICT_PARENTAL_CONSENT_REQUIRED = false; // [PENDIENTE-DUEÑO: CONSENTIMIENTO]
+    const playerAgeCalc = calcularEdad(editData.fechaNacimiento || editData.birthDate)?.years;
+    const isUnderage = playerAgeCalc !== undefined && playerAgeCalc < 18;
+
+    if (STRICT_PARENTAL_CONSENT_REQUIRED && isUnderage) {
+      const isSigned = editData.consentStatus === 'firmado' || 
+                       editData.consentimientoFirmado === true || 
+                       editData.hasSignedConsent === true;
+      if (!isSigned) {
+        setFormError(isEn 
+          ? 'Parental consent signature is legally required before registering an underage athlete.' 
+          : 'Es obligatorio contar con el consentimiento parental firmado antes de dar de alta a un deportista menor de edad.');
+        return;
+      }
+    }
+
     setIsSaving(true);
     setFormError('');
     try {

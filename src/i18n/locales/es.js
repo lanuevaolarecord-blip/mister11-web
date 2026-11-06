@@ -1824,11 +1824,11 @@ export const es = {
   "player.minutes": "MINUTOS",
   "player.minutesPlayed": "Minutos jugados",
   "player.nav.achievements": "Logros",
-  "player.nav.chat": "Mister",
+  "player.nav.chat": "Mister", // [PENDIENTE-DUEÑO: NAV-CHAT-ES]
   "player.nav.home": "Inicio",
   "player.nav.profile": "Ficha",
   "player.nav.schedule": "Agenda",
-  "player.nav.stats": "Stats",
+  "player.nav.stats": "Estadísticas",
   "player.nav.tests": "Tests",
   "player.noAccount": "Sin cuenta (edita el perfil para vincular)",
   "player.noLinkedAccount": "Sin cuenta vinculada",

@@ -155,7 +155,13 @@ export function createAnimationEngine({
         ? JSON.parse(frameData.state)
         : (frameData.state || { objects: [] });
 
-      const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
+      const rawObjs = Array.isArray(state.objects) ? state.objects : [];
+      const objsToEnliven = rawObjs.filter(o => 
+        !o.isTrajectory && 
+        o.category !== 'trajectory' && 
+        o.data?.type !== 'trajectory' && 
+        o.data?.type !== 'temp'
+      );
 
       renderFc.clear();
 
@@ -198,12 +204,26 @@ export function createAnimationEngine({
 
       fabric.util.enlivenObjects(enlivenedData, (objects) => {
         try {
+          let ballAdded = false;
           objects.forEach((o, objIdx) => {
             if (!o.data && enlivenedData[objIdx]?.data) {
               o.data = { ...enlivenedData[objIdx].data };
             }
             if (!o.id && enlivenedData[objIdx]?.id) {
               o.id = enlivenedData[objIdx].id;
+            }
+
+            // P14-FIX: Purgar cualquier trayectoria residual
+            if (o.isTrajectory || o.data?.type === 'trajectory' || enlivenedData[objIdx]?.category === 'trajectory') {
+              return;
+            }
+
+            // P14-FIX: Unicidad estricta de balón (máximo 1 instancia viva)
+            const isBall = o.isBall || o.id === 'ball' || o.data?.type === 'ball' || o.data?.itemId === 'balon';
+            if (isBall) {
+              if (ballAdded) return;
+              ballAdded = true;
+              o.isBall = true;
             }
 
             const isPlayer = o.data?.type === 'player' || 
@@ -278,7 +298,11 @@ export function createAnimationEngine({
       ? JSON.parse(frameB.state)
       : (frameB.state || { objects: [] });
 
-    const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
+    const rawTargets = (Array.isArray(stateB.objects) ? stateB.objects : []).filter(o => 
+      !o.isTrajectory && 
+      o.category !== 'trajectory' && 
+      o.data?.type !== 'trajectory'
+    );
     const targetsByKey = new Map();
 
     rawTargets.forEach((objData, i) => {
@@ -297,8 +321,19 @@ export function createAnimationEngine({
 
     // Desplazar objetos linealmente de su pos inicial a la pos destino
     const animatableObjs = renderFc.getObjects().filter(o => 
-      o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background'
+      o.type !== 'field' && 
+      o.data?.type !== 'field' && 
+      o.data?.type !== 'background' &&
+      !o.isTrajectory &&
+      o.category !== 'trajectory' &&
+      o.data?.type !== 'trajectory'
     );
+
+    // P14-FIX: Garantizar balón <= 1 en renderFc
+    const curBalls = renderFc.getObjects().filter(b => b.isBall || b.id === 'ball' || b.data?.type === 'ball');
+    if (curBalls.length > 1) {
+      for (let i = 1; i < curBalls.length; i++) renderFc.remove(curBalls[i]);
+    }
 
     animatableObjs.forEach((obj, idx) => {
       const objId = getObjectIdentifier(obj) || `idx_${idx}`;

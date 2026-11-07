@@ -304,6 +304,29 @@ if (fs.existsSync(adminPanelPath)) {
   }
 }
 
+// 5.1 Verificación P14-FIX: Pizarra Táctica y Canvas Runtime
+const pizarraFiles = [
+  'src/pages/PizarraTactica.jsx',
+  'src/utils/animationEngine.js'
+];
+for (const rel of pizarraFiles) {
+  const pPath = path.resolve(rootDir, rel);
+  if (!fs.existsSync(pPath)) continue;
+  const pContent = fs.readFileSync(pPath, 'utf-8');
+  // Prohibición de líneas de trayectoria residuales o estilos teal en canvas
+  const canvasPatterns = [
+    { pattern: /stroke:\s*['"]#4CAF7D['"]/gi, name: 'Trayectoria con Verde Campo #4CAF7D (vetado para trayectorias; usar #D4A843 o 0 líneas)' },
+    { pattern: /stroke:\s*['"]#0D9488['"]/gi, name: 'Trayectoria con Teal #0D9488 en canvas' },
+    { pattern: /stroke:\s*['"]#10B981['"]/gi, name: 'Trayectoria con Menta #10B981 en canvas' }
+  ];
+  for (const { pattern, name } of canvasPatterns) {
+    if (pattern.test(pContent)) {
+      console.error(`❌ [P14-CANVAS-VIOLATION: ${name}] detectado en ${rel}`);
+      totalViolations++;
+    }
+  }
+}
+
 if (totalViolations > 0) {
   console.error(`\n🚨 FALLO: Se encontraron ${totalViolations} violaciones de paleta en los componentes auditados.`);
   console.error('   Regla: Queda terminantemente prohibido el uso de azules/navy/casi-colores (#047857, #1E293B, #10B981), rojo #EF4444, emojis y colores no canónicos.');

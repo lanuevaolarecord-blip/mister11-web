@@ -178,7 +178,13 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return { objects: [] };
 
-    const objects = fc.getObjects().filter(o => !isFieldLayer(o)).map(obj => {
+    const objects = fc.getObjects().filter(o => 
+      !isFieldLayer(o) &&
+      !o.isTrajectory &&
+      o.category !== TACTICAL_CATEGORIES.TRAJECTORY &&
+      o.data?.type !== 'trajectory' &&
+      o.data?.type !== 'temp'
+    ).map(obj => {
       const serializado = obj.toObject([
         'data', 'id', 'isPlayerPiece', 'isMaterial', 'isBall', 'isComodin', 'isZone', 'isTool', 'isTrajectory',
         'radius', 'width', 'height', 'scaleX', 'scaleY', 'angle', 'stroke', 'strokeWidth', 'strokeDashArray', 'fill'
@@ -358,7 +364,13 @@ const PizarraTactica = () => {
     }
 
     removeAllPiecesPreservingField(fc);
-    const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
+    const rawObjs = Array.isArray(state.objects) ? state.objects : [];
+    const objsToEnliven = rawObjs.filter(o => 
+      !o.isTrajectory && 
+      o.category !== TACTICAL_CATEGORIES.TRAJECTORY && 
+      o.data?.type !== 'trajectory' && 
+      o.data?.type !== 'temp'
+    );
     
     if (objsToEnliven.length === 0) {
       syncingR.current = false;
@@ -404,6 +416,7 @@ const PizarraTactica = () => {
 
       // FIX-2: try/catch para garantizar que syncingR nunca queda en true permanentemente
       try {
+        let ballAdded = false;
         objects.forEach((o, objIdx) => {
           const itemData = enlivenedData[objIdx] || {};
           if (!o.data && itemData.data) {
@@ -415,13 +428,27 @@ const PizarraTactica = () => {
 
           // Restaurar categoría taxonómica canónica (Puerta P3)
           const cat = itemData.category || itemData.data?.category || getTacticalCategory(o) || getTacticalCategory(itemData);
+          
+          // P14-FIX: Purgar cualquier línea de trayectoria residual en runtime
+          if (cat === TACTICAL_CATEGORIES.TRAJECTORY || o.isTrajectory || itemData.isTrajectory || itemData.data?.type === 'trajectory') {
+            return;
+          }
+
+          // P14-FIX: Unicidad estricta del balón (máximo 1 instancia viva en el canvas)
+          const isBall = cat === TACTICAL_CATEGORIES.BALL || o.isBall || itemData.isBall || o.id === 'ball' || itemData.id === 'ball' || itemData.data?.type === 'ball' || itemData.data?.itemId === 'balon';
+          if (isBall) {
+            if (ballAdded) {
+              return; // Descartar balón duplicado (ghost)
+            }
+            ballAdded = true;
+            o.isBall = true;
+          }
+
           if (cat === TACTICAL_CATEGORIES.PLAYER) o.isPlayerPiece = true;
-          if (cat === TACTICAL_CATEGORIES.MATERIAL) o.isMaterial = true;
-          if (cat === TACTICAL_CATEGORIES.BALL) o.isBall = true;
+          if (cat === TACTICAL_CATEGORIES.MATERIAL && !isBall) o.isMaterial = true;
           if (cat === TACTICAL_CATEGORIES.COMODIN) { o.isComodin = true; o.isPlayerPiece = true; }
           if (cat === TACTICAL_CATEGORIES.ZONE) o.isZone = true;
           if (cat === TACTICAL_CATEGORIES.TOOL) o.isTool = true;
-          if (cat === TACTICAL_CATEGORIES.TRAJECTORY) o.isTrajectory = true;
 
           // Restaurar borde blanco en los jugadores
           const isPlayer = cat === TACTICAL_CATEGORIES.PLAYER || 
@@ -448,6 +475,20 @@ const PizarraTactica = () => {
           applyMister11Controls(o);
           fc.add(o);
         });
+
+        // P14-FIX: Garantizar 0 líneas residuales de trayectoria y unicidad estricta de balón en runtime
+        fc.getObjects().forEach(obj => {
+          if (obj.isTrajectory || obj.data?.type === 'trajectory' || obj.category === 'trajectory') {
+            fc.remove(obj);
+          }
+        });
+        const currentBalls = fc.getObjects().filter(b => b.isBall || b.category === 'ball' || b.id === 'ball' || b.data?.type === 'ball');
+        if (currentBalls.length > 1) {
+          for (let i = 1; i < currentBalls.length; i++) {
+            fc.remove(currentBalls[i]);
+          }
+        }
+
         normalizarTamañoJugadores(fc);
         ensurePlayersOnTop();
         fc.renderAll();
@@ -2752,46 +2793,13 @@ const PizarraTactica = () => {
       : targetFrame.state;
 
     cargarFrame(targetState, () => {
-      // D-FRAME-1: Visualizar trayectorias de piezas entre frames en modo edición
-      if (idx > 0 && framesR.current[idx - 1]) {
-        try {
-          const prevState = typeof framesR.current[idx - 1].state === 'string'
-            ? JSON.parse(framesR.current[idx - 1].state)
-            : framesR.current[idx - 1].state;
-          const prevObjs = Array.isArray(prevState?.objects) ? prevState.objects : [];
-          const curObjs = Array.isArray(targetState?.objects) ? targetState.objects : [];
-          const fr = frRef.current;
-
-          curObjs.forEach(c => {
-            const cId = c.id || c.data?.id;
-            if (!cId || c.data?.type === 'field' || c.isFieldLayer) return;
-            const p = prevObjs.find(po => (po.id || po.data?.id) === cId);
-            if (p && fr) {
-              const pPt = (p.xRel !== undefined && p.yRel !== undefined)
-                ? fr.getCanvasPoint(p.xRel, p.yRel)
-                : { x: p.left, y: p.top };
-              const cPt = (c.xRel !== undefined && c.yRel !== undefined)
-                ? fr.getCanvasPoint(c.xRel, c.yRel)
-                : { x: c.left, y: c.top };
-              const dist = Math.hypot(cPt.x - pPt.x, cPt.y - pPt.y);
-              if (dist > 18) {
-                const trajectoryLine = new fabric.Line([pPt.x, pPt.y, cPt.x, cPt.y], {
-                  stroke: '#4CAF7D',
-                  strokeWidth: 2,
-                  strokeDashArray: [6, 4],
-                  opacity: 0.7,
-                  selectable: false,
-                  evented: false,
-                  isTrajectory: true,
-                  data: { type: 'trajectory', fromId: cId, toId: cId }
-                });
-                fc.add(trajectoryLine);
-                fc.sendToBack(trajectoryLine);
-              }
-            }
-          });
-        } catch (_) {}
-      }
+      // D-FRAME-1 (P14-FIX): Cero líneas residuales teal. Suprimido por defecto para 0 líneas en runtime.
+      // Purgar preventivamente cualquier trayectoria previa que pudiera persistir
+      fc.getObjects().forEach(obj => {
+        if (obj.isTrajectory || obj.data?.type === 'trajectory' || obj.category === 'trajectory') {
+          fc.remove(obj);
+        }
+      });
 
       syncingR.current = false;
       fc.renderAll();
@@ -2872,6 +2880,18 @@ const PizarraTactica = () => {
     // Guardar frame actual antes de reproducir para asegurar que no se pierdan ediciones
     await saveFrameState(true);
 
+    fc.discardActiveObject();
+    // P14-FIX: Purgar preventivamente cualquier trayectoria previa o duplicado de balón antes de animar
+    fc.getObjects().forEach(o => {
+      if (o.isTrajectory || o.category === 'trajectory' || o.data?.type === 'trajectory') {
+        fc.remove(o);
+      }
+    });
+    const initBalls = fc.getObjects().filter(b => b.isBall || b.category === 'ball' || b.id === 'ball' || b.data?.type === 'ball');
+    if (initBalls.length > 1) {
+      for (let i = 1; i < initBalls.length; i++) fc.remove(initBalls[i]);
+    }
+
     setIsPlaying(true);
     playingR.current = true;
 
@@ -2915,6 +2935,18 @@ const PizarraTactica = () => {
       // Al inicio de la animación completa (idx === 0), cargar frame 0 en canvas
       // Para pasos posteriores, los objetos ya están posicionados en el estado final del paso anterior
       const prepareFrame = (onReady) => {
+        // P14-FIX: Purgar siempre cualquier trayectoria residual antes de cada transición
+        fc.getObjects().forEach(o => {
+          if (o.isTrajectory || o.category === 'trajectory' || o.data?.type === 'trajectory') {
+            fc.remove(o);
+          }
+        });
+        // P14-FIX: Garantizar balón <= 1 en canvas antes de cada paso
+        const curBalls = fc.getObjects().filter(b => b.isBall || b.category === 'ball' || b.id === 'ball' || b.data?.type === 'ball');
+        if (curBalls.length > 1) {
+          for (let i = 1; i < curBalls.length; i++) fc.remove(curBalls[i]);
+        }
+
         if (idx === 0) {
           cargarFrame(stateA, onReady);
         } else {
@@ -2925,7 +2957,12 @@ const PizarraTactica = () => {
       prepareFrame(() => {
         if (!playingR.current) return;
         const objs = fc.getObjects();
-        const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
+        const rawTargets = (Array.isArray(stateB.objects) ? stateB.objects : []).filter(o =>
+          !isFieldLayer(o) &&
+          !o.isTrajectory &&
+          o.category !== 'trajectory' &&
+          o.data?.type !== 'trajectory'
+        );
 
         if (objs.length === 0 || rawTargets.length === 0) {
           // Fallback: transición directa
@@ -2957,8 +2994,13 @@ const PizarraTactica = () => {
           return { left, top, id, category: cat, data: objData, index: i };
         });
 
-        // Filtrar objetos animables (todas las piezas tácticas, no el fondo ni el césped)
-        const animatableObjs = objs.filter(o => !isFieldLayer(o));
+        // Filtrar objetos animables (todas las piezas tácticas, no el fondo, ni el césped, ni trayectorias)
+        const animatableObjs = objs.filter(o => 
+          !isFieldLayer(o) && 
+          !o.isTrajectory && 
+          o.category !== 'trajectory' && 
+          o.data?.type !== 'trajectory'
+        );
         if (animatableObjs.length === 0) {
           cargarFrame(stateB, () => {
             if (!playingR.current) return;
@@ -3022,6 +3064,12 @@ const PizarraTactica = () => {
           easing: fabric.util.ease.easeInOutSine,
           onChange: (v) => {
             if (!playingR.current) return;
+            // P14-FIX: Balón con 1 única instancia viva por rAF
+            const ballsInRaf = fc.getObjects().filter(b => b.isBall || b.category === 'ball' || b.id === 'ball' || b.data?.type === 'ball');
+            if (ballsInRaf.length > 1) {
+              for (let i = 1; i < ballsInRaf.length; i++) fc.remove(ballsInRaf[i]);
+            }
+
             animationsData.forEach(({ obj, sLeft, sTop, tLeft, tTop }) => {
               obj.set({
                 left: sLeft + (tLeft - sLeft) * v,

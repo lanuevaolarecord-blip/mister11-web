@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { usePlayerPlans } from '../../hooks/usePlayerPlans';
 import { showToast } from '../../utils/toast';
 import { 
   Target, 
@@ -212,44 +213,44 @@ const formatSafeDate = (dateVal) => {
 export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
   const { t, language, formatDate } = useTranslation();
-  const [plans, setPlans] = useState([]);
+  const effectiveTeamId = team?.id || (teamPath ? teamPath.split('/').pop() : null);
+
+  // Selector canónico compartido: usePlayerPlans con scope estricto por playerId
+  const { playerPlans, teamPlans, loading: plansLoading, updatePlayerPlan } = usePlayerPlans(
+    effectiveTeamId,
+    player?.id,
+    { teamPath }
+  );
+
   const [teamExercises, setTeamExercises] = useState([]);
   const [expandedGuides, setExpandedGuides] = useState({});
-  const [loading, setLoading] = useState(true);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const playerAge = calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.edad || player?.age)?.years;
 
-  // 1. Escuchar planes del jugador
+  // Planes visibles para este jugador: individuales (scoped por playerId) + colectivos
+  const plans = useMemo(() => {
+    const individual = (playerPlans || []).filter(p => p.active !== false);
+    const collective = (teamPlans || []).filter(p => p.assignedToAll && p.active !== false);
+    return [...individual, ...collective];
+  }, [playerPlans, teamPlans]);
+
+  const loading = plansLoading;
+
+  // Escuchar ejercicios del equipo para resolver nombres reales
   useEffect(() => {
-    if (!teamPath || !player?.id) {
-      setLoading(false);
-      return;
-    }
+    if (!teamPath) return;
 
     const cleanPath = teamPath.replace(/^\/+|\/+$/g, '');
-    const plansRef = collection(db, `${cleanPath}/playerPlans`);
-    const unsub = onSnapshot(plansRef, (snapshot) => {
-      const allPlans = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      const myPlans = allPlans.filter(p => (p.playerId === player.id || p.assignedToAll) && p.active !== false);
-      setPlans(myPlans);
-      setLoading(false);
-    }, (err) => {
-      console.warn('[PlayerPlansPortalTab] Error cargando planes:', err);
-      setLoading(false);
-    });
-
-    // 2. Escuchar ejercicios del equipo para resolver nombres reales
     const exRef = collection(db, `${cleanPath}/exercises`);
     const unsubEx = onSnapshot(exRef, (snap) => {
       setTeamExercises(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, () => {});
 
     return () => {
-      unsub();
       unsubEx();
     };
-  }, [teamPath, player?.id]);
+  }, [teamPath]);
 
   const toggleGuide = (planId, exIdx) => {
     const key = `${planId}-${exIdx}`;

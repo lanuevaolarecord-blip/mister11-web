@@ -39,7 +39,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
   ];
 
   const { exercises } = useExercises(activeTeamId);
-  const { addPlayerPlan } = usePlayerPlans(activeTeamId);
+  const { addPlayerPlan } = usePlayerPlans(activeTeamId, player?.id);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [frequency, setFrequency] = useState('daily');

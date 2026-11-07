@@ -10,7 +10,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import './PlayerPlansTab.css';
 
 const PlayerPlansTab = ({ player, activeTeamId }) => {
-  const { playerPlans, teamPlans, loading, updatePlayerPlan, removePlayerPlan } = usePlayerPlans(activeTeamId);
+  const { playerPlans, teamPlans, loading, updatePlayerPlan, removePlayerPlan } = usePlayerPlans(activeTeamId, player?.id);
   const { exercises } = useExercises(activeTeamId);
   const { activeTeam } = useTeams();
   const { t, isEn, fmtPlural } = useTranslation();

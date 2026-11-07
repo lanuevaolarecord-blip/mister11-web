@@ -385,34 +385,26 @@ const pendingOwnerDecisions = {
 // - NOMBRE-LOGRO = localizado.
 
 const legitimateCognates = {
-  'player.nav.schedule': ['Agenda', 'Schedule'],
+  'player.nav.schedule': ['Agenda'],
   'player.nav.tests': ['Tests', 'Testes', 'Tes'],
   'bottomnav.tests': ['Tests', 'Testes', 'Tes'],
-  'nav.tests': ['TESTS', 'TESTES', 'TES & EVALUASI'],
-  'push.foreground_toast': ['🔔 {title}: {body}', '🔔 Notificação {title}: {body}', '🔔 {title} : {body}', '🔔 Notifikasi {title}: {body}'],
-  'attendance.toast.allMarkedPresent': ['Todos marcados como presentes (Oficial)'],
-  'player.tab.general': ['GENERAL', 'GERAL', 'GÉNÉRAL', 'UMUM'],
-  'player.tab.physical': ['FÍSICO', 'PHYSICAL', 'PHYSIQUE', 'FISIK'],
-  'player.tab.technical': ['TÉCNICA', 'Técnica', 'TECHNICAL', 'TECHNIQUE', 'TEKNIS'],
-  'player.tab.tactical': ['TÁCTICA', 'Táctica', 'TACTICAL', 'Tactical', 'TÁTICA', 'Tática', 'TACTIQUE', 'Tactique', 'TAKTIK', 'Taktik'],
-  'player.tab.plans': ['PLANES', 'PLANS', 'PLANOS', 'PROGRAMMES', 'PROGRAM'],
-  'player.tab.chat': ['CHAT', 'OBROLAN'],
+  'nav.tests': ['TESTS', 'TESTES'],
+  'push.foreground_toast': ['🔔 {title}: {body}'],
+  'player.tab.general': ['GENERAL'],
+  'player.tab.physical': ['FÍSICO'],
+  'player.tab.technical': ['TÉCNICA', 'Técnica'],
+  'player.tab.chat': ['CHAT'],
   'player.plans.sets': ['Series', 'Sets', 'Séries', 'Set'],
-  'player.plans.youth': ['Juvenil', 'Youth', 'Base / Juvenil', 'Jeunes', 'Usia Muda'],
   'player.plans.subtitle': ['Routines personnalisées assignées par le staff technique'],
-  'mat.sofa': ['Sofá', 'Sofa', 'Canapé'],
-  'mat.cones': ['Cones', 'Cônes', 'Kerucut'],
-  'mat.balls': ['Balones', 'Balls', 'Bolas', 'Ballons', 'Bola'],
-  'mat.wall': ['Pared', 'Wall', 'Parede', 'Mur', 'Dinding'],
-  'mat.towel': ['Toalla', 'Towel', 'Toalha', 'Serviette', 'Handuk'],
-  'mat.rings': ['Aros', 'Rings', 'Cerceaux', 'Gelang-gelang'],
-  'mat.nordic_bench': ['Banco nórdico', 'Nordic bench', 'Banc nordique', 'Bangku nordik'],
-  'mat.heavy_bed': ['Cama pesada', 'Heavy bed', 'Lit lourd', 'Tempat tidur kokoh'],
-  'mat.bodyweight': ['Peso corporal', 'Bodyweight', 'Poids du corps', 'Berat badan'],
-  'player.profile.category': ['Categoría', 'Category', 'Categoria', 'Catégorie', 'Kategori'],
-  'player.profile.position': ['Position', 'Position principale', 'Posición Principal', 'Main Position', 'Posição principal', 'Posisi utama'],
-  'player.nav.profile': ['Ficha', 'Profile', 'Perfil', 'Profil'],
-  'player.nav.home': ['Inicio', 'Home', 'Início', 'Accueil', 'Beranda']
+  'mat.sofa': ['Sofá', 'Sofa'],
+  'mat.cones': ['Cones'],
+  'mat.rings': ['Aros'],
+  'mat.nordic_bench': ['Banco nórdico'],
+  'mat.heavy_bed': ['Cama pesada'],
+  'mat.bodyweight': ['Peso corporal'],
+  'player.profile.position': ['Position', 'Position principale'],
+  'player.nav.profile': ['Perfil', 'Profil'],
+  'player.profile.category': ['Categoria', 'Catégorie']
 };
 
 // ── CLASIFICADOR Y DETECTOR DE IDIOMA MULTI-LENGUA REFINADO (H9, H14, H15) ───
@@ -434,14 +426,14 @@ const foreignPatterns = {
   }
 };
 
-// Evidencias léxicas/morfológicas positivas por lengua target (H16)
+// Evidencias léxicas/morfológicas positivas por lengua target (H16, H23, H24)
 const nativePatterns = {
-  es: /[ñ¿¡áéíóúÁÉÍÓÚ]|\b(el|la|los|las|de|del|en|un|una|por|para|sin|con|planes|rutinas|entrenamiento|personalizadas|cuerpo|técnico|posición|categoría|prevención|recuperación|fortalecimiento|banco|mancuerna|conos|error|guardar|datos|altura|peso|perfil|cuenta|partidos|asistencia|repeticiones|series|instrucciones|clave|postural|seguimiento|paso|completado|pendiente|hechos|activo|logros|inicio|ficha)\b/i,
-  'es-419': /[ñ¿¡áéíóúÁÉÍÓÚ]|\b(el|la|los|las|de|del|en|un|una|por|para|sin|con|planes|rutinas|entrenamiento|personalizadas|cuerpo|técnico|posición|categoría|prevención|recuperación|fortalecimiento|banco|mancuerna|conos|error|guardar|datos|altura|peso|perfil|cuenta|partidos|asistencia|repeticiones|series|instrucciones|clave|postural|seguimiento|paso|completado|pendiente|hechos|activo|logros|inicio|ficha)\b/i,
-  en: /\b(the|of|in|to|for|with|on|at|by|from|a|an|no|all|your|our|my|plans|routines|custom|assigned|coaching|staff|main|position|category|prevention|recovery|strengthening|bench|sofa|dumbbell|cones|error|saving|saved|stats|profile|matches|player|account|exercises|today|step|postural|key|monitoring|completed|pending|done|active|reps|sets|instructions|coach|achievements|home)\b/i,
-  pt: /[ãõçêéíóúÃÕÇÊÉÍÓÚ]|\b(o|a|os|as|de|do|da|dos|das|em|no|na|nos|nas|um|uma|por|para|com|sem|planos|rotinas|treino|personalizadas|comissão|técnica|posição|categoria|prevenção|recuperação|fortalecimento|banco|haltere|cones|erro|salvar|dados|altura|peso|perfil|conta|partidas|presença|repetições|séries|instruções|chave|postural|acompanhamento|passo|concluído|pendente|feitos|ativo|conquistas|início)\b/i,
-  fr: /[éèêëàâôûùçœæÉÈÊÀÇ]|\b(le|la|les|de|du|des|en|un|une|par|pour|avec|sans|plans|d'entraînement|routines|personnalisées|staff|technique|principale|position|catégorie|prévention|récupération|renforcement|banc|haltère|cônes|erreur|enregistrer|données|taille|poids|profil|compte|matchs|présence|répétitions|séries|consignes|point|postural|suivi|étape|terminé|en\s+attente|faits|actif|réalisations|accueil)\b/i,
-  id: /\b(yang|di|ke|dari|pada|untuk|dengan|dan|atau|tanpa|rencana|pelatihan|rutinitas|khusus|staf|pelatih|posisi|utama|kategori|pencegahan|pemulihan|penguatan|bangku|dumbel|kerucut|kesalahan|menyimpan|data|tinggi|berat|profil|akun|pertandingan|kehadiran|repetisi|set|instruksi|kunci|postur|pemantauan|langkah|selesai|tertunda|dikerjakan|aktif|pencapaian|beranda)\b/i
+  es: /[ñ¿¡áéíóúÁÉÍÓÚ]|\b(el|la|los|las|de|del|en|un|una|por|para|sin|con|planes|rutinas|entrenamiento|personalizadas|cuerpo|técnico|posición|categoría|prevención|recuperación|fortalecimiento|banco|mancuerna|conos|error|guardar|datos|altura|peso|perfil|cuenta|partidos|asistencia|repeticiones|series|instrucciones|clave|postural|seguimiento|paso|completado|pendiente|hechos|activo|logros|inicio|ficha|ajustes|equipo|más|pizarra|planificación|sesiones|salud)\b/i,
+  'es-419': /[ñ¿¡áéíóúÁÉÍÓÚ]|\b(el|la|los|las|de|del|en|un|una|por|para|sin|con|planes|rutinas|entrenamiento|personalizadas|cuerpo|técnico|posición|categoría|prevención|recuperación|fortalecimiento|banco|mancuerna|conos|error|guardar|datos|altura|peso|perfil|cuenta|partidos|asistencia|repeticiones|series|instrucciones|clave|postural|seguimiento|paso|completado|pendiente|hechos|activo|logros|inicio|ficha|ajustes|equipo|más|pizarra|planificación|sesiones|salud)\b/i,
+  en: /\b(the|of|in|to|for|with|on|at|by|from|a|an|no|all|your|our|my|plans|routines|custom|assigned|coaching|staff|main|position|category|prevention|recovery|strengthening|bench|sofa|dumbbell|cones|error|saving|saved|stats|profile|matches|player|account|exercises|today|step|postural|key|monitoring|completed|pending|done|active|reps|sets|instructions|coach|achievements|home|settings|team|more|board|planning|sessions|attendance|health|technical|tactical|physical|schedule|youth|straps|hurdles|ladder|bibs|goals|chair|mat|heavy|bed|bodyweight|wall|towel|balls|ball|rings|ring|could|read|file|format|imported|successfully|consent|updated|must|between)\b/i,
+  pt: /[ãõçêéíóúÃÕÇÊÉÍÓÚ]|\b(o|a|os|as|de|do|da|dos|das|em|no|na|nos|nas|um|uma|por|para|com|sem|planos|rotinas|treino|personalizadas|comissão|técnica|posição|categoria|prevenção|recuperação|fortalecimento|banco|haltere|cones|erro|salvar|dados|altura|peso|perfil|conta|partidas|presença|repetições|séries|instruções|chave|postural|acompanhamento|passo|concluído|pendente|feitos|ativo|conquistas|início|configurações|equipe|mais|quadro|planejamento|sessões|treinador|saúde)\b/i,
+  fr: /[éèêëàâôûùçœæÉÈÊÀÇ]|\b(le|la|les|de|du|des|en|un|une|par|pour|avec|sans|plans|d'entraînement|routines|personnalisées|staff|technique|principale|position|catégorie|prévention|récupération|renforcement|banc|haltère|cônes|erreur|enregistrer|données|taille|poids|profil|compte|matchs|présence|répétitions|séries|consignes|point|postural|suivi|étape|terminé|en\s+attente|faits|actif|réalisations|accueil|paramètres|équipe|plus|tableau|planification|séances|entraîneur|santé)\b/i,
+  id: /\b(yang|di|ke|dari|pada|untuk|dengan|dan|atau|tanpa|rencana|pelatihan|rutinitas|khusus|staf|pelatih|posisi|utama|kategori|pencegahan|pemulihan|penguatan|bangku|dumbel|kerucut|kesalahan|menyimpan|data|tinggi|berat|profil|akun|pertandingan|kehadiran|repetisi|set|instruksi|kunci|postur|pemantauan|langkah|selesai|tertunda|dikerjakan|aktif|pencapaian|beranda|pengaturan|tim|lainnya|papan|perencanaan|sesi|kesehatan)\b/i
 };
 
 function classifyCellLanguage(val, targetCode, key) {
@@ -750,6 +742,64 @@ if (verdictCaseFail.status === 'FAIL' && verdictCaseExpired.status === 'FAIL' &&
 } else {
   recordFailure({ test: 'Regresión H18', surface: 'meta', lang: 'all', key: 'verdict', error: 'Lógica tri-nivel de veredicto inconsistente' });
 }
+
+// 10. Regresión H22.1: Inyección de inglés ("PHYSICAL") en columna PT (key player.tab.physical)
+const reg10Val = 'PHYSICAL';
+const reg10Classified = classifyCellLanguage(reg10Val, 'pt', 'player.tab.physical');
+if (reg10Classified.lang === 'en' && reg10Classified.source === 'rama3-exact') {
+  console.log('  ✅ Regresión H22.1: Inyección de inglés ("PHYSICAL") en PT detectada como fuga exacta (rama3-exact), NUNCA aprobada como cognado.');
+} else {
+  recordFailure({ test: 'Regresión H22.1', surface: 'meta', lang: 'pt', key: 'player.tab.physical', error: `Inyección de "PHYSICAL" en PT no fue bloqueada: ${reg10Classified.source}` });
+}
+
+// 11. Regresión H22.2: Inyección de español ("Ficha") en columna PT (key player.nav.profile)
+const reg11Val = 'Ficha';
+const reg11Classified = classifyCellLanguage(reg11Val, 'pt', 'player.nav.profile');
+if (reg11Classified.lang === 'es' && reg11Classified.source === 'rama3-exact') {
+  console.log('  ✅ Regresión H22.2: Inyección de español ("Ficha") en PT detectada como fuga exacta (rama3-exact), NUNCA aprobada como cognado.');
+} else {
+  recordFailure({ test: 'Regresión H22.2', surface: 'meta', lang: 'pt', key: 'player.nav.profile', error: `Inyección de "Ficha" en PT no fue bloqueada: ${reg11Classified.source}` });
+}
+
+// 12. Regresión H23.1: Inyección de forma española ("Fortalecimiento") en columna PT
+const reg12Val = 'Fortalecimiento';
+const reg12Classified = classifyCellLanguage(reg12Val, 'pt', 'plan.type.fortalecimiento');
+if (reg12Classified.lang === 'es' && reg12Classified.source === 'rama3-exact') {
+  console.log('  ✅ Regresión H23.1: Inyección de forma española ("Fortalecimiento") en PT bloqueada como fuga exacta (rama3-exact), no admitida en nativePatterns.pt.');
+} else {
+  recordFailure({ test: 'Regresión H23.1', surface: 'meta', lang: 'pt', key: 'plan.type.fortalecimiento', error: `Inyección de "Fortalecimiento" en PT no fue bloqueada: ${reg12Classified.source}` });
+}
+
+// 13. Regresión H23.2: Inyección de forma portuguesa legítima ("Fortalecimento") en columna PT
+const reg13Val = 'Fortalecimento';
+const reg13Classified = classifyCellLanguage(reg13Val, 'pt', 'plan.type.fortalecimiento');
+if (reg13Classified.lang === 'pt' && reg13Classified.source === 'rama2-lexical-native') {
+  console.log('  ✅ Regresión H23.2: Forma portuguesa legítima ("Fortalecimento") en PT aprobada afirmativamente como nativa (rama2-lexical-native).');
+} else {
+  recordFailure({ test: 'Regresión H23.2', surface: 'meta', lang: 'pt', key: 'plan.type.fortalecimiento', error: `Forma legítima "Fortalecimento" en PT no fue reconocida como nativa: ${reg13Classified.source}` });
+}
+
+// 14. Regresión H24: Batería anti-contrabando de palabras EN añadidas frente a las otras 5 lenguas
+const wordsAddedToEN = [
+  'settings', 'team', 'more', 'board', 'planning', 'sessions', 'attendance', 'health',
+  'technical', 'tactical', 'physical', 'schedule', 'youth', 'straps', 'hurdles', 'ladder',
+  'bibs', 'goals', 'chair', 'mat', 'heavy', 'bed', 'bodyweight', 'wall', 'towel', 'balls',
+  'ball', 'rings', 'ring', 'could', 'read', 'file', 'format', 'imported', 'successfully',
+  'consent', 'updated', 'must', 'between'
+];
+let contrabandCount = 0;
+for (const word of wordsAddedToEN) {
+  for (const otherLang of ['es', 'es-419', 'pt', 'fr', 'id']) {
+    if (nativePatterns[otherLang].test(word)) {
+      contrabandCount++;
+      recordFailure({ test: 'Regresión H24 Contrabando', surface: 'meta', lang: otherLang, key: word, error: `Palabra añadida a EN "${word}" genera colisión positiva en ${otherLang}` });
+    }
+  }
+}
+if (contrabandCount === 0) {
+  console.log(`  ✅ Regresión H24: Batería anti-contrabando 100% PASS: Las ${wordsAddedToEN.length} palabras añadidas a EN dieron negativo en las otras 5 lenguas.`);
+}
+
 fugaCount += surfaceLeakCount;
 
 // Tabla literal Campo × Lengua

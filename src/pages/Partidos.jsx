@@ -1120,37 +1120,81 @@ const Partidos = () => {
 
   // ── FUNCIÓN COMPARTIDA: captura el campo de alineación con html2canvas ───────
   // Usada tanto por el PNG de la pestaña como por el informe PDF para que
-  // ambas imágenes sean IDÉNTICAS (tarjetas FIFA con fotos reales).
+  // ambas imágenes sean IDÉNTICAS (tarjetas FIFA con fotos reales de los jugadores).
   const captureLineupDataUrl = async () => {
     if (!pitchExportRef.current) return null;
     let exportClone = null;
     try {
-      const [html2canvasMod, { imageUrlToBase64 }] = await Promise.all([
+      const [html2canvasMod, { imageUrlToBase64, generateInitialsAvatar }] = await Promise.all([
         import('html2canvas'),
         import('../utils/pdfTheme'),
       ]);
       const html2canvas = html2canvasMod.default || html2canvasMod;
 
-      const photoBase64Map = {};
-      const convocadosIds = (calledPlayers || []).filter(Boolean);
-      await Promise.all(
-        convocadosIds.map(async (pid) => {
-          const p = (players || []).find((x) => x && String(x.id) === String(pid));
-          const rawUrl = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview || p?.foto || p?.avatar;
-          if (rawUrl && !photoBase64Map[rawUrl]) {
-            try {
-              const b64 = await imageUrlToBase64(rawUrl, p?.name || p?.nombre, true);
-              if (b64 && b64.startsWith('data:image/')) photoBase64Map[rawUrl] = b64;
-            } catch (_) {}
+      // 1. Extraer en caliente las imágenes que ya están renderizadas en el DOM en vivo.
+      // Si el navegador ya las decodificó en pantalla, extraemos sus píxeles directamente sin re-petición.
+      const liveImgMap = new Map();
+      const liveImgs = pitchExportRef.current.querySelectorAll('img');
+      liveImgs.forEach((img) => {
+        const srcAttr = img.getAttribute('src');
+        const resolvedSrc = img.src;
+        try {
+          if (img.complete && img.naturalWidth > 0) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const b64 = canvas.toDataURL('image/png');
+            if (b64 && b64.startsWith('data:image/png') && b64.length > 200) {
+              if (srcAttr) liveImgMap.set(srcAttr, b64);
+              if (resolvedSrc) liveImgMap.set(resolvedSrc, b64);
+            }
           }
+        } catch (_) {
+          // Si el canvas se marca como tainted por falta de CORS, se resolverá mediante carga directa
+        }
+      });
+
+      // 2. Mapa de fotos Base64 de todos los jugadores convocados y del equipo
+      const photoBase64Map = {};
+      const allCandidatePlayers = [
+        ...(players || []),
+        ...((calledPlayers || []).map((pid) => (players || []).find((x) => x && String(x.id) === String(pid))).filter(Boolean))
+      ];
+
+      const urlToPlayerMap = new Map();
+      allCandidatePlayers.forEach((p) => {
+        const rawUrl = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview || p?.photoURL || p?.foto || p?.avatar || p?.imageUrl;
+        if (rawUrl && typeof rawUrl === 'string' && !urlToPlayerMap.has(rawUrl)) {
+          urlToPlayerMap.set(rawUrl, p);
+        }
+      });
+
+      await Promise.all(
+        Array.from(urlToPlayerMap.entries()).map(async ([rawUrl, p]) => {
+          if (liveImgMap.has(rawUrl)) {
+            photoBase64Map[rawUrl] = liveImgMap.get(rawUrl);
+            return;
+          }
+          if (rawUrl.startsWith('data:image/')) {
+            photoBase64Map[rawUrl] = rawUrl;
+            return;
+          }
+          try {
+            // isAvatar = false para evitar que devuelva un avatar de iniciales si la foto no descarga
+            const b64 = await imageUrlToBase64(rawUrl, p?.name || p?.nombre, false);
+            if (b64 && typeof b64 === 'string' && b64.startsWith('data:image/')) {
+              photoBase64Map[rawUrl] = b64;
+            }
+          } catch (_) {}
         })
       );
 
       exportClone = pitchExportRef.current.cloneNode(true);
       exportClone.classList.add('export-lineup-hd-capture');
       // IMPORTANTE: NO usar opacity:0 porque html2canvas lo respeta y captura
-      // el elemento como transparente → imagen negra/vacía en el PDF.
-      // Usar solo left:-9999px para ocultarlo visualmente al usuario.
+      // el elemento como transparente. Usar solo left:-9999px.
       exportClone.style.position = 'fixed';
       exportClone.style.left = '-9999px';
       exportClone.style.top = '0px';
@@ -1165,15 +1209,31 @@ const Partidos = () => {
       exportClone.style.opacity = '1';
       exportClone.style.pointerEvents = 'none';
 
-      const cloneImgs = exportClone.querySelectorAll('img[src]');
+      // Sustituir cada img del clon por su Base64 real para garantizar renderizado offline sin CORS
+      const cloneImgs = exportClone.querySelectorAll('img');
       cloneImgs.forEach((img) => {
-        const src = img.getAttribute('src');
-        if (src && photoBase64Map[src]) {
-          img.setAttribute('src', photoBase64Map[src]);
+        const srcAttr = img.getAttribute('src');
+        const resolvedSrc = img.src;
+        const b64 = (srcAttr && photoBase64Map[srcAttr]) ||
+                    (resolvedSrc && photoBase64Map[resolvedSrc]) ||
+                    (srcAttr && liveImgMap.get(srcAttr)) ||
+                    (resolvedSrc && liveImgMap.get(resolvedSrc));
+
+        if (b64) {
+          img.setAttribute('src', b64);
           img.removeAttribute('crossorigin');
           img.removeAttribute('crossOrigin');
-        } else if (src && (src.includes('firebasestorage') || src.startsWith('gs://'))) {
-          img.style.display = 'none';
+          img.style.display = '';
+        } else if (srcAttr && (srcAttr.includes('firebasestorage') || srcAttr.startsWith('gs://') || srcAttr.startsWith('http'))) {
+          // Fallback con iniciales para no dejar tarjetas rotas si la red no responde
+          const altText = img.getAttribute('alt') || 'J';
+          const fallbackAvatar = generateInitialsAvatar ? generateInitialsAvatar(altText) : null;
+          if (fallbackAvatar) {
+            img.setAttribute('src', fallbackAvatar);
+            img.removeAttribute('crossorigin');
+            img.removeAttribute('crossOrigin');
+            img.style.display = '';
+          }
         }
       });
 
@@ -1201,8 +1261,23 @@ const Partidos = () => {
         chip.style.top = `${topPx}px`;
       });
 
-      // Esperar a que el browser layoutee y pinte todos los sub-elementos
-      await new Promise((r) => setTimeout(r, 300));
+      // Esperar activamente a que el navegador decodifique todas las imágenes Base64
+      await Promise.all(
+        Array.from(exportClone.querySelectorAll('img')).map((img) => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          if (typeof img.decode === 'function') {
+            return img.decode().catch(() => {});
+          }
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 300);
+          });
+        })
+      );
+
+      // Breve margen para que el layout engine finalice el rasterizado
+      await new Promise((r) => setTimeout(r, 150));
 
       const canvas = await html2canvas(exportClone, {
         scale: 2,
@@ -2352,7 +2427,7 @@ const Partidos = () => {
 
                         const posLabel = getSlotPosition(idx);
                         const isSelected = selectedSlotIdx === idx;
-                        const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
+                        const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview || player.photoURL || player.foto || player.avatar || player.imageUrl) : null;
 
                         return (
                           <div
@@ -3965,7 +4040,7 @@ const Partidos = () => {
             const topPos = `${clampedTop}%`;
             const leftPos = customPos ? customPos.left : pos.left;
             const posLabel = getSlotPosition(idx);
-            const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
+            const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview || player.photoURL || player.foto || player.avatar || player.imageUrl) : null;
 
             return (
               <div key={idx} className={`pitch-player-3d ${player ? '' : 'empty-slot'}`} style={{ top: topPos, left: leftPos }}>
@@ -4013,7 +4088,7 @@ const Partidos = () => {
               calledPlayers.slice(11).map((pid, sIdx) => {
                 const player = players.find(p => p.id === pid);
                 if (!player) return null;
-                const photoUrl = player.avatarUrl || player.photoUrl || player.photo || player.photoPreview;
+                const photoUrl = player.avatarUrl || player.photoUrl || player.photo || player.photoPreview || player.photoURL || player.foto || player.avatar || player.imageUrl;
                 return (
                   <div key={sIdx} style={{
                     display: 'flex',

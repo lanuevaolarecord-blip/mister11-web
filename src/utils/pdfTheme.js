@@ -205,15 +205,13 @@ const convertImageToPngViaCanvas = (srcUrl, timeoutMs = 2500) => {
       clearTimeout(timer);
       try {
         const canvas = document.createElement('canvas');
-        const w = img.naturalWidth || img.width || 600;
-        const h = img.naturalHeight || img.height || 350;
+        const w = img.naturalWidth || img.width || 200;
+        const h = img.naturalHeight || img.height || 200;
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         const pngDataUrl = canvas.toDataURL('image/png', 1.0);
         resolve(pngDataUrl);
@@ -276,28 +274,36 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
   const withTimeout = (promise, ms = 3500) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
-  // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path
+  // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path o URL directa
   if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage.googleapis.com') || targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
     try {
-      let path = targetUrl;
-      if (targetUrl.startsWith('gs://')) {
-        path = targetUrl.replace(/^gs:\/\/[^/]+\//, '');
-      } else if (targetUrl.includes('/o/')) {
-        const rawPath = targetUrl.split('/o/')[1].split('?')[0];
-        path = decodeURIComponent(rawPath);
+      let fileRef = null;
+      try {
+        // ref(storage, targetUrl) soporta directamente la URL completa y extrae el bucket exacto
+        fileRef = storageRef(storage, targetUrl);
+      } catch (_) {
+        let path = targetUrl;
+        if (targetUrl.startsWith('gs://')) {
+          path = targetUrl.replace(/^gs:\/\/[^/]+\//, '');
+        } else if (targetUrl.includes('/o/')) {
+          const rawPath = targetUrl.split('/o/')[1].split('?')[0];
+          path = decodeURIComponent(rawPath);
+        }
+        fileRef = storageRef(storage, path);
       }
-      const fileRef = storageRef(storage, path);
-      const blob = await withTimeout(getBlob(fileRef), 3500);
-      if (blob) {
-        const b64 = await blobToDataURL(blob);
-        if (b64) {
-          let finalB64 = b64;
-          if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
-            const png = await convertImageToPngViaCanvas(b64, 2000);
-            finalB64 = png || b64;
+      if (fileRef) {
+        const blob = await withTimeout(getBlob(fileRef), 3500);
+        if (blob) {
+          const b64 = await blobToDataURL(blob);
+          if (b64) {
+            let finalB64 = b64;
+            if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
+              const png = await convertImageToPngViaCanvas(b64, 2000);
+              finalB64 = png || b64;
+            }
+            imageBase64Cache.set(targetUrl, finalB64);
+            return finalB64;
           }
-          imageBase64Cache.set(targetUrl, finalB64);
-          return finalB64;
         }
       }
     } catch (sdkErr) {
@@ -370,8 +376,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     }
   } catch (_) {}
 
-  // Fallback final: almacenar null en caché para no reintentar peticiones fallidas
-  imageBase64Cache.set(targetUrl, null);
+  // Fallback final: si falló por red o CORS, no almacenar null permanente para permitir reintentos futuros
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);
   }

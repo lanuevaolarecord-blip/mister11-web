@@ -222,10 +222,14 @@ service cloud.firestore {
       // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
       match /playerPlans/{planId} {
         function teamRel() { return 'teams/' + teamId; }
-        allow read: if isAuth();
-        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-        allow delete: if isAuth();
+        function isStaff() { return isTeamStaff(teamRel()); }
+        function canReadPlan() {
+          return isStaff() || resource.data.get('playerId', '') == request.auth.uid;
+        }
+        allow read: if isAuth() && canReadPlan();
+        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isStaff());
+        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isStaff());
+        allow delete: if isAuth() && isStaff();
       }
 
       match /teamPlans/{planId} {
@@ -308,10 +312,13 @@ service cloud.firestore {
       match /playerPlans/{planId} {
         function teamRel() { return 'users/' + userId + '/teams/' + teamId; }
         function coach() { return isOwner(userId) || isTeamStaff(teamRel()); }
-        allow read: if isAuth();
+        function canReadPlan() {
+          return coach() || resource.data.get('playerId', '') == request.auth.uid;
+        }
+        allow read: if isAuth() && canReadPlan();
         allow create: if isAuth() && canCreatePlayerPlan(teamRel(), coach());
         allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), coach());
-        allow delete: if isAuth();
+        allow delete: if isAuth() && coach();
       }
 
       match /teamPlans/{planId} {
@@ -377,10 +384,14 @@ service cloud.firestore {
       // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
       match /playerPlans/{planId} {
         function teamRel() { return 'equipos/' + teamId; }
-        allow read: if isAuth();
-        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-        allow delete: if isAuth();
+        function isStaff() { return isTeamStaff(teamRel()); }
+        function canReadPlan() {
+          return isStaff() || resource.data.get('playerId', '') == request.auth.uid;
+        }
+        allow read: if isAuth() && canReadPlan();
+        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isStaff());
+        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isStaff());
+        allow delete: if isAuth() && isStaff();
       }
 
       match /teamPlans/{planId} {
@@ -432,10 +443,14 @@ service cloud.firestore {
         // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
         match /playerPlans/{planId} {
           function teamRel() { return 'clubs/' + clubId + '/teams/' + teamId; }
-          allow read: if isAuth();
-          allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-          allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
-          allow delete: if isAuth();
+          function isStaff() { return isTeamStaff(teamRel()); }
+          function canReadPlan() {
+            return isStaff() || resource.data.get('playerId', '') == request.auth.uid;
+          }
+          allow read: if isAuth() && canReadPlan();
+          allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isStaff());
+          allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isStaff());
+          allow delete: if isAuth() && isStaff();
         }
 
         match /teamPlans/{planId} {

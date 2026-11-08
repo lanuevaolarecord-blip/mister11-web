@@ -1,6 +1,10 @@
 /**
  * src/types/clinical.d.ts
- * Míster11 — Definición de Tipos Clínicos y de Seguridad (B8)
+ * Míster 11 — Tipado Estricto del Núcleo Clínico y Gobernanza de Seguridad (P9 / B8)
+ *
+ * Contratos formales para exerciseSafety.js y catálogos de ejercicios.
+ * Previene bugs de drift (B3), edad (B2) y dosificación (B7) en tiempo de compilación.
+ * Prohibido el uso de 'any'.
  */
 
 export type RiskTier = 'alto' | 'bajo' | 'PENDIENTE-FISIO';
@@ -17,6 +21,7 @@ export interface LocalizedString {
   pt?: string;
   fr?: string;
   id?: string;
+  'es-419'?: string;
   [locale: string]: string | undefined;
 }
 
@@ -25,6 +30,7 @@ export interface ExerciseIllustration {
   status?: 'pilot_pending_review' | 'certified' | 'pending';
   author?: string;
   reviewed_by_human: boolean;
+  rigVerifiedBy?: string;
   url?: string | null;
   alt?: LocalizedString;
   source?: string | null;
@@ -61,6 +67,8 @@ export interface CanonicalExercise {
   contexto: ExerciseContext;
   edad_minima_segura: number;
   requiere_supervision_presencial: boolean;
+  tier_riesgo?: RiskTier;
+  tier_rationale?: string;
   safety_notes?: LocalizedString;
   source: ExerciseSource;
   illustration: ExerciseIllustration;
@@ -76,7 +84,15 @@ export interface ExerciseSafetyEntry {
   supervision: boolean;
   tier_riesgo: RiskTier;
   tier_rationale: string;
+  rigVerifiedBy?: string;
   duplicateOf?: string;
+}
+
+export interface PrescriptionValidationOptions {
+  edadJugador?: number | null;
+  contexto?: ExerciseContext;
+  materialDisponible?: string[];
+  modo?: 'preferido' | 'alternativa';
 }
 
 export interface PrescriptionValidationResult {
@@ -88,3 +104,19 @@ export interface PrescriptionValidationResult {
   selectedMaterial?: string[];
   nota?: string | null;
 }
+
+/**
+ * Firmas de funciones del motor puro de seguridad clínica (exerciseSafety.js)
+ */
+export declare function assertAgeSafe(edad: number | null | undefined, exercise: CanonicalExercise | ExerciseSafetyEntry): boolean;
+
+export declare function validateExercisePrescription(
+  exercise: CanonicalExercise,
+  options?: PrescriptionValidationOptions
+): PrescriptionValidationResult;
+
+export declare function isHighRiskExercise(exercise: CanonicalExercise | ExerciseSafetyEntry): boolean;
+
+export declare function requiresSpecialistSupervision(exercise: CanonicalExercise | ExerciseSafetyEntry): boolean;
+
+export declare function resolveToGroups(exerciseId: string): string[];

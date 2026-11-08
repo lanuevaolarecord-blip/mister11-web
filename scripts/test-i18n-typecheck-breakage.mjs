@@ -31,7 +31,7 @@ try {
 console.log('\n▶ [2/2] Inyectando diccionario incompleto para verificar rotura estática...');
 const testFilePath = path.resolve(rootDir, 'src/types/test-breakage.ts');
 const brokenContent = `
-import { ExactCoreDictionary } from './i18n.d';
+import { ExactCoreDictionary } from './i18n';
 
 // Objeto al que le falta 'player.tab.plans' de forma intencional
 export const brokenLocaleDictionary: ExactCoreDictionary = {
@@ -39,7 +39,23 @@ export const brokenLocaleDictionary: ExactCoreDictionary = {
   'player.nav.stats': 'Estadísticas',
   'player.nav.chat': 'Mister',
   'player.nav.physical': 'Físico',
-  'nav.schedule': 'Calendario'
+  'player.nav.schedule': 'Calendario',
+  'player.nav.tests': 'Tests',
+  'nav.schedule': 'Calendario',
+  'nav.dashboard': 'Dashboard',
+  'nav.tests': 'Tests',
+  'player.tab.general': 'General',
+  'player.tab.physical': 'Físico',
+  'player.tab.technical': 'Técnico',
+  'player.tab.tactical': 'Táctico',
+  'player.tab.chat': 'Chat',
+  'player.plans.title': 'Planes',
+  'player.plans.subtitle': 'Subtítulo',
+  'player.profile.position': 'Posición',
+  'player.profile.category': 'Categoría',
+  'plan.type.prevencion': 'Prevención',
+  'plan.type.recuperacion': 'Recuperación',
+  'plan.type.fortalecimiento': 'Fortalecimiento'
   // 'player.tab.plans' OMITIDO
 };
 `;

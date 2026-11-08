@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { doc, writeBatch, serverTimestamp, getDoc, increment } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { logger } from '../utils/logger.js';
 
 export const getWeekKey = (d = new Date()) => {
   const date = new Date(d);
@@ -227,7 +228,7 @@ export const useCognitiveSync = (teamPath, playerId) => {
 
       // Confirmar en un solo paquete de red atómico
       await batch.commit();
-      console.log(`[useCognitiveSync] ✅ Sesión guardada y ranking actualizado atómicamente (+${xpEarned} pts)`);
+      logger.log(`[useCognitiveSync] ✅ Sesión guardada y ranking actualizado atómicamente (+${xpEarned} pts)`);
     } catch (err) {
       console.warn('[useCognitiveSync] Error en batch atómico, respaldando en cola offline:', err);
       enqueueLocally();

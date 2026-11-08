@@ -46,6 +46,8 @@ const rawPayload = {
     token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secret',
     password: 'PasswordSuperSegura123!'
   },
+  playerName: 'Mateo Menor',
+  birthDate: '2012-05-14',
   diagnosticMessage: 'El jugador con DNI 87654321A llamó desde el +34 600 123 456'
 };
 
@@ -74,6 +76,12 @@ if (scrubbed.auth.token !== '[REDACTED_SECRET]' || scrubbed.auth.password !== '[
 }
 if (scrubbed.diagnosticMessage.includes('87654321A')) {
   console.error('❌ Fallo al sanitizar DNI dentro de texto libre'); errors++;
+}
+if (scrubbed.playerName !== '[REDACTED_MINOR_PII]') {
+  console.error('❌ Fallo al sanitizar playerName de menor'); errors++;
+}
+if (scrubbed.birthDate !== '[REDACTED_DOB]') {
+  console.error('❌ Fallo al sanitizar birthDate de menor'); errors++;
 }
 
 // Probar logger.log interceptado

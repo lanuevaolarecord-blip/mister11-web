@@ -26,6 +26,7 @@ import {
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Capacitor } from "@capacitor/core";
+import { logger } from "./utils/logger.js";
 
 // Configuración definitiva de Firebase para Míster11
 const firebaseConfig = {
@@ -92,7 +93,7 @@ const WEB_CLIENT_ID = "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.google
 const signInWithGoogle = async () => {
   // ─── FLUJO 100% NATIVO (Android APK / Google Play Store) ───────────────
   if (Capacitor.isNativePlatform()) {
-    console.log("=== GOOGLE SIGN-IN 100% NATIVO ===");
+    logger.log("=== GOOGLE SIGN-IN 100% NATIVO ===");
     try {
       let result;
 
@@ -108,7 +109,7 @@ const signInWithGoogle = async () => {
         });
       }
 
-      console.log("✅ Selector nativo completado:", JSON.stringify(result));
+      logger.log("✅ Selector nativo completado");
 
       // 2. Extraer ID Token devuelto por Google
       let idToken =
@@ -132,14 +133,14 @@ const signInWithGoogle = async () => {
       if (idToken) {
         const credential = GoogleAuthProvider.credential(idToken);
         const userCred = await signInWithCredential(auth, credential);
-        console.log("✅ Sesión iniciada con éxito:", userCred.user.email);
+        logger.log("✅ Sesión iniciada con éxito");
         await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName || '');
         return userCred;
       }
 
       // 4. Si el plugin ya autenticó al usuario en la capa nativa
       if (result?.user?.uid) {
-        console.log("✅ Usuario nativo verificado:", result.user.email);
+        logger.log("✅ Usuario nativo verificado");
         await initUserDocument(result.user.uid, result.user.email || '', result.user.displayName || '');
         return result;
       }
@@ -169,7 +170,7 @@ const signInWithGoogle = async () => {
   }
 
   // ─── FLUJO EXCLUSIVO PARA NAVEGADOR WEB DE ESCRITORIO (PC / Mac) ────────
-  console.log("Usando flujo Firebase Web Auth Popup para navegador");
+  logger.log("Usando flujo Firebase Web Auth Popup para navegador");
   try {
     const result = await signInWithPopup(auth, googleProvider);
     await initUserDocument(result.user.uid, result.user.email, result.user.displayName);

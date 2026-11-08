@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { logger } from '../utils/logger.js';
 
 /**
  * useLocalNotifications
@@ -152,7 +153,7 @@ export const scheduleSessionReminder = async (session) => {
       ],
     });
 
-    console.log(`[LocalNotifications] Recordatorio programado para: ${notifDate.toLocaleString('es-ES')}`);
+    logger.log(`[LocalNotifications] Recordatorio programado para: ${notifDate.toLocaleString('es-ES')}`);
   } catch (e) {
     console.warn('[LocalNotifications] Error al programar recordatorio:', e);
   }

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePlan } from '../hooks/usePlan';
 import { isDeveloperEmail } from '../config/admins';
 import { getNextUpcomingMatch } from '../utils/nextUpcomingOpponent';
+import { logger } from '../utils/logger.js';
 import { 
   Users, 
   ClipboardList, 
@@ -72,7 +73,7 @@ const Dashboard = () => {
 
     // El webhook de Stripe actualizará Firestore automáticamente.
     // El onSnapshot en usePlan detectará el cambio y actualizará la UI.
-    console.log('[Stripe] Pago detectado. Esperando sincronización del webhook...');
+    logger.log('[Stripe] Pago detectado. Esperando sincronización del webhook...');
 
     // Refrescar el contexto del equipo para recoger cambios del webhook
     if (typeof refreshTeam === 'function') {

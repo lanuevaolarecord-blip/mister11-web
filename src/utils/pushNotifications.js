@@ -9,6 +9,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { showToast } from './toast';
 import { t, isEn } from '../i18n/index.js';
+import { logger } from './logger.js';
 
 const COOLDOWN_DAYS = 30;
 const LOCAL_STORAGE_KEY = 'm11_push_prompt_state';
@@ -80,7 +81,7 @@ export const savePushToken = async (userId, token, platform = 'android', teamIds
       createdAt: serverTimestamp(),
     }, { merge: true });
 
-    console.log(`[Push] Token guardado exitosamente para usuario ${userId} (${platform})`);
+    logger.log(`[Push] Token guardado exitosamente para usuario ${userId} (${platform})`);
   } catch (err) {
     console.warn('[Push] Error guardando pushToken:', err);
   }
@@ -102,7 +103,7 @@ export const registerPushNotifications = async (userId, teamIds = [], onNavigate
       }
 
       if (permStatus.receive !== 'granted') {
-        console.log('[Push] Permiso denegado por el usuario en Android');
+        logger.log('[Push] Permiso denegado por el usuario en Android');
         try {
           await setDoc(doc(db, `users/${userId}/prefs`, 'notifications'), {
             permission: 'denied',
@@ -128,7 +129,7 @@ export const registerPushNotifications = async (userId, teamIds = [], onNavigate
 
       // Listener cuando llega la notificación con app en primer plano
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('[Push] Notificación recibida en foreground:', notification);
+        logger.log('[Push] Notificación recibida en foreground:', notification);
         const title = notification.title || 'Míster11';
         const body = notification.body || '';
         showToast(t('push.foreground_toast', { title, body }), 'info');
@@ -136,7 +137,7 @@ export const registerPushNotifications = async (userId, teamIds = [], onNavigate
 
       // Listener cuando el usuario pulsa en la notificación (Deep Link)
       PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        console.log('[Push] Acción de notificación pulsada:', action);
+        logger.log('[Push] Acción de notificación pulsada:', action);
         const data = action.notification?.data || {};
         const targetTab = data.tab || 'home';
         if (typeof onNavigate === 'function') {

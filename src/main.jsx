@@ -10,6 +10,16 @@ import './index.css'
 import App from './App.jsx'
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+import { initObservability } from './utils/sentryWeb.js';
+
+// Inicialización de observabilidad Sentry / Web Crash Reporting con scrub de PII de menores
+initObservability();
+
+// Silenciar logs verbosos en producción para protección de datos
+if (typeof import.meta !== 'undefined' && import.meta.env && !import.meta.env.DEV) {
+  console.log = () => {};
+  console.debug = () => {};
+}
 
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('capacitor-native');
@@ -17,7 +27,6 @@ if (Capacitor.isNativePlatform()) {
   StatusBar.setBackgroundColor({ color: '#1a2e1a' });
   StatusBar.setOverlaysWebView({ overlay: false });
 }
-
 
 import { LanguageProvider, useLanguage } from './context/LanguageContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'

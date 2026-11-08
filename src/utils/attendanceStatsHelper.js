@@ -34,6 +34,7 @@ import {
   isEventPast
 } from './attendanceMath.js';
 import { t, getLocale } from '../i18n/index.js';
+import { logger } from './logger.js';
 
 export const DEFAULT_XP_TABLE = {
   xpPresente: 10,
@@ -1052,7 +1053,7 @@ export const checkAttendanceConsistency = ({
   });
 
   if (divergences.length === 0) {
-    console.log(`[checkAttendanceConsistency] ✅ 0 divergencias detectadas en ${players.length} jugadores y ${trendEvents.length} eventos auditados. Coherencia 100% total.`);
+    logger.log(`[checkAttendanceConsistency] ✅ 0 divergencias detectadas en ${players.length} jugadores y ${trendEvents.length} eventos auditados. Coherencia 100% total.`);
   }
 
   return {

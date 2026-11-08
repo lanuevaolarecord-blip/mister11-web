@@ -6,6 +6,7 @@ import { showToast } from '../utils/toast';
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, UserPlus, LogIn, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import { logger } from '../utils/logger.js';
 import './Login.css';
 
 const Login = () => {
@@ -44,7 +45,7 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     try {
-      console.log('[Login] Iniciando flujo Google Sign-In...');
+      logger.log('[Login] Iniciando flujo Google Sign-In...');
       await signInWithGoogle();
     } catch (err) {
       console.error('=== ERROR GOOGLE SIGN-IN ===', err);

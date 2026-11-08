@@ -15,6 +15,7 @@ import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import { cleanPdfText } from '../utils/pdfTheme';
+import { logger } from '../utils/logger.js';
 import '../styles/planificacion.css';
 
 const runAutoTable = (targetDoc, options) => {
@@ -228,7 +229,7 @@ const Planificacion = () => {
           macroCounts, 
           updatedAt: serverTimestamp() 
         }, { merge: true });
-        console.log("Planificación auto-guardada con éxito");
+        logger.log("Planificación auto-guardada con éxito");
       } catch (e) {
         console.error("Error en auto-guardado de planificación:", e);
       }

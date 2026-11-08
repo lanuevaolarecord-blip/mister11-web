@@ -7,6 +7,7 @@ import { normalizeEmail } from '../utils/normalizeEmail';
 import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 import { showToast } from '../utils/toast';
 import { t } from '../i18n/index.js';
+import { logger } from '../utils/logger.js';
 
 const MOCK_GUEST_USER = {
   uid: 'invitado-local',
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     // Procesar credenciales de retorno si el usuario viene de un flujo OAuth Redirect
     getRedirectResult(auth).then(async (result) => {
       if (result && result.user) {
-        console.log("✅ getRedirectResult exitoso:", result.user.email);
+        logger.log("✅ getRedirectResult exitoso");
         try {
           await initUserDocument(result.user.uid, result.user.email, result.user.displayName || '');
         } catch (e) {

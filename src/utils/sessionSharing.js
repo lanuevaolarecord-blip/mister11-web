@@ -42,6 +42,8 @@ export const shareSessionToFirestore = async (session, user, team) => {
     shareId,
     shareCode: shareId,
     id: shareId,
+    // B2-FIX: dueño explícito (firestore.rules exige coachUid == auth.uid en create; sin escape-hatch)
+    coachUid: user?.uid || null,
     sharedByEmail: user?.email || 'entrenador@mister11.app',
     sharedByName: user?.displayName || user?.email?.split('@')[0] || 'Entrenador Míster11',
   };

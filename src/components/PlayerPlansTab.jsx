@@ -4,7 +4,7 @@ import { useExercises } from '../hooks/useExercises';
 import { useTeams } from '../hooks/useTeams';
 import AssignPlanModal from './AssignPlanModal';
 import { CheckCircle, Circle, Activity, Trash2, Plus, Share2, Copy } from 'lucide-react';
-import { db } from '../firebaseConfig';
+import { db, auth } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { useTranslation } from '../hooks/useTranslation';
 import './PlayerPlansTab.css';
@@ -48,6 +48,8 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
         playerPosition: player?.position || 'MC',
         exercises: resolvedExercises,
         coachNotes: plan.description || '',
+        // B2-FIX: dueño explícito (firestore.rules exige coachUid == auth.uid; sin escape-hatch)
+        coachUid: auth.currentUser?.uid || null,
         createdAt: new Date().toISOString()
       };
 

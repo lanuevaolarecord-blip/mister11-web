@@ -11,35 +11,130 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
-    // ── DEF-B2: Age-Gate de Seguridad Clínica en Persistencia (Menores) ───────
-    // Umbrales canónicos de edad mínima por ejercicio (derivados de B3):
-    //   • 16+ años: hex-064 (Drop Jump), hex-065 (Single-Leg Land), hex-092 (Deep Squat Jump)
-    //   • 14+ años: sys-4 (Nordic), sys-5 (Copenhagen), hex-076 (Copenhagen banco), hex-078 (Nordic asistido), hex-108 (Cervical GK)
-    //   • 12+ años: sys-6 (Sentadilla Búlgara), sys-7 (Peso Muerto Unipodal), hex-057 (Saltos Cruz), hex-077 (Copenhagen suelo)
+    // ── B2-FIX: Age-Gate de Seguridad Clínica en Persistencia (Menores) ───────
+    // La edad se DERIVA en el servidor desde la fecha de nacimiento del doc
+    // .../players/{playerId} (get()). NUNCA se lee playerAge/age/edad del payload.
+    // Las listas restrictivas (bloque GEN) se generan desde exerciseSafetyMap.
+    //
+    // NOTA DE OR-SEMÁNTICA: en Firestore las reglas de todos los `match` que
+    // aplican a una ruta se combinan con OR. Por eso los comodines recursivos de
+    // más abajo EXCLUYEN playerPlans/teamPlans/team_codes/sharedPlans/sharedSessions;
+    // de lo contrario `{x=**} allow write: if isAuth()` anularía estas cláusulas.
 
+    // <<GEN:AGE_LISTS BEGIN>>
+    // GENERADO por scripts/gen-rules-age-lists.mjs desde src/data/exerciseSafetyMap.js.
+    // NO EDITAR A MANO: `node scripts/gen-rules-age-lists.mjs --write`.
     function getRestricted16Exercises() {
       return ['hex-064', 'hex-065', 'hex-092'];
     }
-
     function getRestricted14Exercises() {
-      return ['sys-4', 'sys-5', 'hex-076', 'hex-078', 'hex-108'];
+      return ['hex-076', 'hex-078', 'hex-080', 'hex-081', 'hex-082', 'hex-108', 'sys-4', 'sys-5'];
     }
-
     function getRestricted12Exercises() {
-      return ['sys-6', 'sys-7', 'hex-057', 'hex-077'];
+      return ['hex-003', 'hex-008', 'hex-016', 'hex-017', 'hex-020', 'hex-056', 'hex-057', 'hex-058', 'hex-059', 'hex-077', 'hex-096', 'sys-6', 'sys-7'];
+    }
+    function restrictedForAge(age) {
+      return age >= 16 ? [] : age >= 14 ? getRestricted16Exercises() : age >= 12 ? (getRestricted16Exercises() + getRestricted14Exercises()) : (getRestricted16Exercises() + getRestricted14Exercises() + getRestricted12Exercises());
+    }
+    function planWithinCap(data) {
+      return data.get('exercises', []).size() <= 20 && data.get('exerciseIds', []).size() <= 20;
+    }
+    function planHasAny(data, restricted) {
+      let ex = data.get('exercises', []);
+      return data.get('exerciseIds', []).hasAny(restricted) ||
+        (ex.size() > 0 && ex[0].exerciseId in restricted) ||
+        (ex.size() > 1 && ex[1].exerciseId in restricted) ||
+        (ex.size() > 2 && ex[2].exerciseId in restricted) ||
+        (ex.size() > 3 && ex[3].exerciseId in restricted) ||
+        (ex.size() > 4 && ex[4].exerciseId in restricted) ||
+        (ex.size() > 5 && ex[5].exerciseId in restricted) ||
+        (ex.size() > 6 && ex[6].exerciseId in restricted) ||
+        (ex.size() > 7 && ex[7].exerciseId in restricted) ||
+        (ex.size() > 8 && ex[8].exerciseId in restricted) ||
+        (ex.size() > 9 && ex[9].exerciseId in restricted) ||
+        (ex.size() > 10 && ex[10].exerciseId in restricted) ||
+        (ex.size() > 11 && ex[11].exerciseId in restricted) ||
+        (ex.size() > 12 && ex[12].exerciseId in restricted) ||
+        (ex.size() > 13 && ex[13].exerciseId in restricted) ||
+        (ex.size() > 14 && ex[14].exerciseId in restricted) ||
+        (ex.size() > 15 && ex[15].exerciseId in restricted) ||
+        (ex.size() > 16 && ex[16].exerciseId in restricted) ||
+        (ex.size() > 17 && ex[17].exerciseId in restricted) ||
+        (ex.size() > 18 && ex[18].exerciseId in restricted) ||
+        (ex.size() > 19 && ex[19].exerciseId in restricted);
+    }
+    // <<GEN:AGE_LISTS END>>
+
+    // yearsSince: edad en años cumplidos a request.time. Fecha anterior a 1990 => 0 (igual que calcularEdad).
+    function yearsSince(y, m, d) {
+      return y < 1990 ? 0 :
+        (request.time.year() - y -
+          ((m > request.time.month() || (m == request.time.month() && d > request.time.day())) ? 1 : 0));
     }
 
-    function isPlanAgeSafe(data) {
-      let playerAge = 'playerAge' in data ? data.playerAge : 
-                      ('age' in data ? data.age : 
-                      ('edad' in data ? data.edad : 0));
-      
-      let ids = 'exerciseIds' in data ? data.exerciseIds : [];
+    // Edad desde fecha de nacimiento: Timestamp, 'YYYY-MM-DD...' o 'DD/MM/YYYY...'.
+    // Cualquier otro formato / ausencia => 0 (FAIL-CLOSED: tramo más restrictivo).
+    function ageFromBirth(b) {
+      return b is timestamp ? yearsSince(b.year(), b.month(), b.day()) :
+        (b is string && b.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}.*')) ? yearsSince(int(b[0:4]), int(b[5:7]), int(b[8:10])) :
+        (b is string && b.matches('^[0-9]{2}/[0-9]{2}/[0-9]{4}.*')) ? yearsSince(int(b[6:10]), int(b[3:5]), int(b[0:2])) :
+        0;
+    }
 
-      return playerAge >= 16 ? true :
-             playerAge >= 14 ? !ids.hasAny(getRestricted16Exercises()) :
-             playerAge >= 12 ? (!ids.hasAny(getRestricted16Exercises()) && !ids.hasAny(getRestricted14Exercises())) :
-             (!ids.hasAny(getRestricted16Exercises()) && !ids.hasAny(getRestricted14Exercises()) && !ids.hasAny(getRestricted12Exercises()));
+    function playerDocPath(teamRel, playerId) {
+      return /databases/$(database)/documents/$(teamRel)/players/$(playerId);
+    }
+
+    function birthOfPlayer(teamRel, playerId) {
+      let p = get(playerDocPath(teamRel, playerId)).data;
+      return p.get('fechaNacimiento', p.get('birthDate', null));
+    }
+
+    function ageOfPlayer(teamRel, playerId) {
+      return (playerId is string && exists(playerDocPath(teamRel, playerId))) ?
+        ageFromBirth(birthOfPlayer(teamRel, playerId)) : 0;
+    }
+
+    // Autoridad del coach sobre el equipo: doc del equipo con ownerId o staffMembers[uid].
+    function teamDocPath(teamRel) {
+      return /databases/$(database)/documents/$(teamRel);
+    }
+
+    function isTeamStaff(teamRel) {
+      return isAuth() && exists(teamDocPath(teamRel)) &&
+        (get(teamDocPath(teamRel)).data.get('ownerId', '') == request.auth.uid ||
+         get(teamDocPath(teamRel)).data.get('staffMembers', {}).get(request.auth.uid, null) != null);
+    }
+
+    // Plan individual: edad derivada del player doc (playerId también se valida contra el doc).
+    function playerPlanSafe(teamRel, d) {
+      return planWithinCap(d) &&
+        !planHasAny(d, restrictedForAge(ageOfPlayer(teamRel, d.get('playerId', null))));
+    }
+
+    // Plan de equipo: no hay un único jugador => edad 0 (FAIL-CLOSED: ningún id restringido).
+    function teamPlanSafe(d) {
+      return planWithinCap(d) && !planHasAny(d, restrictedForAge(0));
+    }
+
+    function canCreatePlayerPlan(teamRel, coach) {
+      return coach && request.resource.data.get('playerId', null) is string &&
+        playerPlanSafe(teamRel, request.resource.data);
+    }
+
+    // Update: playerId inmutable; el staff puede cambiar ejercicios; un no-staff solo puede
+    // actualizar progreso (exerciseIds sin cambios). Siempre se re-valida la edad.
+    function canUpdatePlayerPlan(teamRel, coach) {
+      return request.resource.data.get('playerId', null) is string &&
+        request.resource.data.get('playerId', null) == resource.data.get('playerId', null) &&
+        playerPlanSafe(teamRel, request.resource.data) &&
+        (coach || request.resource.data.get('exerciseIds', []) == resource.data.get('exerciseIds', []));
+    }
+
+    function canWriteTeamPlan(coach) {
+      return teamPlanSafe(request.resource.data) &&
+        (coach || (resource != null &&
+          request.resource.data.get('exerciseIds', []) == resource.data.get('exerciseIds', [])));
     }
 
     // ── PARTE A: BLINDAJE TOTAL DE IDENTIDAD DETERMINISTA ────────────────────
@@ -79,37 +174,34 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
-    // ── Colecciones compartidas endurecidas (B2: Membresía / Rol de Staff) ───
+    // ── Colecciones compartidas (B2-FIX): dueño = coachUid, inmutable, SIN escape-hatch ─
+    // Un doc sin coachUid (huérfano) NO es actualizable ni borrable por nadie desde el cliente.
     match /sharedPlans/{planId} {
       allow read: if true;
-      allow create: if isAuth();
-      allow update: if isAuth() && 
-        (resource.data.coachUid == request.auth.uid || 
-         resource.data.createdBy == request.auth.uid || 
-         !('coachUid' in resource.data));
-      allow delete: if isAuth() && 
-        (resource.data.coachUid == request.auth.uid || 
-         resource.data.createdBy == request.auth.uid);
+      allow create: if isAuth() && request.resource.data.get('coachUid', null) == request.auth.uid;
+      allow update: if isAuth() &&
+        resource.data.get('coachUid', null) == request.auth.uid &&
+        request.resource.data.get('coachUid', null) == resource.data.get('coachUid', null);
+      allow delete: if isAuth() && resource.data.get('coachUid', null) == request.auth.uid;
     }
 
     match /sharedSessions/{shareId} {
       allow read: if true;
-      allow create: if isAuth();
-      allow update: if isAuth() && 
-        (resource.data.coachUid == request.auth.uid || 
-         resource.data.createdBy == request.auth.uid || 
-         !('coachUid' in resource.data));
-      allow delete: if isAuth() && 
-        (resource.data.coachUid == request.auth.uid || 
-         resource.data.createdBy == request.auth.uid);
+      allow create: if isAuth() && request.resource.data.get('coachUid', null) == request.auth.uid;
+      allow update: if isAuth() &&
+        resource.data.get('coachUid', null) == request.auth.uid &&
+        request.resource.data.get('coachUid', null) == resource.data.get('coachUid', null);
+      allow delete: if isAuth() && resource.data.get('coachUid', null) == request.auth.uid;
     }
 
+    // team_codes: crear solo como uno mismo; actualizar exige dueño ACTUAL + coachUid inmutable.
     match /team_codes/{codeId} {
       allow read: if true;
-      allow create: if isAuth() && request.resource.data.coachUid == request.auth.uid;
-      allow update: if isAuth() && 
-        (resource.data.coachUid == request.auth.uid || request.resource.data.coachUid == request.auth.uid);
-      allow delete: if isAuth() && resource.data.coachUid == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.get('coachUid', null) == request.auth.uid;
+      allow update: if isAuth() &&
+        resource.data.get('coachUid', null) == request.auth.uid &&
+        request.resource.data.get('coachUid', null) == resource.data.get('coachUid', null);
+      allow delete: if isAuth() && resource.data.get('coachUid', null) == request.auth.uid;
     }
 
     match /staff_codes/{codeId} {
@@ -127,16 +219,19 @@ service cloud.firestore {
       
       allow write: if isAuth();
 
-      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
       match /playerPlans/{planId} {
+        function teamRel() { return 'teams/' + teamId; }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
+        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
         allow delete: if isAuth();
       }
 
       match /teamPlans/{planId} {
+        function teamRel() { return 'teams/' + teamId; }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create, update: if isAuth() && canWriteTeamPlan(isTeamStaff(teamRel()));
         allow delete: if isAuth();
       }
 
@@ -144,8 +239,9 @@ service cloud.firestore {
         allow read, write: if isAuth();
       }
 
-      match /{subcollection=**} {
-        allow read, write: if isAuth();
+      // Comodín que EXCLUYE playerPlans/teamPlans (si no, OR anula el age-gate)
+      match /{colA}/{docA}/{restA=**} {
+        allow read, write: if isAuth() && !(colA in ['playerPlans', 'teamPlans']);
       }
     }
 
@@ -179,6 +275,15 @@ service cloud.firestore {
       }
     }
 
+    // ── Usuario raíz y subcolecciones que no son equipos ──────────────────────
+    match /users/{userId} {
+      allow read, write: if isAuth();
+    }
+
+    match /users/{userId}/{colU}/{docU}/{restU=**} {
+      allow read, write: if isAuth() && colU != 'teams';
+    }
+
     // ── Equipos de Usuario y Gestión de Jugadores / Familias ──────────────────
     match /users/{userId}/teams/{teamId} {
       allow read, write: if isAuth();
@@ -199,16 +304,21 @@ service cloud.firestore {
         }
       }
 
-      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
       match /playerPlans/{planId} {
+        function teamRel() { return 'users/' + userId + '/teams/' + teamId; }
+        function coach() { return isOwner(userId) || isTeamStaff(teamRel()); }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), coach());
+        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), coach());
         allow delete: if isAuth();
       }
 
       match /teamPlans/{planId} {
+        function teamRel() { return 'users/' + userId + '/teams/' + teamId; }
+        function coach() { return isOwner(userId) || isTeamStaff(teamRel()); }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create, update: if isAuth() && canWriteTeamPlan(coach());
         allow delete: if isAuth();
       }
 
@@ -254,8 +364,9 @@ service cloud.firestore {
         allow read, write: if isAuth();
       }
 
-      match /{subcollection=**} {
-        allow read, write: if isAuth();
+      // Comodín que EXCLUYE playerPlans/teamPlans (si no, OR anula el age-gate)
+      match /{colB}/{docB}/{restB=**} {
+        allow read, write: if isAuth() && !(colB in ['playerPlans', 'teamPlans']);
       }
     }
 
@@ -263,16 +374,19 @@ service cloud.firestore {
     match /equipos/{teamId} {
       allow read, write: if isAuth();
 
-      // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+      // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
       match /playerPlans/{planId} {
+        function teamRel() { return 'equipos/' + teamId; }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
+        allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
         allow delete: if isAuth();
       }
 
       match /teamPlans/{planId} {
+        function teamRel() { return 'equipos/' + teamId; }
         allow read: if isAuth();
-        allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+        allow create, update: if isAuth() && canWriteTeamPlan(isTeamStaff(teamRel()));
         allow delete: if isAuth();
       }
 
@@ -288,8 +402,9 @@ service cloud.firestore {
         allow read, write: if isAuth();
       }
 
-      match /{subcollection=**} {
-        allow read, write: if isAuth();
+      // Comodín que EXCLUYE playerPlans/teamPlans (si no, OR anula el age-gate)
+      match /{colC}/{docC}/{restC=**} {
+        allow read, write: if isAuth() && !(colC in ['playerPlans', 'teamPlans']);
       }
     }
 
@@ -314,16 +429,19 @@ service cloud.firestore {
           }
         }
 
-        // ── Planes individuales y de equipo (Age-Gate B2) ───────────────
+        // ── Planes individuales y de equipo (Age-Gate B2-FIX) ───────────
         match /playerPlans/{planId} {
+          function teamRel() { return 'clubs/' + clubId + '/teams/' + teamId; }
           allow read: if isAuth();
-          allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+          allow create: if isAuth() && canCreatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
+          allow update: if isAuth() && canUpdatePlayerPlan(teamRel(), isTeamStaff(teamRel()));
           allow delete: if isAuth();
         }
 
         match /teamPlans/{planId} {
+          function teamRel() { return 'clubs/' + clubId + '/teams/' + teamId; }
           allow read: if isAuth();
-          allow create, update: if isAuth() && isPlanAgeSafe(request.resource.data);
+          allow create, update: if isAuth() && canWriteTeamPlan(isTeamStaff(teamRel()));
           allow delete: if isAuth();
         }
 
@@ -337,13 +455,15 @@ service cloud.firestore {
           allow read, write: if isAuth();
         }
 
-        match /{subcollection=**} {
-          allow read, write: if isAuth();
+        // Comodín que EXCLUYE playerPlans/teamPlans (si no, OR anula el age-gate)
+        match /{colD}/{docD}/{restD=**} {
+          allow read, write: if isAuth() && !(colD in ['playerPlans', 'teamPlans']);
         }
       }
 
-      match /{subcollection=**} {
-        allow read, write: if isAuth();
+      // Resto del club (customFormations, etc.). `teams` se rige por su bloque explícito.
+      match /{colE}/{docE}/{restE=**} {
+        allow read, write: if isAuth() && colE != 'teams';
       }
     }
 
@@ -352,9 +472,18 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
+    // Consultas collectionGroup('teams') (getTeamByCode) — lectura autenticada.
+    match /{path=**}/teams/{teamId} {
+      allow read: if isAuth();
+    }
+
     // ── Regla General para Usuarios Autenticados ─────────────────────────────
-    match /{document=**} {
-      allow read, write: if isAuth();
+    // Excluye: colecciones con reglas propias de B2-FIX (team_codes/sharedPlans/sharedSessions)
+    // y los árboles de equipos (teams/equipos/users/clubs), que ya tienen sus propios comodines
+    // con exclusión de playerPlans/teamPlans. Sin esta exclusión el OR anula todo lo anterior.
+    match /{colG}/{docG}/{restG=**} {
+      allow read, write: if isAuth() &&
+        !(colG in ['team_codes', 'sharedPlans', 'sharedSessions', 'teams', 'equipos', 'users', 'clubs']);
     }
 
   }

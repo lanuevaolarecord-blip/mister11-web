@@ -11,6 +11,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Curl Nórdico",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -19,6 +20,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Curl Nórdico",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -27,6 +29,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Curl Nórdico",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -35,6 +38,7 @@
       "superficie": "PDF",
       "valor": "Curl Nórdico",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -43,6 +47,7 @@
       "superficie": "Notifications",
       "valor": "Curl Nórdico",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -51,6 +56,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Ischio-jambier nordique",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -59,6 +65,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Ischio-jambier nordique",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -67,6 +74,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Ischio-jambier nordique",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -75,6 +83,7 @@
       "superficie": "PDF",
       "valor": "Ischio-jambier nordique",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -83,6 +92,7 @@
       "superficie": "Notifications",
       "valor": "Ischio-jambier nordique",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -91,6 +101,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Hamstring nordik",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -99,6 +110,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Hamstring nordik",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -107,6 +119,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Hamstring nordik",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -115,6 +128,7 @@
       "superficie": "PDF",
       "valor": "Hamstring nordik",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -123,6 +137,7 @@
       "superficie": "Notifications",
       "valor": "Hamstring nordik",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -131,6 +146,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Nordic Hamstring",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -139,6 +155,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Nordic Hamstring",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -147,6 +164,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Nordic Hamstring",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -155,6 +173,7 @@
       "superficie": "PDF",
       "valor": "Nordic Hamstring",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -163,6 +182,7 @@
       "superficie": "Notifications",
       "valor": "Nordic Hamstring",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -171,6 +191,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Nordic Hamstring Curl",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -179,6 +200,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Nordic Hamstring Curl",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -187,6 +209,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Nordic Hamstring Curl",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -195,6 +218,7 @@
       "superficie": "PDF",
       "valor": "Nordic Hamstring Curl",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -203,6 +227,7 @@
       "superficie": "Notifications",
       "valor": "Nordic Hamstring Curl",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -211,6 +236,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Agachamento Búlgaro",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -219,6 +245,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Agachamento Búlgaro",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -227,6 +254,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Agachamento Búlgaro",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -235,6 +263,7 @@
       "superficie": "PDF",
       "valor": "Agachamento Búlgaro",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -243,6 +272,7 @@
       "superficie": "Notifications",
       "valor": "Agachamento Búlgaro",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -251,6 +281,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Squat Bulgare",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -259,6 +290,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Squat Bulgare",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -267,6 +299,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Squat Bulgare",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -275,6 +308,7 @@
       "superficie": "PDF",
       "valor": "Squat Bulgare",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -283,6 +317,7 @@
       "superficie": "Notifications",
       "valor": "Squat Bulgare",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -291,6 +326,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Squat Bulgaria",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -299,6 +335,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Squat Bulgaria",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -307,6 +344,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Squat Bulgaria",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -315,6 +353,7 @@
       "superficie": "PDF",
       "valor": "Squat Bulgaria",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -323,6 +362,7 @@
       "superficie": "Notifications",
       "valor": "Squat Bulgaria",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -331,6 +371,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Sentadilla Búlgara",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -339,6 +380,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Sentadilla Búlgara",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -347,6 +389,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Sentadilla Búlgara",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -355,6 +398,7 @@
       "superficie": "PDF",
       "valor": "Sentadilla Búlgara",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -363,6 +407,7 @@
       "superficie": "Notifications",
       "valor": "Sentadilla Búlgara",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -371,6 +416,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Bulgarian Split Squat",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -379,6 +425,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Bulgarian Split Squat",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -387,6 +434,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Bulgarian Split Squat",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -395,6 +443,7 @@
       "superficie": "PDF",
       "valor": "Bulgarian Split Squat",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -403,6 +452,7 @@
       "superficie": "Notifications",
       "valor": "Bulgarian Split Squat",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -411,6 +461,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Movilidad de Tobillo Dinámica",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -419,6 +470,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Movilidad de Tobillo Dinámica",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -427,6 +479,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Movilidad de Tobillo Dinámica",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -435,6 +488,7 @@
       "superficie": "PDF",
       "valor": "Movilidad de Tobillo Dinámica",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -443,6 +497,7 @@
       "superficie": "Notifications",
       "valor": "Movilidad de Tobillo Dinámica",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -451,6 +506,7 @@
       "superficie": "ExerciseLibrary",
       "valor": "Isométrico Cervical Multidireccional de Portero",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -459,6 +515,7 @@
       "superficie": "AssignPlanModal",
       "valor": "Isométrico Cervical Multidireccional de Portero",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -467,6 +524,7 @@
       "superficie": "PlayerPlansPortalTab",
       "valor": "Isométrico Cervical Multidireccional de Portero",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -475,6 +533,7 @@
       "superficie": "PDF",
       "valor": "Isométrico Cervical Multidireccional de Portero",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     },
     {
@@ -483,6 +542,7 @@
       "superficie": "Notifications",
       "valor": "Isométrico Cervical Multidireccional de Portero",
       "clasificacion": "T",
+      "procedencia": "curated",
       "politica": "localizar"
     }
   ]

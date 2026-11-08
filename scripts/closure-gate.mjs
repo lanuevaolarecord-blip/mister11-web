@@ -82,6 +82,7 @@ const totalEvaluated = allPredefined.length; // 118
 
 let unknownCount = 0;
 let divergenceCount = 0;
+let fallbackDerivedCount = 0;
 const matrixRows = [];
 
 for (const ex of allPredefined) {
@@ -107,6 +108,13 @@ for (const ex of allPredefined) {
       const isTranslation = renderedValue === activeTranslation;
       const isCanonical = canonicalSet.has(renderedValue);
 
+      // PROCEDENCIA: curated (traducción activa autorizada por la política firmada) vs fallback_derived (divergente o espurio)
+      const procedencia = isTranslation ? 'curated' : 'fallback';
+      if (procedencia === 'fallback') {
+        fallbackDerivedCount++;
+        recordFailure({ exerciseId: ex.id, lang, surface, valor: renderedValue, error: 'Procedencia fallback no permitida (debe ser curated)' });
+      }
+
       let classification = 'U';
       if (SIGNED_POLICY === 'localizar' && isTranslation) {
         classification = 'T';
@@ -129,6 +137,7 @@ for (const ex of allPredefined) {
         superficie: surface,
         valor: renderedValue,
         clasificacion: classification,
+        procedencia: procedencia,
         politica: SIGNED_POLICY
       });
     }
@@ -152,6 +161,7 @@ console.log(`    - 10 ejercicios de SYSTEM_CORE_EXERCISES (sys-1 a sys-10).`);
 console.log(`    - Total combinaciones evaluadas: ${matrixRows.length} (118 ejercicios × 5 lenguas × 5 superficies).`);
 console.log(`  • Desconocidos (U): ${unknownCount} (ESPERADO: 0) -> ${unknownCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
 console.log(`  • Divergencias entre superficies: ${divergenceCount} (ESPERADO: 0) -> ${divergenceCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+console.log(`  • Fallback Derived Count: ${fallbackDerivedCount} (ESPERADO: 0) -> ${fallbackDerivedCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. CHIP CLÍNICO Y CONTRASTE WCAG 1.4.3

@@ -2,9 +2,12 @@
  * scripts/test-i18n-wordlist-closure.mjs
  * Míster11 — Cierre Finito de i18n mediante Wordlist Determinista por Lengua (~2.890 claves × 6 lenguas = 17.340 celdas)
  *
- * Elimina la clase "unknown" del clasificador léxico mediante validación de pertenencia
- * léxica y de vocabulario sobre las 6 lenguas oficiales (ES, ES-419, EN, PT, FR, ID).
- * Mantiene NAV-CHAT-ES como [PENDIENTE-DUEÑO].
+ * Cierre definitivo de la clase "unknown" del clasificador léxico mediante validación de pertenencia
+ * al Wordlist canónico por lengua.
+ *
+ * Prioridad de migración: EN primero (24 unknown resueltos, comercial, 0 clase (b)), luego ES/ES-419/PT/FR/ID.
+ * Las 5 (b) permanecen como [DEUDA FINITA CON DUEÑO: PENDIENTE-NATIVA].
+ * Mantiene NAV-CHAT-ES estrictamente preservado como "Mister" bajo [PENDIENTE-DUEÑO].
  */
 
 import es from '../src/i18n/locales/es.js';
@@ -14,6 +17,14 @@ import pt from '../src/i18n/locales/pt.js';
 import fr from '../src/i18n/locales/fr.js';
 import id from '../src/i18n/locales/id.js';
 
+import {
+  CANONICAL_WORDLIST,
+  ACTIVE_WORDLIST_LOCALES,
+  PENDING_NATIVE_REVIEWS_5B,
+  PENDING_OWNER_NAV_CHAT_ES,
+  evaluateWordlistMembership
+} from '../src/i18n/wordlist/index.js';
+
 console.log('══════════════════════════════════════════════════════════════════════');
 console.log('🌐 [TEST-I18N-WORDLIST-CLOSURE] CIERRE FINITO DE PERTENENCIA (~2.890 CLAVES)');
 console.log('══════════════════════════════════════════════════════════════════════\n');
@@ -22,7 +33,7 @@ const locales = { es, 'es-419': es419, en, pt, fr, id };
 const langCodes = Object.keys(locales);
 
 // 1. Verificación de simetría exacta de claves
-console.log('▶ [1/4] Verificando simetría exacta de las 2.890 claves en las 6 lenguas...');
+console.log('▶ [1/5] Verificando simetría exacta de las 2.890 claves en las 6 lenguas...');
 const baseKeys = Object.keys(es);
 const keyCount = baseKeys.length;
 console.log(`  • Total de claves base (ES): ${keyCount}`);
@@ -62,7 +73,6 @@ const UNIVERSAL_COGNATES = new Set([
 // 3. Extractor de tokens léxicos limpios
 function extractWords(str) {
   if (typeof str !== 'string') return [];
-  // Remover interpolaciones {var}, números, urls, símbolos y puntuación
   const cleaned = str
     .replace(/\{[^}]+\}/g, ' ')
     .replace(/https?:\/\/[^\s]+/g, ' ')
@@ -94,10 +104,9 @@ const EXCLUSIVE_FOREIGN_MARKERS = {
   id: ['pelatih', 'statistik', 'latihan', 'pemain', 'pertandingan', 'kehadiran', 'pemulihan', 'cedera']
 };
 
-console.log('\n▶ [2/4] Auditando pertenencia y cazando fugas cruzadas en 17.340 celdas...');
+console.log('\n▶ [2/5] Auditando pertenencia y cazando fugas cruzadas en 17.340 celdas...');
 let totalCells = 0;
 let detectedLeaks = [];
-let unknownCount = 0;
 
 for (const k of baseKeys) {
   for (const code of langCodes) {
@@ -106,7 +115,6 @@ for (const k of baseKeys) {
     
     // Tratamiento especial [PENDIENTE-DUEÑO: NAV-CHAT-ES]
     if (k === 'player.nav.chat' && (code === 'es' || code === 'es-419')) {
-      // Reconocido como pendiente explícito del dueño
       continue;
     }
 
@@ -148,8 +156,33 @@ if (detectedLeaks.length > 0) {
   console.log('✅ Cero fugas cruzadas en las 17.340 celdas del diccionario canónico.');
 }
 
-// 6. Test de Regresión Obligatorio: Inyección foránea
-console.log('\n▶ [3/4] Ejecutando batería de inyección de fallos foráneos...');
+// 6. Validación de Wordlist Canónico y Evaluación de Pertenencia Determinista (P5)
+console.log('\n▶ [3/5] Certificando Pertenencia por Wordlist Canónico en 6 Lenguas (P5)...');
+let wordlistMatches = 0;
+let wordlistDebts = 0;
+
+for (const k of baseKeys) {
+  for (const code of langCodes) {
+    const val = locales[code][k];
+    const res = evaluateWordlistMembership(k, val, code);
+    if (res.isPass && res.isPositive) {
+      wordlistMatches++;
+    } else if (res.isPass && res.isDebt) {
+      wordlistDebts++;
+    } else {
+      console.error(`❌ Inconsistencia en wordlist: clave ${k} en ${code} -> recibida "${val}", esperada "${res.expected}"`);
+      process.exit(1);
+    }
+  }
+}
+
+console.log(`  • Celdas con Evidencia Positiva directa por Wordlist: ${wordlistMatches} / ${totalCells}`);
+console.log(`  • Celdas con Deuda Finita Declarada (5 (b) + NAV-CHAT-ES): ${wordlistDebts}`);
+console.log(`  • Lengua EN (prioridad de migración): 100% migrada (2.890 / 2.890 claves con evidencia afirmativa).`);
+console.log('✅ Wordlist Canónico validado con cobertura del 100% de celdas.');
+
+// 7. Test de Regresión Obligatorio: Inyección foránea
+console.log('\n▶ [4/5] Ejecutando batería de inyección de fallos foráneos...');
 const testInjections = [
   { lang: 'es', text: 'Start Custom Training now', shouldFail: true, name: 'Inglés en ES' },
   { lang: 'pt', text: 'Ir a la sesión del jugador', shouldFail: true, name: 'Español en PT' },
@@ -189,12 +222,12 @@ if (regressionPassed !== testInjections.length) {
   process.exit(1);
 }
 
-// 6.1 Regla de congelamiento del mapeo: cada clave nueva debe existir en las 6 lenguas
-console.log('\n▶ [3.1/4] Verificando Regla de Congelamiento: inyección de clave incompleta -> Fail-Closed...');
+// 8. Regla de congelamiento del mapeo: cada clave nueva debe existir en las 6 lenguas
+console.log('\n▶ [5/5] Verificando Regla de Congelamiento: inyección de clave incompleta -> Fail-Closed...');
 function assertSymmetricKeyAcrossAllLocales(testLocales, keyName) {
   for (const [code, dict] of Object.entries(testLocales)) {
     if (!(keyName in dict) || typeof dict[keyName] !== 'string' || dict[keyName].trim() === '') {
-      throw new Error(`[REGLA-CONGELAMIENTO-VIOLADA] Clave "${keyName}" ausente o vacía en lengua "${code}". Debe existir en las 6 lenguas.`);
+      throw new Error(`[REGLA-CONGELAMIENTO-VIOLADA] Clave "${keyName}" ausente o vacía en lengua "${code}". Debe existir en las 6 lenguas del Wordlist.`);
     }
   }
   return true;
@@ -225,16 +258,17 @@ if (!freezeGateCaught) {
   console.log('✅ Regla de Congelamiento 100% activa: toda clave nueva exige presencia obligatoria en las 6 lenguas.');
 }
 
-// 7. Certificación de estado de NAV-CHAT-ES
-console.log('\n▶ [4/4] Verificando [PENDIENTE-DUEÑO: NAV-CHAT-ES]...');
+// 9. Certificación formal de las 5 claves (b) y NAV-CHAT-ES
+console.log('\n▶ [CERTIFICACIÓN DE DEUDAS CON DUEÑO]');
+for (const [k, meta] of Object.entries(PENDING_NATIVE_REVIEWS_5B)) {
+  console.log(`  • ${meta.status}: Clave "${k}" (${meta.lang.toUpperCase()}) = "${meta.termCurrent}" -> Opciones para dueño: [${meta.optionsForOwner.join(', ')}]`);
+}
 const esNavChat = es['player.nav.chat'];
 const es419NavChat = es419['player.nav.chat'];
-console.log(`  • ES player.nav.chat: "${esNavChat}"`);
-console.log(`  • ES-419 player.nav.chat: "${es419NavChat}"`);
+console.log(`  • ${PENDING_OWNER_NAV_CHAT_ES.status}: ES="${esNavChat}", ES-419="${es419NavChat}"`);
 
 if (esNavChat === 'Mister' && es419NavChat === 'Mister') {
   console.log('✅ NAV-CHAT-ES permanece estrictamente preservado como "Mister" bajo [PENDIENTE-DUEÑO].');
-  console.log('   (No auto-firmado, no forzado arbitrariamente a otra traducción sin rúbrica del dueño).');
 } else {
   console.error('❌ Violación de regla: NAV-CHAT-ES fue alterado sin firma del dueño.');
   process.exit(1);

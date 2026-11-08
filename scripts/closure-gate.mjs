@@ -22,6 +22,11 @@ import { getClinicalChipText, getCanonicalClinicalChipHtml, CLINICAL_FALLBACK_TE
 import { generateSessionPDF, tPdf } from '../src/utils/pdfGenerator.js';
 import { PDFParse } from 'pdf-parse';
 import { translations, t } from '../src/i18n/translations.js';
+import {
+  CANONICAL_WORDLIST,
+  PENDING_NATIVE_REVIEWS_5B,
+  evaluateWordlistMembership
+} from '../src/i18n/wordlist/index.js';
 
 // ── Función de Localización Canónica ────────────────────────────────────────
 function getLocalizedExercise(ex, isEnglish, lang = 'es') {
@@ -498,7 +503,17 @@ function classifyCellLanguage(val, targetCode, key) {
     return { lang: targetCode, source: 'rama2-lexical-native' };
   }
 
-  // 7. DEFAULT H14: desconocido, NUNCA targetCode
+  // 7. Evaluación de Pertenencia Determinista por Wordlist Canónico (P5)
+  // Certificación positiva directa del término esperado por lengua (EN migrada primero)
+  const wlEval = evaluateWordlistMembership(key, val, targetCode);
+  if (wlEval.isPass && wlEval.isPositive) {
+    return { lang: targetCode, source: 'wordlist-exact' };
+  }
+  if (wlEval.isPass && wlEval.isDebt && wlEval.source === 'pending-native-5b') {
+    return { lang: 'unknown', source: 'pending-native-5b', debtTag: wlEval.tag };
+  }
+
+  // 8. DEFAULT H14: desconocido, NUNCA targetCode
   return { lang: 'unknown', source: 'DEFAULT-unknown' };
 }
 
@@ -524,6 +539,8 @@ const sourceHistogram = {
   cognado: 0,
   pending: 0,
   'pending-EXPIRED': 0,
+  'wordlist-exact': 0,
+  'pending-native-5b': 0,
   'rama3-exact': 0,
   'rama2-lexical-foreign': 0,
   'rama2-lexical-native': 0,
@@ -615,7 +632,9 @@ console.log(`  | whitelist | ${sourceHistogram.whitelist} | ${((sourceHistogram.
 console.log(`  | cognado | ${sourceHistogram.cognado} | ${((sourceHistogram.cognado/618)*100).toFixed(1)}% | Evidencia Positiva (Cognado legítimo declarado) |`);
 console.log(`  | pending (vigente) | ${sourceHistogram.pending} | ${((sourceHistogram.pending/618)*100).toFixed(1)}% | Bypass Provisional Vigente |`);
 console.log(`  | pending-EXPIRED | ${sourceHistogram['pending-EXPIRED']} | ${((sourceHistogram['pending-EXPIRED']/618)*100).toFixed(1)}% | 🔴 [VENCIDO en Build 95] (Requiere firma Dueño) |`);
+console.log(`  | wordlist-exact | ${sourceHistogram['wordlist-exact']} | ${((sourceHistogram['wordlist-exact']/618)*100).toFixed(1)}% | Evidencia Positiva (Término esperado en Wordlist Canónico P5) |`);
 console.log(`  | rama2-lexical-native | ${sourceHistogram['rama2-lexical-native']} | ${((sourceHistogram['rama2-lexical-native']/618)*100).toFixed(1)}% | Evidencia Positiva (Marcadores léxicos/diacríticos de la lengua) |`);
+console.log(`  | pending-native-5b | ${sourceHistogram['pending-native-5b']} | ${((sourceHistogram['pending-native-5b']/618)*100).toFixed(1)}% | [PENDIENTE-NATIVA] (Deuda finita de 5 claves con DUEÑO) |`);
 console.log(`  | rama3-exact (foráneo) | ${sourceHistogram['rama3-exact']} | ${((sourceHistogram['rama3-exact']/618)*100).toFixed(1)}% | Fuga Foránea (Cruce exacto de diccionario ajeno) |`);
 console.log(`  | rama2-lexical-foreign | ${sourceHistogram['rama2-lexical-foreign']} | ${((sourceHistogram['rama2-lexical-foreign']/618)*100).toFixed(1)}% | Fuga Foránea (Marcador léxico foráneo) |`);
 console.log(`  | DEFAULT-unknown | ${sourceHistogram['DEFAULT-unknown']} | ${((sourceHistogram['DEFAULT-unknown']/618)*100).toFixed(1)}% | [P] PARCIAL (Sin evidencia léxica explícita; default no-tautológico) |`);

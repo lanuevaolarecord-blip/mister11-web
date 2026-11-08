@@ -11,8 +11,8 @@
 const PII_PATTERNS = [
   // Emails
   { regex: /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g, replacement: '[REDACTED_EMAIL]' },
-  // Teléfonos (formatos internacionales y locales)
-  { regex: /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, replacement: '[REDACTED_PHONE]' },
+  // Teléfonos (formatos internacionales +XX... y locales con espacios/guiones)
+  { regex: /(?:(?:\+|00)\d{1,3}[\s.-]+(?:\(?\d{1,4}\)?[\s.-]+)?\d{2,4}[\s.-]?\d{2,4}[\s.-]?\d{2,4}|\b\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{3,4})\b/g, replacement: '[REDACTED_PHONE]' },
   // DNI / NIE español
   { regex: /\b[0-9]{8}[A-Z]\b|\b[XYZ][0-9]{7}[A-Z]\b/gi, replacement: '[REDACTED_DNI_NIE]' },
   // Fechas de nacimiento (YYYY-MM-DD o DD/MM/YYYY)

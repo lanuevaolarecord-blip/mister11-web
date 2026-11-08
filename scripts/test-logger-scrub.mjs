@@ -77,6 +77,9 @@ if (scrubbed.auth.token !== '[REDACTED_SECRET]' || scrubbed.auth.password !== '[
 if (scrubbed.diagnosticMessage.includes('87654321A')) {
   console.error('❌ Fallo al sanitizar DNI dentro de texto libre'); errors++;
 }
+if (scrubbed.diagnosticMessage.includes('600 123 456') || !scrubbed.diagnosticMessage.includes('[REDACTED_PHONE]')) {
+  console.error('❌ Fallo al sanitizar teléfono inline dentro de texto libre'); errors++;
+}
 if (scrubbed.playerName !== '[REDACTED_MINOR_PII]') {
   console.error('❌ Fallo al sanitizar playerName de menor'); errors++;
 }

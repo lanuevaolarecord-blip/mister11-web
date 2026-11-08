@@ -132,6 +132,34 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(resLow.prescribable).toBe(true);
     });
 
+    it('exerciseSafety R4: PENDIENTE-FISIO tier requires rigVerifiedBy even if reviewed_by_human is true', () => {
+      // hex-022 is canonical tier PENDIENTE-FISIO
+      const exWithoutFisio = {
+        id: 'hex-022',
+        edad_minima_segura: 10,
+        illustration: {
+          reviewed_by_human: true,
+          type: 'vectorial'
+          // Sin rigVerifiedBy
+        }
+      };
+      const resWithout = canPrescribeAtHome(exWithoutFisio, { playerAge: 16, hasSupervision: false });
+      expect(resWithout.prescribable).toBe(false);
+      expect(resWithout.reason).toBe('high_risk_fisio_verification_required');
+
+      const exWithFisio = {
+        id: 'hex-022',
+        edad_minima_segura: 10,
+        illustration: {
+          reviewed_by_human: true,
+          type: 'vectorial',
+          rigVerifiedBy: 'col_fisio_madrid_1234'
+        }
+      };
+      const resWith = canPrescribeAtHome(exWithFisio, { playerAge: 16, hasSupervision: false });
+      expect(resWith.prescribable).toBe(true);
+    });
+
     it('filterHomeExercises correctly filters catalog array', () => {
       const catalog = [
         { id: 'sys-1', edadMin: 10, material_preferido: ['peso_corporal'] },
@@ -341,19 +369,28 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       };
       const rsvpMap = {
         'p3': { status: 'going' },
-        'p4': { status: 'not_going' }
+        'p4': { status: 'not_going' },
+        'p5': { status: 'late' },
+        'p6': { status: 'justified' },
+        'p7': { status: 'unknown_status' }
       };
       const currentActual = {
-        'p1': { status: 'presente' }
+        'p1': { status: 'presente', lateMin: 10 },
+        'p8': { source: 'manual', status: 'presente', minutesOverride: 45 }
       };
 
-      const sheet = buildSmartMatchSheetActual(match, currentActual, rsvpMap, 'coach_uid', { preserveManual: false });
+      const sheet = buildSmartMatchSheetActual(match, currentActual, rsvpMap, 'coach_uid', { preserveManual: true });
       expect(sheet['p1'].minutes).toBe(60);
       expect(sheet['p1'].status).toBe('presente');
       expect(sheet['p2'].minutes).toBe(30);
       expect(sheet['p2'].status).toBe('presente');
       expect(sheet['p3'].status).toBe('presente');
       expect(sheet['p4'].status).toBe('ausente');
+      expect(sheet['p5'].status).toBe('tarde');
+      expect(sheet['p6'].status).toBe('justificado');
+      expect(sheet['p7'].status).toBe('sin_registro');
+      expect(sheet['p8'].minutes).toBe(45);
+      expect(sheet['p8'].source).toBe('manual');
     });
 
     it('cleanseImpossibleMatchEvents filters corrupted minutes', () => {
@@ -381,12 +418,77 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(typeof minutesMap).toBe('object');
     });
 
-    it('detectMatchEventDivergences detects discrepancies in player data', () => {
-      const divergences = detectMatchEventDivergences({
-        events: [{ id: 'e1', type: 'goal', playerId: 'p1' }],
-        players: [{ id: 'p2' }]
-      });
-      expect(Array.isArray(divergences)).toBe(true);
+    it('detectMatchEventDivergences detects all divergence edge cases', () => {
+      const matchData = {
+        duration: 90,
+        goalsFor: 3,
+        goalsAgainst: 2,
+        titulares: ['p1', 'p2'],
+        events: [
+          { type: 'gol_local', minute: 10, playerId: 'p1' }, // only 1 goal vs 3 declared
+          // 0 goals rival vs 2 declared
+          { type: 'falta', minute: 95, playerId: 'p1' }, // beyond 90 min
+          { type: 'cambio', minute: 20, subInId: 'p1', subOutId: 'p2' }, // p1 already in field
+          { type: 'cambio', minute: 40, subInId: 'p3', subOutId: 'p4' }  // p4 not in field
+        ]
+      };
+
+      const sheetActual = {
+        'p3': { minutes: 0, minuteSource: 'dnp', status: 'presente' }, // entered at 40' but dnp
+        'p2': { minutes: 90, minuteSource: 'titular_full', status: 'presente' }, // subbed out at 20' but titular_full
+        'p5': { status: 'tarde', lateMin: 0 }, // late missing minutes
+        'p6': { status: 'sin_registro' } // no status
+      };
+
+      const players = [
+        { id: 'p1', name: 'Jugador 1' },
+        { id: 'p2', name: 'Jugador 2' },
+        { id: 'p3', name: 'Jugador 3' },
+        { id: 'p4', name: 'Jugador 4' },
+        { id: 'p5', name: 'Jugador 5' },
+        { id: 'p6', name: 'Jugador 6' }
+      ];
+
+      const divergences = detectMatchEventDivergences(matchData, sheetActual, players);
+      expect(divergences.some(d => d.type === 'goals_for_mismatch')).toBe(true);
+      expect(divergences.some(d => d.type === 'goals_against_mismatch')).toBe(true);
+      expect(divergences.some(d => d.type === 'event_beyond_final_whistle')).toBe(true);
+      expect(divergences.some(d => d.type === 'impossible_substitution_in')).toBe(true);
+      expect(divergences.some(d => d.type === 'impossible_substitution_out')).toBe(true);
+      expect(divergences.some(d => d.type === 'sub_in_zero_minutes')).toBe(true);
+      expect(divergences.some(d => d.type === 'sub_out_full_minutes')).toBe(true);
+      expect(divergences.some(d => d.type === 'late_missing_minutes')).toBe(true);
+      expect(divergences.some(d => d.type === 'player_no_status')).toBe(true);
+    });
+
+    it('cleanseImpossibleMatchEvents purges duplicate cards and impossible substitutions', () => {
+      const dirtyEvents = [
+        { id: 'e1', type: 'card_yellow_own', minute: 15, playerId: 'p1' },
+        { id: 'e2', type: 'card_yellow_own', minute: 15, playerId: 'p1' }, // duplicate signature
+        { id: 'e3', type: 'cambio', minute: 30, subInId: 'p1', subOutId: 'p2' }, // p1 already titular
+        { id: 'e4', type: 'cambio', minute: 50, subInId: 'p3', subOutId: 'p99' }, // p99 not in match
+        { id: 'e5', type: 'gol_rival', minute: 120 } // beyond 90 min
+      ];
+      const { cleansedEvents, removedCount, details } = cleanseImpossibleMatchEvents(dirtyEvents, ['p1', 'p2'], 90);
+      expect(cleansedEvents.length).toBeGreaterThan(0);
+      expect(removedCount).toBeGreaterThan(0);
+      expect(details.length).toBeGreaterThan(0);
+    });
+
+    it('getUnifiedMatchEvents deduplicates goals and cards with various signatures', () => {
+      const match = {
+        events: [
+          { type: 'gol_rival', minute: 30, playerId: 'r1' },
+          { type: 'card_yellow_own', minute: 40, playerId: 'p1' }
+        ],
+        liveStatsEvents: [
+          { type: 'gol_rival', minute: 30, playerId: 'r1' }, // duplicate goal
+          { type: 'card_yellow_own', minute: 40, playerId: 'p1' }, // duplicate yellow
+          { type: 'roja', minute: 85, playerId: 'p2' }
+        ]
+      };
+      const unified = getUnifiedMatchEvents(match);
+      expect(unified.length).toBe(3);
     });
   });
 

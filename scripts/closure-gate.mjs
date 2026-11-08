@@ -457,6 +457,13 @@ function classifyCellLanguage(val, targetCode, key) {
     return { lang: targetCode, source: 'whitelist' };
   }
 
+  // 1.5. Deudas Finitas Formales (5b) declaradas para revisión nativa del DUEÑO (G1+G4 / R6)
+  // Tienen precedencia sobre cognados y nativos: NUNCA se lavan a PASS provisional
+  const wlDebtCheck = evaluateWordlistMembership(key, val, targetCode);
+  if (wlDebtCheck.isPass && wlDebtCheck.isDebt && wlDebtCheck.source === 'pending-native-5b') {
+    return { lang: 'unknown', source: 'pending-native-5b', debtTag: wlDebtCheck.tag };
+  }
+
   // 2. Cognados legítimos
   if (legitimateCognates[key] && legitimateCognates[key].includes(val)) {
     return { lang: targetCode, source: 'cognado' };
@@ -508,19 +515,22 @@ function classifyCellLanguage(val, targetCode, key) {
     }
   }
 
-  // 6. Evidencia léxica afirmativa de la propia lengua (H16)
+  // 6. Evaluación de Pertenencia Determinista por Wordlist Canónico (P5 / R6)
+  // REGLA ANTI-LAVADO (G1+G4 / R6): Las claves con deuda nativa formal (pending-native-5b)
+  // NUNCA se lavan a rama2-lexical-native ni a cognado.
+  const wlEval = evaluateWordlistMembership(key, val, targetCode);
+  if (wlEval.isPass && wlEval.isDebt && wlEval.source === 'pending-native-5b') {
+    return { lang: 'unknown', source: 'pending-native-5b', debtTag: wlEval.tag };
+  }
+
+  // 7. Evidencia léxica afirmativa de la propia lengua (H16)
   if (nativePatterns[targetCode] && nativePatterns[targetCode].test(val)) {
     return { lang: targetCode, source: 'rama2-lexical-native' };
   }
 
-  // 7. Evaluación de Pertenencia Determinista por Wordlist Canónico (P5)
-  // Certificación positiva directa del término esperado por lengua (EN migrada primero)
-  const wlEval = evaluateWordlistMembership(key, val, targetCode);
+  // 8. Certificación positiva directa del término esperado por Wordlist Canónico (P5)
   if (wlEval.isPass && wlEval.isPositive) {
     return { lang: targetCode, source: 'wordlist-exact' };
-  }
-  if (wlEval.isPass && wlEval.isDebt && wlEval.source === 'pending-native-5b') {
-    return { lang: 'unknown', source: 'pending-native-5b', debtTag: wlEval.tag };
   }
 
   // 8. DEFAULT H14: desconocido, NUNCA targetCode
@@ -533,7 +543,7 @@ let activeSurfacesCount = 0;
 
 console.log('  • Escaneando DOBLE ASERCIÓN (Pertenencia de Valor no-tautológica + Clave Resuelta) en LAS 6 LENGUAS (H8, H14, H16):');
 
-// Inicializar Matriz 6x6 + Columna UNKNOWN [P] de Clasificación de Pertenencia
+// Inicializar Matriz 6x6 + Columnas DEUDA [5b] y VENCIDO [FAIL] (R7 / G2)
 const matrix6x6 = {};
 const langCodes = ['es', 'es-419', 'en', 'pt', 'fr', 'id'];
 for (const r of langCodes) {
@@ -541,6 +551,8 @@ for (const r of langCodes) {
   for (const c of langCodes) {
     matrix6x6[r][c] = 0;
   }
+  matrix6x6[r]['debt_5b'] = 0;
+  matrix6x6[r]['expired_fail'] = 0;
   matrix6x6[r]['unknown'] = 0;
 }
 
@@ -589,7 +601,11 @@ for (const [surfName, keys] of Object.entries(surfacesToScan)) {
       const classificationSource = res.source;
 
       sourceHistogram[classificationSource]++;
-      if (matrix6x6[lang.code][classifiedLang] !== undefined) {
+      if (classificationSource === 'pending-EXPIRED') {
+        matrix6x6[lang.code]['expired_fail']++;
+      } else if (classificationSource === 'pending-native-5b') {
+        matrix6x6[lang.code]['debt_5b']++;
+      } else if (matrix6x6[lang.code][classifiedLang] !== undefined) {
         matrix6x6[lang.code][classifiedLang]++;
       } else {
         matrix6x6[lang.code]['unknown']++;
@@ -620,18 +636,22 @@ for (const [surfName, keys] of Object.entries(surfacesToScan)) {
   console.log(`    - Superficie [${surfName}]: ${keys.length} claves × 6 lenguas evaluadas -> ${surfLeaks === 0 ? 'PASS ✅ (0 fugas)' : `FAIL ❌ (${surfLeaks} fugas)`}`);
 }
 
-// Imprimir Matriz 6x6 Literal con columna UNKNOWN [P] (H8, H14, H16)
-console.log('\n  [TABLA 6x6 MATRIZ DE PERTENENCIA POR CELDA (H8, H14, H16)]');
-console.log('  | Target Col \\ Detected | ES | ES-419 | EN | PT | FR | ID | UNKNOWN [P] | Total | Estado |');
-console.log('  |---|---|---|---|---|---|---|---|---|---|');
+// Imprimir Matriz 6x6 Literal Reconciliada (R7 / G2 / P8-g)
+console.log('\n  [TABLA 6x6 MATRIZ DE PERTENENCIA RECONCILIADA (618 CELDAS)]');
+console.log('  | Target Col \\ Detected | ES | ES-419 | EN | PT | FR | ID | DEUDA [5b] | VENCIDO [FAIL] | Total | Estado |');
+console.log('  |---|---|---|---|---|---|---|---|---|---|---|');
 for (const r of langCodes) {
   const rowCounts = langCodes.map(c => matrix6x6[r][c]);
-  const unknownCount = matrix6x6[r]['unknown'];
-  const rowTotal = rowCounts.reduce((a, b) => a + b, 0) + unknownCount;
+  const debt5b = matrix6x6[r]['debt_5b'] || 0;
+  const expiredFail = matrix6x6[r]['expired_fail'] || 0;
+  const unknownOther = matrix6x6[r]['unknown'] || 0;
+  const rowTotal = rowCounts.reduce((a, b) => a + b, 0) + debt5b + expiredFail + unknownOther;
   const ownCount = matrix6x6[r][r];
-  const foreignLeaks = rowTotal - ownCount - unknownCount;
-  const statusStr = foreignLeaks > 0 ? 'FAIL ❌' : (unknownCount > 0 ? `PASS* (${unknownCount} [P])` : 'PASS ✅');
-  console.log(`  | ${r.toUpperCase()} | ${rowCounts.join(' | ')} | ${unknownCount} | ${rowTotal} | ${statusStr} |`);
+  const foreignLeaks = rowTotal - ownCount - debt5b - expiredFail - unknownOther;
+  const statusStr = expiredFail > 0 
+    ? `FAIL ❌ (${expiredFail} Vencido)` 
+    : (foreignLeaks > 0 ? 'FAIL ❌ (Fuga)' : (debt5b > 0 ? `PASS-CON-DEUDA [P] (${debt5b} [5b])` : 'PASS ✅'));
+  console.log(`  | ${r.toUpperCase()} | ${rowCounts.join(' | ')} | ${debt5b} | ${expiredFail} | ${rowTotal} | ${statusStr} |`);
 }
 
 // Imprimir Histograma de Fuentes de Clasificación (H16)

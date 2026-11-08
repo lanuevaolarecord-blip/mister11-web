@@ -542,17 +542,19 @@ export const SYSTEM_CORE_EXERCISES = [
       "citation": "FIFA 11+ Programme Manual, Part 2"
     },
     "illustration": {
-      "type": "pendiente",
+      "type": "vector_svg",
+      "status": "pilot_pending_review",
+      "author": "agent",
+      "reviewed_by_human": false,
       "url": null,
       "alt": {
-        "es": "Ilustración técnica pendiente",
-        "en": "Technical illustration pending",
-        "pt": "Ilustração técnica pendente",
-        "fr": "Illustration technique en attente",
-        "id": "Ilustrasi teknis tertunda"
+        "es": "Ilustración vectorial técnica: Plancha lateral",
+        "en": "Technical vector illustration: Side plank",
+        "pt": "Ilustração vetorial técnica: Prancha lateral",
+        "fr": "Illustration vectorielle technique: Planche latérale",
+        "id": "Ilustrasi vektor teknis: Plank samping"
       },
-      "source": null,
-      "reviewed_by_human": false
+      "source": "pilot_b5a_vectorial"
     },
     "createdBy": "clinical_seed",
     "namePt": "Prancha Lateral",

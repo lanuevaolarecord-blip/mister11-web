@@ -130,14 +130,24 @@ export const canPrescribeAtHome = (exercise, {
     };
   }
 
-  // G10 (Oleada 6.4): Ejercicio de riesgo alto sin ilustración validada requiere supervisión presencial obligatoria
+  // G10 (Oleada 6.4) & E1b / R4: Ejercicio de riesgo alto sin ilustración validada requiere supervisión presencial obligatoria
+  // Para tier 'PENDIENTE-FISIO', reviewed_by_human NO basta por sí solo; exige obligatoriamente rigVerifiedBy (firma de fisioterapeuta colegiado)
   const isHighRisk = isHighClinicalRisk(exercise);
+  const exerciseId = typeof exercise === 'string' ? exercise : exercise?.id;
+  const safetyMeta = exerciseId && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[exerciseId] : null;
+  const isTierPendienteFisio = safetyMeta?.tier_riesgo === 'PENDIENTE-FISIO';
+
   const unreviewedIllustration = !exercise.illustration?.reviewed_by_human || exercise.illustration?.type === 'pendiente';
-  if (isHighRisk && unreviewedIllustration && !hasSupervision) {
+  const fisioVerificationMissing = isTierPendienteFisio && !exercise.illustration?.rigVerifiedBy;
+
+  if (isHighRisk && (unreviewedIllustration || fisioVerificationMissing) && !hasSupervision) {
+    const isFisioBlocked = !unreviewedIllustration && fisioVerificationMissing;
     return {
       prescribable: false,
-      reason: 'high_risk_unreviewed_illustration',
-      badge: 'Requiere supervisión presencial (ilustración pendiente)'
+      reason: isFisioBlocked ? 'high_risk_fisio_verification_required' : 'high_risk_unreviewed_illustration',
+      badge: isFisioBlocked 
+        ? 'Requiere supervisión presencial (firma de fisio requerida)'
+        : 'Requiere supervisión presencial (ilustración pendiente)'
     };
   }
 

@@ -14,22 +14,22 @@
       "modulo": "Catálogo de ejercicios casa",
       "archivos": "src/data/homeExercisesCatalog.js",
       "lineas": 8642,
-      "estado": "[P]",
-      "evidencia": "src/data/homeExercisesCatalog.js:78 export const HOME_EXERCISES_108; cuenta real hex-001..hex-108 = 108 ejercicios. 100% de ilustraciones en type:'pendiente' y url:null.",
+      "estado": "[E]",
+      "evidencia": "src/data/homeExercisesCatalog.js:78 export const HOME_EXERCISES_108; cuenta canónica exacta hex-001..hex-108 = 108 ejercicios. Mapa canónico id->tier_riesgo/edadMin publicado y 5 ilustraciones bajo riesgo vectoriales B5-A activadas.",
       "dimension": "Integridad de datos / Contenido clínico",
-      "veredicto": "PARTIAL",
-      "riesgo": "Off-by-one constante (107 vs 108); ilustraciones pendientes obligan a supervisión presencial en riesgo alto."
+      "veredicto": "PASS",
+      "riesgo": "Resuelto: mapa canónico cerrado, sin off-by-one, ilustraciones bajo riesgo B5-A implementadas."
     },
     {
       "id": "MOD-02",
       "modulo": "SYSTEM_CORE_EXERCISES",
-      "archivos": "src/hooks/useExercises.js, scripts/closure-gate.mjs",
+      "archivos": "src/data/systemCoreExercises.js, src/hooks/useExercises.js, scripts/closure-gate.mjs",
       "lineas": 465,
-      "estado": "[P]",
-      "evidencia": "src/hooks/useExercises.js:14 export const SYSTEM_CORE_EXERCISES (10 ejercicios sys-1 a sys-10). Afirmado en testScoreEngine.js pero AUSENTE allí [X].",
+      "estado": "[E]",
+      "evidencia": "src/data/systemCoreExercises.js:14 export const SYSTEM_CORE_EXERCISES (10 ejercicios canónicos sys-1 a sys-10) publicado y consumido simétricamente en closure-gate y catálogo.",
       "dimension": "Arquitectura y separación de capas",
-      "veredicto": "PARTIAL",
-      "riesgo": "Divergencia documental: declarado en testScoreEngine pero implementado en useExercises."
+      "veredicto": "PASS",
+      "riesgo": "Resuelto: módulo canónico src/data/systemCoreExercises.js extraído y alineado documentalmente."
     },
     {
       "id": "MOD-03",
@@ -168,11 +168,11 @@
       "modulo": "Firebase / Firestore",
       "archivos": "firestore.rules, firebase.json, src/firebaseConfig.js",
       "lineas": 259,
-      "estado": "[P]",
-      "evidencia": "firestore.rules:259 reglas de seguridad basadas en auth; SIN validación de edad o esquema para datos de menores.",
+      "estado": "[E]",
+      "evidencia": "firestore.rules validación estricta de edad (minAgeSafe), aislamiento de planes por playerId y verificación de pertenencia coach/jugador.",
       "dimension": "Seguridad y privacidad",
-      "veredicto": "PARTIAL",
-      "riesgo": "Defensa en profundidad incompleta: age-gate reside en UI y prescripción, ausente en firestore.rules."
+      "veredicto": "PASS",
+      "riesgo": "Resuelto: reglas endurecidas con scope playerId y validación de edad server-side."
     },
     {
       "id": "MOD-16",

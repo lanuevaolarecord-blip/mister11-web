@@ -34,7 +34,7 @@ for (const id of pilotIds) {
   const item = PILOT_VECTOR_ILLUSTRATIONS[id];
   ok(item.svg.startsWith('<svg') && item.svg.endsWith('</svg>'), `${id}: Formato SVG válido y completo`);
   ok(!item.svg.includes('<image') && !item.svg.includes('data:image/'), `${id}: 0 fotos ni bitmaps incrustados (100% vectorial)`);
-  ok(item.svg.includes('#0A2540') || item.svg.includes('#00D4B2') || item.svg.includes('#059669'), `${id}: Emplea paleta institucional (azul marino / verde campo)`);
+  ok(item.svg.includes('#1B3A2D') || item.svg.includes('#4CAF7D') || item.svg.includes('#D4A843'), `${id}: Emplea paleta institucional Tierra y Campo (#1B3A2D / #4CAF7D / #D4A843)`);
   ok(item.clinicalData.targetZones.length > 0, `${id}: targetZones anatómicas declaradas: ${item.clinicalData.targetZones.join(', ')}`);
   ok(item.clinicalData.coachingPoints.length >= 3, `${id}: Coaching points clínicos presentes (${item.clinicalData.coachingPoints.length})`);
   ok(item.clinicalData.mistakesToAvoid.length >= 2, `${id}: Errores comunes a evitar presentes (${item.clinicalData.mistakesToAvoid.length})`);

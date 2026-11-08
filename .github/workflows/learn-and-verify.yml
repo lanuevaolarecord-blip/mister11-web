@@ -38,5 +38,8 @@ jobs:
       - name: i18n Zero-Offenders Gate
         run: node scripts/ci-i18n-gate.mjs
 
+      - name: Vitest Pure Engines & Catalog Safety Gate (>=75% Coverage)
+        run: npx vitest run --coverage
+
       - name: Production Build Check
         run: npm run build

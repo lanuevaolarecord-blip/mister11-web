@@ -60,3 +60,6 @@ serviceAccountKey.json
 test-results/
 playwright-report/
 scratch-screenshots/
+
+# Coverage
+coverage/

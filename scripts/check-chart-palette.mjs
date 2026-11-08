@@ -305,6 +305,25 @@ if (fs.existsSync(adminPanelPath)) {
 }
 
 // 5.1 Verificación P14-FIX: Pizarra Táctica y Canvas Runtime
+export function inspectCanvasRuntimeObjects(objects = []) {
+  const violations = [];
+  const forbiddenColors = ['#0D9488', '#10B981', '#0A2540', '#00D4B2'];
+  for (const obj of objects) {
+    const stroke = (obj.stroke || obj.get?.('stroke') || '').toUpperCase();
+    const fill = (obj.fill || obj.get?.('fill') || '').toUpperCase();
+    for (const forbidden of forbiddenColors) {
+      if (stroke === forbidden.toUpperCase() || fill === forbidden.toUpperCase()) {
+        violations.push({
+          objectType: obj.type || 'unknown',
+          forbiddenColor: forbidden,
+          reason: `Línea/Objeto runtime con color vetado ${forbidden}`
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 const pizarraFiles = [
   'src/pages/PizarraTactica.jsx',
   'src/utils/animationEngine.js'
@@ -368,6 +387,26 @@ if (failedTests > 0) {
   process.exit(1);
 } else {
   console.log(`✅ [PASS] El linter detectó el 100% de los casi-colores y azules inyectados (${testSnippets.length}/${testSnippets.length}). Allowlist y cazadores blindados.`);
+}
+
+// 6.1 Regresión P14: Inyección runtime de objeto canvas teal (#0D9488) -> Caza Fail-Closed
+console.log('▶ [TEST REGRESIÓN P14 RUNTIME] Inyectando línea teal (#0D9488) en inspectCanvasRuntimeObjects...');
+const injectedTealLine = {
+  type: 'line',
+  stroke: '#0D9488',
+  strokeWidth: 2,
+  strokeDashArray: [4, 4]
+};
+const runtimeViolations = inspectCanvasRuntimeObjects([
+  { type: 'line', stroke: '#D4A843' }, // Canónico Oro
+  injectedTealLine
+]);
+
+if (runtimeViolations.length === 1 && runtimeViolations[0].forbiddenColor === '#0D9488') {
+  console.log('✅ [P14-RUNTIME-PASS] Línea teal (#0D9488) cazada con éxito en inspectCanvasRuntimeObjects (Fail-Closed).');
+} else {
+  console.error('❌ FALLO CRÍTICO: inspectCanvasRuntimeObjects no cazó la línea teal inyectada.');
+  process.exit(1);
 }
 
 console.log('==============================================================================\n');

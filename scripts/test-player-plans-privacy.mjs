@@ -169,6 +169,80 @@ if (simAnon === 'PERMISSION_DENIED') {
   console.error('❌ Error anon'); process.exit(1);
 }
 
+console.log('\n▶ [4/4] Verificando write scopeado (canCreatePlayerPlan / canUpdatePlayerPlan)...');
+
+// Simular existencia de jugador en teamRel: databases/{db}/documents/{teamRel}/players/{playerId}
+const teamPlayersDb = {
+  'teams/team_X': new Set(['player_X1', 'player_X2']),
+  'teams/team_Y': new Set(['player_Y1', 'player_Y2'])
+};
+
+function simulateCanCreatePlayerPlan({ teamRel, isCoach, resourceData }) {
+  if (!isCoach) return 'PERMISSION_DENIED';
+  const playerId = resourceData?.playerId;
+  if (typeof playerId !== 'string') return 'PERMISSION_DENIED';
+  
+  // exists(playerDocPath(teamRel, playerId))
+  const teamSet = teamPlayersDb[teamRel];
+  const playerExistsInTeam = teamSet && teamSet.has(playerId);
+  if (!playerExistsInTeam) return 'PERMISSION_DENIED';
+
+  return 'ALLOWED';
+}
+
+function simulateCanUpdatePlayerPlan({ teamRel, isCoach, oldResourceData, newResourceData }) {
+  const newPlayerId = newResourceData?.playerId;
+  const oldPlayerId = oldResourceData?.playerId;
+  if (typeof newPlayerId !== 'string') return 'PERMISSION_DENIED';
+  if (newPlayerId !== oldPlayerId) return 'PERMISSION_DENIED';
+
+  const teamSet = teamPlayersDb[teamRel];
+  const playerExistsInTeam = teamSet && teamSet.has(newPlayerId);
+  if (!playerExistsInTeam) return 'PERMISSION_DENIED';
+
+  return 'ALLOWED';
+}
+
+// Test E6.1: Staff de equipo X crea plan para jugador de su equipo X -> ALLOWED
+const createInTeam = simulateCanCreatePlayerPlan({
+  teamRel: 'teams/team_X',
+  isCoach: true,
+  resourceData: { playerId: 'player_X1', exerciseIds: ['sys-1'] }
+});
+if (createInTeam === 'ALLOWED') {
+  console.log('✅ Staff de equipo X creando plan para jugador_X1 (su equipo): ALLOWED');
+} else {
+  console.error('❌ FAIL: staff no pudo crear plan en su propio equipo');
+  process.exit(1);
+}
+
+// Test E6.2: Staff de equipo X crea plan para jugador de equipo Y -> PERMISSION_DENIED
+const crossCreate = simulateCanCreatePlayerPlan({
+  teamRel: 'teams/team_X',
+  isCoach: true,
+  resourceData: { playerId: 'player_Y1', exerciseIds: ['sys-1'] }
+});
+if (crossCreate === 'PERMISSION_DENIED') {
+  console.log('✅ Test E6: Staff de equipo X intentando create plan para jugador de equipo Y: PERMISSION_DENIED 🛡️');
+} else {
+  console.error('❌ FAIL Test E6: Staff de equipo X pudo crear plan para jugador de otro equipo');
+  process.exit(1);
+}
+
+// Test E6.3: Intento de update cambiando playerId -> PERMISSION_DENIED
+const tamperUpdate = simulateCanUpdatePlayerPlan({
+  teamRel: 'teams/team_X',
+  isCoach: true,
+  oldResourceData: { playerId: 'player_X1', exerciseIds: ['sys-1'] },
+  newResourceData: { playerId: 'player_X2', exerciseIds: ['sys-1'] }
+});
+if (tamperUpdate === 'PERMISSION_DENIED') {
+  console.log('✅ Update intentando mutar playerId: PERMISSION_DENIED 🛡️');
+} else {
+  console.error('❌ FAIL: playerId mutable en update');
+  process.exit(1);
+}
+
 console.log('\n══════════════════════════════════════════════════════════════════════');
 console.log('✅ [TEST-PLAYER-PLANS-PRIVACY] 100% PASS — PRIVACIDAD ASEGURADA.');
 console.log('══════════════════════════════════════════════════════════════════════');

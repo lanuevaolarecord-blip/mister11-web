@@ -5,7 +5,7 @@
  * Características:
  * - 100% Vectorial (SVG limpio, sin fotos, estética profesional Android First).
  * - Generado programáticamente con coordenadas biomecánicas deterministas.
- * - Paleta institucional: Azul Marino (#0A2540), Verde Campo (#00D4B2 / #059669), Blanco y Grises neutros (#F3F4F6, #9CA3AF).
+ * - Paleta institucional Tierra y Campo: Verde Bosque (#1B3A2D), Verde Campo (#4CAF7D), Oro (#D4A843), Terracota (#C85A32), Cuero (#9C6A3B), y Grises neutros (#E2E8F0, #CBD5E1, #94A3B8).
  * - Cero IA generativa alucinada: puntos anatómicos precisos y datos clínicos derivados del catálogo.
  * - Estado inicial: pilot_pending_review con reviewed_by_human = false (requiere confirmación del dueño).
  */
@@ -43,25 +43,25 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
   <!-- Colchoneta / Suelo -->
   <rect x="20" y="155" width="280" height="8" rx="4" fill="url(#pMat)"/>
   <!-- Línea de alineación neutra (verde campo) -->
-  <line x1="55" y1="120" x2="265" y2="70" stroke="#00D4B2" stroke-width="2" stroke-dasharray="4,4"/>
+  <line x1="55" y1="120" x2="265" y2="70" stroke="#4CAF7D" stroke-width="2" stroke-dasharray="4,4"/>
   <!-- Silueta biomecánica -->
   <!-- Pies / Puntas -->
-  <circle cx="55" cy="150" r="6" fill="#0A2540"/>
+  <circle cx="55" cy="150" r="6" fill="#1B3A2D"/>
   <!-- Piernas extendidas -->
-  <line x1="55" y1="150" x2="145" y2="120" stroke="#0A2540" stroke-width="8" stroke-linecap="round"/>
+  <line x1="55" y1="150" x2="145" y2="120" stroke="#1B3A2D" stroke-width="8" stroke-linecap="round"/>
   <!-- Pelvis / Core -->
-  <circle cx="145" cy="120" r="8" fill="#00D4B2"/>
+  <circle cx="145" cy="120" r="8" fill="#4CAF7D"/>
   <!-- Tronco alineado -->
-  <line x1="145" y1="120" x2="235" y2="90" stroke="#0A2540" stroke-width="9" stroke-linecap="round"/>
+  <line x1="145" y1="120" x2="235" y2="90" stroke="#1B3A2D" stroke-width="9" stroke-linecap="round"/>
   <!-- Hombro -->
-  <circle cx="235" cy="90" r="7" fill="#0A2540"/>
+  <circle cx="235" cy="90" r="7" fill="#1B3A2D"/>
   <!-- Cabeza en línea neutra -->
-  <circle cx="265" cy="78" r="9" fill="#0A2540"/>
+  <circle cx="265" cy="78" r="9" fill="#1B3A2D"/>
   <!-- Brazo / Antebrazo vertical de soporte -->
-  <line x1="235" y1="90" x2="235" y2="150" stroke="#0A2540" stroke-width="6" stroke-linecap="round"/>
-  <line x1="235" y1="150" x2="260" y2="150" stroke="#0A2540" stroke-width="6" stroke-linecap="round"/>
+  <line x1="235" y1="90" x2="235" y2="150" stroke="#1B3A2D" stroke-width="6" stroke-linecap="round"/>
+  <line x1="235" y1="150" x2="260" y2="150" stroke="#1B3A2D" stroke-width="6" stroke-linecap="round"/>
   <!-- Indicador biomecánico Core -->
-  <text x="145" y="105" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">CORE ACTIVO</text>
+  <text x="145" y="105" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#1B3A2D" text-anchor="middle">CORE ACTIVO</text>
 </svg>`
   },
 
@@ -91,24 +91,24 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
   <!-- Suelo -->
   <line x1="20" y1="160" x2="300" y2="160" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
   <!-- Vector de alineación hombro-cadera-rodilla -->
-  <line x1="65" y1="155" x2="215" y2="105" stroke="#00D4B2" stroke-width="2" stroke-dasharray="4,4"/>
+  <line x1="65" y1="155" x2="215" y2="105" stroke="#4CAF7D" stroke-width="2" stroke-dasharray="4,4"/>
   <!-- Cabeza y hombros en suelo -->
-  <circle cx="45" cy="155" r="9" fill="#0A2540"/>
-  <circle cx="65" cy="155" r="7" fill="#0A2540"/>
-  <line x1="65" y1="155" x2="140" y2="115" stroke="#0A2540" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="45" cy="155" r="9" fill="#1B3A2D"/>
+  <circle cx="65" cy="155" r="7" fill="#1B3A2D"/>
+  <line x1="65" y1="155" x2="140" y2="115" stroke="#1B3A2D" stroke-width="9" stroke-linecap="round"/>
   <!-- Pelvis elevada / Glúteo activo -->
-  <circle cx="140" cy="115" r="8" fill="#00D4B2"/>
+  <circle cx="140" cy="115" r="8" fill="#4CAF7D"/>
   <!-- Muslos hacia rodillas -->
-  <line x1="140" y1="115" x2="215" y2="105" stroke="#0A2540" stroke-width="8" stroke-linecap="round"/>
+  <line x1="140" y1="115" x2="215" y2="105" stroke="#1B3A2D" stroke-width="8" stroke-linecap="round"/>
   <!-- Rodilla flexionada 90° -->
-  <circle cx="215" cy="105" r="7" fill="#0A2540"/>
+  <circle cx="215" cy="105" r="7" fill="#1B3A2D"/>
   <!-- Pierna inferior / tibia vertical -->
-  <line x1="215" y1="105" x2="225" y2="158" stroke="#0A2540" stroke-width="7" stroke-linecap="round"/>
+  <line x1="215" y1="105" x2="225" y2="158" stroke="#1B3A2D" stroke-width="7" stroke-linecap="round"/>
   <!-- Pie firme en suelo -->
-  <line x1="215" y1="158" x2="245" y2="158" stroke="#0A2540" stroke-width="6" stroke-linecap="round"/>
+  <line x1="215" y1="158" x2="245" y2="158" stroke="#1B3A2D" stroke-width="6" stroke-linecap="round"/>
   <!-- Flecha de empuje vertical -->
-  <path d="M 140 145 L 140 128 M 136 133 L 140 126 L 144 133" stroke="#00D4B2" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <text x="140" y="98" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">EMPUJE GLÚTEO</text>
+  <path d="M 140 145 L 140 128 M 136 133 L 140 126 L 144 133" stroke="#4CAF7D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <text x="140" y="98" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#1B3A2D" text-anchor="middle">EMPUJE GLÚTEO</text>
 </svg>`
   },
 
@@ -140,24 +140,24 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
   <!-- Pared de referencia vertical -->
   <line x1="260" y1="30" x2="260" y2="165" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
   <!-- Pierna retrasada (apoyo en rodilla) -->
-  <circle cx="70" cy="162" r="6" fill="#0A2540"/>
+  <circle cx="70" cy="162" r="6" fill="#1B3A2D"/>
   <line x1="70" y1="162" x2="115" y2="110" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
   <!-- Tronco erguido -->
-  <line x1="115" y1="110" x2="125" y2="55" stroke="#0A2540" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="127" cy="42" r="8" fill="#0A2540"/>
+  <line x1="115" y1="110" x2="125" y2="55" stroke="#1B3A2D" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="127" cy="42" r="8" fill="#1B3A2D"/>
   <!-- Muslo adelantado horizontal -->
-  <line x1="115" y1="110" x2="195" y2="108" stroke="#0A2540" stroke-width="8" stroke-linecap="round"/>
+  <line x1="115" y1="110" x2="195" y2="108" stroke="#1B3A2D" stroke-width="8" stroke-linecap="round"/>
   <!-- Rodilla adelantándose hacia la pared -->
-  <circle cx="195" cy="108" r="7" fill="#00D4B2"/>
+  <circle cx="195" cy="108" r="7" fill="#4CAF7D"/>
   <!-- Tibia en ángulo de dorsiflexión -->
-  <line x1="195" y1="108" x2="170" y2="163" stroke="#0A2540" stroke-width="7" stroke-linecap="round"/>
+  <line x1="195" y1="108" x2="170" y2="163" stroke="#1B3A2D" stroke-width="7" stroke-linecap="round"/>
   <!-- Talón pegado al suelo (clave clínica) -->
-  <circle cx="170" cy="163" r="5" fill="#059669"/>
+  <circle cx="170" cy="163" r="5" fill="#1B3A2D"/>
   <!-- Pie firme adelantado -->
-  <line x1="165" y1="163" x2="205" y2="163" stroke="#0A2540" stroke-width="6" stroke-linecap="round"/>
+  <line x1="165" y1="163" x2="205" y2="163" stroke="#1B3A2D" stroke-width="6" stroke-linecap="round"/>
   <!-- Vector flecha dorsiflexión hacia pared -->
-  <path d="M 205 108 L 245 108 M 238 103 L 246 108 L 238 113" stroke="#00D4B2" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <text x="170" y="180" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#059669" text-anchor="middle">TALÓN FIJO (0 DESPEGUE)</text>
+  <path d="M 205 108 L 245 108 M 238 103 L 246 108 L 238 113" stroke="#4CAF7D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <text x="170" y="180" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#1B3A2D" text-anchor="middle">TALÓN FIJO (0 DESPEGUE)</text>
 </svg>`
   },
 
@@ -189,21 +189,21 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
   <!-- Soporte bajo / escalón -->
   <rect x="210" y="135" width="45" height="30" rx="3" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="2"/>
   <!-- Pierna de apoyo vertical -->
-  <line x1="110" y1="165" x2="110" y2="110" stroke="#0A2540" stroke-width="7" stroke-linecap="round"/>
+  <line x1="110" y1="165" x2="110" y2="110" stroke="#1B3A2D" stroke-width="7" stroke-linecap="round"/>
   <!-- Pelvis (eje de flexión / bisagra) -->
-  <circle cx="110" cy="110" r="7" fill="#00D4B2"/>
+  <circle cx="110" cy="110" r="7" fill="#4CAF7D"/>
   <!-- Pierna estirada sobre el soporte -->
-  <line x1="110" y1="110" x2="215" y2="135" stroke="#0A2540" stroke-width="7" stroke-linecap="round"/>
-  <circle cx="215" cy="135" r="5" fill="#0A2540"/>
+  <line x1="110" y1="110" x2="215" y2="135" stroke="#1B3A2D" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="215" cy="135" r="5" fill="#1B3A2D"/>
   <!-- Zona de estiramiento activa (isquiosural) -->
-  <line x1="130" y1="120" x2="195" y2="132" stroke="#00D4B2" stroke-width="3" stroke-dasharray="3,3"/>
+  <line x1="130" y1="120" x2="195" y2="132" stroke="#4CAF7D" stroke-width="3" stroke-dasharray="3,3"/>
   <!-- Tronco con flexión neutra de cadera -->
-  <line x1="110" y1="110" x2="155" y2="70" stroke="#0A2540" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="165" cy="60" r="8" fill="#0A2540"/>
+  <line x1="110" y1="110" x2="155" y2="70" stroke="#1B3A2D" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="165" cy="60" r="8" fill="#1B3A2D"/>
   <!-- Brazos extendidos hacia la pierna sin forzar -->
   <line x1="145" y1="80" x2="185" y2="105" stroke="#94A3B8" stroke-width="5" stroke-linecap="round"/>
   <!-- Indicador biomecánico -->
-  <text x="160" y="150" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#059669" text-anchor="middle">TENSIÓN SUAVE ISQUIO</text>
+  <text x="160" y="150" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#1B3A2D" text-anchor="middle">TENSIÓN SUAVE ISQUIO</text>
 </svg>`
   }
 };

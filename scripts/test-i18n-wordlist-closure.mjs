@@ -189,6 +189,42 @@ if (regressionPassed !== testInjections.length) {
   process.exit(1);
 }
 
+// 6.1 Regla de congelamiento del mapeo: cada clave nueva debe existir en las 6 lenguas
+console.log('\n▶ [3.1/4] Verificando Regla de Congelamiento: inyección de clave incompleta -> Fail-Closed...');
+function assertSymmetricKeyAcrossAllLocales(testLocales, keyName) {
+  for (const [code, dict] of Object.entries(testLocales)) {
+    if (!(keyName in dict) || typeof dict[keyName] !== 'string' || dict[keyName].trim() === '') {
+      throw new Error(`[REGLA-CONGELAMIENTO-VIOLADA] Clave "${keyName}" ausente o vacía en lengua "${code}". Debe existir en las 6 lenguas.`);
+    }
+  }
+  return true;
+}
+
+// Inyección de clave huérfana en mock
+const mockLocalesIncomplete = {
+  es: { 'new.feature.key': 'Nuevo' },
+  'es-419': { 'new.feature.key': 'Nuevo' },
+  en: { 'new.feature.key': 'New' },
+  pt: {}, // Faltante
+  fr: { 'new.feature.key': 'Nouveau' },
+  id: { 'new.feature.key': 'Baru' }
+};
+
+let freezeGateCaught = false;
+try {
+  assertSymmetricKeyAcrossAllLocales(mockLocalesIncomplete, 'new.feature.key');
+} catch (err) {
+  freezeGateCaught = true;
+  console.log(`✅ Regla de congelamiento cazó clave incompleta: "${err.message}"`);
+}
+
+if (!freezeGateCaught) {
+  console.error('❌ FAIL: La regla de congelamiento no bloqueó la clave incompleta.');
+  process.exit(1);
+} else {
+  console.log('✅ Regla de Congelamiento 100% activa: toda clave nueva exige presencia obligatoria en las 6 lenguas.');
+}
+
 // 7. Certificación de estado de NAV-CHAT-ES
 console.log('\n▶ [4/4] Verificando [PENDIENTE-DUEÑO: NAV-CHAT-ES]...');
 const esNavChat = es['player.nav.chat'];

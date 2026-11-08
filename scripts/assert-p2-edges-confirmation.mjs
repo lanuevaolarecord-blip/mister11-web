@@ -89,3 +89,4 @@ if (failed) {
   console.log('✅ [ASSERT-P2-EDGES] 100% PASS — TODOS LOS BORDES E1-E5 CERTIFICADOS.');
   console.log('══════════════════════════════════════════════════════════════════════');
 }
+

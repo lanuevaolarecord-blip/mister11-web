@@ -119,14 +119,16 @@ service cloud.firestore {
 
     function canCreatePlayerPlan(teamRel, coach) {
       return coach && request.resource.data.get('playerId', null) is string &&
+        exists(playerDocPath(teamRel, request.resource.data.get('playerId', ''))) &&
         playerPlanSafe(teamRel, request.resource.data);
     }
 
-    // Update: playerId inmutable; el staff puede cambiar ejercicios; un no-staff solo puede
-    // actualizar progreso (exerciseIds sin cambios). Siempre se re-valida la edad.
+    // Update: playerId inmutable y perteneciente a teamRel; el staff puede cambiar ejercicios;
+    // un no-staff solo puede actualizar progreso (exerciseIds sin cambios). Siempre se re-valida la edad.
     function canUpdatePlayerPlan(teamRel, coach) {
       return request.resource.data.get('playerId', null) is string &&
         request.resource.data.get('playerId', null) == resource.data.get('playerId', null) &&
+        exists(playerDocPath(teamRel, request.resource.data.get('playerId', ''))) &&
         playerPlanSafe(teamRel, request.resource.data) &&
         (coach || request.resource.data.get('exerciseIds', []) == resource.data.get('exerciseIds', []));
     }

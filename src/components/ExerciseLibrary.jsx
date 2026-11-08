@@ -453,7 +453,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#0A2540'
               }}
-              aria-label="Cerrar modal"
+              aria-label={t('common.close', 'Cerrar')}
             >
               ✕
             </button>

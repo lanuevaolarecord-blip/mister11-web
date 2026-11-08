@@ -33,7 +33,7 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
         'No descolgar la cabeza ni arquear el cuello.'
       ]
     },
-    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plancha Frontal">
+    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <linearGradient id="pMat" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#E2E8F0"/>
@@ -87,7 +87,7 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
         'No despegar los talones del suelo durante el empuje.'
       ]
     },
-    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Puente de Glúteos">
+    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <!-- Suelo -->
   <line x1="20" y1="160" x2="300" y2="160" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
   <!-- Vector de alineación hombro-cadera-rodilla -->
@@ -134,7 +134,7 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
         'Rotar la pelvis para compensar la rigidez articular.'
       ]
     },
-    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Movilidad de Tobillo">
+    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <!-- Suelo -->
   <line x1="20" y1="165" x2="300" y2="165" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
   <!-- Pared de referencia vertical -->
@@ -183,7 +183,7 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
         'Realizar rebotes balísticos incontrolados.'
       ]
     },
-    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Estiramiento Isquiosural">
+    svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <!-- Suelo -->
   <line x1="20" y1="165" x2="300" y2="165" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
   <!-- Soporte bajo / escalón -->

@@ -49,17 +49,19 @@ export const SYSTEM_CORE_EXERCISES = [
       "citation": "FIFA 11+ Programme Manual, Part 2 (Core stability)"
     },
     "illustration": {
-      "type": "pendiente",
+      "type": "vector_svg",
+      "status": "pilot_pending_review",
+      "author": "agent",
+      "reviewed_by_human": false,
       "url": null,
       "alt": {
-        "es": "Ilustración técnica pendiente",
-        "en": "Technical illustration pending",
-        "pt": "Ilustração técnica pendente",
-        "fr": "Illustration technique en attente",
-        "id": "Ilustrasi teknis tertunda"
+        "es": "Ilustración vectorial técnica: Plancha frontal",
+        "en": "Technical vector illustration: Front plank",
+        "pt": "Ilustração vetorial técnica: Prancha frontal",
+        "fr": "Illustration vectorielle technique: Planche frontale",
+        "id": "Ilustrasi vektor teknis: Plank depan"
       },
-      "source": null,
-      "reviewed_by_human": false
+      "source": "pilot_b5a_vectorial"
     },
     "createdBy": "clinical_seed",
     "namePt": "Prancha Frontal",
@@ -111,17 +113,19 @@ export const SYSTEM_CORE_EXERCISES = [
       "citation": "FIFA 11+ Programme Manual, Part 2"
     },
     "illustration": {
-      "type": "pendiente",
+      "type": "vector_svg",
+      "status": "pilot_pending_review",
+      "author": "agent",
+      "reviewed_by_human": false,
       "url": null,
       "alt": {
-        "es": "Ilustración técnica pendiente",
-        "en": "Technical illustration pending",
-        "pt": "Ilustração técnica pendente",
-        "fr": "Illustration technique en attente",
-        "id": "Ilustrasi teknis tertunda"
+        "es": "Ilustración vectorial técnica: Puente de glúteos",
+        "en": "Technical vector illustration: Glute bridge",
+        "pt": "Ilustração vetorial técnica: Ponte de glúteos",
+        "fr": "Illustration vectorielle technique: Pont fessier",
+        "id": "Ilustrasi vektor teknis: Glute bridge"
       },
-      "source": null,
-      "reviewed_by_human": false
+      "source": "pilot_b5a_vectorial"
     },
     "createdBy": "clinical_seed",
     "namePt": "Ponte de Glúteos",
@@ -171,17 +175,19 @@ export const SYSTEM_CORE_EXERCISES = [
       "citation": "Verhagen et al. 2004, ankle injury prevention"
     },
     "illustration": {
-      "type": "pendiente",
+      "type": "vector_svg",
+      "status": "pilot_pending_review",
+      "author": "agent",
+      "reviewed_by_human": false,
       "url": null,
       "alt": {
-        "es": "Ilustración técnica pendiente",
-        "en": "Technical illustration pending",
-        "pt": "Ilustração técnica pendente",
-        "fr": "Illustration technique en attente",
-        "id": "Ilustrasi teknis tertunda"
+        "es": "Ilustración vectorial técnica: Movilidad de tobillo",
+        "en": "Technical vector illustration: Ankle mobility",
+        "pt": "Ilustração vetorial técnica: Mobilidade de tornozelo",
+        "fr": "Illustration vectorielle technique: Mobilité de la cheville",
+        "id": "Ilustrasi vektor teknis: Mobilitas pergelangan kaki"
       },
-      "source": null,
-      "reviewed_by_human": false
+      "source": "pilot_b5a_vectorial"
     },
     "createdBy": "clinical_seed",
     "namePt": "Mobilidade de Tornozelo",
@@ -474,17 +480,19 @@ export const SYSTEM_CORE_EXERCISES = [
       "citation": "ACSM 2022 flexibility; Page 2012 stretching concepts"
     },
     "illustration": {
-      "type": "pendiente",
+      "type": "vector_svg",
+      "status": "pilot_pending_review",
+      "author": "agent",
+      "reviewed_by_human": false,
       "url": null,
       "alt": {
-        "es": "Ilustración técnica pendiente",
-        "en": "Technical illustration pending",
-        "pt": "Ilustração técnica pendente",
-        "fr": "Illustration technique en attente",
-        "id": "Ilustrasi teknis tertunda"
+        "es": "Ilustración vectorial técnica: Estiramiento isquiosural",
+        "en": "Technical vector illustration: Hamstring stretch",
+        "pt": "Ilustração vetorial técnica: Alongamento de isquiotibiais",
+        "fr": "Illustration vectorielle technique: Étirement des ischio-jambiers",
+        "id": "Ilustrasi vektor teknis: Peregangan hamstring"
       },
-      "source": null,
-      "reviewed_by_human": false
+      "source": "pilot_b5a_vectorial"
     },
     "createdBy": "clinical_seed",
     "namePt": "Alongamento de Isquiotibiais",

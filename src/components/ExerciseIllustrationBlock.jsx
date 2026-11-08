@@ -1,9 +1,57 @@
 import React from 'react';
-import { ImageOff } from 'lucide-react';
+import { ImageOff, ShieldAlert } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { getPilotIllustration } from '../data/vectorIllustrations';
 
-export const ExerciseIllustrationBlock = ({ illustration, exerciseName, compact = false }) => {
+export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exerciseId, compact = false }) => {
   const { t, language } = useTranslation();
+
+  // B5-A: Si es ilustración vectorial del piloto
+  if (illustration?.type === 'vector_svg') {
+    const id = exerciseId || illustration.id;
+    const pilotItem = getPilotIllustration(id);
+    if (pilotItem) {
+      return (
+        <div 
+          className="exercise-illustration-frame exercise-illustration-vector"
+          style={{
+            margin: compact ? '4px 0 8px 0' : '10px 0 14px 0',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            border: '1px solid rgba(10, 37, 64, 0.15)',
+            background: '#FFFFFF',
+            padding: compact ? '6px' : '12px'
+          }}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxHeight: compact ? '140px' : '220px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+            dangerouslySetInnerHTML={{ __html: pilotItem.svg }}
+          />
+          <div style={{
+            fontSize: '0.72rem',
+            color: '#0A2540',
+            padding: '4px 8px',
+            background: '#F0F9FF',
+            borderTop: '1px solid #E0F2FE',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <span style={{ fontWeight: 600 }}>Ilustración Vectorial Biomecánica</span>
+            <span style={{ color: pilotItem.reviewed_by_human ? '#059669' : '#D97706', fontWeight: 600 }}>
+              {pilotItem.reviewed_by_human ? 'Certificada' : 'Piloto en Revisión'}
+            </span>
+          </div>
+        </div>
+      );
+    }
+  }
 
   const isPending = !illustration || illustration.type === 'pendiente' || !illustration.url;
 

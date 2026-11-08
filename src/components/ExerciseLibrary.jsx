@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
 import { ClinicalFallbackChip } from './common/ClinicalFallbackChip';
+import { PilotIllustrationsReview } from './admin/PilotIllustrationsReview';
 import './ExerciseLibrary.css';
 
 const renderMarkdown = (text) => {
@@ -71,6 +72,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [showPilotModal, setShowPilotModal] = useState(false);
   const [viewExercise, setViewExercise] = useState(null);
   const [newExercise, setNewExercise] = useState({
     name: '', category: 'fortalecimiento', targetZones: [], injuryTypes: [], 
@@ -104,9 +106,31 @@ const ExerciseLibrary = ({ activeTeamId }) => {
     <div className="exercise-library">
       <div className="library-header">
         <h2>{isEn ? 'Exercise Library' : 'Biblioteca de Ejercicios'}</h2>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> {isEn ? 'New Exercise' : 'Nuevo Ejercicio'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button 
+            type="button"
+            className="btn-secondary" 
+            onClick={() => setShowPilotModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: '1px solid #CBD5E1',
+              background: '#FFFFFF',
+              color: '#0A2540',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minHeight: '40px'
+            }}
+          >
+            <Eye size={16} /> {isEn ? 'Pilot Review (B5-A)' : 'Revisar Piloto (B5-A)'}
+          </button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={18} /> {isEn ? 'New Exercise' : 'Nuevo Ejercicio'}
+          </button>
+        </div>
       </div>
 
       <div className="library-filters">
@@ -275,6 +299,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
             <ExerciseIllustrationBlock 
               illustration={activeViewEx.illustration} 
               exerciseName={activeViewEx.name || activeViewEx.titulo} 
+              exerciseId={activeViewEx.id}
             />
 
             {/* Dosificación atlética */}
@@ -405,6 +430,37 @@ const ExerciseLibrary = ({ activeTeamId }) => {
           </div>
         </div>
       ); })()}
+
+      {showPilotModal && (
+        <div className="modal-backdrop" onClick={() => setShowPilotModal(false)} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(10, 37, 64, 0.6)', zIndex: 1000, display: 'flex',
+          justifyContent: 'center', alignItems: 'center', padding: '16px',
+          backdropFilter: 'blur(3px)'
+        }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{
+            background: '#FFFFFF', borderRadius: '16px', maxWidth: '850px', width: '100%',
+            maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+          }}>
+            <button 
+              type="button"
+              onClick={() => setShowPilotModal(false)} 
+              style={{
+                position: 'absolute', top: '16px', right: '16px', zIndex: 10,
+                background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '50%',
+                width: '40px', height: '40px', cursor: 'pointer', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#0A2540'
+              }}
+              aria-label="Cerrar modal"
+            >
+              ✕
+            </button>
+            <PilotIllustrationsReview />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

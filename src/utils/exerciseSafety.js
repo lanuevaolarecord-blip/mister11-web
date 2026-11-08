@@ -59,7 +59,8 @@ export const isHighClinicalRisk = (exercise) => {
   if (!exercise) return false;
   const id = typeof exercise === 'string' ? exercise : exercise?.id;
   if (id && CANONICAL_EXERCISE_SAFETY_MAP && CANONICAL_EXERCISE_SAFETY_MAP[id]) {
-    return CANONICAL_EXERCISE_SAFETY_MAP[id].tier_riesgo === 'alto';
+    const tier = CANONICAL_EXERCISE_SAFETY_MAP[id].tier_riesgo;
+    return tier === 'alto' || tier === 'PENDIENTE-FISIO';
   }
   const name = ((exercise.name || '') + ' ' + (exercise.nameEs || '') + ' ' + (exercise.nameEn || '') + ' ' + (exercise.id || '')).toLowerCase();
   const tz = (exercise.targetZones || []).map(z => String(z).toLowerCase());
@@ -137,6 +138,15 @@ export const canPrescribeAtHome = (exercise, {
       prescribable: false,
       reason: 'high_risk_unreviewed_illustration',
       badge: 'Requiere supervisión presencial (ilustración pendiente)'
+    };
+  }
+
+  // B5-A: Piloto vectorial bajo riesgo — Fail-closed si está en revisión pendiente sin aprobación humana
+  if (exercise.illustration?.status === 'pilot_pending_review' && !exercise.illustration?.reviewed_by_human) {
+    return {
+      prescribable: false,
+      reason: 'pilot_illustration_pending_review',
+      badge: 'Ilustración en revisión (aprobación requerida)'
     };
   }
 

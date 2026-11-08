@@ -149,6 +149,9 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/fabric')) {
               return 'vendor-fabric'
             }
+            if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
+              return 'vendor-pdf'
+            }
           }
         }
       }

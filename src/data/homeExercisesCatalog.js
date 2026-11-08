@@ -78,6 +78,7 @@ export const HOME_EXERCISES_CATEGORIES = {
 export const HOME_EXERCISES_108 = [
   {
     "id": "hex-001",
+    "duplicateOf": "sys-3",
     "name": "Movilidad de Tobillo Dinámica",
     "nameEs": "Movilidad de Tobillo Dinámica",
     "nameEn": "Dynamic Ankle Mobility",

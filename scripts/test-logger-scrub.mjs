@@ -104,3 +104,4 @@ if (errors > 0) {
   console.log('✅ [TEST-LOGGER-SCRUB] 100% PASS — CERO FUGAS DE PII.');
   console.log('══════════════════════════════════════════════════════════════════════');
 }
+

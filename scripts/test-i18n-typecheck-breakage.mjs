@@ -72,3 +72,4 @@ if (caughtBreakage && breakageMessage.includes('player.tab.plans')) {
 console.log('\n══════════════════════════════════════════════════════════════════════');
 console.log('✅ [TEST-I18N-TYPECHECK-BREAKAGE] 100% PASS — SELLO DE TIPOS ACTIVO.');
 console.log('══════════════════════════════════════════════════════════════════════');
+

@@ -132,3 +132,4 @@ if (checkInInstancePostF5.microIndicator === 'synced') {
 console.log('\n══════════════════════════════════════════════════════════════════════');
 console.log('✅ [TEST-CHECKIN-REHYDRATION] 100% PASS — REHIDRATACIÓN PERFECTA.');
 console.log('══════════════════════════════════════════════════════════════════════');
+

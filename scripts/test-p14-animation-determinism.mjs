@@ -1,11 +1,12 @@
 /**
  * scripts/test-p14-animation-determinism.mjs
- * MÍSTER11 — P14-FIX: Test de Reproducción Determinista 10x de Animación en Pizarra (Fabric.js)
+ * MÍSTER11 — P4 / P14-FIX: Test de Reproducción Determinista 10x de Animación en Pizarra (Fabric.js)
  *
  * Valida de forma estricta:
  * 1. Cero líneas residuales teal (#4CAF7D, #0D9488, etc.) en cada rAF y tras cada transición.
  * 2. Balón con exactamente 1 única instancia viva por rAF (cero duplicados / ghosting).
  * 3. 10 reproducciones consecutivas sin un solo fallo (10/10 PASS).
+ * 4. Extensión de check-chart-palette al canvas runtime.
  */
 
 import { getTacticalCategory, getTacticalPieceIdentifier, isFieldLayer, removeAllTacticalPieces, TACTICAL_CATEGORIES } from '../src/lib/mister11-pieces.js';

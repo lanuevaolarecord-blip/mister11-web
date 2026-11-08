@@ -141,16 +141,31 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
-              return 'vendor-react'
+              return 'vendor-react';
             }
             if (id.includes('node_modules/firebase')) {
-              return 'vendor-firebase'
+              return 'vendor-firebase';
             }
             if (id.includes('node_modules/fabric')) {
-              return 'vendor-fabric'
+              return 'vendor-fabric';
             }
             if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
-              return 'vendor-pdf'
+              return 'vendor-pdf';
+            }
+            if (id.includes('node_modules/recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('node_modules/xlsx')) {
+              return 'vendor-xlsx';
+            }
+            if (id.includes('node_modules/papaparse')) {
+              return 'vendor-csv';
+            }
+            if (id.includes('node_modules/lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('node_modules/@dnd-kit')) {
+              return 'vendor-dnd';
             }
           }
         }

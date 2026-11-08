@@ -11,12 +11,12 @@ import { Browser } from '@capacitor/browser';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import LandingPage from './pages/LandingPage';
 import NotFound from './pages/NotFound';
 import PageLoader from './components/PageLoader';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // ── Carga DIFERIDA (code splitting) — se cargan solo cuando se navega ────────
+const LandingPage       = lazy(() => import('./pages/LandingPage'));
 const PizarraTactica    = lazy(() => import('./pages/PizarraTactica'));
 const MiEquipo          = lazy(() => import('./pages/MiEquipo'));
 const Sesiones          = lazy(() => import('./pages/Sesiones'));

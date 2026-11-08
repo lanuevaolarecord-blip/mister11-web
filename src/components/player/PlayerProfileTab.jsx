@@ -11,6 +11,7 @@ import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../../utils/testScoreEngine';
 import { calcularEdad } from '../../utils/calcularEdad';
 import { updatePhysicalStats } from '../../utils/playerProfile';
+import { setWellnessQueueItem, getWellnessQueueItem, getWellnessQueueItemSync } from '../../utils/wellnessQueueDb';
 import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
@@ -208,8 +209,8 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
     };
 
     try {
-      localStorage.setItem(`m11_wellness_${effId}_${todayStr}`, JSON.stringify(queueItem));
-      localStorage.setItem('m11_wellness_queue', JSON.stringify(queueItem));
+      setWellnessQueueItem(`m11_wellness_${effId}_${todayStr}`, queueItem);
+      setWellnessQueueItem('m11_wellness_queue', queueItem);
     } catch (_) {}
 
     try {
@@ -237,8 +238,8 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       // Éxito: marcar como 'synced' en la cola local
       queueItem.status = 'synced';
       try {
-        localStorage.setItem(`m11_wellness_${effId}_${todayStr}`, JSON.stringify(queueItem));
-        localStorage.setItem('m11_wellness_queue', JSON.stringify(queueItem));
+        setWellnessQueueItem(`m11_wellness_${effId}_${todayStr}`, queueItem);
+        setWellnessQueueItem('m11_wellness_queue', queueItem);
       } catch (_) {}
 
       setSyncStatus('synced');
@@ -274,15 +275,12 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
 
   // Reintento silencioso al recuperar conexión (evento online)
   useEffect(() => {
-    const handleOnline = () => {
+    const handleOnline = async () => {
       try {
         const effId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
-        const queuedRaw = localStorage.getItem('m11_wellness_queue');
-        if (queuedRaw) {
-          const item = JSON.parse(queuedRaw);
-          if (item && item.status === 'pending' && item.playerId === effId) {
-            syncWellnessPayload(item);
-          }
+        const item = await getWellnessQueueItem('m11_wellness_queue');
+        if (item && item.status === 'pending' && item.playerId === effId) {
+          syncWellnessPayload(item);
         }
       } catch (_) {}
     };
@@ -394,14 +392,22 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   useEffect(() => {
     const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
     
-    // Check local storage first for instant load
+    // Check persistent storage first for instant load
     try {
-      const localSaved = localStorage.getItem(`m11_wellness_${effectivePlayerId}_${todayStr}`);
+      const localSaved = getWellnessQueueItemSync(`m11_wellness_${effectivePlayerId}_${todayStr}`);
       if (localSaved) {
-        setWellnessData(JSON.parse(localSaved));
+        setWellnessData(localSaved);
         setWellnessSubmitted(true);
       }
     } catch (_) {}
+
+    // Lectura asíncrona reforzada desde IndexedDB si el sync aún no lo tenía
+    getWellnessQueueItem(`m11_wellness_${effectivePlayerId}_${todayStr}`).then(idbSaved => {
+      if (idbSaved) {
+        setWellnessData(idbSaved);
+        setWellnessSubmitted(true);
+      }
+    }).catch(() => {});
 
     if (!cleanTeamPath) return;
 

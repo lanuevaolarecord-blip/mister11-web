@@ -4,3 +4,4 @@
  */
 
 export * from './canonicalWordlist.js';
+

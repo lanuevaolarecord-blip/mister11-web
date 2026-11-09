@@ -304,13 +304,26 @@ if (fs.existsSync(adminPanelPath)) {
   }
 }
 
-// 5.1 Verificación P14-FIX: Pizarra Táctica y Canvas Runtime
+// 5.1 Verificación P14-FIX & D5: Pizarra Táctica y Canvas Runtime
 export function inspectCanvasRuntimeObjects(objects = []) {
   const violations = [];
-  const forbiddenColors = ['#0D9488', '#10B981', '#0A2540', '#00D4B2'];
+  const forbiddenColors = ['#0D9488', '#10B981', '#0A2540', '#00D4B2', '#047857', '#1E293B', '#2E7D5C'];
   for (const obj of objects) {
     const stroke = (obj.stroke || obj.get?.('stroke') || '').toUpperCase();
     const fill = (obj.fill || obj.get?.('fill') || '').toUpperCase();
+    const isTrajectory = obj.category === 'trajectory' || obj.isTrajectory || obj.data?.type === 'trajectory';
+
+    // D5 (Oleada 9.3): Trayectorias intencionales deben usar estrictamente dorado #D4A843
+    if (isTrajectory) {
+      if (stroke && stroke !== '#D4A843') {
+        violations.push({
+          objectType: 'trajectory',
+          forbiddenColor: stroke,
+          reason: `Trayectoria con color no canónico ${stroke} (se exige dorado #D4A843)`
+        });
+      }
+    }
+
     for (const forbidden of forbiddenColors) {
       if (stroke === forbidden.toUpperCase() || fill === forbidden.toUpperCase()) {
         violations.push({

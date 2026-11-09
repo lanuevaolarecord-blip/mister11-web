@@ -47,7 +47,8 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
     tier_riesgo: 'bajo',
     edadMin: 10,
     reviewed_by_human: false,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
+    rejection_note: 'Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.',
     author: 'agent',
     source: 'FIFA 11+ Programme Manual, Part 2 (Core stability)',
     clinicalData: {
@@ -132,7 +133,8 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
     tier_riesgo: 'bajo',
     edadMin: 10,
     reviewed_by_human: false,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
+    rejection_note: 'Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.',
     author: 'agent',
     source: 'FIFA 11+ Programme Manual, Part 2 (Hip extensor)',
     clinicalData: {
@@ -206,7 +208,8 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
     tier_riesgo: 'bajo',
     edadMin: 10,
     reviewed_by_human: false,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
+    rejection_note: 'Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.',
     author: 'agent',
     source: 'FIFA 11+ Programme Manual, Part 1 (Running & mobility)',
     clinicalData: {
@@ -284,7 +287,8 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
     tier_riesgo: 'bajo',
     edadMin: 10,
     reviewed_by_human: false,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
+    rejection_note: 'Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.',
     author: 'agent',
     source: 'FIFA 11+ Programme Manual, Part 3 (Cool-down & recovery)',
     clinicalData: {
@@ -358,7 +362,8 @@ export const PILOT_VECTOR_ILLUSTRATIONS = {
     tier_riesgo: 'bajo',
     edadMin: 10,
     reviewed_by_human: false,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
+    rejection_note: 'Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.',
     author: 'agent',
     source: 'FIFA 11+ Programme Manual, Part 2 (Core stability)',
     clinicalData: {

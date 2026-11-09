@@ -1848,7 +1848,7 @@ export const es = {
   "player.plans.sets": "Series",
   "player.plans.stepByStep": "EJECUCIÓN PASO A PASO",
   "player.plans.subtitle": "Rutinas personalizadas asignadas por el cuerpo técnico",
-  "player.plans.title": "Planes de Entrenamiento Individual",
+  "player.plans.title": "Planes individuales",
   "player.portal.activeCard": "Ficha activa:",
   "player.portal.family": "PORTAL FAMILIA",
   "player.portal.joinWithCode": "Unirme a un Equipo con Código",

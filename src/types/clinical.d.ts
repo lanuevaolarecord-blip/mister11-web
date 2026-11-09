@@ -27,7 +27,7 @@ export interface LocalizedString {
 
 export interface ExerciseIllustration {
   type: IllustrationType;
-  status?: 'pilot_pending_review' | 'certified' | 'pending';
+  status?: 'pilot_pending_review' | 'certified' | 'pending' | 'rejected_by_owner';
   author?: string;
   reviewed_by_human: boolean;
   rigVerifiedBy?: string;

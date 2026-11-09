@@ -370,29 +370,22 @@ const scanLanguages = [
 // WHITELISTS CARRIL C EXPLÍCITAS POR LENGUA REAL (H10):
 // - 'Error' eliminado de pt/fr/id (en pt: Erro, fr: Erreur, id: Kesalahan)
 // - 'DNI'/'NIE' eliminados de pt/id (específicos de España/Latam)
+// - D1 (Oleada 9.3): 'Mister' declarado formalmente como Marca Institucional en Carril C por decisión del DUEÑO
 const carrilCAllowlistByLang = {
-  es: new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK']),
-  'es-419': new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK']),
-  en: new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'Zen', 'Error', 'OK']),
+  es: new Set(['MISTER11', 'Mister11', 'Mister', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK']),
+  'es-419': new Set(['MISTER11', 'Mister11', 'Mister', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'DNI', 'NIE', 'Zen', 'Error', 'OK']),
+  en: new Set(['MISTER11', 'Mister11', 'Mister', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'Zen', 'Error', 'OK']),
   pt: new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'Zen', 'OK']),
   fr: new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'Zen', 'OK']),
   id: new Set(['MISTER11', 'Mister11', 'mister11.app', 'AI', 'Admin', 'XP', 'GPS', 'PDF', 'CSV', 'MP4', 'EVA', 'RPE', 'ACWR', 'Zen', 'OK'])
 };
 
-// [DECISIÓN-DUEÑO: NAV-CHAT-ES] Whitelist de decisiones de marca pendientes del Dueño con CADUCIDAD (H13, H17):
+// [DECISIÓN-DUEÑO: NAV-CHAT-ES RESUELTO EN D1]
+// La decisión fue aplicada en Oleada 9.3 como marca institucional Carril C ("Mister").
+// El pending-EXPIRED de ISSUE-NAV-CHAT-ES queda completamente eliminado.
 const CURRENT_BUILD = 95; // Build actual de la aplicación evaluada
 
-const pendingOwnerDecisions = {
-  'player.nav.chat': {
-    tag: '[PENDIENTE-DUEÑO: NAV-CHAT-ES]',
-    issue: 'ISSUE-NAV-CHAT-ES',
-    expiresAtBuild: 95,
-    expiresAtPhase: 'Fin de Closed Testing (Pruebas Cerradas)',
-    langs: ['es', 'es-419'],
-    allowedProvisional: ['Mister'],
-    question: '¿"Mister" (marca, Carril C) o "Entrenador"/"Míster" (traducción)?'
-  }
-};
+const pendingOwnerDecisions = {};
 
 // FIRMAS DEL DUEÑO APLICADAS:
 // - CARRIL-NAV = localizar (PT Treinador/Estatísticas, FR Entraîneur/Statistiques, ID Pelatih/Statistik, EN Coach/Stats, ES/ES-419 Estadísticas).
@@ -452,9 +445,9 @@ const nativePatterns = {
 };
 
 function classifyCellLanguage(val, targetCode, key) {
-  // 1. Whitelist Carril C
+  // 1. Whitelist Carril C (Marcas institucionales y siglas técnicas autorizadas)
   if (carrilCAllowlistByLang[targetCode].has(val)) {
-    return { lang: targetCode, source: 'whitelist' };
+    return { lang: targetCode, source: 'whitelist-brand' };
   }
 
   // 1.5. Deudas Finitas Formales (5b) declaradas para revisión nativa del DUEÑO (G1+G4 / R6)
@@ -558,6 +551,7 @@ for (const r of langCodes) {
 
 const sourceHistogram = {
   whitelist: 0,
+  'whitelist-brand': 0,
   cognado: 0,
   pending: 0,
   'pending-EXPIRED': 0,
@@ -658,7 +652,8 @@ for (const r of langCodes) {
 console.log('\n  [HISTOGRAMA DE FUENTES DE CLASIFICACIÓN (618 CELDAS) — H16]');
 console.log('  | Fuente de Clasificación | Celdas | % del Total | Naturaleza de la Evidencia |');
 console.log('  |---|---|---|---|');
-console.log(`  | whitelist | ${sourceHistogram.whitelist} | ${((sourceHistogram.whitelist/618)*100).toFixed(1)}% | Evidencia Positiva (Carril C allowlist) |`);
+const totalWhitelist = (sourceHistogram.whitelist || 0) + (sourceHistogram['whitelist-brand'] || 0);
+console.log(`  | whitelist-brand | ${totalWhitelist} | ${((totalWhitelist/618)*100).toFixed(1)}% | Evidencia Positiva (Carril C allowlist marca/siglas) |`);
 console.log(`  | cognado | ${sourceHistogram.cognado} | ${((sourceHistogram.cognado/618)*100).toFixed(1)}% | Evidencia Positiva (Cognado legítimo declarado) |`);
 console.log(`  | pending (vigente) | ${sourceHistogram.pending} | ${((sourceHistogram.pending/618)*100).toFixed(1)}% | Bypass Provisional Vigente |`);
 console.log(`  | pending-EXPIRED | ${sourceHistogram['pending-EXPIRED']} | ${((sourceHistogram['pending-EXPIRED']/618)*100).toFixed(1)}% | 🔴 [VENCIDO en Build 95] (Requiere firma Dueño) |`);
@@ -727,13 +722,21 @@ if (reg5Classified.lang === 'unknown' && reg5Classified.source === 'DEFAULT-unkn
   recordFailure({ test: 'Regresión H14', surface: 'meta', lang: 'es', key: 'sample.unlisted', error: `Inyección sin stopword devolvió "${reg5Classified.lang}" en vez de unknown` });
 }
 
-// 6. Regresión H17: Caducidad de NAV-CHAT-ES en Build 95
+// 6. Regresión D1 / H17: "Mister" como marca institucional Carril C y rechazo de inglés no-marca ("Coach")
 const reg6Val = 'Mister';
 const reg6Classified = classifyCellLanguage(reg6Val, 'es', 'player.nav.chat');
-if (reg6Classified.source === 'pending-EXPIRED') {
-  console.log('  ✅ Regresión H17: Caducidad de NAV-CHAT-ES evaluada contra Build 95 => marcado 🔴 [VENCIDO] (pending-EXPIRED), no aprueba provisional.');
+const reg6CoachClassified = classifyCellLanguage('Coach', 'es', 'player.nav.chat');
+
+if (reg6Classified.lang === 'es' && reg6Classified.source === 'whitelist-brand' && reg6CoachClassified.lang === 'en' && reg6CoachClassified.source === 'rama3-exact') {
+  console.log('  ✅ Regresión D1 / H17: "Mister" en ES clasificado como "whitelist-brand" (Carril C), e inyección de inglés no-marca ("Coach") en ES rechazada como fuga (rama3-exact).');
 } else {
-  recordFailure({ test: 'Regresión H17', surface: 'meta', lang: 'es', key: 'player.nav.chat', error: 'Bypass NAV-CHAT-ES no fue detectado como vencido en Build 95' });
+  recordFailure({ 
+    test: 'Regresión D1 / H17', 
+    surface: 'meta', 
+    lang: 'es', 
+    key: 'player.nav.chat', 
+    error: `"Mister" clasificó como ${reg6Classified.source} o "Coach" no fue detectado como fuga (${reg6CoachClassified.source})` 
+  });
 }
 
 // 7. Regresión H20.1: Inyección de español no-cognado ("Prevención") en columna FR (key plan.type.prevencion)
@@ -881,7 +884,7 @@ for (const f of sampleTableFields) {
 console.log(`\n  • Superficies activas auditadas con claves > 0: ${activeSurfacesCount} / ${Object.keys(surfacesToScan).length}`);
 console.log(`  • Fugas de idioma en todo el portal evaluadas: ${fugaCount} (ESPERADO: 0) -> ${fugaCount === 0 ? 'PASS ✅' : 'FAIL ❌'}`);
 console.log('  • Firmas del dueño aplicadas: CARRIL-NAV = localizar (PT Treinador/Estatísticas, FR Entraîneur/Statistiques, ID Pelatih/Statistik, EN Coach/Stats, ES/ES-419 Estadísticas).');
-console.log('  • [PENDIENTE-DUEÑO: NAV-CHAT-ES] (H13): "Mister" en ES/ES-419 bajo bypass provisional con caducidad (Issue: ISSUE-NAV-CHAT-ES, Vence: Build 95 / Fin de Closed Testing).');
+console.log('  • [DECISIÓN-DUEÑO: NAV-CHAT-ES] (D1): "Mister" en ES/ES-419 certificado como Marca Institucional Carril C por decisión del DUEÑO.');
 console.log('  • Material de planes: Glosario canónico cerrado mat.* en 6 lenguas (Carril A certificado).');
 
 // ─────────────────────────────────────────────────────────────────────────────

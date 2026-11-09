@@ -78,15 +78,15 @@ export const PENDING_NATIVE_REVIEWS_5B = {
 };
 
 /**
- * Decisión pendiente de marca [PENDIENTE-DUEÑO: NAV-CHAT-ES]
+ * Decisión de marca del Dueño (D1 — Oleada 9.3: "Mister" como marca institucional Carril C)
  */
 export const PENDING_OWNER_NAV_CHAT_ES = {
   key: 'player.nav.chat',
   langs: ['es', 'es-419'],
   value: 'Mister',
-  status: '[PENDIENTE-DUEÑO: NAV-CHAT-ES]',
+  status: '[RESUELTO-DUEÑO: MARCA-CARRIL-C]',
   owner: 'DUEÑO',
-  expiresAtBuild: 95
+  decision: 'Mister como marca institucional Carril C'
 };
 
 /**
@@ -101,30 +101,35 @@ export function evaluateWordlistMembership(key, val, langCode) {
     return { isPass: false, source: 'invalid-input', isPositive: false };
   }
 
-  // 1. Caso especial: NAV-CHAT-ES
+  // 1. Caso especial: NAV-CHAT-ES resuelto como marca institucional Carril C (D1)
   if (key === PENDING_OWNER_NAV_CHAT_ES.key && PENDING_OWNER_NAV_CHAT_ES.langs.includes(langCode)) {
-    return {
-      isPass: true,
-      source: 'pending-owner-chat',
-      tag: PENDING_OWNER_NAV_CHAT_ES.status,
-      isDebt: true,
-      isPositive: false,
-      term: val
-    };
+    if (val === 'Mister') {
+      return {
+        isPass: true,
+        source: 'whitelist-brand',
+        tag: PENDING_OWNER_NAV_CHAT_ES.status,
+        isDebt: false,
+        isPositive: true,
+        term: 'Mister'
+      };
+    }
   }
 
   // 2. Caso especial: 5 claves (b) pendientes de revisión nativa
   const native5b = PENDING_NATIVE_REVIEWS_5B[key];
   if (native5b && native5b.lang === langCode) {
-    return {
-      isPass: true,
-      source: 'pending-native-5b',
-      tag: native5b.status,
-      issue: native5b.issue,
-      isDebt: true,
-      isPositive: false,
-      term: val
-    };
+    const candidateTerms = [native5b.termCurrent, ...(native5b.optionsForOwner || [])];
+    if (candidateTerms.includes(val)) {
+      return {
+        isPass: true,
+        source: 'pending-native-5b',
+        tag: native5b.status,
+        issue: native5b.issue,
+        isDebt: true,
+        isPositive: false,
+        term: val
+      };
+    }
   }
 
   // 3. Verificación exacta contra término esperado en el wordlist canónico

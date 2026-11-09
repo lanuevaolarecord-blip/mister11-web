@@ -140,14 +140,29 @@ export const canPrescribeAtHome = (exercise, {
   const unreviewedIllustration = !exercise.illustration?.reviewed_by_human || exercise.illustration?.type === 'pendiente';
   const fisioVerificationMissing = isTierPendienteFisio && !exercise.illustration?.rigVerifiedBy;
 
-  if (isHighRisk && (unreviewedIllustration || fisioVerificationMissing) && !hasSupervision) {
-    const isFisioBlocked = !unreviewedIllustration && fisioVerificationMissing;
+  // S1 (R4): PENDIENTE-FISIO exige rigVerifiedBy colegiada obligatoria; la supervisión del coach NO sustituye la firma del fisio
+  if (isTierPendienteFisio && !exercise.illustration?.rigVerifiedBy) {
     return {
       prescribable: false,
-      reason: isFisioBlocked ? 'high_risk_fisio_verification_required' : 'high_risk_unreviewed_illustration',
-      badge: isFisioBlocked 
-        ? 'Requiere supervisión presencial (firma de fisio requerida)'
-        : 'Requiere supervisión presencial (ilustración pendiente)'
+      reason: 'high_risk_fisio_verification_required',
+      badge: 'Bloqueado clínicamente (firma de fisio requerida, supervisión no sustituye)'
+    };
+  }
+
+  if (isHighRisk && unreviewedIllustration && !hasSupervision) {
+    return {
+      prescribable: false,
+      reason: 'high_risk_unreviewed_illustration',
+      badge: 'Requiere supervisión presencial (ilustración pendiente)'
+    };
+  }
+
+  // D2 (Oleada 9.3): Ilustraciones rechazadas por el DUEÑO — Fail-closed absoluto
+  if (exercise.illustration?.status === 'rejected_by_owner') {
+    return {
+      prescribable: false,
+      reason: 'illustration_rejected_by_owner',
+      badge: 'Ilustración rechazada por el dueño (rediseño biomecánico requerido)'
     };
   }
 

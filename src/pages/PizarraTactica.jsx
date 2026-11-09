@@ -3054,6 +3054,34 @@ const PizarraTactica = () => {
           return { obj, sLeft, sTop, tLeft, tTop };
         });
 
+        // D5 (Oleada 9.3): Limpiar trayectorias previas antes de iniciar animación
+        fc.getObjects().forEach(obj => {
+          if (obj.category === 'trajectory' || obj.isTrajectory || obj.data?.type === 'trajectory') {
+            fc.remove(obj);
+          }
+        });
+
+        // Crear trayectorias doradas punteadas (#D4A843) para piezas con desplazamiento intencional
+        const trajectoryLines = [];
+        animationsData.forEach(({ obj, sLeft, sTop, tLeft, tTop }) => {
+          const dist = Math.hypot(tLeft - sLeft, tTop - sTop);
+          if (dist > 8) {
+            const line = new fabric.Line([sLeft, sTop, sLeft, sTop], {
+              stroke: '#D4A843',
+              strokeWidth: 2,
+              strokeDashArray: [4, 3],
+              selectable: false,
+              evented: false,
+              category: 'trajectory',
+              isTrajectory: true,
+              data: { type: 'trajectory' }
+            });
+            fc.add(line);
+            fc.sendToBack(line);
+            trajectoryLines.push({ line, sLeft, sTop, tLeft, tTop });
+          }
+        });
+
         let transitionScheduled = false;
 
         // P-G4: Un único fabric.util.animate maestro que mueve todos los objetos y llama a fc.renderAll() 1 sola vez por tick
@@ -3070,6 +3098,15 @@ const PizarraTactica = () => {
               for (let i = 1; i < ballsInRaf.length; i++) fc.remove(ballsInRaf[i]);
             }
 
+            // D5: Actualizar trazo de trayectorias doradas en cada fotograma
+            trajectoryLines.forEach(({ line, sLeft, sTop, tLeft, tTop }) => {
+              line.set({
+                x2: sLeft + (tLeft - sLeft) * v,
+                y2: sTop  + (tTop  - sTop ) * v
+              });
+              line.setCoords();
+            });
+
             animationsData.forEach(({ obj, sLeft, sTop, tLeft, tTop }) => {
               obj.set({
                 left: sLeft + (tLeft - sLeft) * v,
@@ -3082,6 +3119,13 @@ const PizarraTactica = () => {
           onComplete: () => {
             if (!playingR.current || transitionScheduled) return;
             transitionScheduled = true;
+            // D5: Limpiar trayectorias antes de renderizar frame final
+            trajectoryLines.forEach(({ line }) => fc.remove(line));
+            fc.getObjects().forEach(obj => {
+              if (obj.category === 'trajectory' || obj.isTrajectory || obj.data?.type === 'trajectory') {
+                fc.remove(obj);
+              }
+            });
             cargarFrame(stateB, () => {
               if (!playingR.current) return;
               fc.renderAll();

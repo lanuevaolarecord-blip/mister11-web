@@ -25,7 +25,8 @@ for (const id of pilotIds) {
   ok(safety && safety.edadMin <= 10, `${id} tiene edadMin <= 10 (edadMin=${safety?.edadMin})`);
   ok(safety && safety.supervision === false, `${id} requiere_supervision_presencial === false`);
   ok(catalogEx && catalogEx.illustration.type === 'vector_svg', `${id} en catálogo tiene illustration.type === 'vector_svg'`);
-  ok(catalogEx && catalogEx.illustration.status === 'pilot_pending_review', `${id} en catálogo tiene status === 'pilot_pending_review'`);
+  ok(catalogEx && catalogEx.illustration.status === 'rejected_by_owner', `${id} en catálogo tiene status === 'rejected_by_owner'`);
+  ok(catalogEx && typeof catalogEx.illustration.rejection_note === 'string', `${id} en catálogo tiene rejection_note formal`);
 }
 
 // 2. Integridad de los SVGs vectoriales y clínica
@@ -40,34 +41,27 @@ for (const id of pilotIds) {
   ok(item.clinicalData.mistakesToAvoid.length >= 2, `${id}: Errores comunes a evitar presentes (${item.clinicalData.mistakesToAvoid.length})`);
 }
 
-// 3. Comportamiento Fail-Closed en canPrescribeAtHome
-console.log('\n▶ [3/4] Verificando comportamiento FAIL-CLOSED en prescripción...');
-const sampleEx = SYSTEM_CORE_EXERCISES.find(e => e.id === 'sys-1');
+// 3. Comportamiento Fail-Closed en canPrescribeAtHome (D2 — Rechazo del Dueño)
+console.log('\n▶ [3/4] Verificando comportamiento FAIL-CLOSED en prescripción (D2)...');
 
-// Caso A: Sin aprobación humana (reviewed_by_human: false)
-const unapprovedEx = {
-  ...sampleEx,
-  illustration: {
-    ...sampleEx.illustration,
-    status: 'pilot_pending_review',
-    reviewed_by_human: false
-  }
-};
-const resUnapproved = canPrescribeAtHome(unapprovedEx);
-ok(resUnapproved.prescribable === false, 'Ejercicio en piloto sin revisión humana: Bloqueado en prescripción (prescribable === false)');
-ok(resUnapproved.reason === 'pilot_illustration_pending_review', `Razón de bloqueo esperada: ${resUnapproved.reason}`);
+for (const id of pilotIds) {
+  const catalogEx = SYSTEM_CORE_EXERCISES.find(e => e.id === id);
+  const resRejected = canPrescribeAtHome(catalogEx);
+  ok(resRejected.prescribable === false, `${id}: Bloqueado fail-closed por rechazo del dueño (prescribable === false)`);
+  ok(resRejected.reason === 'illustration_rejected_by_owner', `${id}: Razón de bloqueo correcta ('illustration_rejected_by_owner')`);
+  ok(resRejected.badge.includes('rechazada por el dueño'), `${id}: Badge informativo correcto ("${resRejected.badge}")`);
+}
 
-// Caso B: Con aprobación humana (reviewed_by_human: true)
-const approvedEx = {
-  ...sampleEx,
+// Caso B: Intento de forzar reviewed_by_human en estado rejected_by_owner -> Sigue bloqueado
+const forcedEx = {
+  ...SYSTEM_CORE_EXERCISES.find(e => e.id === 'sys-1'),
   illustration: {
-    ...sampleEx.illustration,
-    status: 'pilot_pending_review',
+    status: 'rejected_by_owner',
     reviewed_by_human: true
   }
 };
-const resApproved = canPrescribeAtHome(approvedEx);
-ok(resApproved.prescribable === true, 'Ejercicio en piloto con aprobación humana: Desbloqueado para prescripción (prescribable === true)');
+const resForced = canPrescribeAtHome(forcedEx);
+ok(resForced.prescribable === false, 'Forzar reviewed_by_human: true en estado rejected_by_owner NO desbloquea la prescripción (Fail-Closed estricto)');
 
 // 4. Verificación de ausencia de IA alucinada
 console.log('\n▶ [4/4] Verificando trazabilidad y ausencia de IA alucinada...');

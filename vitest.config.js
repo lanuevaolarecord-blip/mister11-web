@@ -24,7 +24,13 @@ export default defineConfig({
       thresholds: {
         lines: 75,
         functions: 75,
-        statements: 75
+        statements: 75,
+        // S3 (Oleada 9.3): Umbrales per-file para motores clínicos y de datos
+        'src/utils/exerciseSafety.js': { lines: 75, branches: 75, functions: 75, statements: 75 },
+        'src/utils/lineupEngine.js': { lines: 75, branches: 75, functions: 75, statements: 75 },
+        'src/utils/ratingFormula.js': { lines: 75, branches: 75, functions: 75, statements: 75 },
+        'src/utils/materialGlossary.js': { lines: 75, branches: 75, functions: 75, statements: 75 },
+        'src/utils/minutesEngine.js': { lines: 75, functions: 75, statements: 75 } // branches en 57.12% registrado como [DEUDA FINITA CON DUEÑO]
       }
     }
   }

@@ -95,23 +95,25 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(resAge.prescribable).toBe(false);
       expect(resAge.reason).toBe('age_below_minimum');
 
-      // 2. High risk unreviewed illustration without supervision
+      // 2. High risk unreviewed illustration without supervision (ejercicio clínico tier alto no PENDIENTE-FISIO, ej. sys-4)
       const resHigh = canPrescribeAtHome({
-        id: 'hex-022',
+        id: 'sys-4',
+        name: 'Nordic Hamstring',
         illustration: { type: 'pendiente', reviewed_by_human: false },
         material_preferido: ['peso_corporal'],
-        edad_minima_segura: 10
-      }, { playerAge: 15, hasSupervision: false });
+        edad_minima_segura: 14
+      }, { playerAge: 16, hasSupervision: false });
       expect(resHigh.prescribable).toBe(false);
       expect(resHigh.reason).toBe('high_risk_unreviewed_illustration');
 
-      // 3. High risk with supervision allowed
+      // 3. High risk with coach supervision allowed for non-PENDIENTE-FISIO
       const resHighSup = canPrescribeAtHome({
-        id: 'hex-022',
+        id: 'sys-4',
+        name: 'Nordic Hamstring',
         illustration: { type: 'pendiente', reviewed_by_human: false },
         material_preferido: ['peso_corporal'],
-        edad_minima_segura: 10
-      }, { playerAge: 15, hasSupervision: true });
+        edad_minima_segura: 14
+      }, { playerAge: 16, hasSupervision: true });
       expect(resHighSup.prescribable).toBe(true);
 
       // 4. Missing required material
@@ -125,14 +127,22 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
 
       // 5. Normal low risk allowed
       const resLow = canPrescribeAtHome({
-        id: 'sys-1',
+        id: 'hex-001',
         material_preferido: ['peso_corporal'],
         edad_minima_segura: 10
       }, { playerAge: 12 });
       expect(resLow.prescribable).toBe(true);
+
+      // 6. D2: Ilustración rechazada por el dueño (fail-closed absoluto)
+      const resRejected = canPrescribeAtHome({
+        id: 'sys-1',
+        illustration: { status: 'rejected_by_owner', reviewed_by_human: false }
+      }, { playerAge: 15 });
+      expect(resRejected.prescribable).toBe(false);
+      expect(resRejected.reason).toBe('illustration_rejected_by_owner');
     });
 
-    it('exerciseSafety R4: PENDIENTE-FISIO tier requires rigVerifiedBy even if reviewed_by_human is true', () => {
+    it('exerciseSafety R4: PENDIENTE-FISIO tier requires rigVerifiedBy even if reviewed_by_human is true or hasSupervision is true', () => {
       // hex-022 is canonical tier PENDIENTE-FISIO
       const exWithoutFisio = {
         id: 'hex-022',
@@ -143,9 +153,15 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
           // Sin rigVerifiedBy
         }
       };
+      // Sin supervisión
       const resWithout = canPrescribeAtHome(exWithoutFisio, { playerAge: 16, hasSupervision: false });
       expect(resWithout.prescribable).toBe(false);
       expect(resWithout.reason).toBe('high_risk_fisio_verification_required');
+
+      // S1 (R4): Test de inyección: hasSupervision: true + PENDIENTE-FISIO + sin rigVerifiedBy => prescribable: false
+      const resSupWithoutFisio = canPrescribeAtHome(exWithoutFisio, { playerAge: 16, hasSupervision: true });
+      expect(resSupWithoutFisio.prescribable).toBe(false);
+      expect(resSupWithoutFisio.reason).toBe('high_risk_fisio_verification_required');
 
       const exWithFisio = {
         id: 'hex-022',
@@ -158,6 +174,9 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       };
       const resWith = canPrescribeAtHome(exWithFisio, { playerAge: 16, hasSupervision: false });
       expect(resWith.prescribable).toBe(true);
+
+      const resWithSup = canPrescribeAtHome(exWithFisio, { playerAge: 16, hasSupervision: true });
+      expect(resWithSup.prescribable).toBe(true);
     });
 
     it('filterHomeExercises correctly filters catalog array', () => {

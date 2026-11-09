@@ -50,7 +50,8 @@ export const SYSTEM_CORE_EXERCISES = [
     },
     "illustration": {
       "type": "vector_svg",
-      "status": "pilot_pending_review",
+      "status": "rejected_by_owner",
+      "rejection_note": "Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.",
       "author": "agent",
       "reviewed_by_human": false,
       "url": null,
@@ -114,7 +115,8 @@ export const SYSTEM_CORE_EXERCISES = [
     },
     "illustration": {
       "type": "vector_svg",
-      "status": "pilot_pending_review",
+      "status": "rejected_by_owner",
+      "rejection_note": "Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.",
       "author": "agent",
       "reviewed_by_human": false,
       "url": null,
@@ -176,7 +178,8 @@ export const SYSTEM_CORE_EXERCISES = [
     },
     "illustration": {
       "type": "vector_svg",
-      "status": "pilot_pending_review",
+      "status": "rejected_by_owner",
+      "rejection_note": "Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.",
       "author": "agent",
       "reviewed_by_human": false,
       "url": null,
@@ -481,7 +484,8 @@ export const SYSTEM_CORE_EXERCISES = [
     },
     "illustration": {
       "type": "vector_svg",
-      "status": "pilot_pending_review",
+      "status": "rejected_by_owner",
+      "rejection_note": "Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.",
       "author": "agent",
       "reviewed_by_human": false,
       "url": null,
@@ -543,7 +547,8 @@ export const SYSTEM_CORE_EXERCISES = [
     },
     "illustration": {
       "type": "vector_svg",
-      "status": "pilot_pending_review",
+      "status": "rejected_by_owner",
+      "rejection_note": "Rechazadas por el DUEÑO en Oleada 9.3: silueta demasiado plana, no se visualiza el cuerpo completo y no se muestran los músculos a trabajar. Requiere rediseño biomecánico.",
       "author": "agent",
       "reviewed_by_human": false,
       "url": null,

@@ -234,7 +234,13 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       const mGk = m.gkStats?.[pid] || {};
       const gkEvents = allLiveEvents.filter(e => ['save', 'save_own', 'conceded', 'penaltySave', 'claim', 'errorGoal'].includes(e.type));
       const savesInMatch = mGk.saves ?? allLiveEvents.filter(e => e.type === 'save' || e.type === 'save_own').length;
-      const concededInMatch = mGk.conceded ?? allLiveEvents.filter(e => e.type === 'conceded').length;
+      const explicitConceded = allLiveEvents.filter(e => e.type === 'conceded').length;
+      const allMatchEventsList = [
+        ...(Array.isArray(m.liveStatsEvents) ? m.liveStatsEvents : []),
+        ...(Array.isArray(m.events) ? m.events : [])
+      ];
+      const rivalGoalsInMatch = allMatchEventsList.filter(e => e && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
+      const concededInMatch = mGk.conceded ?? Math.max(explicitConceded, rivalGoalsInMatch, Number(m.goalsAgainst || 0));
       const penaltySavesInMatch = mGk.penaltySaves ?? allLiveEvents.filter(e => e.type === 'penaltySave').length;
       const claimsInMatch = mGk.claims ?? allLiveEvents.filter(e => e.type === 'claim').length;
       const errorsInMatch = mGk.errors ?? allLiveEvents.filter(e => e.type === 'errorGoal').length;

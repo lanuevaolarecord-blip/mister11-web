@@ -34,7 +34,8 @@ import {
   calcPerformanceScore,
   actitudToScore,
   calcMixedRating,
-  deriveStatsFromEvents
+  deriveStatsFromEvents,
+  getGkConcededCount
 } from '../ratingFormula.js';
 
 import {
@@ -559,6 +560,10 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(rating.mixedRating).toBeLessThanOrEqual(10.0);
       expect(rating.performanceScore).toBeDefined();
       expect(rating.attitudeScore).toBe(8.0);
+
+      // Con override explícito del míster
+      const ratingWithOverride = calcMixedRating(stats, 4, 8.5);
+      expect(ratingWithOverride.mixedRating).toBe(8.5);
     });
 
     it('deriveStatsFromEvents aggregates player match events into stats object', () => {
@@ -573,9 +578,67 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(statsP1.recuperaciones).toBe(1);
       expect(statsP1.faltas).toBe(1);
 
+      // Llamada con firma invertida (events primero)
+      const statsP1Inverted = deriveStatsFromEvents(events, 'p1', 'DEL');
+      expect(statsP1Inverted.goles).toBe(1);
+
       const statsGk = deriveStatsFromEvents('gk1', events, 'POR');
       expect(statsGk.saves).toBe(1);
       expect(statsGk.isGoalkeeper).toBe(true);
+    });
+
+    it('deriveStatsFromEvents correctly reflects rival goals as conceded for goalkeepers', () => {
+      const eventsWithRivalGoal = [
+        { type: 'save', playerId: 'gk1', attributed: true },
+        { type: 'gol_rival', minute: 23, playerId: 'Rival' }
+      ];
+      const statsGk = deriveStatsFromEvents('gk1', eventsWithRivalGoal, 'POR');
+      expect(statsGk.saves).toBe(1);
+      expect(statsGk.conceded).toBe(1);
+    });
+
+    it('getGkConcededCount accurately counts and deduplicates rival goals and conceded events', () => {
+      const gk = { id: 'gk_pau', name: 'Pau Barruguer' };
+
+      // 1. Caso sin eventos ni goles
+      expect(getGkConcededCount([], gk, { goalsAgainst: 0 })).toBe(0);
+
+      // 2. Fallback con solo marcador en matchData
+      expect(getGkConcededCount([], gk, { goalsAgainst: 2 })).toBe(2);
+
+      // 3. Caso de gol rival desde Día del Partido (gol_rival sin evento 'conceded')
+      const rivalGoalEvents = [
+        { type: 'gol_rival', minute: 15, half: 1 }
+      ];
+      expect(getGkConcededCount(rivalGoalEvents, gk, { goalsAgainst: 1 })).toBe(1);
+
+      // 4. Caso con evento 'conceded' explícito del portero
+      const explicitConceded = [
+        { type: 'conceded', playerId: 'gk_pau', minute: 30, half: 1 }
+      ];
+      expect(getGkConcededCount(explicitConceded, gk, null)).toBe(1);
+
+      // 5. Deduplicación cuando coexisten 'gol_rival' y 'conceded' para el mismo gol
+      const duplicatePairSameMinute = [
+        { type: 'conceded', playerId: 'gk_pau', minute: 30, half: 1 },
+        { type: 'gol_rival', playerId: 'Rival', minute: 30, half: 1 }
+      ];
+      expect(getGkConcededCount(duplicatePairSameMinute, gk, { goalsAgainst: 1 })).toBe(1);
+
+      // 6. Deduplicación por rivalGoalId
+      const duplicatePairWithId = [
+        { type: 'shot_on_target_rival', outcome: 'goal', isGoal: true, rivalGoalId: 'rg_1', minute: 40 },
+        { type: 'conceded', playerId: 'gk_pau', rivalGoalId: 'rg_1', minute: 40 },
+        { type: 'gol_rival', playerId: 'Rival', rivalGoalId: 'rg_1', minute: 40 }
+      ];
+      expect(getGkConcededCount(duplicatePairWithId, gk, { goalsAgainst: 1 })).toBe(1);
+
+      // 7. Múltiples goles rivales distintos
+      const multiGoals = [
+        { type: 'gol_rival', minute: 12, half: 1 },
+        { type: 'gol_rival', minute: 68, half: 2 }
+      ];
+      expect(getGkConcededCount(multiGoals, gk, { goalsAgainst: 2 })).toBe(2);
     });
   });
 

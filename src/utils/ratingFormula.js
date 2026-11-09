@@ -140,7 +140,18 @@ export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], p
   const allSaves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own');
   const normalSaves = allSaves.filter(e => e.saveDifficulty !== 'decisiva' && e.difficulty !== 'decisiva').length;
   const decisiveSaves = allSaves.filter(e => e.saveDifficulty === 'decisiva' || e.difficulty === 'decisiva').length;
-  const conceded = count('conceded');
+  let conceded = count('conceded');
+  const isGk = playerRole === 'POR' || playerRole === 'GK' || allSaves.length > 0 || conceded > 0;
+  if (isGk && conceded === 0) {
+    // Si no hay evento explícito 'conceded' atribuido directamente al ID del portero,
+    // pero hubo goles del rival en el partido ('gol_rival', 'goal_rival' o remates gol rival),
+    // derivar fielmente los goles encajados.
+    const rivalGoals = validEvents.filter(e => {
+      const t = String(e.type || '').toLowerCase();
+      return t === 'gol_rival' || t === 'goal_rival' || (t.includes('rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
+    }).length;
+    if (rivalGoals > 0) conceded = rivalGoals;
+  }
   const penaltySaves = count('penaltySave') + count('penalty_save');
   const claims = count('claim');
   const errorGoal = count('errorGoal');
@@ -180,4 +191,52 @@ export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], p
     errorGoal,
     isGoalkeeper: playerRole === 'POR',
   };
+}
+
+/**
+ * Calcula de forma canónica y fiel los goles encajados por el portero en campo.
+ * Suma eventos explícitos 'conceded' (atribuidos al portero o sin asignar),
+ * eventos de gol rival ('gol_rival', 'goal_rival', o tiros rival con resultado gol),
+ * y deduplica cuando ambos coexisten para el mismo gol en el mismo minuto/mitad o con el mismo rivalGoalId.
+ * Fallback garantizado: si no hay eventos desglosados pero hay marcador en contra, refleja matchData.goalsAgainst.
+ *
+ * @param {Array} events
+ * @param {Object|null} gk
+ * @param {Object|null} matchData
+ * @returns {number}
+ */
+export function getGkConcededCount(events = [], gk = null, matchData = null) {
+  const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+
+  const rivalGoalEvents = safeEvents.filter(e => {
+    if (e.isValid === false) return false;
+    const t = String(e.type || '').toLowerCase();
+    const isExplicitConceded = t === 'conceded' && (!gk || !e.playerId || String(e.playerId) === String(gk.id));
+    const isRivalGoal = t === 'gol_rival' || t === 'goal_rival';
+    const isRivalShotGoal = (t === 'shot_on_target_rival' || t === 'shot_rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol');
+    const isGoalAgainst = (t === 'goal' || t === 'gol') && (e.team === 'rival' || e.isRival || e.playerId === 'rival');
+    return isExplicitConceded || isRivalGoal || isRivalShotGoal || isGoalAgainst;
+  });
+
+  const matchGoalsAgainst = Number(matchData?.goalsAgainst ?? matchData?.golesContra ?? matchData?.marcadorVisitante ?? 0);
+
+  if (rivalGoalEvents.length === 0) {
+    return matchGoalsAgainst;
+  }
+
+  // Deduplicación: agrupar por rivalGoalId si existe, o por minuto+mitad
+  const seenGoals = new Set();
+  let distinctCount = 0;
+
+  rivalGoalEvents.forEach((e) => {
+    const minute = Number(e.minute || e.minuto || e.min || 0);
+    const half = Number(e.half || (minute > 45 ? 2 : 1));
+    const key = e.rivalGoalId ? `rg_${e.rivalGoalId}` : `min_${half}_${minute}`;
+    if (!seenGoals.has(key)) {
+      seenGoals.add(key);
+      distinctCount++;
+    }
+  });
+
+  return Math.max(distinctCount, matchGoalsAgainst);
 }

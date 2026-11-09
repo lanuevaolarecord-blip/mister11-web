@@ -779,8 +779,20 @@ const Partidos = () => {
       return;
     }
     if (type === 'gol_rival') {
-      addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute);
-      if (handleAddLiveEvent) handleAddLiveEvent('shot_on_target_rival');
+      const rivalGoalId = `rival_goal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute, { rivalGoalId });
+      if (handleAddLiveEvent) {
+        handleAddLiveEvent('shot_on_target_rival', null, { rivalGoalId, outcome: 'goal', isGoal: true });
+        const gk = (calledPlayers || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+        if (gk) {
+          handleAddLiveEvent('conceded', null, {
+            playerId: gk.id,
+            playerName: gk.name || gk.nombre || 'Portero',
+            minute: currentMinute,
+            rivalGoalId
+          });
+        }
+      }
     } else {
       setPendingEventType(type);
       setShowEventPlayerSelector(true);
@@ -2921,7 +2933,7 @@ const Partidos = () => {
                 resetLiveStats={resetLiveStats}
                 language={settings?.language || 'Español (ES)'}
                 onAddGoalFor={(playerId, playerName) => addEvent('gol_local', playerId || 'Equipo', playerName || (isGlobalEn ? 'Own Goal' : 'Gol Propio'), currentMinute)}
-                onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute)}
+                onAddGoalAgainst={(extra = {}) => addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', extra?.minute || currentMinute, extra)}
                 onAddCard={(cardType, playerId, playerName, extra) => addEvent(cardType, playerId || 'Equipo', playerName || (isGlobalEn ? 'Player' : 'Jugador'), currentMinute, extra || {})}
                 onFinishMatch={handleFinishMatch}
                 onNavigateToLineup={() => handleTabChange('ALINEACIÓN')}

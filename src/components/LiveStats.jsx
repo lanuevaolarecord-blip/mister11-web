@@ -18,6 +18,7 @@ import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
 import { isMatchLocked, getStartingXI, calculateMinutesFromEvents, getEffectiveMatchDuration } from '../utils/minutesEngine';
+import { getGkConcededCount } from '../utils/ratingFormula.js';
 import { showToast } from '../utils/toast';
 import { t } from '../i18n/index.js';
 import MatchStatsBlock from './MatchStatsBlock';
@@ -255,6 +256,8 @@ const BUTTON_GROUPS = [
     ],
   },
 ];
+
+export { getGkConcededCount };
 
 const LiveStats = ({
   teamId,
@@ -881,9 +884,24 @@ const LiveStats = ({
       onAddGoalFor(effectivePlayerId, effectivePlayerName);
     }
 
-    // 4. Notificar gol rival si aplica
-    if (team === 'rival' && result === 'gol' && onAddGoalAgainst) {
-      onAddGoalAgainst();
+    // 4. Notificar gol rival si aplica y registrar acción de gol encajado al portero en campo
+    if (team === 'rival' && result === 'gol') {
+      const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+      const rivalGoalId = `rival_goal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      if (portero) {
+        await addLiveEvent('conceded', currentHalf, {
+          playerId: portero.id,
+          playerName: portero.nombre || portero.name || 'Portero',
+          sector: sector || selectedSector || 'center',
+          x: 10,
+          y: yCoord,
+          minute: currentMinute,
+          rivalGoalId
+        });
+      }
+      if (onAddGoalAgainst) {
+        onAddGoalAgainst({ rivalGoalId, minute: currentMinute });
+      }
     }
 
     setFlashType(eventType);
@@ -1954,7 +1972,24 @@ const LiveStats = ({
                   { type: 'errorGoal', label: t('gk.btn.errorGoal'), icon: <AlertTriangle size={16} color="#9C6A3B" />, color: '#9C6A3B' },
                 ].map(gkAction => {
                   const isFlashingGk = flashType === `gk_${gkAction.type}`;
-                  const count = (filteredEvents || []).filter(e => e.type === gkAction.type && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                  const count = (() => {
+                    if (gkAction.type === 'conceded') {
+                      return getGkConcededCount(filteredEvents, activeGoalkeeper, matchData);
+                    }
+                    if (gkAction.type === 'save') {
+                      return (filteredEvents || []).filter(e => e && ['save', 'save_own', 'parada'].includes(e.type) && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                    }
+                    if (gkAction.type === 'penaltySave') {
+                      return (filteredEvents || []).filter(e => e && ['penaltySave', 'penalty_save', 'penalti_parado'].includes(e.type) && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                    }
+                    if (gkAction.type === 'claim') {
+                      return (filteredEvents || []).filter(e => e && ['claim', 'salida', 'despeje'].includes(e.type) && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                    }
+                    if (gkAction.type === 'errorGoal') {
+                      return (filteredEvents || []).filter(e => e && ['errorGoal', 'error_goal'].includes(e.type) && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                    }
+                    return (filteredEvents || []).filter(e => e && e.type === gkAction.type && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                  })();
                   return (
                     <button
                       key={gkAction.type}
@@ -1971,6 +2006,7 @@ const LiveStats = ({
                           : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
                         const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                        const rivalGoalId = `rival_goal_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
                         const localDoc = {
                           id: tempId,
                           type: gkAction.type,
@@ -1981,6 +2017,7 @@ const LiveStats = ({
                           y: 50,
                           playerId: activeGoalkeeper?.id || null,
                           playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
+                          rivalGoalId: gkAction.type === 'conceded' ? rivalGoalId : undefined,
                           timestamp: new Date().toISOString()
                         };
                         setLocalEvents(prev => [...prev, localDoc]);
@@ -1991,9 +2028,16 @@ const LiveStats = ({
                             playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
                             sector: selectedSector || 'center',
                             x: 15,
-                            y: 50
+                            y: 50,
+                            minute: safeMin,
+                            rivalGoalId: gkAction.type === 'conceded' ? rivalGoalId : undefined
                           });
                           if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                        }
+
+                        // Si la acción del portero es Gol Encajado, sincronizar con el marcador y bitácora del partido (+1 Gol Rival)
+                        if (gkAction.type === 'conceded' && onAddGoalAgainst) {
+                          onAddGoalAgainst({ rivalGoalId, minute: safeMin });
                         }
                       }}
                       style={{

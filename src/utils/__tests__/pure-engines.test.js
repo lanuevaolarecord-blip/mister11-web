@@ -639,6 +639,18 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
         { type: 'gol_rival', minute: 68, half: 2 }
       ];
       expect(getGkConcededCount(multiGoals, gk, { goalsAgainst: 2 })).toBe(2);
+
+      // 8. Eventos aislados de outfield player (ej. Anas #17 en filtro) pero gol rival registrado en matchData.events
+      const outfieldOnlyEvents = [
+        { type: 'pass_completed', playerId: 'anas_17', minute: 20 }
+      ];
+      const matchWithRivalGoal = {
+        events: [{ type: 'gol_rival', minute: 34, playerName: 'Gol del Rival' }]
+      };
+      expect(getGkConcededCount(outfieldOnlyEvents, gk, matchWithRivalGoal)).toBe(1);
+
+      // 9. Partido como Visitante con marcador local en contra
+      expect(getGkConcededCount([], gk, { type: 'Visitante', marcadorLocal: 2 })).toBe(2);
     });
   });
 

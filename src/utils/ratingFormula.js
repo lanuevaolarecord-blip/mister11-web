@@ -208,7 +208,15 @@ export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], p
 export function getGkConcededCount(events = [], gk = null, matchData = null) {
   const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
 
-  const rivalGoalEvents = safeEvents.filter(e => {
+  // Combinar eventos directos con la bitácora de matchData (events y liveStatsEvents) para garantizar cobertura total
+  const matchEvents = [
+    ...(Array.isArray(matchData?.events) ? matchData.events : []),
+    ...(Array.isArray(matchData?.liveStatsEvents) ? matchData.liveStatsEvents : [])
+  ].filter(Boolean);
+
+  const allEvents = [...safeEvents, ...matchEvents];
+
+  const rivalGoalEvents = allEvents.filter(e => {
     if (e.isValid === false) return false;
     const t = String(e.type || '').toLowerCase();
     const isExplicitConceded = t === 'conceded' && (!gk || !e.playerId || String(e.playerId) === String(gk.id));
@@ -218,20 +226,28 @@ export function getGkConcededCount(events = [], gk = null, matchData = null) {
     return isExplicitConceded || isRivalGoal || isRivalShotGoal || isGoalAgainst;
   });
 
-  const matchGoalsAgainst = Number(matchData?.goalsAgainst ?? matchData?.golesContra ?? matchData?.marcadorVisitante ?? 0);
+  const matchGoalsAgainst = Number(
+    matchData?.goalsAgainst ?? 
+    matchData?.golesContra ?? 
+    (matchData?.type === 'Visitante' ? matchData?.marcadorLocal : matchData?.marcadorVisitante) ?? 
+    matchData?.marcadorVisitante ?? 
+    0
+  );
 
   if (rivalGoalEvents.length === 0) {
     return matchGoalsAgainst;
   }
 
-  // Deduplicación: agrupar por rivalGoalId si existe, o por minuto+mitad
+  // Deduplicación canónica: agrupar por rivalGoalId, por id de evento o por minuto+mitad
   const seenGoals = new Set();
   let distinctCount = 0;
 
   rivalGoalEvents.forEach((e) => {
     const minute = Number(e.minute || e.minuto || e.min || 0);
     const half = Number(e.half || (minute > 45 ? 2 : 1));
-    const key = e.rivalGoalId ? `rg_${e.rivalGoalId}` : `min_${half}_${minute}`;
+    const key = e.rivalGoalId 
+      ? `rg_${e.rivalGoalId}` 
+      : (e.id ? `id_${e.id}` : `min_${half}_${minute}`);
     if (!seenGoals.has(key)) {
       seenGoals.add(key);
       distinctCount++;

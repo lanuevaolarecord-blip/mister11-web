@@ -1974,7 +1974,7 @@ const LiveStats = ({
                   const isFlashingGk = flashType === `gk_${gkAction.type}`;
                   const count = (() => {
                     if (gkAction.type === 'conceded') {
-                      return getGkConcededCount(filteredEvents, activeGoalkeeper, matchData);
+                      return getGkConcededCount(rawEvents, activeGoalkeeper, matchData);
                     }
                     if (gkAction.type === 'save') {
                       return (filteredEvents || []).filter(e => e && ['save', 'save_own', 'parada'].includes(e.type) && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;

@@ -366,8 +366,12 @@ const Partidos = () => {
     // Eventos del Match-Day (goles, tarjetas, sustituciones registrados en bitácora)
     const matchDayEvents = (matchData?.events || []).filter(Boolean);
     // Unir ambas fuentes deduplicando por id (liveBase tiene precedencia)
-    const liveIds = new Set(liveBase.map(e => e?.id).filter(Boolean));
-    const extraFromMatchDay = matchDayEvents.filter(e => e && e.id && !liveIds.has(e.id));
+    const liveIds = new Set(liveBase.map(e => e?.id || `evt_${e?.minute}_${e?.type}`).filter(Boolean));
+    const extraFromMatchDay = matchDayEvents.filter(e => {
+      if (!e) return false;
+      const key = e.id || `md_${e.minute}_${e.type}`;
+      return !liveIds.has(key);
+    });
     const merged = [...liveBase, ...extraFromMatchDay];
     return merged.length > 0 ? merged : [];
   }, [liveEvents, matchData?.liveStatsEvents, matchData?.events]);
@@ -783,7 +787,9 @@ const Partidos = () => {
       addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute, { rivalGoalId });
       if (handleAddLiveEvent) {
         handleAddLiveEvent('shot_on_target_rival', null, { rivalGoalId, outcome: 'goal', isGoal: true });
-        const gk = (calledPlayers || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+        const gk = (calledPlayers || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'))
+          || (matchData?.titulares || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'))
+          || (players || []).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
         if (gk) {
           handleAddLiveEvent('conceded', null, {
             playerId: gk.id,
@@ -2126,7 +2132,13 @@ const Partidos = () => {
             {editTab === 'CONVOCATORIA' && (
               <div className="tab-pane convocatoria-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <ConvocationSelector
-                  matchData={matchData}
+                  matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                   players={players || []}
                   teamData={activeTeam || {}}
                   teamId={effectiveTeamId}
@@ -2925,7 +2937,13 @@ const Partidos = () => {
               <LiveStats
                 teamId={activeTeamId}
                 matchId={matchData?.id || null}
-                matchData={matchData}
+                matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                 players={players}
                 calledPlayers={calledPlayers}
                 events={effectiveLiveEvents}
@@ -2945,7 +2963,13 @@ const Partidos = () => {
               <div className="tab-pane acta-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <ActaOficialPanel
                   matchId={matchData?.id || null}
-                  matchData={matchData}
+                  matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                   players={players}
                   calledPlayers={calledPlayers}
                   events={effectiveLiveEvents}
@@ -3283,7 +3307,13 @@ const Partidos = () => {
                       />
                       <div style={{ marginTop: '14px' }}>
                         <MatchStatsBlock
-                          matchData={matchData}
+                          matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                           events={effectiveLiveEvents || []}
                           language={currentGlobalLanguage || 'Español (ES)'}
                           showDonuts={false}
@@ -3443,7 +3473,13 @@ const Partidos = () => {
                     <div style={{ marginTop: '12px' }}>
                       <TerritoryMap3x3
                         analytics={postMatchCanonicalStats}
-                        matchData={matchData}
+                        matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                         events={effectiveLiveEvents}
                         teamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
                         rivalName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
@@ -3738,7 +3774,13 @@ const Partidos = () => {
                     <div style={{ marginTop: '12px' }}>
                       <SwotMatrix
                         derivedSwot={postMatchSwotData}
-                        matchData={matchData}
+                        matchData={{
+                  ...matchData,
+                  goalsFor: derivedGoalsFor,
+                  goalsAgainst: derivedGoalsAgainst,
+                  events: matchData?.events || [],
+                  liveStatsEvents: matchData?.liveStatsEvents || []
+                }}
                         onNavigateToSection={(target) => {
                           const el = document.getElementById(target);
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });

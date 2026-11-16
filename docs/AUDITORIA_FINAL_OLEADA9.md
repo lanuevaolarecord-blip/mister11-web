@@ -2084,3 +2084,42 @@ EXIT=1
 
 ==============================================================================
 FIN DEL DOCUMENTO DE AUDITORÍA INTEGRAL — OLEADA 9.4
+
+---
+
+## 7. APÉNDICE OLEADA 9.4-TRACE — TRAZABILIDAD DE `193582e` Y DIFF STAT `0dcc3e7..63dd128`
+
+* **Documento literal completo**: [`docs/TRACE_OLEADA9_4.md`](TRACE_OLEADA9_4.md)
+* **HEAD previo al trace**: `63dd12840423a067c523e61c0b67e415f044b1e0` (`63dd128`)
+
+### Resumen de Evidencia Literal Verificada:
+1. **`git log --oneline 0dcc3e7..63dd128`**:
+   * `63dd128 fix(gate): Oleada 9.4 corrige PASS-LIMPIO falso, anexa G1-G5 y clasifica higiene de repo`
+   * `193582e docs(status): informe read-only de estado y plan de continuación Oleada 10`
+2. **Inspección de `193582e`**:
+   * `193582e` (`jhojan`, `Mon Nov 16 19:53:48 2026 +0100`) añade exclusivamente `docs/ESTADO_Y_PLAN_CONTINUACION_OLEADA10.md` (`A`, `+919`). Cero archivos de código de producto, cero scripts, cero zonas protegidas -> `[AUTORIZADO DOCUMENTAL]`.
+3. **`git diff --stat 0dcc3e7 63dd128` y `--name-status`**:
+   * `M docs/AUDITORIA_FINAL_OLEADA9.md` (+391) — `[AUTORIZADO DOCUMENTAL]`
+   * `A docs/ESTADO_Y_PLAN_CONTINUACION_OLEADA10.md` (+919) — `[AUTORIZADO DOCUMENTAL]`
+   * `A docs/REPO_HYGIENE_OLEADA9_4.md` (+350) — `[AUTORIZADO DOCUMENTAL]`
+   * `M scripts/closure-gate.mjs` (+10/-5) — `[AUTORIZADO AUDITORÍA]`
+   * Total: `4 files changed, 1668 insertions(+), 5 deletions(-)`. Cero toques en zonas no permitidas (`src/**`, `firestore.rules`, `android/**`, etc.).
+4. **Verificación vigente**:
+   * `node scripts/closure-gate.mjs` -> `RESULTADO: PASS-CON-DEUDA ⚠️`, `5` celdas `pending-native-5b`, `0` en `DEFAULT-unknown`, `Total Fallos Registrados: 0`, `console_errors = []`.
+   * `npx tsc --noEmit` -> exit code `0`.
+
+| Ítem | Etiqueta | Evidencia |
+|---|---|---|
+| Identificación de `193582e` | `[CERRADO]` | `git show --stat/--name-status/log 193582e` en `docs/TRACE_OLEADA9_4.md` |
+| Diff stat `0dcc3e7..63dd128` | `[CERRADO]` | `git diff --stat/name-status` en `docs/TRACE_OLEADA9_4.md` |
+| Ausencia de toques no autorizados | `[CERRADO]` | Tabla de archivos permitidos en `docs/TRACE_OLEADA9_4.md` |
+| `closure-gate` sigue `PASS-CON-DEUDA` | `[CERRADO]` | Salida literal `node scripts/closure-gate.mjs` (`0` fallos) |
+| `tsc` sigue limpio | `[CERRADO]` | `npx tsc --noEmit` exit code `0` |
+| Anexo documental | `[CERRADO]` | `docs/TRACE_OLEADA9_4.md` + `docs/AUDITORIA_FINAL_OLEADA9.md` |
+| D2 rediseño SVG | `[DEUDA FINITA CON DUEÑO: D2-R]` | No auto-firmado |
+| D3 nativo PT/ID | `[DEUDA FINITA CON DUEÑO: D3-R]` | No auto-firmado |
+| D6 producción consents | `[CONFLICTO-DE-SCOPE]` / `[DEUDA FINITA CON DUEÑO: D6-R]` | No desplegado |
+| D7 generador | `[DEUDA FINITA CON DUEÑO: D7-R]` | No activado |
+
+==============================================================================
+FIN DEL DOCUMENTO DE AUDITORÍA INTEGRAL — OLEADA 9.4-TRACE

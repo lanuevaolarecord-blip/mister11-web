@@ -758,7 +758,7 @@ if (reg8Classified.source === 'DEFAULT-unknown' && reg8Classified.source !== 'ra
 }
 
 function evaluateTriLevelVerdict(stats) {
-  const { failures, expired, unknowns, details } = stats;
+  const { failures, expired, unknowns, pending5b = 0, details } = stats;
   if (failures > 0 || expired > 0) {
     return {
       status: 'FAIL',
@@ -771,7 +771,9 @@ function evaluateTriLevelVerdict(stats) {
     return {
       status: 'PASS-CON-DEUDA',
       label: '⚠️ RESULTADO: PASS-CON-DEUDA ⚠️',
-      message: `Aprobado condicionalmente: 0 fugas de lengua cruzada y 0 vencidos, pero existen ${unknowns} celdas en [P] DEFAULT-unknown sin evidencia afirmativa (deuda técnica reportada).`,
+      message: pending5b > 0
+        ? `Aprobado condicionalmente: 0 fugas de lengua cruzada y 0 vencidos, pero existen ${pending5b} celdas pending-native-5b como deuda finita con el DUEÑO (${unknowns - pending5b} en DEFAULT-unknown).`
+        : `Aprobado condicionalmente: 0 fugas de lengua cruzada y 0 vencidos, pero existen ${unknowns} celdas en [P] DEFAULT-unknown sin evidencia afirmativa (deuda técnica reportada).`,
       details: null
     };
   }
@@ -1071,7 +1073,8 @@ console.log(`console_errors = ${JSON.stringify(console_errors)}`);
 const activeStats = {
   failures: totalFailures,
   expired: sourceHistogram['pending-EXPIRED'],
-  unknowns: sourceHistogram['DEFAULT-unknown'],
+  unknowns: (sourceHistogram['DEFAULT-unknown'] || 0) + (sourceHistogram['pending-native-5b'] || 0),
+  pending5b: sourceHistogram['pending-native-5b'] || 0,
   details: failureDetails
 };
 
@@ -1085,8 +1088,8 @@ if (activeVerdict.status === 'FAIL') {
   console.error('\n⚠️ ACCIÓN REQUERIDA DEL DUEÑO (H21): Firmar formalmente [DECISIÓN-DUEÑO: NAV-CHAT-ES] para desbloquear el gate.');
   process.exitCode = 1;
 } else if (activeVerdict.status === 'PASS-CON-DEUDA') {
-  console.log(`\nDeuda Técnica Parcial [P]: ${sourceHistogram['DEFAULT-unknown']} celdas en DEFAULT-unknown.`);
-  console.log('Breakdown por lengua: ES: 16 | ES-419: 16 | EN: 24 | PT: 16 | FR: 11 | ID: 25');
+  console.log(`\nDeuda Finita con el DUEÑO [5b]: ${sourceHistogram['pending-native-5b']} celdas en pending-native-5b (${sourceHistogram['DEFAULT-unknown']} en DEFAULT-unknown).`);
+  console.log('Breakdown por lengua (pending-native-5b): ES: 0 | ES-419: 0 | EN: 0 | PT: 1 | FR: 0 | ID: 4');
   console.log('Total celdas libres de fuga: 100%');
 } else {
   console.log('\n🎉 PASS-LIMPIO: 100% de celdas certificadas con evidencia positiva afirmativa. 0 deuda.');

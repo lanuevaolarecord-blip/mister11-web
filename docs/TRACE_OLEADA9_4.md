@@ -300,3 +300,86 @@ TSC_EXIT=0
 | D3 nativo PT/ID | `[DEUDA FINITA CON DUEÑO: D3-R]` | No auto-firmado |
 | D6 producción consents | `[CONFLICTO-DE-SCOPE]` / `[DEUDA FINITA CON DUEÑO: D6-R]` | No desplegado |
 | D7 generador | `[DEUDA FINITA CON DUEÑO: D7-R]` | No activado |
+
+---
+
+## 6. MICRO-CIERRE f59c2c5 — EVIDENCIA DE COMMIT FINAL
+
+### 6.1. Inspección literal de `f59c2c5`
+
+```text
+=== git rev-parse HEAD ===
+f59c2c514d06fe13547e69cfd6d887a5a08ab6ec
+=== git show --stat --oneline f59c2c5 ===
+f59c2c5 docs(trace): Oleada 9.4-TRACE cierra trazabilidad de 193582e y diff stat sin tocar producto
+ docs/AUDITORIA_FINAL_OLEADA9.md |  39 ++++++
+ docs/TRACE_OLEADA9_4.md         | 302 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 341 insertions(+)
+=== git show --name-status --oneline f59c2c5 ===
+f59c2c5 docs(trace): Oleada 9.4-TRACE cierra trazabilidad de 193582e y diff stat sin tocar producto
+M	docs/AUDITORIA_FINAL_OLEADA9.md
+A	docs/TRACE_OLEADA9_4.md
+=== git log -1 f59c2c5 ===
+hash=f59c2c514d06fe13547e69cfd6d887a5a08ab6ec
+subject=docs(trace): Oleada 9.4-TRACE cierra trazabilidad de 193582e y diff stat sin tocar producto
+body=
+```
+
+### 6.2. Estado del working tree (`git status --short` previo al micro-cierre)
+
+```text
+ M docs/TRACE_OLEADA9_4.md
+?? Sesion_Sesion_20261006.pdf
+?? Sesion_Sesion_20261014.pdf
+?? docs/CATALOGO_PROMPTS_VIDEOS_MISTER11.md
+?? scratch/... (solo archivos temporales untracked clasificados previamente)
+?? scripts/Sesion_Sesion_20261014.pdf
+?? scripts/audit-consents-inventory.mjs
+```
+
+> **Nota:** `M docs/TRACE_OLEADA9_4.md` correspondía únicamente a un cambio de fin de línea (`1 insertion(+)` reportado por `git diff --stat`), con `0` modificaciones en `src/`, `firestore.rules`, `android/`, `scripts/closure-gate.mjs` ni zonas protegidas.
+
+### 6.3. Re-verificación de `node scripts/closure-gate.mjs` y `npx tsc --noEmit`
+
+```text
+closure_gate_exit=0
+tsc_exit=0
+```
+
+```text
+  | whitelist-brand | 15 | 2.4% | Evidencia Positiva (Carril C allowlist marca/siglas) |
+  | cognado | 61 | 9.9% | Evidencia Positiva (Cognado legítimo declarado) |
+  | pending (vigente) | 0 | 0.0% | Bypass Provisional Vigente |
+  | pending-EXPIRED | 0 | 0.0% | 🔴 [VENCIDO en Build 95] (Requiere firma Dueño) |
+  | wordlist-exact | 87 | 14.1% | Evidencia Positiva (Término esperado en Wordlist Canónico P5) |
+  | rama2-lexical-native | 450 | 72.8% | Evidencia Positiva (Marcadores léxicos/diacríticos de la lengua) |
+  | pending-native-5b | 5 | 0.8% | [PENDIENTE-NATIVA] (Deuda finita de 5 claves con DUEÑO) |
+  | rama3-exact (foráneo) | 0 | 0.0% | Fuga Foránea (Cruce exacto de diccionario ajeno) |
+  | rama2-lexical-foreign | 0 | 0.0% | Fuga Foránea (Marcador léxico foráneo) |
+  | DEFAULT-unknown | 0 | 0.0% | [P] PARCIAL (Sin evidencia léxica explícita; default no-tautológico) |
+  | TOTAL EVALUADO | 618 | 100.0% | 618 celdas (103 claves × 6 lenguas) |
+
+══════════════════════════════════════════════════════════════════════════════
+VEREDICTO GLOBAL — CLOSURE GATE (TRI-NIVEL: FAIL | PASS-CON-DEUDA | PASS-LIMPIO)
+══════════════════════════════════════════════════════════════════════════════
+Total Fallos Registrados: 0
+console_errors = []
+
+⚠️ RESULTADO: PASS-CON-DEUDA ⚠️
+Mensaje: Aprobado condicionalmente: 0 fugas de lengua cruzada y 0 vencidos, pero existen 5 celdas pending-native-5b como deuda finita con el DUEÑO (0 en DEFAULT-unknown).
+
+Deuda Finita con el DUEÑO [5b]: 5 celdas en pending-native-5b (0 en DEFAULT-unknown).
+Breakdown por lengua (pending-native-5b): ES: 0 | ES-419: 0 | EN: 0 | PT: 1 | FR: 0 | ID: 4
+Total celdas libres de fuga: 100%
+```
+
+### 6.4. VEREDICTO FINAL MICRO-CIERRE
+
+| Ítem | Etiqueta | Evidencia |
+|---|---|---|
+| Commit `f59c2c5` solo tocó `docs/` | `[CERRADO]` | `git show --stat --oneline f59c2c5` / `git show --name-status --oneline f59c2c5`: solo `M docs/AUDITORIA_FINAL_OLEADA9.md` y `A docs/TRACE_OLEADA9_4.md` (`2 files changed, 341 insertions(+)`) |
+| Estado limpio del repo | `[CERRADO]` | `git status --short`: 0 `M` en `src/` o zonas protegidas |
+| `closure-gate.mjs` vigente | `[CERRADO]` | `RESULTADO: PASS-CON-DEUDA ⚠️`, `5` `pending-native-5b`, `0` `DEFAULT-unknown`, `Total Fallos Registrados: 0`, `console_errors = []` |
+| `tsc --noEmit` vigente | `[CERRADO]` | `npx tsc --noEmit` exit code `0` |
+
+

@@ -4,10 +4,15 @@ import { describe, it, expect } from 'vitest';
 import {
   getExerciseRiskTier,
   getExerciseMinAge,
+  requiresEffectiveSupervision,
+  resolveExerciseAlias,
+  getIllustrationRenderState,
   assertAgeSafe,
   isHighClinicalRisk,
   canPrescribeAtHome,
   filterHomeExercises,
+  normalizeTargetZone,
+  normalizeExerciseTargetZones,
   CANONICAL_EXERCISE_SAFETY_MAP
 } from '../exerciseSafety.js';
 
@@ -126,21 +131,118 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(resMat.prescribable).toBe(false);
       expect(resMat.reason).toBe('material_missing');
 
-      // 5. Normal low risk allowed
+      // 5. Normal low risk allowed (hex-002; hex-001 es alias de sys-3 según Q1=A)
       const resLow = canPrescribeAtHome({
-        id: 'hex-001',
+        id: 'hex-002',
         material_preferido: ['peso_corporal'],
         edad_minima_segura: 10
       }, { playerAge: 12 });
       expect(resLow.prescribable).toBe(true);
 
-      // 6. D2: Ilustración rechazada por el dueño (fail-closed absoluto)
+      // 6. D2 / Q3=C: Ilustración rechazada por el dueño (fail-closed absoluto)
       const resRejected = canPrescribeAtHome({
         id: 'sys-1',
         illustration: { status: 'rejected_by_owner', reviewed_by_human: false }
       }, { playerAge: 15 });
       expect(resRejected.prescribable).toBe(false);
       expect(resRejected.reason).toBe('illustration_rejected_by_owner');
+    });
+
+    it('P12-A Q1=A: hex-001 is alias of sys-3, inherits rejected_by_owner block, and is excluded from filterHomeExercises', () => {
+      const aliasInfo = resolveExerciseAlias('hex-001');
+      expect(aliasInfo.isAlias).toBe(true);
+      expect(aliasInfo.duplicateOf).toBe('sys-3');
+      expect(aliasInfo.independentPrescribable).toBe(false);
+      expect(aliasInfo.parentIllustrationStatus).toBe('rejected_by_owner');
+
+      const resHex001 = canPrescribeAtHome({
+        id: 'hex-001',
+        duplicateOf: 'sys-3',
+        material_preferido: ['pared'],
+        edad_minima_segura: 10
+      }, { playerAge: 18, hasSupervision: true });
+      expect(resHex001.prescribable).toBe(false);
+      expect(resHex001.reason).toBe('alias_of_blocked_exercise');
+      expect(resHex001.inheritedReason).toBe('illustration_rejected_by_owner');
+
+      // Incluso si un alias apuntara a un ejercicio no rechazado (ej. sys-10), Q1=A impide prescribirlo como ficha independiente
+      const resSyntheticAlias = canPrescribeAtHome({
+        id: 'hex-alias-test',
+        duplicateOf: 'sys-10',
+        material_preferido: ['peso_corporal'],
+        edad_minima_segura: 10
+      }, { playerAge: 18, hasSupervision: true });
+      expect(resSyntheticAlias.prescribable).toBe(false);
+      expect(resSyntheticAlias.reason).toBe('alias_not_independent');
+
+      const filtered = filterHomeExercises([
+        { id: 'hex-001', duplicateOf: 'sys-3', edad_minima_segura: 10, material_preferido: ['peso_corporal'] },
+        { id: 'hex-002', edad_minima_segura: 10, material_preferido: ['peso_corporal'] }
+      ], { playerAge: 18, hasSupervision: true });
+      expect(filtered.map(e => e.id)).toEqual(['hex-002']);
+    });
+
+    it('P12-A Q2=B: edadMin=8 exercises require effective supervision without promoting risk tier to alto', () => {
+      expect(getExerciseRiskTier('hex-093')).toBe('bajo');
+      expect(requiresEffectiveSupervision('hex-093')).toBe(true);
+      expect(requiresEffectiveSupervision({ id: 'hex-093', edad_minima_segura: 8, requiere_supervision_presencial: false })).toBe(true);
+
+      const exAge8 = {
+        id: 'hex-093',
+        edad_minima_segura: 8,
+        requiere_supervision_presencial: false,
+        material_preferido: ['toalla']
+      };
+
+      // Jugador 10 años sin supervisión -> bloqueado
+      const res10NoSup = canPrescribeAtHome(exAge8, { playerAge: 10, hasSupervision: false });
+      expect(res10NoSup.prescribable).toBe(false);
+      expect(res10NoSup.reason).toBe('supervision_required');
+      expect(res10NoSup.subReason).toBe('q2_age_min_under_10');
+
+      // Jugador 10 años con supervisión -> permitido
+      const res10Sup = canPrescribeAtHome(exAge8, { playerAge: 10, hasSupervision: true });
+      expect(res10Sup.prescribable).toBe(true);
+
+      // Jugador 8 años sin supervisión -> bloqueado
+      const res8NoSup = canPrescribeAtHome(exAge8, { playerAge: 8, hasSupervision: false });
+      expect(res8NoSup.prescribable).toBe(false);
+
+      // Jugador 8 años con supervisión -> permitido
+      const res8Sup = canPrescribeAtHome(exAge8, { playerAge: 8, hasSupervision: true });
+      expect(res8Sup.prescribable).toBe(true);
+
+      // Jugador 7 años con supervisión -> bloqueado por edad mínima (7 < 8)
+      const res7Sup = canPrescribeAtHome(exAge8, { playerAge: 7, hasSupervision: true });
+      expect(res7Sup.prescribable).toBe(false);
+      expect(res7Sup.reason).toBe('age_below_minimum');
+    });
+
+    it('P12-A Q3=C & Q4=B: getIllustrationRenderState blocks rejected SVGs and targetZones normalize cleanly', () => {
+      for (const id of ['sys-1', 'sys-2', 'sys-3', 'sys-8', 'sys-9']) {
+        const state = getIllustrationRenderState(id);
+        expect(state.renderable).toBe(false);
+        expect(state.svgAllowed).toBe(false);
+        expect(state.guideAllowed).toBe(false);
+        expect(state.status).toBe('rejected_by_owner');
+        expect(state.placeholder).toBe('Ilustración pendiente de rediseño aprobado por el DUEÑO');
+      }
+
+      const stateHex001 = getIllustrationRenderState('hex-001');
+      expect(stateHex001.renderable).toBe(false);
+      expect(stateHex001.inheritedFrom).toBe('sys-3');
+      expect(stateHex001.placeholder).toBe('Ilustración pendiente de rediseño aprobado por el DUEÑO');
+
+      expect(normalizeTargetZone('isquiosural')).toBe('isquiosurales');
+      expect(normalizeTargetZone('isquiosurales')).toBe('isquiosurales');
+      expect(normalizeTargetZone('tobillos')).toBe('tobillo');
+      expect(normalizeTargetZone('gemelo')).toBe('gemelos');
+      expect(normalizeTargetZone('tendón_aquiles')).toBe('tendon_aquiles');
+      expect(normalizeTargetZone('gluteo', 'hex-007')).toBe('gluteo_mayor');
+      expect(normalizeTargetZone('gluteo', 'hex-008')).toBe('gluteo_medio');
+      expect(normalizeTargetZone('gluteo')).toBe('[TARGETZONE_NO_CANONICA]');
+      expect(normalizeTargetZone('zona_fantasma')).toBe('[TARGETZONE_NO_CANONICA]');
+      expect(normalizeExerciseTargetZones(['isquiosural', 'gemelo', 'tobillos'])).toEqual(['isquiosurales', 'gemelos', 'tobillo']);
     });
 
     it('exerciseSafety R4: PENDIENTE-FISIO tier requires rigVerifiedBy even if reviewed_by_human is true or hasSupervision is true', () => {
@@ -182,12 +284,12 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
 
     it('filterHomeExercises correctly filters catalog array', () => {
       const catalog = [
-        { id: 'sys-1', edadMin: 10, material_preferido: ['peso_corporal'] },
+        { id: 'sys-10', edadMin: 10, material_preferido: ['peso_corporal'] },
         { id: 'hex-057', edadMin: 14, material_preferido: ['peso_corporal'] }
       ];
       const under14 = filterHomeExercises(catalog, { playerAge: 12 });
       expect(under14.length).toBe(1);
-      expect(under14[0].id).toBe('sys-1');
+      expect(under14[0].id).toBe('sys-10');
     });
 
     it('CANONICAL_EXERCISE_SAFETY_MAP contains valid tiers and minimum ages', () => {

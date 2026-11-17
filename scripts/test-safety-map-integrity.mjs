@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { HOME_EXERCISES_108 } from '../src/data/homeExercisesCatalog.js';
 import { SYSTEM_CORE_EXERCISES } from '../src/data/systemCoreExercises.js';
 import { CANONICAL_EXERCISE_SAFETY_MAP as MAP, PENDIENTE_FISIO_IDS, projectSafetyEntry } from '../src/data/exerciseSafetyMap.js';
+import { CANONICAL_TARGET_ZONE_SET, REDESIGN_SVG_CANONICAL_ZONES, auditCatalogTargetZones, normalizeTargetZone } from '../src/data/targetZoneCanonicalMap.js';
 import { findSemanticDuplicates, assertNoUnresolvedDuplicates } from './lib/semanticDuplicates.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -83,6 +84,24 @@ ok(assertNoUnresolvedDuplicates(inj4).some((x) => x.includes('huérfano')), 'INY
 // Regresión: mover un tier/edad en el catálogo se refleja en el mapa (es derivado)
 const moved = projectSafetyEntry({ ...sys3, edad_minima_segura: 16, requiere_supervision_presencial: true });
 ok(moved.edadMin === 16 && moved.tier_riesgo === 'alto', 'REGRESIÓN: cambiar el catálogo cambia la proyección del mapa (sin editar el mapa)');
+
+// ── 4. P12-A: Q1 (alias), Q2 (edadMin<10 supervisión efectiva), Q4 (targetZones canónicas) ──
+console.log('\n▶ [4/4] P12-A: Q1 alias, Q2 supervisión edadMin<10 y Q4 targetZones canónicas');
+ok(MAP['hex-001'].isAlias === true && MAP['hex-001'].independentPrescribable === false && MAP['hex-001'].parentIllustrationStatus === 'rejected_by_owner',
+  'Q1: hex-001 marcado como alias no independiente con parentIllustrationStatus="rejected_by_owner"');
+
+const under10Entries = Object.values(MAP).filter((m) => m.edadMin < 10);
+ok(under10Entries.length === 14 && under10Entries.every((m) => m.edadMin === 8 && m.supervision === false && m.effectiveSupervision === true && m.supervisionReason === 'q2_age_min_under_10' && m.tier_riesgo === 'bajo'),
+  `Q2: ${under10Entries.length}/14 ejercicios con edadMin=8 tienen effectiveSupervision=true derivada y mantienen tier_riesgo='bajo'`);
+
+const tzAudit = auditCatalogTargetZones(catalog);
+ok(tzAudit.nonCanonicalCount === 0, `Q4: 118/118 ejercicios resuelven 100% a CANONICAL_TARGET_ZONES (nonCanonicalCount=${tzAudit.nonCanonicalCount})`);
+ok(Object.values(MAP).every((m) => Array.isArray(m.canonicalTargetZones) && m.canonicalTargetZones.length > 0 && m.canonicalTargetZones.every((z) => CANONICAL_TARGET_ZONE_SET.has(z))),
+  'Q4: todas las entradas del mapa proyectan canonicalTargetZones válidas');
+ok(['sys-1', 'sys-2', 'sys-3', 'sys-8', 'sys-9', 'hex-001'].every((id) => JSON.stringify(MAP[id].canonicalTargetZones) === JSON.stringify(REDESIGN_SVG_CANONICAL_ZONES[id])),
+  'Q4: sys-1, sys-2, sys-3, sys-8, sys-9 y hex-001 tienen canonicalTargetZones listas para rediseño SVG');
+ok(normalizeTargetZone('zona_inventada_inexistente') === '[TARGETZONE_NO_CANONICA]' && normalizeTargetZone('gluteo') === '[TARGETZONE_NO_CANONICA]',
+  'Q4: inyección de zona desconocida o "gluteo" sin contexto devuelve [TARGETZONE_NO_CANONICA] (0 unknowns silenciosos)');
 
 console.log(failed ? '\n❌ [TEST-SAFETY-MAP] FALLÓ' : '\n✅ [TEST-SAFETY-MAP] 100% PASS');
 process.exit(failed ? 1 : 0);

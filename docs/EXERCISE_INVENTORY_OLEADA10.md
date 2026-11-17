@@ -577,3 +577,24 @@ vitest_exit=0
 | `tsc` sigue limpio | `[CERRADO]` | `npx tsc --noEmit` exit code `0` |
 | Documento `.md` autocontenido | `[CERRADO]` | `docs/EXERCISE_INVENTORY_OLEADA10.md` |
 | Documento `.json` máquina-legible | `[CERRADO]` | `docs/EXERCISE_INVENTORY_OLEADA10.json` |
+
+---
+
+## APÉNDICE DELTA POST P12-A (DECISIONES DEL DUEÑO Q1–Q4)
+
+> **Nota de preservación:** Todo el contenido superior corresponde al baseline inmutable de `P11` (commit `bc498a6`). Este apéndice documenta el delta tras aplicar `Q1=A`, `Q2=B`, `Q3=C` y `Q4=B` en `P12-A`. Véase el detalle completo en `docs/P12_A_DELTA_OLEADA10.md` y el snapshot JSON actualizado en `docs/EXERCISE_INVENTORY_OLEADA10_POST_P12A.json`.
+
+| Métrica | P11 baseline | Post P12-A | Delta | Causa |
+|---|---:|---:|---:|---|
+| Total ejercicios catalogados | `118` | `118` | `0` | Sin cambio de IDs (`10 sys + 108 hex`). |
+| Total prescribibles 10 años sin supervisión | `81` | `66` | `-15` | `-1` por `Q1=A` (`hex-001` alias bloqueado de `sys-3`) y `-14` por `Q2=B` (`edadMin=8` exige supervisión). |
+| Total prescribibles 13 años sin supervisión | `92` | `77` | `-15` | `-1` por `Q1=A` (`hex-001`) y `-14` por `Q2=B` (`hex-093..hex-095, hex-097..hex-107`). |
+| Total prescribibles 16 años sin supervisión | `92` | `77` | `-15` | `-1` por `Q1=A` (`hex-001`) y `-14` por `Q2=B` (`hex-093..hex-095, hex-097..hex-107`). |
+| Total prescribibles 18 años sin supervisión | `92` | `77` | `-15` | `-1` por `Q1=A` (`hex-001`) y `-14` por `Q2=B` (`hex-093..hex-095, hex-097..hex-107`). |
+| Total prescribibles 16 años con supervisión | `100` | `99` | `-1` | `-1` por `Q1=A` (`hex-001` bloqueado como alias de `sys-3`). |
+| Total prescribibles 18 años con supervisión | `100` | `99` | `-1` | `-1` por `Q1=A` (`hex-001` bloqueado como alias de `sys-3`). |
+| Total `rejected_by_owner` | `5` | `5` | `0` | `Q3=C`: `sys-1, sys-2, sys-3, sys-8, sys-9` siguen bloqueados hasta rediseño aprobado. |
+| Total alias bloqueados | `0` | `1` | `+1` | `Q1=A`: `hex-001 -> sys-3` (`reason: 'alias_of_blocked_exercise'`). |
+| Total `edadMin=8` con supervisión requerida | `0` | `14` | `+14` | `Q2=B`: `hex-093..hex-095, hex-097..hex-107` (`effectiveSupervision=true`, mantienen `tier_riesgo='bajo'`). |
+| `targetZones` no canónicas restantes | `180` libres | `0` | `-180` | `Q4=B`: `118/118` resuelven a las `26` `CANONICAL_TARGET_ZONES` (`nonCanonicalCount=0`). |
+

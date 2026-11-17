@@ -12,7 +12,8 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Front Plank",
     "category": "fortalecimiento",
     "targetZones": [
-      "core"
+      "core",
+      "estabilizadores_lumbopelvicos"
     ],
     "injuryTypes": [
       "lumbalgia"
@@ -77,6 +78,7 @@ export const SYSTEM_CORE_EXERCISES = [
     "category": "fortalecimiento",
     "targetZones": [
       "cadera",
+      "gluteo_mayor",
       "core"
     ],
     "injuryTypes": [
@@ -141,7 +143,10 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Ankle Mobility",
     "category": "movilidad",
     "targetZones": [
-      "tobillo"
+      "tobillo",
+      "dorsiflexion",
+      "soleo",
+      "gemelos"
     ],
     "injuryTypes": [
       "esguince"
@@ -204,7 +209,7 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Nordic Hamstring Curl",
     "category": "prevencion",
     "targetZones": [
-      "isquiosural",
+      "isquiosurales",
       "isquiosurales_excentrico"
     ],
     "injuryTypes": [
@@ -387,7 +392,7 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Single-Leg Deadlift",
     "category": "prevencion",
     "targetZones": [
-      "isquiosural",
+      "isquiosurales",
       "cadera"
     ],
     "injuryTypes": [
@@ -448,7 +453,7 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Hamstring Stretch",
     "category": "recuperacion",
     "targetZones": [
-      "isquiosural"
+      "isquiosurales"
     ],
     "injuryTypes": [
       "sobrecarga"
@@ -510,7 +515,8 @@ export const SYSTEM_CORE_EXERCISES = [
     "nameEn": "Side Plank",
     "category": "fortalecimiento",
     "targetZones": [
-      "core"
+      "core",
+      "oblicuos"
     ],
     "injuryTypes": [
       "lumbalgia"

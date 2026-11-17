@@ -1,15 +1,25 @@
 /**
  * src/utils/exerciseSafety.js
- * Míster11 — Motor de Validación Clínica, Seguridad por Edad y Prescripción Casera (Oleada 6.1)
+ * Míster11 — Motor de Validación Clínica, Seguridad por Edad y Prescripción Casera (Oleada 6.1 / P12-A)
+ *
+ * Decisiones del DUEÑO aplicadas en P12-A:
+ * - Q1=A: hex-001 es alias de sys-3 (duplicateOf) y no se prescribe como ficha independiente;
+ *         hereda el bloqueo clínico/visual del padre.
+ * - Q2=B: todo ejercicio con edadMin < 10 (ej. edadMin=8) exige supervisión presencial efectiva
+ *         (effectiveSupervision = true), sin promocionar su tier_riesgo a 'alto'.
+ * - Q3=C: los 5 SVG rechazados por el DUEÑO (status === 'rejected_by_owner') quedan bloqueados
+ *         hasta rediseño aprobado; no se habilita el SVG rechazado ni guía orientativa visible.
+ * - Q4=B: integración con el normalizador canónico de targetZones (targetZoneCanonicalMap.js).
  */
 
 import { DEFAULT_USER_INVENTORY } from '../data/homeExercisesCatalog.js';
 import { CANONICAL_EXERCISE_SAFETY_MAP } from '../data/exerciseSafetyMap.js';
+import { normalizeExerciseTargetZones, normalizeTargetZone } from '../data/targetZoneCanonicalMap.js';
 
-export { CANONICAL_EXERCISE_SAFETY_MAP };
+export { CANONICAL_EXERCISE_SAFETY_MAP, normalizeExerciseTargetZones, normalizeTargetZone };
 
 /**
- * Obtiene el tier de riesgo canónico ('alto' o 'bajo') por ID o ejercicio.
+ * Obtiene el tier de riesgo canónico ('alto', 'bajo' o 'PENDIENTE-FISIO') por ID o ejercicio.
  */
 export const getExerciseRiskTier = (exerciseOrId) => {
   const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
@@ -23,11 +33,126 @@ export const getExerciseRiskTier = (exerciseOrId) => {
  * Obtiene la edad mínima segura canónica por ID o ejercicio.
  */
 export const getExerciseMinAge = (exerciseOrId) => {
+  if (typeof exerciseOrId === 'object' && exerciseOrId !== null) {
+    if (typeof exerciseOrId.edad_minima_segura === 'number') return exerciseOrId.edad_minima_segura;
+    if (typeof exerciseOrId.edadMin === 'number') return exerciseOrId.edadMin;
+    if (typeof exerciseOrId.age_min === 'number') return exerciseOrId.age_min;
+  }
   const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
   if (id && CANONICAL_EXERCISE_SAFETY_MAP[id]) {
     return CANONICAL_EXERCISE_SAFETY_MAP[id].edadMin;
   }
-  return exerciseOrId?.edad_minima_segura ?? exerciseOrId?.age_min ?? 0;
+  return 0;
+};
+
+/**
+ * Q2=B: Determina si un ejercicio requiere supervisión presencial efectiva.
+ * Es true cuando el catálogo lo exige explícitamente O cuando edadMin < 10 (ej. edadMin = 8).
+ * No promociona ejercicios de edadMin = 8 a tier_riesgo 'alto'.
+ */
+export const requiresEffectiveSupervision = (exerciseOrId) => {
+  const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
+  const safetyMeta = id && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[id] : null;
+
+  if (typeof exerciseOrId === 'object' && exerciseOrId !== null) {
+    if (exerciseOrId.requiere_supervision_presencial === true) return true;
+    const minAge = getExerciseMinAge(exerciseOrId);
+    if (minAge > 0 && minAge < 10) return true;
+  }
+
+  if (safetyMeta) {
+    return Boolean(safetyMeta.effectiveSupervision || safetyMeta.supervision || (safetyMeta.edadMin > 0 && safetyMeta.edadMin < 10));
+  }
+
+  return false;
+};
+
+/**
+ * Q1=A: Resuelve el estado de alias (duplicateOf) de un ejercicio.
+ */
+export const resolveExerciseAlias = (exerciseOrId) => {
+  const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
+  const safetyMeta = id && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[id] : null;
+  const duplicateOf = (typeof exerciseOrId === 'object' && exerciseOrId !== null && 'duplicateOf' in exerciseOrId)
+    ? exerciseOrId.duplicateOf
+    : (safetyMeta?.duplicateOf || null);
+
+  if (!duplicateOf) {
+    return {
+      isAlias: false,
+      id: id || null,
+      duplicateOf: null,
+      independentPrescribable: true,
+      parentIllustrationStatus: null,
+      label: null
+    };
+  }
+
+  const parentMeta = CANONICAL_EXERCISE_SAFETY_MAP?.[duplicateOf] || null;
+  const parentIllustrationStatus = (typeof exerciseOrId === 'object' && exerciseOrId?.parentIllustrationStatus)
+    || parentMeta?.illustrationStatus
+    || safetyMeta?.parentIllustrationStatus
+    || null;
+
+  return {
+    isAlias: true,
+    id: id || null,
+    duplicateOf,
+    independentPrescribable: false,
+    parentIllustrationStatus,
+    parentExists: Boolean(parentMeta),
+    label: `Alias/variante de ${duplicateOf}`
+  };
+};
+
+/**
+ * Q3=C: Estado de renderizado seguro de ilustración.
+ * Bloquea el SVG viejo rechazado y prohíbe habilitar guía orientativa antes del rediseño aprobado por el DUEÑO.
+ * Aplica tanto a los 5 rechazados (sys-1, sys-2, sys-3, sys-8, sys-9) como a sus alias (hex-001 -> sys-3).
+ */
+export const getIllustrationRenderState = (exerciseOrId) => {
+  const id = typeof exerciseOrId === 'string' ? exerciseOrId : exerciseOrId?.id;
+  const safetyMeta = id && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[id] : null;
+  const aliasInfo = resolveExerciseAlias(exerciseOrId);
+
+  const directStatus = (typeof exerciseOrId === 'object' && exerciseOrId?.illustration?.status)
+    || safetyMeta?.illustrationStatus
+    || null;
+  const effectiveStatus = directStatus || aliasInfo.parentIllustrationStatus || null;
+
+  if (effectiveStatus === 'rejected_by_owner') {
+    return {
+      renderable: false,
+      svgAllowed: false,
+      guideAllowed: false,
+      status: 'rejected_by_owner',
+      inheritedFrom: aliasInfo.isAlias ? aliasInfo.duplicateOf : null,
+      placeholder: 'Ilustración pendiente de rediseño aprobado por el DUEÑO'
+    };
+  }
+
+  if (aliasInfo.isAlias) {
+    return {
+      renderable: false,
+      svgAllowed: false,
+      guideAllowed: false,
+      status: 'alias_non_independent',
+      inheritedFrom: aliasInfo.duplicateOf,
+      placeholder: `Alias/variante de ${aliasInfo.duplicateOf}`
+    };
+  }
+
+  const ill = typeof exerciseOrId === 'object' ? exerciseOrId?.illustration : null;
+  const isApproved = Boolean(ill && ill.reviewed_by_human === true && ill.type !== 'pendiente' && ill.status !== 'rejected_by_owner');
+
+  return {
+    renderable: isApproved,
+    svgAllowed: isApproved,
+    guideAllowed: isApproved,
+    status: effectiveStatus || ill?.type || 'pendiente',
+    inheritedFrom: null,
+    placeholder: isApproved ? null : 'Ilustración pendiente de rediseño aprobado por el DUEÑO'
+  };
 };
 
 /**
@@ -80,8 +205,9 @@ export const isHighClinicalRisk = (exercise) => {
 };
 
 /**
- * Motor de prescripción segura en casa (C1, C2, C3).
- * Bloquea campo_only, evalúa inventario de usuario con equivalencias y supervisión.
+ * Motor de prescripción segura en casa (C1, C2, C3 + P12-A Q1, Q2, Q3).
+ * Bloquea alias no independientes (Q1), exige supervisión para edadMin < 10 (Q2),
+ * bloquea ilustraciones rechazadas por el DUEÑO (Q3), aísla campo_only y evalúa inventario.
  */
 export const canPrescribeAtHome = (exercise, {
   playerAge = null,
@@ -91,6 +217,30 @@ export const canPrescribeAtHome = (exercise, {
   locale = 'es'
 } = {}) => {
   if (!exercise) return { prescribable: false, reason: 'missing_exercise', badge: 'Inválido' };
+
+  const exerciseId = typeof exercise === 'string' ? exercise : exercise?.id;
+  const safetyMeta = exerciseId && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[exerciseId] : null;
+
+  // Q1=A: Si el ejercicio tiene duplicateOf (ej. hex-001 -> sys-3), es alias no independiente
+  // y hereda el bloqueo del padre si el padre está en rejected_by_owner.
+  const aliasInfo = resolveExerciseAlias(exercise);
+  if (aliasInfo.isAlias) {
+    if (aliasInfo.parentIllustrationStatus === 'rejected_by_owner') {
+      return {
+        prescribable: false,
+        reason: 'alias_of_blocked_exercise',
+        inheritedReason: 'illustration_rejected_by_owner',
+        duplicateOf: aliasInfo.duplicateOf,
+        badge: `Alias/variante de ${aliasInfo.duplicateOf} bloqueado (ilustración rechazada por el dueño)`
+      };
+    }
+    return {
+      prescribable: false,
+      reason: 'alias_not_independent',
+      duplicateOf: aliasInfo.duplicateOf,
+      badge: `Alias/variante de ${aliasInfo.duplicateOf} (no prescribible como ficha independiente)`
+    };
+  }
 
   // C3: Aislamiento estricto de técnica de campo
   if (exercise.contexto === 'campo_only') {
@@ -121,24 +271,37 @@ export const canPrescribeAtHome = (exercise, {
     };
   }
 
-  // C2: Supervisión presencial requerida
-  if (exercise.requiere_supervision_presencial && !hasSupervision) {
+  // D2 / Q3=C: Ilustraciones rechazadas por el DUEÑO — Fail-closed absoluto (incluso con supervisión)
+  const effectiveIllStatus = exercise.illustration?.status || (!exercise.illustration ? safetyMeta?.illustrationStatus : null);
+  if (effectiveIllStatus === 'rejected_by_owner') {
+    return {
+      prescribable: false,
+      reason: 'illustration_rejected_by_owner',
+      badge: 'Ilustración rechazada por el dueño (rediseño biomecánico requerido)'
+    };
+  }
+
+  // C2 + Q2=B: Supervisión presencial requerida (heredada del catálogo o derivada por edadMin < 10)
+  const minSafeAge = getExerciseMinAge(exercise);
+  const catalogSupervision = Boolean(exercise.requiere_supervision_presencial);
+  const under10Supervision = minSafeAge > 0 && minSafeAge < 10;
+  if ((catalogSupervision || under10Supervision) && !hasSupervision) {
     return {
       prescribable: false,
       reason: 'supervision_required',
-      badge: 'Requiere supervisión presencial'
+      subReason: (!catalogSupervision && under10Supervision) ? 'q2_age_min_under_10' : 'catalog_supervision_required',
+      badge: (!catalogSupervision && under10Supervision)
+        ? 'Requiere supervisión presencial (edad mínima < 10 años)'
+        : 'Requiere supervisión presencial'
     };
   }
 
   // G10 (Oleada 6.4) & E1b / R4: Ejercicio de riesgo alto sin ilustración validada requiere supervisión presencial obligatoria
   // Para tier 'PENDIENTE-FISIO', reviewed_by_human NO basta por sí solo; exige obligatoriamente rigVerifiedBy (firma de fisioterapeuta colegiado)
   const isHighRisk = isHighClinicalRisk(exercise);
-  const exerciseId = typeof exercise === 'string' ? exercise : exercise?.id;
-  const safetyMeta = exerciseId && CANONICAL_EXERCISE_SAFETY_MAP ? CANONICAL_EXERCISE_SAFETY_MAP[exerciseId] : null;
   const isTierPendienteFisio = safetyMeta?.tier_riesgo === 'PENDIENTE-FISIO';
 
   const unreviewedIllustration = !exercise.illustration?.reviewed_by_human || exercise.illustration?.type === 'pendiente';
-  const fisioVerificationMissing = isTierPendienteFisio && !exercise.illustration?.rigVerifiedBy;
 
   // S1 (R4): PENDIENTE-FISIO exige rigVerifiedBy colegiada obligatoria; la supervisión del coach NO sustituye la firma del fisio
   if (isTierPendienteFisio && !exercise.illustration?.rigVerifiedBy) {
@@ -154,15 +317,6 @@ export const canPrescribeAtHome = (exercise, {
       prescribable: false,
       reason: 'high_risk_unreviewed_illustration',
       badge: 'Requiere supervisión presencial (ilustración pendiente)'
-    };
-  }
-
-  // D2 (Oleada 9.3): Ilustraciones rechazadas por el DUEÑO — Fail-closed absoluto
-  if (exercise.illustration?.status === 'rejected_by_owner') {
-    return {
-      prescribable: false,
-      reason: 'illustration_rejected_by_owner',
-      badge: 'Ilustración rechazada por el dueño (rediseño biomecánico requerido)'
     };
   }
 
@@ -221,8 +375,9 @@ export const canPrescribeAtHome = (exercise, {
 };
 
 /**
- * Selector que filtra catálogo casero aplicando C1, C2 y C3.
+ * Selector que filtra catálogo casero aplicando C1, C2, C3 y P12-A (Q1, Q2, Q3).
+ * Excluye todo alias con duplicateOf (Q1=A).
  */
 export const filterHomeExercises = (exercises = [], options = {}) => {
-  return exercises.filter(ex => canPrescribeAtHome(ex, options).prescribable);
+  return exercises.filter(ex => !resolveExerciseAlias(ex).isAlias && canPrescribeAtHome(ex, options).prescribable);
 };

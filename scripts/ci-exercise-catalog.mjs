@@ -17,7 +17,8 @@
  */
 
 import { HOME_EXERCISES_108, HOME_EXERCISES_CATEGORIES } from '../src/data/homeExercisesCatalog.js';
-import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises, isHighClinicalRisk } from '../src/utils/exerciseSafety.js';
+import { assertAgeSafe, canPrescribeAtHome, filterHomeExercises, isHighClinicalRisk, requiresEffectiveSupervision } from '../src/utils/exerciseSafety.js';
+import { auditCatalogTargetZones } from '../src/data/targetZoneCanonicalMap.js';
 
 console.log('══════════════════════════════════════════════════════════════════════');
 console.log('🏆 [CI-EXERCISE-CATALOG] CERTIFICACIÓN CLÍNICA, MATERIALES Y SEGURIDAD 6.1');
@@ -453,6 +454,51 @@ if (g10Ok && highRiskCount > 0) {
 } else if (highRiskCount === 0) {
   console.error('   ❌ FALLO G10: No se detectaron ejercicios de alto riesgo.');
   failed = true;
+}
+
+// ── G11. P12-A: Q1 ALIAS HEX-001, Q2 SUPERVISIÓN EDADMIN<10, Q4 TARGETZONES ──
+console.log('\n▶ [G11] Verificando P12-A (Q1 alias hex-001, Q2 edadMin<10 con supervisión, Q4 targetZones canónicas)...');
+let g11Ok = true;
+
+// Q1: hex-001 no prescribible como ficha independiente
+const hex001Ex = HOME_EXERCISES_108.find(ex => ex.id === 'hex-001');
+const hex001Eval = canPrescribeAtHome(hex001Ex, { playerAge: 18, hasSupervision: true });
+const hex001InPool = filterHomeExercises(HOME_EXERCISES_108, { playerAge: 18, hasSupervision: true }).some(ex => ex.id === 'hex-001');
+if (hex001Eval.prescribable || hex001InPool || hex001Eval.reason !== 'alias_of_blocked_exercise') {
+  console.error('   ❌ FALLO Q1: hex-001 sigue prescribible o presente como ficha independiente en filterHomeExercises.');
+  g11Ok = false;
+  failed = true;
+}
+
+// Q2: Los 14 ejercicios con edad_minima_segura === 8 requieren supervisión presencial efectiva
+const under10List = HOME_EXERCISES_108.filter(ex => ex.edad_minima_segura < 10);
+if (under10List.length !== 14) {
+  console.error(`   ❌ FALLO Q2: Se esperaban 14 ejercicios con edadMin < 10 y se encontraron ${under10List.length}.`);
+  g11Ok = false;
+  failed = true;
+}
+for (const ex of under10List) {
+  const noSup10 = canPrescribeAtHome(ex, { playerAge: 10, hasSupervision: false });
+  const withSup10 = canPrescribeAtHome(ex, { playerAge: 10, hasSupervision: true });
+  const noSup8 = canPrescribeAtHome(ex, { playerAge: 8, hasSupervision: false });
+  const withSup8 = canPrescribeAtHome(ex, { playerAge: 8, hasSupervision: true });
+  if (!requiresEffectiveSupervision(ex) || noSup10.prescribable || !withSup10.prescribable || noSup8.prescribable || !withSup8.prescribable) {
+    console.error(`   ❌ FALLO Q2 en ${ex.id}: supervisión derivada para edadMin=8 no se cumple.`);
+    g11Ok = false;
+    failed = true;
+  }
+}
+
+// Q4: Normalización canónica de targetZones
+const tzAuditHex = auditCatalogTargetZones(HOME_EXERCISES_108);
+if (tzAuditHex.nonCanonicalCount !== 0) {
+  console.error(`   ❌ FALLO Q4: ${tzAuditHex.nonCanonicalCount} targetZones no canónicas detectadas.`);
+  g11Ok = false;
+  failed = true;
+}
+
+if (g11Ok) {
+  console.log('   ✅ G11 Certificado: Q1 (hex-001 alias bloqueado), Q2 (14 ejercicios edadMin=8 exigen supervisión), Q4 (0 targetZones no canónicas).');
 }
 
 // ── RESULTADO FINAL ────────────────────────────────────────────────────────

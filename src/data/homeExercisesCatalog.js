@@ -114,7 +114,7 @@ export const HOME_EXERCISES_108 = [
     ],
     "targetZones": [
       "tobillo",
-      "gemelo"
+      "gemelos"
     ],
     "contexto": "casa",
     "material_preferido": [
@@ -586,7 +586,7 @@ export const HOME_EXERCISES_108 = [
     ],
     "targetZones": [
       "cuadriceps",
-      "gluteo",
+      "gluteo_mayor",
       "core"
     ],
     "contexto": "casa",
@@ -666,7 +666,7 @@ export const HOME_EXERCISES_108 = [
     ],
     "targetZones": [
       "aductores",
-      "gluteo",
+      "gluteo_medio",
       "rodilla"
     ],
     "contexto": "casa",
@@ -827,7 +827,7 @@ export const HOME_EXERCISES_108 = [
     "targetZones": [
       "cadera",
       "coordinacion",
-      "tobillos"
+      "tobillo"
     ],
     "contexto": "casa",
     "material_preferido": [
@@ -987,7 +987,7 @@ export const HOME_EXERCISES_108 = [
     "targetZones": [
       "flexores_cadera",
       "propiocepcion",
-      "gemelo"
+      "gemelos"
     ],
     "contexto": "casa",
     "material_preferido": [
@@ -1543,8 +1543,8 @@ export const HOME_EXERCISES_108 = [
       "Open chest wide"
     ],
     "targetZones": [
-      "tobillos",
-      "caderas",
+      "tobillo",
+      "cadera",
       "columna_toracica"
     ],
     "contexto": "casa",
@@ -6299,7 +6299,7 @@ export const HOME_EXERCISES_108 = [
     ],
     "targetZones": [
       "isquiosurales",
-      "gluteos"
+      "gluteo_mayor"
     ],
     "contexto": "casa",
     "material_preferido": [
@@ -7960,7 +7960,7 @@ export const HOME_EXERCISES_108 = [
     ],
     "targetZones": [
       "movilidad_toracica",
-      "gluteo",
+      "gluteo_medio",
       "columna"
     ],
     "contexto": "casa",

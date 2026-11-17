@@ -1,6 +1,7 @@
 import { PILOT_VECTOR_ILLUSTRATIONS, getPilotIllustration } from '../src/data/vectorIllustrations.js';
-import { canPrescribeAtHome } from '../src/utils/exerciseSafety.js';
+import { canPrescribeAtHome, filterHomeExercises, getIllustrationRenderState } from '../src/utils/exerciseSafety.js';
 import { SYSTEM_CORE_EXERCISES } from '../src/data/systemCoreExercises.js';
+import { HOME_EXERCISES_108 } from '../src/data/homeExercisesCatalog.js';
 import { CANONICAL_EXERCISE_SAFETY_MAP } from '../src/data/exerciseSafetyMap.js';
 
 console.log('══════════════════════════════════════════════════════════════════════');
@@ -64,11 +65,32 @@ const resForced = canPrescribeAtHome(forcedEx);
 ok(resForced.prescribable === false, 'Forzar reviewed_by_human: true en estado rejected_by_owner NO desbloquea la prescripción (Fail-Closed estricto)');
 
 // 4. Verificación de ausencia de IA alucinada
-console.log('\n▶ [4/4] Verificando trazabilidad y ausencia de IA alucinada...');
+console.log('\n▶ [4/5] Verificando trazabilidad y ausencia de IA alucinada...');
 for (const id of pilotIds) {
   const item = PILOT_VECTOR_ILLUSTRATIONS[id];
   ok(item.author === 'agent' && item.reviewed_by_human === false, `${id}: Marcado explícito de revisión humana pendiente`);
 }
+
+// 5. P12-A (Q1=A y Q3=C): Bloqueo de renderizado SVG/guía y herencia en alias hex-001 -> sys-3
+console.log('\n▶ [5/5] Verificando P12-A (Q1=A alias hex-001 y Q3=C bloqueo visual hasta rediseño)...');
+for (const id of pilotIds) {
+  const catalogEx = SYSTEM_CORE_EXERCISES.find(e => e.id === id);
+  const renderState = getIllustrationRenderState(catalogEx);
+  ok(renderState.renderable === false && renderState.svgAllowed === false && renderState.guideAllowed === false,
+    `${id}: Q3=C bloquea renderizado de SVG viejo y guía orientativa (renderable=false, svgAllowed=false, guideAllowed=false)`);
+  ok(renderState.placeholder === 'Ilustración pendiente de rediseño aprobado por el DUEÑO',
+    `${id}: Placeholder obligatorio activo ("${renderState.placeholder}")`);
+}
+
+const hex001 = HOME_EXERCISES_108.find(e => e.id === 'hex-001');
+const resHex001 = canPrescribeAtHome(hex001, { playerAge: 18, hasSupervision: true });
+const renderHex001 = getIllustrationRenderState(hex001);
+ok(resHex001.prescribable === false && resHex001.reason === 'alias_of_blocked_exercise' && resHex001.inheritedReason === 'illustration_rejected_by_owner',
+  `hex-001: Q1=A bloquea prescripción como alias de sys-3 (reason='${resHex001.reason}', inheritedReason='${resHex001.inheritedReason}')`);
+ok(!filterHomeExercises(HOME_EXERCISES_108, { playerAge: 18, hasSupervision: true }).some(e => e.id === 'hex-001'),
+  'hex-001: Q1=A excluido de filterHomeExercises como ficha independiente');
+ok(renderHex001.renderable === false && renderHex001.svgAllowed === false && renderHex001.inheritedFrom === 'sys-3' && renderHex001.placeholder === 'Ilustración pendiente de rediseño aprobado por el DUEÑO',
+  `hex-001: Q1+Q3 hereda bloqueo visual de sys-3 (inheritedFrom='${renderHex001.inheritedFrom}', placeholder='${renderHex001.placeholder}')`);
 
 if (failed) {
   console.error('\n❌ [FAIL] Fallos detectados en test de ilustraciones del piloto.');

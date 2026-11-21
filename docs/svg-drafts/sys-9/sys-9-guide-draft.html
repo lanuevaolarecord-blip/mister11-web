@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preview Documental P12-B — sys-9 Plancha Lateral (Draft SVG)</title>
+  <style>
+    :root {
+      --bg-page: #F7F5F0;
+      --bg-card: #FFFFFF;
+      --text-main: #1B3A2D;
+      --border-main: #CBD5E1;
+      --accent-green: #4CAF7D;
+      --accent-gold: #D4A843;
+      --accent-terra: #C85A32;
+      --accent-ochre: #9C6A3B;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .warning-banner {
+      background: #FAF8F5;
+      border: 2px solid var(--accent-terra);
+      border-left-width: 8px;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    button {
+      min-height: 48px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--text-main);
+      background: var(--text-main);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #FAF8F5;
+      color: var(--text-main);
+    }
+    .svg-stage {
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      padding: 12px;
+      background: #F7F5F0;
+      transition: filter 0.2s ease, background 0.2s ease;
+    }
+    .svg-stage.print-mode {
+      background: #FFFFFF;
+    }
+    .svg-stage.print-bw {
+      background: #FFFFFF;
+      filter: grayscale(100%) contrast(115%);
+    }
+    .svg-stage.paused .m11-pulse {
+      animation: none !important;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    th {
+      width: 240px;
+      color: var(--text-main);
+      background: #FAF8F5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="warning-banner" role="alert">
+      Guía visual orientativa en rediseño. No validada clínicamente. No sustituye supervisión ni valoración profesional.
+    </div>
+
+    <div class="card">
+      <h1 style="margin-top:0;font-size:1.3rem;">Míster11 — Candidato SVG P12-B: <code>sys-9</code> Plancha Lateral (Side Plank)</h1>
+      <div class="controls">
+        <button type="button" id="btn-error" onclick="toggleLayer('error-marker', this)">Ocultar Error (X)</button>
+        <button type="button" id="btn-muscles" onclick="toggleLayer('muscle-zones', this)">Ocultar Zonas Musculares</button>
+        <button type="button" id="btn-reg" class="secondary" onclick="toggleLayer('regression-layer', this)">Ocultar Regresión (Rodilla)</button>
+        <button type="button" id="btn-prog" class="secondary" onclick="toggleLayer('progression-layer', this)">Ocultar Progresión (Pierna)</button>
+        <button type="button" id="btn-print" class="secondary" onclick="cyclePrintMode(this)">Modo: Crema (#F7F5F0)</button>
+        <button type="button" id="btn-anim" class="secondary" onclick="toggleAnimation(this)">Pausar Pulso</button>
+      </div>
+
+      <div id="stage" class="svg-stage">
+        <!-- SVG INLINE DRAFT -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="100%" height="auto" role="img" aria-labelledby="sys9-title sys9-desc">
+          <title id="sys9-title">Guía visual orientativa en rediseño (Draft): Plancha Lateral (sys-9) / Side Plank</title>
+          <desc id="sys9-desc">ES: Apoyo sobre un antebrazo con codo debajo del hombro y borde lateral del pie, elevando la cadera para alinear cabeza, tronco, pelvis y pies en línea recta. Zonas canónicas: core, oblicuos. Error señalado con marcador X: cadera caída y pelvis desalineada. EN: Support on one forearm with elbow under shoulder and lateral border of foot, raising hips to align head, torso, pelvis and feet. Canonical targetZones: core, oblicuos. Error marked with X: dropped hip / misaligned pelvis.</desc>
+          <defs>
+            <style>
+              .m11-bg { fill: #F7F5F0; }
+              .m11-grid { stroke: #E2E8F0; stroke-width: 1; }
+              .m11-mat { fill: #E2E8F0; stroke: #CBD5E1; stroke-width: 1.5; }
+              .m11-body-far { fill: #2E4A3E; stroke: #1B3A2D; stroke-width: 1.5; }
+              .m11-body-main { fill: #1B3A2D; stroke: #1B3A2D; stroke-width: 1.5; stroke-linejoin: round; }
+              .m11-body-outline { fill: none; stroke: #F7F5F0; stroke-width: 1.2; opacity: 0.45; }
+              .m11-muscle-core { fill: #4CAF7D; stroke: #2E7D52; stroke-width: 1.5; fill-opacity: 0.88; }
+              .m11-muscle-oblicuos { fill: #2E7D52; stroke: #4CAF7D; stroke-width: 1.8; fill-opacity: 0.92; }
+              .m11-joint { fill: #4CAF7D; stroke: #D4A843; stroke-width: 2.5; }
+              .m11-axis { stroke: #D4A843; stroke-width: 2.5; stroke-dasharray: 7 5; fill: none; }
+              .m11-support { fill: #D4A843; fill-opacity: 0.22; stroke: #9C6A3B; stroke-width: 1.8; }
+              .m11-error-ghost { fill: none; stroke: #C85A32; stroke-width: 2.2; stroke-dasharray: 5 4; }
+              .m11-error-box { fill: #F7F5F0; stroke: #C85A32; stroke-width: 2.5; }
+              .m11-error-x { stroke: #C85A32; stroke-width: 3; stroke-linecap: round; }
+              .m11-variant-reg { fill: none; stroke: #9C6A3B; stroke-width: 2; stroke-dasharray: 4 4; }
+              .m11-variant-prog { fill: none; stroke: #2E7D52; stroke-width: 2; stroke-dasharray: 6 3; }
+              .m11-label { font-family: system-ui, -apple-system, sans-serif; font-size: 11px; font-weight: 700; fill: #1B3A2D; }
+              .m11-sublabel { font-family: system-ui, -apple-system, sans-serif; font-size: 10px; font-weight: 600; fill: #1B3A2D; }
+              .m11-err-label { font-family: system-ui, -apple-system, sans-serif; font-size: 11px; font-weight: 700; fill: #C85A32; }
+              .m11-warn-box { fill: #FAF8F5; stroke: #9C6A3B; stroke-width: 1.5; }
+              .m11-pulse { animation: m11Pulse 2.8s ease-in-out infinite; }
+              @keyframes m11Pulse {
+                0%, 100% { fill-opacity: 0.82; }
+                50% { fill-opacity: 1; }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .m11-pulse { animation: none !important; }
+              }
+            </style>
+          </defs>
+
+          <rect class="m11-bg" id="svg-bg-rect" x="0" y="0" width="640" height="380" rx="10"/>
+          <g aria-hidden="true">
+            <line class="m11-grid" x1="40" y1="80" x2="600" y2="80"/>
+            <line class="m11-grid" x1="40" y1="140" x2="600" y2="140"/>
+            <line class="m11-grid" x1="40" y1="200" x2="600" y2="200"/>
+            <line class="m11-grid" x1="40" y1="260" x2="600" y2="260"/>
+            <line class="m11-grid" x1="160" y1="50" x2="160" y2="310"/>
+            <line class="m11-grid" x1="320" y1="50" x2="320" y2="310"/>
+            <line class="m11-grid" x1="480" y1="50" x2="480" y2="310"/>
+          </g>
+
+          <g id="support-points" data-layer="support-points">
+            <rect class="m11-mat" x="50" y="286" width="540" height="14" rx="5"/>
+            <ellipse class="m11-support" cx="132" cy="286" rx="24" ry="7"/>
+            <text class="m11-sublabel" x="72" y="318">Apoyo 1: Borde lateral del pie</text>
+            <ellipse class="m11-support" cx="484" cy="286" rx="38" ry="8"/>
+            <text class="m11-sublabel" x="415" y="318">Apoyo 2: Antebrazo (codo bajo hombro 90°)</text>
+            <path d="M 462 262 L 478 262 L 478 280" fill="none" stroke="#9C6A3B" stroke-width="2"/>
+            <text class="m11-sublabel" x="484" y="268">90°</text>
+          </g>
+
+          <g id="regression-layer" data-layer="regression-layer">
+            <path class="m11-variant-reg" d="M 320 202 L 236 284 L 156 284"/>
+            <circle cx="236" cy="284" r="5" fill="#FAF8F5" stroke="#9C6A3B" stroke-width="2"/>
+            <text class="m11-sublabel" x="172" y="272">Variante regresión: apoyo en rodilla inferior</text>
+          </g>
+
+          <g id="progression-layer" data-layer="progression-layer">
+            <path class="m11-variant-prog" d="M 318 176 L 210 156 L 124 146"/>
+            <text class="m11-sublabel" x="118" y="136">Variante informativa: pierna superior elevada</text>
+          </g>
+
+          <g id="body-silhouette" data-layer="body-silhouette">
+            <path class="m11-body-far" d="M 316 174 L 222 214 L 136 254 L 122 246 L 116 262 L 136 270 L 228 232 L 322 192 Z"/>
+            <path class="m11-body-main" d="M 118 268 L 142 264 L 146 284 L 114 285 Z"/>
+            <path class="m11-body-main" d="M 134 264 C 162 246, 196 232, 224 220 L 232 238 C 204 252, 168 266, 140 278 Z"/>
+            <path class="m11-body-main" d="M 224 220 C 254 204, 286 188, 316 174 L 326 202 C 294 216, 260 228, 232 238 Z"/>
+            <path class="m11-body-main" d="M 310 170 C 324 164, 342 160, 354 156 L 364 190 C 348 196, 334 200, 322 204 Z"/>
+            <path class="m11-body-main" d="M 348 156 C 384 142, 422 126, 458 116 L 470 156 C 434 168, 396 180, 360 192 Z"/>
+            <path class="m11-body-far" d="M 452 116 C 422 122, 390 134, 354 150 L 358 160 C 394 146, 424 134, 456 128 Z"/>
+            <path class="m11-body-main" d="M 452 132 L 472 132 L 474 274 L 520 276 L 520 286 L 454 286 L 452 274 Z"/>
+            <path class="m11-body-main" d="M 464 124 L 486 116 L 492 132 L 468 140 Z"/>
+            <ellipse class="m11-body-main" cx="510" cy="114" rx="22" ry="18" transform="rotate(-21 510 114)"/>
+            <path class="m11-body-outline" d="M 228 220 L 232 238 M 320 174 L 324 202 M 456 128 L 466 154"/>
+          </g>
+
+          <g id="muscle-zones" data-layer="muscle-zones" data-canonical-zones="core,oblicuos">
+            <path id="zone-core" data-zone="core" class="m11-muscle-core m11-pulse" d="M 352 160 C 384 148, 418 136, 448 126 L 454 144 C 422 154, 388 166, 358 176 Z"/>
+            <path id="zone-oblicuos" data-zone="oblicuos" class="m11-muscle-oblicuos m11-pulse" d="M 346 176 C 382 164, 420 152, 456 142 L 462 156 C 426 168, 388 180, 352 192 Z"/>
+            <line x1="398" y1="142" x2="376" y2="96" stroke="#1B3A2D" stroke-width="1.5"/>
+            <rect x="276" y="74" width="196" height="22" rx="4" fill="#FAF8F5" stroke="#4CAF7D" stroke-width="1.5"/>
+            <text class="m11-label" x="284" y="89">Zonas canónicas: core + oblicuos</text>
+          </g>
+
+          <g id="axis-line" data-layer="axis-line">
+            <line class="m11-axis" x1="118" y1="272" x2="532" y2="106"/>
+            <text class="m11-sublabel" x="424" y="96">Eje axial recto: cabeza–hombro–cadera–pies</text>
+          </g>
+
+          <g id="joints" data-layer="joints">
+            <circle class="m11-joint" cx="136" cy="266" r="6"/>
+            <circle class="m11-joint" cx="228" cy="228" r="6.5"/>
+            <circle class="m11-joint" cx="324" cy="188" r="8"/>
+            <circle class="m11-joint" cx="462" cy="134" r="7.5"/>
+            <circle class="m11-joint" cx="462" cy="278" r="6.5"/>
+          </g>
+
+          <g id="error-marker" data-layer="error-marker">
+            <path class="m11-error-ghost" d="M 136 266 Q 328 282 462 134"/>
+            <line x1="324" y1="198" x2="324" y2="236" stroke="#C85A32" stroke-width="2" stroke-dasharray="3 3"/>
+            <g transform="translate(324, 252)">
+              <circle class="m11-error-box" cx="0" cy="0" r="13"/>
+              <path class="m11-error-x" d="M -6 -6 L 6 6 M -6 6 L 6 -6"/>
+            </g>
+            <rect x="224" y="214" width="88" height="20" rx="4" fill="#FAF8F5" stroke="#C85A32" stroke-width="1.2"/>
+            <text class="m11-err-label" x="230" y="228">Evitar: caída</text>
+            <text class="m11-err-label" x="255" y="276">X Error: cadera caída / pelvis desalineada</text>
+          </g>
+
+          <g id="warning-layer" data-layer="warning-layer">
+            <rect class="m11-warn-box" x="20" y="14" width="600" height="32" rx="6"/>
+            <text class="m11-label" x="34" y="34">DRAFT P12-B (sys-9 Plancha Lateral) — Guía visual orientativa en rediseño. No validada clínicamente.</text>
+            <text class="m11-sublabel" x="24" y="366">Fuente catálogo: FIFA 11+ Programme Manual, Part 2 | Estado: rejected_by_owner (reviewed_by_human=false)</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;font-size:1.1rem;">Metadatos Verificados desde Fuente de Verdad (Read-Only)</h2>
+      <table>
+        <tbody>
+          <tr><th>ID</th><td><code>sys-9</code></td></tr>
+          <tr><th>Nombre ES / EN</th><td>Plancha Lateral / Side Plank</td></tr>
+          <tr><th>Categoría / Riesgo / Edad mínima</th><td><code>fortalecimiento</code> | <code>tier_riesgo: bajo</code> | <code>edadMin: 10</code> | <code>supervision: false</code></td></tr>
+          <tr><th>canonicalTargetZones</th><td><code>core</code>, <code>oblicuos</code></td></tr>
+          <tr><th>Estado en producto</th><td><code>status: rejected_by_owner</code> | <code>reviewed_by_human: false</code> | <code>prescribable_hoy: false</code></td></tr>
+          <tr><th>Estado de este archivo</th><td><strong>DRAFT DOCUMENTAL EN <code>docs/svg-drafts/sys-9/</code> (NO ACTIVO OFICIAL, NO CLÍNICO)</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function toggleLayer(id, btn) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var hidden = el.style.display === 'none';
+      el.style.display = hidden ? '' : 'none';
+      btn.textContent = btn.textContent.replace(hidden ? 'Mostrar' : 'Ocultar', hidden ? 'Ocultar' : 'Mostrar');
+    }
+    var printModeIdx = 0;
+    function cyclePrintMode(btn) {
+      var stage = document.getElementById('stage');
+      var rect = document.getElementById('svg-bg-rect');
+      printModeIdx = (printModeIdx + 1) % 3;
+      stage.classList.remove('print-mode', 'print-bw');
+      if (printModeIdx === 0) {
+        rect.style.fill = '#F7F5F0';
+        btn.textContent = 'Modo: Crema (#F7F5F0)';
+      } else if (printModeIdx === 1) {
+        stage.classList.add('print-mode');
+        rect.style.fill = '#FFFFFF';
+        btn.textContent = 'Modo: Claro Print (#FFFFFF)';
+      } else {
+        stage.classList.add('print-bw');
+        rect.style.fill = '#FFFFFF';
+        btn.textContent = 'Modo: Impresión B/N';
+      }
+    }
+    function toggleAnimation(btn) {
+      var stage = document.getElementById('stage');
+      var paused = stage.classList.toggle('paused');
+      btn.textContent = paused ? 'Reanudar Pulso' : 'Pausar Pulso';
+    }
+  </script>
+</body>
+</html>

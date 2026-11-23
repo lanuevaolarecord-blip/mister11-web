@@ -174,6 +174,8 @@ export async function extractExactPixelGlowAndMicroLoop(cardPath, outGlowPath, o
 /**
  * Construye el HUD SVG limpio (~1.8 KB) sin círculos falsos en el aire, ubicando las barras
  * traducibles en los márgenes superior e inferior y declarando las canonicalTargetZones.
+ * Cumple D8 Condición 3 (enmendada): 100% de los hex vectoriales pertenecen a la paleta
+ * canónica Tierra y Campo (#1B3A2D, #4CAF7D, #2E7D52, #D4A843, #C85A32, #9C6A3B, #F7F5F0).
  */
 export function buildStandaloneOverlaySvg(preset) {
   const safetyEntry = CANONICAL_EXERCISE_SAFETY_MAP[preset.id] || {};
@@ -183,7 +185,7 @@ export function buildStandaloneOverlaySvg(preset) {
   const zonesAttr = canonicalZones.join(',');
   const zonesUpper = canonicalZones.join(' + ').toUpperCase();
   const zoneBadges = canonicalZones
-    .map((z, idx) => `<rect id="zone-${z}" data-zone="${z}" class="m11-pulse" x="${22 + idx * 4}" y="${preset.h - 32}" width="4" height="16" rx="2" fill="#74F2A7"/>`)
+    .map((z, idx) => `<rect id="zone-${z}" data-zone="${z}" class="m11-pulse" x="${22 + idx * 4}" y="${preset.h - 32}" width="4" height="16" rx="2" fill="#4CAF7D"/>`)
     .join('\n    ');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${preset.w} ${preset.h}" width="100%" height="auto" role="img" aria-labelledby="${preset.id}-title ${preset.id}-desc">
@@ -199,23 +201,58 @@ export function buildStandaloneOverlaySvg(preset) {
     </style>
   </defs>
   <g id="warning-layer" data-layer="warning-layer">
-    <rect x="14" y="10" width="${preset.w - 28}" height="28" rx="6" fill="#071710" fill-opacity="0.92" stroke="#4CAF7D" stroke-width="1.4"/>
-    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#74F2A7"/>
-    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F5EFE0">${preset.phaseEs}</text>
+    <rect x="14" y="10" width="${preset.w - 28}" height="28" rx="6" fill="#1B3A2D" fill-opacity="0.94" stroke="#4CAF7D" stroke-width="1.4"/>
+    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#4CAF7D"/>
+    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F7F5F0">${preset.phaseEs}</text>
   </g>
   <g id="muscle-zones" data-layer="muscle-zones" data-canonical-zones="${zonesAttr}">
-    <rect x="14" y="${preset.h - 34}" width="${preset.w - 28}" height="24" rx="5" fill="#071710" fill-opacity="0.92" stroke="#2E5C46" stroke-width="1.1"/>
+    <rect x="14" y="${preset.h - 34}" width="${preset.w - 28}" height="24" rx="5" fill="#1B3A2D" fill-opacity="0.94" stroke="#2E7D52" stroke-width="1.1"/>
     ${zoneBadges}
-    <text x="36" y="${preset.h - 18}" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#74F2A7">ZONAS: ${zonesUpper}</text>
-    <text x="${preset.w - 22}" y="${preset.h - 18}" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#E88D6D">${preset.errEs}</text>
+    <text x="36" y="${preset.h - 18}" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#D4A843">ZONAS: ${zonesUpper}</text>
+    <text x="${preset.w - 22}" y="${preset.h - 18}" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#C85A32">${preset.errEs}</text>
   </g>
 </svg>
 `;
 }
 
+/**
+ * Construye el manifest JSON de trazabilidad D8 para cada activo híbrido.
+ */
+export function buildAssetManifest(preset, reviewTier, assetStatus = 'pending_owner_review') {
+  const safetyEntry = CANONICAL_EXERCISE_SAFETY_MAP[preset.id] || {};
+  return {
+    id: preset.id,
+    nameEs: preset.titleEs,
+    nameEn: preset.titleEn,
+    canonicalTargetZones: safetyEntry.canonicalTargetZones || [],
+    provenance: 'ai_generated',
+    reviewTier,
+    clinicalTier: safetyEntry.tier_riesgo || 'bajo',
+    assetStatus,
+    d8Compliance: {
+      signedByOwner: true,
+      vectorPalette: ['#1B3A2D', '#4CAF7D', '#2E7D52', '#D4A843', '#C85A32', '#9C6A3B', '#F7F5F0'],
+      clinicalGlowRasterException: true,
+    },
+    files: {
+      card: `${preset.id}-card.webp`,
+      full: `${preset.id}-full.webp`,
+      glow: `${preset.id}-glow.webp`,
+      overlay: `${preset.id}-overlay.svg`,
+      microloop: `${preset.id}-microloop.webp`,
+    },
+  };
+}
+
 console.log('══════════════════════════════════════════════════════════════════════');
 console.log('⚡ [OPTIMIZE-EXERCISE-MEDIA] PIPELINE PÍXEL-EXACTO (0.0 px ERROR)');
 console.log('══════════════════════════════════════════════════════════════════════\n');
+
+const ASSET_STATUS_OVERRIDES = {
+  'sys-2': 'pending_regeneration_bilateral',
+  'hex-021': 'pending_owner_review',
+  'hex-075': 'pending_asset_pierna_extendida',
+};
 
 (async () => {
   for (const preset of Object.values(HYBRID_EXERCISE_PRESETS)) {
@@ -224,6 +261,7 @@ console.log('══════════════════════�
     const glowPath = path.join(outDir, `${preset.id}-glow.webp`);
     const loopPath = path.join(outDir, `${preset.id}-microloop.webp`);
     const overlayPath = path.join(outDir, `${preset.id}-overlay.svg`);
+    const manifestPath = path.join(outDir, `${preset.id}-manifest.json`);
 
     if (fs.existsSync(cardPath) && !fs.existsSync(glowPath)) {
       await extractExactPixelGlowAndMicroLoop(cardPath, glowPath, loopPath);
@@ -232,6 +270,10 @@ console.log('══════════════════════�
     const overlaySvg = buildStandaloneOverlaySvg(preset);
     fs.writeFileSync(overlayPath, overlaySvg, 'utf8');
 
+    const assetStatus = ASSET_STATUS_OVERRIDES[preset.id] || 'pending_owner_review';
+    const manifest = buildAssetManifest(preset, 'B', assetStatus);
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+
     const cardKB = fs.existsSync(cardPath) ? (fs.statSync(cardPath).size / 1024).toFixed(1) : 'N/A';
     const glowKB = fs.existsSync(glowPath) ? (fs.statSync(glowPath).size / 1024).toFixed(2) : 'N/A';
     const fullKB = fs.existsSync(fullPath) ? (fs.statSync(fullPath).size / 1024).toFixed(1) : 'N/A';
@@ -239,7 +281,7 @@ console.log('══════════════════════�
     const svgKB = (Buffer.byteLength(overlaySvg, 'utf8') / 1024).toFixed(2);
 
     console.log(
-      `✅ ${preset.id.padEnd(8)} | Base: ${String(cardKB).padStart(5)} KB | Glow Exacto: ${String(glowKB).padStart(5)} KB | HUD SVG: ${svgKB} KB | Micro-Loop: ${String(loopKB).padStart(5)} KB (Full: ${fullKB} KB)`
+      `✅ ${preset.id.padEnd(8)} | Base: ${String(cardKB).padStart(5)} KB | Glow Exacto: ${String(glowKB).padStart(5)} KB | HUD SVG: ${svgKB} KB | Micro-Loop: ${String(loopKB).padStart(5)} KB | Manifest: OK (Tier B, ${assetStatus})`
     );
   }
   console.log('\n══════════════════════════════════════════════════════════════════════');

@@ -11,15 +11,15 @@
     </style>
   </defs>
   <g id="warning-layer" data-layer="warning-layer">
-    <rect x="14" y="10" width="612" height="28" rx="6" fill="#071710" fill-opacity="0.92" stroke="#4CAF7D" stroke-width="1.4"/>
-    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#74F2A7"/>
-    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F5EFE0">ISQUIOSURALES CON BANDA // FLEXIÓN CADERA 90° ACTIVA</text>
+    <rect x="14" y="10" width="612" height="28" rx="6" fill="#1B3A2D" fill-opacity="0.94" stroke="#4CAF7D" stroke-width="1.4"/>
+    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#4CAF7D"/>
+    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F7F5F0">ISQUIOSURALES CON BANDA // FLEXIÓN CADERA 90° ACTIVA</text>
   </g>
   <g id="muscle-zones" data-layer="muscle-zones" data-canonical-zones="isquiosurales,core">
-    <rect x="14" y="549" width="612" height="24" rx="5" fill="#071710" fill-opacity="0.92" stroke="#2E5C46" stroke-width="1.1"/>
-    <rect id="zone-isquiosurales" data-zone="isquiosurales" class="m11-pulse" x="22" y="551" width="4" height="16" rx="2" fill="#74F2A7"/>
-    <rect id="zone-core" data-zone="core" class="m11-pulse" x="26" y="551" width="4" height="16" rx="2" fill="#74F2A7"/>
-    <text x="36" y="565" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#74F2A7">ZONAS: ISQUIOSURALES + CORE</text>
-    <text x="618" y="565" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#E88D6D">✕ Evitar: despegar pelvis contraria</text>
+    <rect x="14" y="549" width="612" height="24" rx="5" fill="#1B3A2D" fill-opacity="0.94" stroke="#2E7D52" stroke-width="1.1"/>
+    <rect id="zone-isquiosurales" data-zone="isquiosurales" class="m11-pulse" x="22" y="551" width="4" height="16" rx="2" fill="#4CAF7D"/>
+    <rect id="zone-core" data-zone="core" class="m11-pulse" x="26" y="551" width="4" height="16" rx="2" fill="#4CAF7D"/>
+    <text x="36" y="565" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#D4A843">ZONAS: ISQUIOSURALES + CORE</text>
+    <text x="618" y="565" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#C85A32">✕ Evitar: despegar pelvis contraria</text>
   </g>
 </svg>

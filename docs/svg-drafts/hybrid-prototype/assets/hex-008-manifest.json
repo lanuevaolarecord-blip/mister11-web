@@ -1,0 +1,34 @@
+{
+  "id": "hex-008",
+  "nameEs": "Movilidad de Cadera en Cuadrupedia (45°)",
+  "nameEn": "Quadruped Hip Circumduction (45°)",
+  "canonicalTargetZones": [
+    "aductores",
+    "gluteo_medio",
+    "rodilla"
+  ],
+  "provenance": "ai_generated",
+  "reviewTier": "B",
+  "clinicalTier": "bajo",
+  "assetStatus": "pending_owner_review",
+  "d8Compliance": {
+    "signedByOwner": true,
+    "vectorPalette": [
+      "#1B3A2D",
+      "#4CAF7D",
+      "#2E7D52",
+      "#D4A843",
+      "#C85A32",
+      "#9C6A3B",
+      "#F7F5F0"
+    ],
+    "clinicalGlowRasterException": true
+  },
+  "files": {
+    "card": "hex-008-card.webp",
+    "full": "hex-008-full.webp",
+    "glow": "hex-008-glow.webp",
+    "overlay": "hex-008-overlay.svg",
+    "microloop": "hex-008-microloop.webp"
+  }
+}

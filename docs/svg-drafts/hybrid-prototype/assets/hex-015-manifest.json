@@ -1,0 +1,33 @@
+{
+  "id": "hex-015",
+  "nameEs": "Estiramiento de Isquiosurales con Banda (90°)",
+  "nameEn": "90° Band Hamstring Stretch",
+  "canonicalTargetZones": [
+    "isquiosurales",
+    "core"
+  ],
+  "provenance": "ai_generated",
+  "reviewTier": "B",
+  "clinicalTier": "bajo",
+  "assetStatus": "pending_owner_review",
+  "d8Compliance": {
+    "signedByOwner": true,
+    "vectorPalette": [
+      "#1B3A2D",
+      "#4CAF7D",
+      "#2E7D52",
+      "#D4A843",
+      "#C85A32",
+      "#9C6A3B",
+      "#F7F5F0"
+    ],
+    "clinicalGlowRasterException": true
+  },
+  "files": {
+    "card": "hex-015-card.webp",
+    "full": "hex-015-full.webp",
+    "glow": "hex-015-glow.webp",
+    "overlay": "hex-015-overlay.svg",
+    "microloop": "hex-015-microloop.webp"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "sys-1",
+  "nameEs": "Plancha Frontal",
+  "nameEn": "Forearm Plank",
+  "canonicalTargetZones": [
+    "core",
+    "estabilizadores_lumbopelvicos"
+  ],
+  "provenance": "ai_generated",
+  "reviewTier": "B",
+  "clinicalTier": "bajo",
+  "assetStatus": "pending_owner_review",
+  "d8Compliance": {
+    "signedByOwner": true,
+    "vectorPalette": [
+      "#1B3A2D",
+      "#4CAF7D",
+      "#2E7D52",
+      "#D4A843",
+      "#C85A32",
+      "#9C6A3B",
+      "#F7F5F0"
+    ],
+    "clinicalGlowRasterException": true
+  },
+  "files": {
+    "card": "sys-1-card.webp",
+    "full": "sys-1-full.webp",
+    "glow": "sys-1-glow.webp",
+    "overlay": "sys-1-overlay.svg",
+    "microloop": "sys-1-microloop.webp"
+  }
+}

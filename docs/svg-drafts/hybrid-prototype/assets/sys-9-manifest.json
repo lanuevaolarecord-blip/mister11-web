@@ -1,0 +1,33 @@
+{
+  "id": "sys-9",
+  "nameEs": "Plancha Lateral",
+  "nameEn": "Side Plank",
+  "canonicalTargetZones": [
+    "core",
+    "oblicuos"
+  ],
+  "provenance": "ai_generated",
+  "reviewTier": "B",
+  "clinicalTier": "bajo",
+  "assetStatus": "pending_owner_review",
+  "d8Compliance": {
+    "signedByOwner": true,
+    "vectorPalette": [
+      "#1B3A2D",
+      "#4CAF7D",
+      "#2E7D52",
+      "#D4A843",
+      "#C85A32",
+      "#9C6A3B",
+      "#F7F5F0"
+    ],
+    "clinicalGlowRasterException": true
+  },
+  "files": {
+    "card": "sys-9-card.webp",
+    "full": "sys-9-full.webp",
+    "glow": "sys-9-glow.webp",
+    "overlay": "sys-9-overlay.svg",
+    "microloop": "sys-9-microloop.webp"
+  }
+}

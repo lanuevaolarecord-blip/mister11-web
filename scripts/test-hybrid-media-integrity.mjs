@@ -15,6 +15,8 @@
  *     - RED_FLAG_3 (glow fuera del cuerpo): los píxeles activos de <id>-glow.webp deben caer dentro de la envolvente anatómica/vectores de <id>-card.webp (>= 97% dentro de la silueta dilatada).
  *     - RED_FLAG_4 (proporción de aspect ratio inconsistente): el aspect ratio (width/height) debe ser consistente entre <id>-card.webp, <id>-full.webp, <id>-glow.webp y <id>-microloop.webp (diferencia <= 0.02).
  *  7. Gobernanza intacta: sys-1, sys-2, sys-9 siguen en illustrationStatus='rejected_by_owner' hasta promoción individual a producción.
+ * [10] Tokens hex vectoriales del SVG (fuera de payloads base64) deben pertenecer a la allowlist canónica Tierra y Campo; el neón solo se tolera dentro del raster (D8 Condición 3 enmendada).
+ * [11] El manifest (<id>-manifest.json) de cada asset declara provenance: ai_generated y tier de revisión válido (A/B/C).
  */
 
 import fs from 'fs';
@@ -32,6 +34,54 @@ const assetsDir = path.join(repoRoot, 'docs/svg-drafts/hybrid-prototype/assets')
 const showcasePath = path.join(repoRoot, 'docs/svg-drafts/hybrid-prototype/mister11-hybrid-xray-showcase.html');
 
 const IDS = ['sys-1', 'sys-2', 'sys-9', 'hex-015', 'hex-008'];
+
+// D8 Condición 3 (enmendada): Allowlist canónica Tierra y Campo para TODO elemento vectorial SVG
+export const CANONICAL_VECTOR_HEX_ALLOWLIST = new Set([
+  '#1B3A2D',
+  '#4CAF7D',
+  '#2E7D52',
+  '#D4A843',
+  '#C85A32',
+  '#9C6A3B',
+  '#F7F5F0',
+]);
+
+/**
+ * [10] Extrae tokens hex del SVG ignorando payloads base64 (data:image/...;base64,...)
+ * y devuelve aquellos fuera de la allowlist canónica Tierra y Campo.
+ */
+export function auditVectorSvgHexPalette(svgContent) {
+  const withoutBase64 = svgContent.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, 'data:image/stripped');
+  const matches = withoutBase64.match(/#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g) || [];
+  const normalized = Array.from(new Set(matches.map((h) => h.toUpperCase())));
+  const disallowed = normalized.filter((hex) => !CANONICAL_VECTOR_HEX_ALLOWLIST.has(hex));
+  return { found: normalized, disallowed };
+}
+
+/**
+ * [11] Valida el manifest (<id>-manifest.json): provenance === 'ai_generated' (o provenance.source === 'ai_generated')
+ * y reviewTier válido ('A', 'B' o 'C').
+ */
+export function validateAssetManifest(manifestPath) {
+  if (!fs.existsSync(manifestPath)) {
+    return { valid: false, reason: 'manifest_missing', provenance: null, reviewTier: null };
+  }
+  try {
+    const data = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    const prov = typeof data.provenance === 'string' ? data.provenance : data.provenance?.source || null;
+    const tier = data.reviewTier || data.tier || null;
+    const validProv = prov === 'ai_generated';
+    const validTier = ['A', 'B', 'C'].includes(tier);
+    return {
+      valid: validProv && validTier,
+      reason: !validProv ? `provenance_invalid(${prov})` : !validTier ? `reviewTier_invalid(${tier})` : 'ok',
+      provenance: prov,
+      reviewTier: tier,
+    };
+  } catch (err) {
+    return { valid: false, reason: `json_parse_error(${err.message})`, provenance: null, reviewTier: null };
+  }
+}
 let failed = false;
 
 const ok = (cond, msg) => {
@@ -286,6 +336,21 @@ console.log('══════════════════════�
     ok(
       !rf.redFlags.flag4InconsistentAspectRatio,
       `[${id}] Bandera Roja 4 (Aspect ratio inconsistente): PASS — AR=${rf.aspectRatio}, delta máx entre capas=${rf.maxArDiff} (<= 0.025)`
+    );
+
+    // [10] Tokens hex vectoriales del SVG (fuera de payloads base64) deben pertenecer a la allowlist canónica Tierra y Campo
+    const paletteAudit = auditVectorSvgHexPalette(svgContent);
+    ok(
+      paletteAudit.disallowed.length === 0,
+      `[${id}] [10] Paleta vectorial SVG canónica Tierra y Campo (sin neón fuera de raster): ${paletteAudit.disallowed.length === 0 ? `PASS (${paletteAudit.found.join(', ')})` : `NO PERMITIDOS: ${paletteAudit.disallowed.join(', ')}`}`
+    );
+
+    // [11] Manifest de cada asset declara provenance: ai_generated y tier de revisión (A/B/C)
+    const manifestPath = path.join(assetsDir, `${id}-manifest.json`);
+    const manifestCheck = validateAssetManifest(manifestPath);
+    ok(
+      manifestCheck.valid,
+      `[${id}] [11] Manifest D8 (provenance=ai_generated + reviewTier): ${manifestCheck.valid ? `PASS (provenance=${manifestCheck.provenance}, reviewTier=${manifestCheck.reviewTier})` : `FAIL (${manifestCheck.reason})`}`
     );
   }
 

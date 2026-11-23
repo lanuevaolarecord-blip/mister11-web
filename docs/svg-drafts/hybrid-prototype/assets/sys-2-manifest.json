@@ -1,0 +1,34 @@
+{
+  "id": "sys-2",
+  "nameEs": "Puente de Glúteo Bilateral",
+  "nameEn": "Bilateral Glute Bridge",
+  "canonicalTargetZones": [
+    "cadera",
+    "gluteo_mayor",
+    "core"
+  ],
+  "provenance": "ai_generated",
+  "reviewTier": "B",
+  "clinicalTier": "bajo",
+  "assetStatus": "pending_regeneration_bilateral",
+  "d8Compliance": {
+    "signedByOwner": true,
+    "vectorPalette": [
+      "#1B3A2D",
+      "#4CAF7D",
+      "#2E7D52",
+      "#D4A843",
+      "#C85A32",
+      "#9C6A3B",
+      "#F7F5F0"
+    ],
+    "clinicalGlowRasterException": true
+  },
+  "files": {
+    "card": "sys-2-card.webp",
+    "full": "sys-2-full.webp",
+    "glow": "sys-2-glow.webp",
+    "overlay": "sys-2-overlay.svg",
+    "microloop": "sys-2-microloop.webp"
+  }
+}

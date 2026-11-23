@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Míster 11 — Estándar Híbrido Píxel-Exacto (Base 3D WebP + Máscara Bioluminiscente Exacta + HUD SVG)</title>
+  <style>
+    :root {
+      --bg: #050F0B;
+      --card: #0B1F16;
+      --border: #1E4633;
+      --gold: #D4A843;
+      --green: #4CAF7D;
+      --neon: #74F2A7;
+      --text: #F5EFE0;
+      --muted: #9DC7AF;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .container { max-width: 1120px; margin: 0 auto; }
+    .warn-banner {
+      background: #142A1E;
+      border: 1.5px solid var(--gold);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0; font-size: 20px; color: var(--text); }
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      min-height: 48px;
+      min-width: 48px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn.active {
+      background: var(--green);
+      border-color: var(--neon);
+      color: #04100B;
+    }
+    .btn-gold.active {
+      background: var(--gold);
+      border-color: #F5D77F;
+      color: #04100B;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .badge-id {
+      background: rgba(212, 168, 67, 0.16);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .badge-kb {
+      background: rgba(76, 175, 125, 0.18);
+      color: var(--neon);
+      border: 1px solid var(--green);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: ui-monospace, monospace;
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      background: #F2F2E8;
+      overflow: hidden;
+    }
+    .stage img.base-img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .stage img.glow-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      mix-blend-mode: normal;
+      animation: exactBiolumPulse 2.1s ease-in-out infinite;
+    }
+    .stage svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .card-foot {
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+    @keyframes exactBiolumPulse {
+      0%, 100% { opacity: 0.08; filter: brightness(1); }
+      50% { opacity: 0.98; filter: brightness(1.35); }
+    }
+    .paused img.glow-img {
+      animation: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="warn-banner">
+      ⚠️ Guía visual orientativa en rediseño. No validada clínicamente. No sustituye supervisión ni valoración profesional.
+    </div>
+
+    <div class="header-bar">
+      <div>
+        <h1>Míster 11 — Estándar Híbrido Píxel-Exacto (0.0 px de error · 0 círculos falsos)</h1>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          Base 3D WebP (11.7–23.2 KB) + Máscara Bioluminiscente Extraída Píxel a Píxel (3.4–6.6 KB) + HUD SVG (1.8 KB)
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn btn-gold active" onclick="setLang('es', this)">ES</button>
+        <button class="btn btn-gold" onclick="setLang('en', this)">EN</button>
+        <button class="btn btn-gold" onclick="setLang('pt', this)">PT</button>
+        <button class="btn btn-gold" onclick="setLang('fr', this)">FR</button>
+        <button class="btn btn-gold" onclick="setLang('id', this)">ID</button>
+        <button class="btn active" id="btn-loop" onclick="toggleLoop()">⏸ Pulso Bioluminiscente Activo</button>
+        <button class="btn active" id="btn-hud" onclick="toggleHud(this)">HUD Idioma</button>
+      </div>
+    </div>
+
+    <div class="grid" id="cards-grid"></div>
+  </div>
+
+  <script>
+    const EXERCISES = [
+      {
+        id: 'sys-1',
+        kbBase: '11.7 KB', kbGlow: '3.39 KB', kbTotal: '15.9 KB', kbLoop: '41.0 KB',
+        w: 640, h: 471,
+        img: './assets/sys-1-card.webp',
+        glow: './assets/sys-1-glow.webp',
+        i18n: {
+          es: { title: 'Plancha Frontal', phase: 'CONTRACCIÓN ISOMÉTRICA · ALINEACIÓN 180°', zones: 'ZONAS: CORE + ESTABILIZADORES LUMBOPÉLVICOS', err: '✕ Evitar: hiperlordosis lumbar' },
+          en: { title: 'Forearm Plank', phase: 'ISOMETRIC CONTRACTION · 180° ALIGNMENT', zones: 'ZONES: CORE + LUMBOPELVIC STABILIZERS', err: '✕ Avoid: lumbar arch' },
+          pt: { title: 'Prancha Frontal', phase: 'CONTRAÇÃO ISOMÉTRICA · ALINHAMENTO 180°', zones: 'ZONAS: CORE + ESTABILIZADORES LOMBOPÉLVICOS', err: '✕ Evitar: arqueamento lombar' },
+          fr: { title: 'Planche Frontale', phase: 'CONTRACTION ISOMÉTRIQUE · ALIGNEMENT 180°', zones: 'ZONES: CORE + STABILISATEURS LOMBO-PELVIENS', err: '✕ Éviter: cambrure lombaire' },
+          id: { title: 'Plank Depan', phase: 'KONTRAKSI ISOMETRIK · GARIS LURUS 180°', zones: 'ZONA: CORE + STABILISATOR LUMBOPELVIK', err: '✕ Hindari: punggung melengkung' }
+        }
+      },
+      {
+        id: 'sys-2',
+        kbBase: '17.5 KB', kbGlow: '6.13 KB', kbTotal: '24.5 KB', kbLoop: '60.5 KB',
+        w: 640, h: 493,
+        img: './assets/sys-2-card.webp',
+        glow: './assets/sys-2-glow.webp',
+        i18n: {
+          es: { title: 'Puente de Glúteo', phase: 'EXTENSIÓN DE CADERA · RODILLA 90°', zones: 'ZONAS: CADERA + GLÚTEO MAYOR + CORE', err: '✕ Evitar: empujar con zona lumbar' },
+          en: { title: 'Glute Bridge', phase: 'HIP EXTENSION · 90° KNEE ANGLE', zones: 'ZONES: HIP + GLUTEUS MAXIMUS + CORE', err: '✕ Avoid: lumbar hyperextension' },
+          pt: { title: 'Ponte de Glúteos', phase: 'EXTENSÃO DE QUADRIL · JOELHO 90°', zones: 'ZONAS: QUADRIL + GLÚTEO MÁXIMO + CORE', err: '✕ Evitar: hiperextensão lombar' },
+          fr: { title: 'Pont Fessier', phase: 'EXTENSION DE HANCHE · GENOU 90°', zones: 'ZONES: HANCHE + GRAND FESSIER + CORE', err: '✕ Éviter: hyperextension lombaire' },
+          id: { title: 'Jembatan Glute', phase: 'EKSTENSI PINGGUL · SUDUT LUTUT 90°', zones: 'ZONA: PINGGUL + GLUTEUS MAKSIMUS + CORE', err: '✕ Hindari: hiperekstensi lumbar' }
+        }
+      },
+      {
+        id: 'sys-9',
+        kbBase: '18.2 KB', kbGlow: '4.75 KB', kbTotal: '23.8 KB', kbLoop: '61.6 KB',
+        w: 640, h: 527,
+        img: './assets/sys-9-card.webp',
+        glow: './assets/sys-9-glow.webp',
+        i18n: {
+          es: { title: 'Plancha Lateral', phase: 'ESTABILIZACIÓN ANTI-GRAVITATORIA LATERAL', zones: 'ZONAS CANÓNICAS: CORE + OBLICUOS', err: '✕ Evitar: caída de pelvis' },
+          en: { title: 'Side Plank', phase: 'LATERAL ANTI-GRAVITY STABILIZATION', zones: 'CANONICAL ZONES: CORE + OBLIQUES', err: '✕ Avoid: hip drop' },
+          pt: { title: 'Prancha Lateral', phase: 'ESTABILIZAÇÃO LATERAL ANTIGRAVIDADE', zones: 'ZONAS CANÔNICAS: CORE + OBLÍQUOS', err: '✕ Evitar: queda do quadril' },
+          fr: { title: 'Planche Latérale', phase: 'STABILISATION LATÉRALE ANTI-GRAVITÉ', zones: 'ZONES CANONIQUES: CORE + OBLIQUES', err: '✕ Éviter: chute du bassin' },
+          id: { title: 'Plank Samping', phase: 'STABILISASI LATERAL ANTI-GRAVITASI', zones: 'ZONA KANONIK: CORE + OBLIQUES', err: '✕ Hindari: pinggul turun' }
+        }
+      },
+      {
+        id: 'hex-015',
+        kbBase: '15.2 KB', kbGlow: '4.34 KB', kbTotal: '20.4 KB', kbLoop: '52.4 KB',
+        w: 640, h: 583,
+        img: './assets/hex-015-card.webp',
+        glow: './assets/hex-015-glow.webp',
+        i18n: {
+          es: { title: 'Isquiosurales con Banda 90°', phase: 'FLEXIÓN CADERA 90° · ELONGACIÓN ACTIVA', zones: 'ZONAS CANÓNICAS: ISQUIOSURALES + CORE', err: '✕ Evitar: despegar pelvis contraria' },
+          en: { title: '90° Band Hamstring Stretch', phase: '90° HIP FLEXION · ACTIVE ELONGATION', zones: 'CANONICAL ZONES: HAMSTRINGS + CORE', err: '✕ Avoid: lifting opposite hip' },
+          pt: { title: 'Alongamento Isquiotibiais 90°', phase: 'FLEXÃO QUADRIL 90° · ALONGAMENTO ATIVO', zones: 'ZONAS CANÔNICAS: ISQUIOTIBIAIS + CORE', err: '✕ Evitar: elevar quadril oposto' },
+          fr: { title: 'Étirement Ischio-Jambiers 90°', phase: 'FLEXION HANCHE 90° · ÉLONGATION ACTIVE', zones: 'ZONES CANONIQUES: ISCHIO-JAMBIERS + CORE', err: '✕ Éviter: décoller le bassin' },
+          id: { title: 'Peregangan Hamstring 90°', phase: 'FLEKSI PINGGUL 90° · ELONGASI AKTIF', zones: 'ZONA KANONIK: HAMSTRING + CORE', err: '✕ Hindari: mengangkat pinggul lawan' }
+        }
+      },
+      {
+        id: 'hex-008',
+        kbBase: '23.2 KB', kbGlow: '6.61 KB', kbTotal: '30.7 KB', kbLoop: '77.8 KB',
+        w: 640, h: 695,
+        img: './assets/hex-008-card.webp',
+        glow: './assets/hex-008-glow.webp',
+        i18n: {
+          es: { title: 'Movilidad Cadera Cuadrupedia', phase: 'COLUMNA LUMBAR ESTABLE · CIRCUNDUCCIÓN', zones: 'ZONAS: ADUCTORES + GLÚTEO MEDIO + RODILLA', err: '✕ Evitar: rotar columna lumbar' },
+          en: { title: 'Quadruped Hip Mobility', phase: 'LUMBAR STABLE · HIP CIRCUMDUCTION', zones: 'ZONES: ADDUCTORS + GLUTEUS MEDIUS + KNEE', err: '✕ Avoid: lumbar spine rotation' },
+          pt: { title: 'Mobilidade de Quadril (4 Apoios)', phase: 'LOMBAR ESTÁVEL · CIRCUNDUÇÃO', zones: 'ZONAS: ADUTORES + GLÚTEO MÉDIO + JOELHO', err: '✕ Evitar: rotação da coluna lombar' },
+          fr: { title: 'Mobilité Hanche Quadrupédie', phase: 'LOMBAIRE STABLE · CIRCUMDUCTION', zones: 'ZONES: ADDUCTEURS + MOYEN FESSIER + GENOU', err: '✕ Éviter: rotation lombaire' },
+          id: { title: 'Mobilitas Pinggul Quadruped', phase: 'LUMBAR STABIL · SIRKUMDUKSI PINGGUL', zones: 'ZONA: ADDUKTOR + GLUTEUS MEDIUS + LUTUT', err: '✕ Hindari: rotasi tulang belakang' }
+        }
+      }
+    ];
+
+    let currentLang = 'es';
+    let isLoopPlaying = true;
+    let showHud = true;
+
+    function renderCards() {
+      const grid = document.getElementById('cards-grid');
+      grid.innerHTML = EXERCISES.map(ex => {
+        const t = ex.i18n[currentLang] || ex.i18n.es;
+        return `
+          <div class="card ${isLoopPlaying ? '' : 'paused'}">
+            <div class="card-head">
+              <div>
+                <span class="badge-id">${ex.id}</span>
+                <strong style="margin-left:8px;font-size:14px;">${t.title}</strong>
+              </div>
+              <span class="badge-kb">Híbrido: ${ex.kbTotal}</span>
+            </div>
+            <div class="stage">
+              <img class="base-img" src="${ex.img}" alt="${t.title}" loading="lazy" />
+              <img class="glow-img" src="${ex.glow}" alt="" loading="lazy" />
+              <svg viewBox="0 0 ${ex.w} ${ex.h}" xmlns="http://www.w3.org/2000/svg" style="display:${showHud ? 'block' : 'none'}">
+                <rect x="14" y="10" width="${ex.w - 28}" height="28" rx="6" fill="#071710" fill-opacity="0.92" stroke="#4CAF7D" stroke-width="1.4"/>
+                <circle cx="28" cy="24" r="5" fill="#74F2A7"/>
+                <text x="40" y="28" font-family="system-ui, sans-serif" font-size="11.5" font-weight="800" fill="#F5EFE0">${t.phase}</text>
+                <rect x="14" y="${ex.h - 34}" width="${ex.w - 28}" height="24" rx="5" fill="#071710" fill-opacity="0.92" stroke="#2E5C46" stroke-width="1.1"/>
+                <text x="22" y="${ex.h - 18}" font-family="ui-monospace, monospace" font-size="10.5" font-weight="700" fill="#74F2A7">${t.zones}</text>
+                <text x="${ex.w - 22}" y="${ex.h - 18}" text-anchor="end" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#E88D6D">${t.err}</text>
+              </svg>
+            </div>
+            <div class="card-foot">
+              <span>Base: <strong>${ex.kbBase}</strong> + Glow Exacto: <strong>${ex.kbGlow}</strong></span>
+              <span>Micro-Loop WebP: <strong>${ex.kbLoop}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setLang(lang, btn) {
+      currentLang = lang;
+      document.querySelectorAll('.btn-gold').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCards();
+    }
+
+    function toggleLoop() {
+      isLoopPlaying = !isLoopPlaying;
+      const btn = document.getElementById('btn-loop');
+      btn.classList.toggle('active', isLoopPlaying);
+      btn.textContent = isLoopPlaying ? '⏸ Pulso Bioluminiscente Activo' : '▶ Pulso Pausado';
+      renderCards();
+    }
+
+    function toggleHud(btn) {
+      showHud = !showHud;
+      btn.classList.toggle('active', showHud);
+      renderCards();
+    }
+
+    renderCards();
+  </script>
+</body>
+</html>

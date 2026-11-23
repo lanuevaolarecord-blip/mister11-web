@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 527" width="100%" height="auto" role="img" aria-labelledby="sys-9-title sys-9-desc">
+  <title id="sys-9-title">HUD Vectorial Rayos-X (Draft): Plancha Lateral (sys-9) / Side Plank</title>
+  <desc id="sys-9-desc">ES: HUD vectorial limpio sobre base 3D Rayos-X WebP + máscara bioluminiscente exacta para Plancha Lateral (sys-9). Zonas canónicas: core,oblicuos. EN: Clean vector HUD over 3D X-Ray WebP base + exact pixel glow mask for Side Plank (sys-9). Canonical targetZones: core,oblicuos.</desc>
+  <defs>
+    <style>
+      .m11-pulse { animation: m11HudPulse 2.1s ease-in-out infinite; }
+      @keyframes m11HudPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .m11-pulse { animation: none !important; }
+      }
+    </style>
+  </defs>
+  <g id="warning-layer" data-layer="warning-layer">
+    <rect x="14" y="10" width="612" height="28" rx="6" fill="#071710" fill-opacity="0.92" stroke="#4CAF7D" stroke-width="1.4"/>
+    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#74F2A7"/>
+    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F5EFE0">PLANCHA LATERAL // ESTABILIZACIÓN ANTI-GRAVITATORIA (180°)</text>
+  </g>
+  <g id="muscle-zones" data-layer="muscle-zones" data-canonical-zones="core,oblicuos">
+    <rect x="14" y="493" width="612" height="24" rx="5" fill="#071710" fill-opacity="0.92" stroke="#2E5C46" stroke-width="1.1"/>
+    <rect id="zone-core" data-zone="core" class="m11-pulse" x="22" y="495" width="4" height="16" rx="2" fill="#74F2A7"/>
+    <rect id="zone-oblicuos" data-zone="oblicuos" class="m11-pulse" x="26" y="495" width="4" height="16" rx="2" fill="#74F2A7"/>
+    <text x="36" y="509" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#74F2A7">ZONAS: CORE + OBLICUOS</text>
+    <text x="618" y="509" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#E88D6D">✕ Evitar: caída de pelvis</text>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 493" width="100%" height="auto" role="img" aria-labelledby="sys-2-title sys-2-desc">
+  <title id="sys-2-title">HUD Vectorial Rayos-X (Draft): Puente de Glúteo Bilateral (sys-2) / Bilateral Glute Bridge</title>
+  <desc id="sys-2-desc">ES: HUD vectorial limpio sobre base 3D Rayos-X WebP + máscara bioluminiscente exacta para Puente de Glúteo Bilateral (sys-2). Zonas canónicas: cadera,gluteo_mayor,core. EN: Clean vector HUD over 3D X-Ray WebP base + exact pixel glow mask for Bilateral Glute Bridge (sys-2). Canonical targetZones: cadera,gluteo_mayor,core.</desc>
+  <defs>
+    <style>
+      .m11-pulse { animation: m11HudPulse 2.1s ease-in-out infinite; }
+      @keyframes m11HudPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .m11-pulse { animation: none !important; }
+      }
+    </style>
+  </defs>
+  <g id="warning-layer" data-layer="warning-layer">
+    <rect x="14" y="10" width="612" height="28" rx="6" fill="#071710" fill-opacity="0.92" stroke="#4CAF7D" stroke-width="1.4"/>
+    <circle class="m11-pulse" cx="28" cy="24" r="5" fill="#74F2A7"/>
+    <text x="40" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#F5EFE0">PUENTE DE GLÚTEO // EXTENSIÓN DE CADERA · RODILLA A 90°</text>
+  </g>
+  <g id="muscle-zones" data-layer="muscle-zones" data-canonical-zones="cadera,gluteo_mayor,core">
+    <rect x="14" y="459" width="612" height="24" rx="5" fill="#071710" fill-opacity="0.92" stroke="#2E5C46" stroke-width="1.1"/>
+    <rect id="zone-cadera" data-zone="cadera" class="m11-pulse" x="22" y="461" width="4" height="16" rx="2" fill="#74F2A7"/>
+    <rect id="zone-gluteo_mayor" data-zone="gluteo_mayor" class="m11-pulse" x="26" y="461" width="4" height="16" rx="2" fill="#74F2A7"/>
+    <rect id="zone-core" data-zone="core" class="m11-pulse" x="30" y="461" width="4" height="16" rx="2" fill="#74F2A7"/>
+    <text x="36" y="475" font-family="ui-monospace, Consolas, monospace" font-size="10.5" font-weight="700" fill="#74F2A7">ZONAS: CADERA + GLUTEO_MAYOR + CORE</text>
+    <text x="618" y="475" text-anchor="end" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" fill="#E88D6D">✕ Evitar: empujar con zona lumbar</text>
+  </g>
+</svg>

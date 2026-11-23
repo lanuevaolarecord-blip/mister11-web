@@ -42,7 +42,9 @@ import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked, getUnifiedMatchEvents, calculateMinutesFromEvents } from '../utils/minutesEngine';
-import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
+import { calcMixedRating, deriveStatsFromEvents, calcPerformanceScore, getGkConcededCount } from '../utils/ratingFormula';
+import { mergeAndDedupeMatchEvents } from '../utils/matchEventIdempotency';
+import { isCanonicalGoalkeeper, resolveActiveGoalkeeper, computeGoalkeeperMatchStats } from '../utils/goalkeeperStats';
 import { sanitizeMatchData } from '../utils/sanitizeMatchData';
 import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
@@ -106,7 +108,7 @@ const alignStartersByPosition = (calledIds = [], players = [], positionsList = [
   // Paso 1: Asignar Portero (slot 0 suele ser POR en todas las formaciones)
   const gkSlotIdx = slots.findIndex(s => s.pos === 'POR' || getGeneralZone(s.pos) === 'POR');
   const targetGkSlot = gkSlotIdx !== -1 ? gkSlotIdx : 0;
-  const gkPlayerIdx = unassigned.findIndex(p => p.position === 'POR' || p.posicion === 'POR');
+  const gkPlayerIdx = unassigned.findIndex(p => isCanonicalGoalkeeper(p));
   if (gkPlayerIdx !== -1) {
     assigned[targetGkSlot] = unassigned[gkPlayerIdx].id;
     unassigned.splice(gkPlayerIdx, 1);
@@ -365,14 +367,8 @@ const Partidos = () => {
           : []);
     // Eventos del Match-Day (goles, tarjetas, sustituciones registrados en bitácora)
     const matchDayEvents = (matchData?.events || []).filter(Boolean);
-    // Unir ambas fuentes deduplicando por id (liveBase tiene precedencia)
-    const liveIds = new Set(liveBase.map(e => e?.id || `evt_${e?.minute}_${e?.type}`).filter(Boolean));
-    const extraFromMatchDay = matchDayEvents.filter(e => {
-      if (!e) return false;
-      const key = e.id || `md_${e.minute}_${e.type}`;
-      return !liveIds.has(key);
-    });
-    const merged = [...liveBase, ...extraFromMatchDay];
+    // Unir ambas fuentes deduplicando por eventId / id canónico (liveBase tiene precedencia)
+    const merged = mergeAndDedupeMatchEvents(liveBase, matchDayEvents);
     return merged.length > 0 ? merged : [];
   }, [liveEvents, matchData?.liveStatsEvents, matchData?.events]);
 
@@ -531,9 +527,98 @@ const Partidos = () => {
     return subs;
   }, [matchData, players, calledPlayers, isGlobalEn]);
 
+  const postMatchGoalkeepersSummary = useMemo(() => {
+    const rawTit = (Array.isArray(matchData?.titulares) && matchData.titulares.length > 0)
+      ? matchData.titulares
+      : (calledPlayers || []).slice(0, 11);
+    const rawSup = (Array.isArray(matchData?.suplentes) && matchData.suplentes.length > 0)
+      ? matchData.suplentes
+      : (calledPlayers || []).slice(11, 18);
+    const titIds = rawTit.filter(Boolean).map(String);
+    const supIds = rawSup.filter(Boolean).map(String);
+    const allCalledIds = Array.from(new Set([...titIds, ...supIds]));
+    const candidatePlayers = allCalledIds
+      .map(id => (players || []).find(p => p && String(p.id) === String(id)))
+      .filter(Boolean);
+
+    const gkCandidates = (candidatePlayers.length > 0 ? candidatePlayers : (players || [])).filter(p =>
+      isCanonicalGoalkeeper(p) || Boolean(matchData?.gkStats?.[p.id])
+    );
+
+    const summaries = gkCandidates.map(gk => {
+      const pid = String(gk.id);
+      const stats = computeGoalkeeperMatchStats(gk, effectiveLiveEvents || [], {
+        matchData,
+        titulares: titIds,
+        suplentes: supIds,
+        goalsAgainst: derivedGoalsAgainst,
+      });
+      const manualRating =
+        matchData?.playerRatings?.[pid] ??
+        matchData?.ratings?.[pid] ??
+        matchData?.actaOficial?.actual?.[pid]?.rating ??
+        null;
+      const computedRating = manualRating !== null && manualRating !== undefined && manualRating !== '' && !Number.isNaN(Number(manualRating))
+        ? Number(Number(manualRating).toFixed(1))
+        : calcPerformanceScore(stats.ratingInputs);
+
+      return {
+        id: pid,
+        name: gk.name || gk.nombre || 'Portero',
+        number: gk.number || gk.dorsal || '1',
+        position: gk.position || gk.posicion || 'POR',
+        isStarter: titIds.includes(pid),
+        ...stats,
+        rating: computedRating,
+      };
+    });
+
+    // Filtrar a los porteros que jugaron o registraron acciones (o el titular si aún está 0')
+    const activeGks = summaries.filter(
+      g => g.minutesPlayed > 0 || g.saves > 0 || g.goalsConceded > 0 || g.penaltiesSaved > 0 || g.claims > 0 || g.isStarter
+    );
+    return activeGks.length > 0 ? activeGks : summaries;
+  }, [matchData, calledPlayers, players, effectiveLiveEvents, derivedGoalsAgainst]);
+
   const postMatchDerivedIndices = useMemo(() => {
-    return calculateMatchDerivedIndices(effectiveLiveEvents || [], { goalsAgainst: derivedGoalsAgainst });
-  }, [effectiveLiveEvents, derivedGoalsAgainst]);
+    const rawIndices = calculateMatchDerivedIndices(effectiveLiveEvents || [], { goalsAgainst: derivedGoalsAgainst });
+    const canonicalConceded = getGkConcededCount(effectiveLiveEvents || [], null, {
+      ...matchData,
+      goalsAgainst: derivedGoalsAgainst,
+    });
+    const gkAggSaves = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.saves || 0), 0);
+    const gkAggNormal = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.normalSaves || 0), 0);
+    const gkAggDecisive = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.decisiveSaves || 0), 0);
+    const gkAggPenalties = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.penaltiesSaved || 0), 0);
+    const gkAggClaims = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.claims || 0), 0);
+    const gkAggErrors = postMatchGoalkeepersSummary.reduce((acc, g) => acc + (g.errorGoal || 0), 0);
+
+    const normalSaves = Math.max(rawIndices.normalSaves || 0, gkAggNormal);
+    const decisiveSaves = Math.max(rawIndices.decisiveSaves || 0, gkAggDecisive);
+    const penaltySaves = Math.max(rawIndices.penaltySaves || 0, gkAggPenalties);
+    const totalSaves = Math.max(normalSaves + decisiveSaves, gkAggSaves);
+    const concededGoals = canonicalConceded;
+    const shotsFaced = totalSaves + penaltySaves + concededGoals;
+    const totalSavePct = shotsFaced > 0
+      ? Math.round(((totalSaves + penaltySaves) / shotsFaced) * 100)
+      : (concededGoals === 0 ? 100 : 0);
+    const gkExertionIndex = normalSaves + (2 * decisiveSaves) + (2 * penaltySaves);
+
+    return {
+      ...rawIndices,
+      normalSaves,
+      decisiveSaves,
+      penaltySaves,
+      totalSaves,
+      concededGoals,
+      shotsFaced,
+      totalSavePct,
+      gkExertionIndex,
+      claims: gkAggClaims,
+      errorGoal: gkAggErrors,
+      isDemandingMatch: gkExertionIndex >= 6 || decisiveSaves >= 3,
+    };
+  }, [effectiveLiveEvents, derivedGoalsAgainst, matchData, postMatchGoalkeepersSummary]);
 
   const postMatchSwotData = useMemo(() => {
     return evaluateSwotRules(matchData, effectiveLiveEvents || [], calledPlayers || []);
@@ -666,33 +751,48 @@ const Partidos = () => {
       { preserveManual: true }
     );
 
-    // D1: Calcular y asignar notas individuales y métricas GK
+    // D1 & E2: Calcular y asignar notas individuales y métricas canónicas de portero (GK)
     const gkStatsMap = {};
     Object.entries(smartActual).forEach(([pid, act]) => {
       if (act && (act.minutes > 0 || act.minutesOverride > 0)) {
         const playerObj = (players || []).find(p => String(p.id) === String(pid));
         const role = playerObj?.position || playerObj?.posicion || null;
-        const stats = deriveStatsFromEvents(pid, allEvents, role);
+        const isGk = isCanonicalGoalkeeper(playerObj) || isCanonicalGoalkeeper(role);
+        const teamContext = {
+          matchData: currentMatch,
+          player: playerObj,
+          titulares: norm.titulares,
+          suplentes: norm.suplentes,
+          playerMinutes: Number(act.minutesOverride ?? act.minutes ?? 0),
+          goalsAgainst: derivedGoalsAgainst,
+        };
+        const stats = deriveStatsFromEvents(pid, allEvents, isGk ? 'POR' : role, teamContext);
 
         if (!act.rating && !currentMatch?.playerRatings?.[pid] && !currentMatch?.ratings?.[pid]) {
           const { mixedRating } = calcMixedRating(stats, act.attitude || 3);
           act.rating = mixedRating;
         }
 
-        if (role === 'POR' || stats.isGoalkeeper) {
-          const saves = stats.saves || 0;
-          const conceded = stats.conceded || 0;
-          const totalShots = saves + conceded;
-          const savePct = totalShots > 0 ? Math.round((saves / totalShots) * 100) : 0;
+        if (isGk || stats.isGoalkeeper) {
+          const gkDetailed = computeGoalkeeperMatchStats(
+            playerObj || { id: pid, position: 'POR', isGoalkeeper: true },
+            allEvents,
+            teamContext
+          );
           gkStatsMap[pid] = {
-            saves,
-            conceded,
-            cleanSheet: stats.cleanSheet ? 1 : 0,
-            penaltySaves: stats.penaltySaves || 0,
-            claims: stats.claims || 0,
-            errorGoal: stats.errorGoal || 0,
-            savePercentage: savePct,
-            rating: act.rating || 6.0
+            saves: gkDetailed.saves,
+            normalSaves: gkDetailed.normalSaves,
+            decisiveSaves: gkDetailed.decisiveSaves,
+            conceded: gkDetailed.goalsConceded,
+            goalsConceded: gkDetailed.goalsConceded,
+            cleanSheet: gkDetailed.cleanSheet ? 1 : 0,
+            penaltySaves: gkDetailed.penaltiesSaved,
+            claims: gkDetailed.claims,
+            errorGoal: gkDetailed.errorGoal,
+            goalsAgainstPer90: gkDetailed.goalsAgainstPer90,
+            savePercentage: gkDetailed.savePct,
+            minutesPlayed: gkDetailed.minutesPlayed,
+            rating: act.rating || calcPerformanceScore(gkDetailed.ratingInputs)
           };
         }
       }
@@ -787,9 +887,9 @@ const Partidos = () => {
       addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute, { rivalGoalId });
       if (handleAddLiveEvent) {
         handleAddLiveEvent('shot_on_target_rival', null, { rivalGoalId, outcome: 'goal', isGoal: true });
-        const gk = (calledPlayers || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'))
-          || (matchData?.titulares || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'))
-          || (players || []).find(p => p && (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+        const calledObjs = (calledPlayers || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).filter(Boolean);
+        const titularObjs = (matchData?.titulares || []).map(id => (players || []).find(p => p && String(p.id) === String(id))).filter(Boolean);
+        const gk = resolveActiveGoalkeeper(titularObjs, calledObjs.length > 0 ? calledObjs : (players || []), matchData);
         if (gk) {
           handleAddLiveEvent('conceded', null, {
             playerId: gk.id,
@@ -3532,6 +3632,63 @@ const Partidos = () => {
                         <div style={{ fontSize: '20px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>{postMatchDerivedIndices.totalSavePct}%</div>
                       </div>
                     </div>
+
+                    {/* E2: Desglose Individual de Portero(s) en el Informe Post-Partido */}
+                    {postMatchGoalkeepersSummary.length > 0 && (
+                      <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--partidos-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {isGlobalEn ? 'Goalkeeper Individual Report' : 'Resumen Individual de Portería en el Informe'}
+                        </div>
+                        {postMatchGoalkeepersSummary.map((gkItem) => (
+                          <div
+                            key={gkItem.id}
+                            style={{
+                              padding: '12px 14px',
+                              background: 'rgba(255,255,255,0.04)',
+                              borderRadius: '10px',
+                              border: '1px solid var(--partidos-border)',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '12px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '180px' }}>
+                              <span style={{ background: '#D4A843', color: '#0E1A14', fontWeight: '900', fontSize: '11px', padding: '3px 7px', borderRadius: '6px' }}>
+                                #{gkItem.number} POR
+                              </span>
+                              <div>
+                                <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--partidos-text-primary)' }}>
+                                  {gkItem.name}
+                                </div>
+                                <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
+                                  {gkItem.minutesPlayed}' {isGlobalEn ? 'played' : 'jugados'} · {gkItem.cleanSheet ? (isGlobalEn ? 'Clean Sheet ✓' : 'Portería a Cero ✓') : `${gkItem.goalsConceded} ${isGlobalEn ? 'conceded' : 'encajado(s)'}`}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', fontSize: '12px' }}>
+                              <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(76,175,125,0.12)', color: '#4CAF7D', fontWeight: '800' }}>
+                                {isGlobalEn ? 'Saves:' : 'Paradas:'} {gkItem.saves}
+                              </span>
+                              <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontWeight: '800' }}>
+                                {isGlobalEn ? 'Conceded:' : 'Encajados:'} {gkItem.goalsConceded} ({gkItem.goalsAgainstPer90}/90')
+                              </span>
+                              <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(59,130,246,0.12)', color: '#3B82F6', fontWeight: '800' }}>
+                                {isGlobalEn ? 'Pen. Saved:' : 'Pen. Parados:'} {gkItem.penaltiesSaved}
+                              </span>
+                              <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(212,168,67,0.12)', color: '#D4A843', fontWeight: '800' }}>
+                                {isGlobalEn ? 'Claims:' : 'Salidas:'} {gkItem.claims}
+                              </span>
+                              <span style={{ padding: '4px 10px', borderRadius: '6px', background: '#1B3A2D', color: '#D4A843', border: '1px solid #D4A843', fontWeight: '900' }}>
+                                ★ {gkItem.rating} / 10
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   </SectionErrorBoundary>
 
@@ -3978,6 +4135,24 @@ const Partidos = () => {
                   </p>
                 </div>
               </div>
+
+              {postMatchGoalkeepersSummary.length > 0 && (
+                <div style={{ marginBottom: '24px', padding: '14px', background: 'var(--partidos-player-card-bg)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>
+                    {isGlobalEn ? 'Goalkeeping Summary' : 'Rendimiento de Portería'}
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {postMatchGoalkeepersSummary.map(gk => (
+                      <div key={gk.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '13px' }}>
+                        <strong>#{gk.number} {gk.name} ({gk.minutesPlayed}')</strong>
+                        <span>
+                          {isGlobalEn ? 'Saves' : 'Paradas'}: <strong>{gk.saves}</strong> · {isGlobalEn ? 'Conceded' : 'Encajados'}: <strong>{gk.goalsConceded}</strong> · {isGlobalEn ? 'Clean Sheet' : 'Portería a Cero'}: <strong>{gk.cleanSheet ? (isGlobalEn ? 'Yes' : 'Sí') : 'No'}</strong> · ★ <strong>{gk.rating}</strong>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {matchData.notes && (
                 <div style={{ marginBottom: '24px' }}>

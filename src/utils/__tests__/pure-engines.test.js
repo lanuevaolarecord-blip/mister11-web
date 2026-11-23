@@ -48,6 +48,40 @@ import {
   MATERIAL_GLOSSARY_MAP
 } from '../materialGlossary.js';
 
+import {
+  createMatchEventId,
+  getCanonicalEventKey,
+  ensureCanonicalEventId,
+  mergeAndDedupeMatchEvents,
+  createActionIdempotencyGuard
+} from '../matchEventIdempotency.js';
+
+import {
+  isCanonicalGoalkeeper,
+  resolveActiveGoalkeeper,
+  computePlayerOnPitchIntervals,
+  computeGoalkeeperMatchStats
+} from '../goalkeeperStats.js';
+
+import {
+  BOARD_LAYERS,
+  classifyBoardObjectLayer,
+  setBoardLayer,
+  reorderBoardCanvas
+} from '../boardLayers.js';
+
+import {
+  MIN_TOUCH_TARGET_DP,
+  BOARD_SELECTION_MODES,
+  getObjectGeometry,
+  ensureMinTouchHitbox,
+  isCompactTacticalTool,
+  evaluatePointerHitOnObject,
+  getBoardObjectDisplayLabel,
+  resolveBoardTargetAtPointer,
+  installSmartBoardSelection
+} from '../boardSelection.js';
+
 describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
   // ── 1. EXERCISE SAFETY & CLINICAL VALIDATION ────────────────────────────────
   describe('exerciseSafety.js & exerciseSafetyMap.js', () => {
@@ -778,6 +812,557 @@ describe('B9: Pure Engines & Catalog Vitest Suite (>= 75% Coverage)', () => {
       expect(Object.keys(MATERIAL_GLOSSARY_MAP).length).toBeGreaterThan(20);
       for (const [term, matKey] of Object.entries(MATERIAL_GLOSSARY_MAP)) {
         expect(matKey.startsWith('mat.')).toBe(true);
+      }
+    });
+  });
+
+  // ── 6. HOTFIX-10.1 E1: IDEMPOTENCIA Y ANTI-DOBLE CONTEO EN ESTADÍSTICAS ────
+  describe('HOTFIX-10.1 E1 — matchEventIdempotency.js', () => {
+    it('1 tap => 1 incremento, sin salto temporal a +2 al coexistir copia optimista local, hook y onSnapshot', () => {
+      const guard = createActionIdempotencyGuard({ syntheticWindowMs: 100 });
+      const acq = guard.tryAcquire('pass_completed', { source: 'pointerup', now: 1000 });
+      expect(acq.allowed).toBe(true);
+      expect(typeof acq.eventId).toBe('string');
+
+      // Copia 1: localEvents en LiveStats.jsx
+      const localOptimistic = {
+        id: acq.eventId,
+        eventId: acq.eventId,
+        type: 'pass_completed',
+        minute: 12,
+        half: 1,
+        playerId: 'p10'
+      };
+      // Copia 2: useLiveStats.js optimistic state con su propio id 'evt_...' pero preservando eventId
+      const hookOptimistic = {
+        id: 'evt_1700000001_abc',
+        eventId: acq.eventId,
+        type: 'pass_completed',
+        minute: 12,
+        half: 1,
+        playerId: 'p10'
+      };
+      // Copia 3: Firestore onSnapshot con doc.id real de 20 caracteres y el mismo eventId
+      const firestoreSnapshotDoc = {
+        id: 'FsDocId9876543210XYZ',
+        eventId: acq.eventId,
+        type: 'pass_completed',
+        minute: 12,
+        half: 1,
+        playerId: 'p10'
+      };
+
+      // En vuelo: hookOptimistic + localOptimistic => exactamente 1 evento (NUNCA 2)
+      const inFlightMerged = mergeAndDedupeMatchEvents([hookOptimistic], [localOptimistic]);
+      expect(inFlightMerged.length).toBe(1);
+      expect(inFlightMerged[0].eventId).toBe(acq.eventId);
+
+      // En transición onSnapshot + localOptimistic antes de limpiar localEvents => exactamente 1 evento (NUNCA 2)
+      const snapshotTransitionMerged = mergeAndDedupeMatchEvents([firestoreSnapshotDoc], [localOptimistic]);
+      expect(snapshotTransitionMerged.length).toBe(1);
+      expect(snapshotTransitionMerged[0].id).toBe('FsDocId9876543210XYZ');
+      expect(snapshotTransitionMerged[0].eventId).toBe(acq.eventId);
+
+      guard.confirm('pass_completed', acq.eventId);
+      expect(guard.isActionPending('pass_completed')).toBe(false);
+    });
+
+    it('2 taps reales deliberados => 2 incrementos independientes', () => {
+      const guard = createActionIdempotencyGuard({ syntheticWindowMs: 80 });
+      const tap1 = guard.tryAcquire('recovery', { source: 'click', now: 1000 });
+      guard.confirm('recovery', tap1.eventId);
+
+      const tap2 = guard.tryAcquire('recovery', { source: 'click', now: 1350 });
+      guard.confirm('recovery', tap2.eventId);
+
+      expect(tap1.allowed).toBe(true);
+      expect(tap2.allowed).toBe(true);
+      expect(tap1.eventId).not.toBe(tap2.eventId);
+
+      const ev1 = { id: tap1.eventId, eventId: tap1.eventId, type: 'recovery', minute: 20 };
+      const ev2 = { id: tap2.eventId, eventId: tap2.eventId, type: 'recovery', minute: 20 };
+      const merged = mergeAndDedupeMatchEvents([ev1, ev2]);
+      expect(merged.length).toBe(2);
+    });
+
+    it('tap + synthetic click / mismo gesto físico => 1 incremento', () => {
+      const guard = createActionIdempotencyGuard({ syntheticWindowMs: 120 });
+
+      // Disparo 1: touchend en t=2000ms
+      const touchTap = guard.tryAcquire('duel_won', { source: 'touchend', gestureId: 'g_1', now: 2000 });
+      expect(touchTap.allowed).toBe(true);
+
+      // Disparo 2: click sintético del navegador 25ms después
+      const syntheticClick = guard.tryAcquire('duel_won', { source: 'click', now: 2025 });
+      expect(syntheticClick.allowed).toBe(false);
+      expect(syntheticClick.reason).toBe('cross_source_synthetic_event');
+
+      // Disparo 3: mismo gestureId
+      const sameGesture = guard.tryAcquire('duel_won', { source: 'touchend', gestureId: 'g_1', now: 2200 });
+      expect(sameGesture.allowed).toBe(false);
+      expect(sameGesture.reason).toBe('same_physical_gesture');
+
+      // Disparo 4: flag explícito isSyntheticClick
+      const explicitSynthetic = guard.tryAcquire('duel_won', { isSyntheticClick: true, now: 2500 });
+      expect(explicitSynthetic.allowed).toBe(false);
+      expect(explicitSynthetic.reason).toBe('synthetic_click_after_touch');
+    });
+
+    it('reintento de red con mismo eventId, listener duplicado y cola offline => 1 incremento', () => {
+      const guard = createActionIdempotencyGuard({ lockWhilePending: true });
+      const fixedId = createMatchEventId('save');
+
+      // Primer envío
+      const firstAttempt = guard.tryAcquire('gk_save', { eventId: fixedId, now: 3000 });
+      expect(firstAttempt.allowed).toBe(true);
+      expect(firstAttempt.eventId).toBe(fixedId);
+
+      // Reintento con el mismo eventId
+      const retryAttempt = guard.tryAcquire('gk_save', { eventId: fixedId, now: 3500 });
+      expect(retryAttempt.allowed).toBe(false);
+      expect(retryAttempt.reason).toBe('duplicate_event_id');
+
+      // Bloqueo mientras está pending con otro eventId si lockWhilePending=true
+      const whilePending = guard.tryAcquire('gk_save', { now: 3550 });
+      expect(whilePending.allowed).toBe(false);
+      expect(whilePending.reason).toBe('action_pending_lock');
+
+      guard.confirm('gk_save', fixedId);
+
+      // Listener duplicado + cola offline reproduciendo el mismo evento
+      const offlineQueue = [{ id: fixedId, eventId: fixedId, type: 'save', playerId: 'gk1', minute: 40 }];
+      const listenerSnapA = [{ id: 'doc_fs_1', eventId: fixedId, type: 'save', playerId: 'gk1', minute: 40 }];
+      const listenerSnapB = [{ id: 'doc_fs_1', eventId: fixedId, type: 'save', playerId: 'gk1', minute: 40 }];
+
+      const reconciled = mergeAndDedupeMatchEvents(listenerSnapA, listenerSnapB, offlineQueue);
+      expect(reconciled.length).toBe(1);
+      expect(getCanonicalEventKey(reconciled[0])).toBe(fixedId);
+
+      // Rollback libera el eventId si falló antes de persistir
+      guard.rollback('gk_save', fixedId);
+      expect(guard.hasEventId(fixedId)).toBe(false);
+      const afterRollback = guard.tryAcquire('gk_save', { eventId: fixedId, now: 4000 });
+      expect(afterRollback.allowed).toBe(true);
+      guard.reset();
+      expect(ensureCanonicalEventId({ type: 'foul_against' }).eventId).toBeTruthy();
+    });
+  });
+
+  // ── 7. HOTFIX-10.1 E2: PORTERO EN TOMA DE DATOS E INFORME ──────────────────
+  describe('HOTFIX-10.1 E2 — goalkeeperStats.js & ratingFormula integration', () => {
+    const gkStarter = { id: 'gk_1', name: 'Unai Simón', dorsal: 1, position: 'Portero' };
+    const gkSub = { id: 'gk_13', name: 'Julen Agirrezabala', dorsal: 13, posicion: 'GK' };
+    const outfieldDef = { id: 'def_4', name: 'Iñigo Martínez', dorsal: 4, position: 'DEF' };
+
+    it('isCanonicalGoalkeeper and resolveActiveGoalkeeper recognize all GK role variants', () => {
+      expect(isCanonicalGoalkeeper('POR')).toBe(true);
+      expect(isCanonicalGoalkeeper('PO')).toBe(true);
+      expect(isCanonicalGoalkeeper('GK')).toBe(true);
+      expect(isCanonicalGoalkeeper('Portero')).toBe(true);
+      expect(isCanonicalGoalkeeper('Goalkeeper')).toBe(true);
+      expect(isCanonicalGoalkeeper('Guardameta')).toBe(true);
+      expect(isCanonicalGoalkeeper('DEL')).toBe(false);
+      expect(isCanonicalGoalkeeper(gkStarter)).toBe(true);
+      expect(isCanonicalGoalkeeper(outfieldDef)).toBe(false);
+
+      const resolved = resolveActiveGoalkeeper([outfieldDef, gkStarter], [outfieldDef, gkStarter, gkSub]);
+      expect(resolved?.id).toBe('gk_1');
+    });
+
+    it('Portero titular 90 min con 0 goles recibidos => cleanSheet: true, goalsConceded: 0, goalsAgainstPer90: 0', () => {
+      const events = [
+        { id: 's1', type: 'save', playerId: 'gk_1', minute: 18, saveDifficulty: 'normal' },
+        { id: 's2', type: 'save_own', playerId: 'gk_1', minute: 64, saveDifficulty: 'decisiva' },
+        { id: 'c1', type: 'claim', playerId: 'gk_1', minute: 77 },
+      ];
+      const stats = computeGoalkeeperMatchStats(gkStarter, events, {
+        titulares: ['gk_1', 'def_4'],
+        suplentes: ['gk_13'],
+        duration: 90,
+        goalsAgainst: 0,
+      });
+
+      expect(stats.isGoalkeeper).toBe(true);
+      expect(stats.minutesPlayed).toBe(90);
+      expect(stats.goalsConceded).toBe(0);
+      expect(stats.cleanSheet).toBe(true);
+      expect(stats.saves).toBe(2);
+      expect(stats.normalSaves).toBe(1);
+      expect(stats.decisiveSaves).toBe(1);
+      expect(stats.claims).toBe(1);
+      expect(stats.goalsAgainstPer90).toBe(0);
+      expect(stats.savePct).toBe(100);
+      expect(calcPerformanceScore(stats.ratingInputs)).toBeGreaterThan(6.5);
+    });
+
+    it('Portero titular 90 min con 2 goles recibidos => cleanSheet: false, goalsConceded: 2, goalsAgainstPer90: 2', () => {
+      const events = [
+        { id: 'g1', type: 'gol_rival', minute: 22, half: 1, rivalGoalId: 'rg_22' },
+        { id: 'c1', type: 'conceded', playerId: 'gk_1', minute: 22, half: 1, rivalGoalId: 'rg_22' }, // mismo gol deduplicado
+        { id: 'g2', type: 'gol_rival', minute: 75, half: 2, rivalGoalId: 'rg_75' },
+        { id: 'sv1', type: 'save', playerId: 'gk_1', minute: 50 },
+        { id: 'ps1', type: 'penaltySave', playerId: 'gk_1', minute: 82 },
+      ];
+      const stats = computeGoalkeeperMatchStats(gkStarter, events, {
+        titulares: ['gk_1', 'def_4'],
+        suplentes: ['gk_13'],
+        duration: 90,
+        goalsAgainst: 2,
+      });
+
+      expect(stats.minutesPlayed).toBe(90);
+      expect(stats.goalsConceded).toBe(2);
+      expect(stats.cleanSheet).toBe(false);
+      expect(stats.saves).toBe(1);
+      expect(stats.penaltiesSaved).toBe(1);
+      expect(stats.goalsAgainstPer90).toBe(2);
+      expect(stats.savePct).toBe(50); // (1 parada + 1 penalti parado) / (2 paradas + 2 goles) = 50%
+    });
+
+    it('Portero sustituido al 45 (GK1 recibe 1 gol en 1T, GK2 recibe 1 gol en 2T) => cada portero suma 1 y equipo suma 2', () => {
+      const events = [
+        { id: 'ev_g1', type: 'gol_rival', minute: 30, half: 1, rivalGoalId: 'rg_1t' },
+        { id: 'ev_sub', type: 'cambio', minute: 45, half: 1, subOutId: 'gk_1', subInId: 'gk_13' },
+        { id: 'ev_g2', type: 'gol_rival', minute: 70, half: 2, rivalGoalId: 'rg_2t' },
+      ];
+      const ctx = {
+        titulares: ['gk_1', 'def_4'],
+        suplentes: ['gk_13'],
+        duration: 90,
+        goalsAgainst: 2,
+      };
+
+      const statsGk1 = computeGoalkeeperMatchStats(gkStarter, events, ctx);
+      const statsGk2 = computeGoalkeeperMatchStats(gkSub, events, ctx);
+
+      expect(statsGk1.minutesPlayed).toBe(45);
+      expect(statsGk1.goalsConceded).toBe(1);
+      expect(statsGk1.cleanSheet).toBe(false);
+      expect(statsGk1.goalsAgainstPer90).toBe(2);
+
+      expect(statsGk2.minutesPlayed).toBe(45);
+      expect(statsGk2.goalsConceded).toBe(1);
+      expect(statsGk2.cleanSheet).toBe(false);
+      expect(statsGk2.goalsAgainstPer90).toBe(2);
+
+      // Total del equipo = suma exacta sin duplicar
+      expect(statsGk1.goalsConceded + statsGk2.goalsConceded).toBe(2);
+    });
+
+    it('Jugador no portero => isGoalkeeper: false y no contamina métricas de portería', () => {
+      const statsOutfield = computeGoalkeeperMatchStats(outfieldDef, [
+        { id: 'e1', type: 'gol_rival', minute: 15 },
+      ], {
+        titulares: ['gk_1', 'def_4'],
+        suplentes: [],
+        duration: 90,
+      });
+
+      expect(statsOutfield.isGoalkeeper).toBe(false);
+      expect(statsOutfield.goalsConceded).toBe(0);
+      expect(statsOutfield.cleanSheet).toBe(false);
+    });
+
+    it('Autogol (own_goal / autogol) => cuenta como gol encajado del portero en cancha y NO como gol a favor del defensa', () => {
+      const events = [
+        { id: 'og_1', type: 'own_goal', playerId: 'def_4', minute: 55, half: 2, isOwnGoal: true },
+      ];
+      const ctx = {
+        titulares: ['gk_1', 'def_4'],
+        suplentes: [],
+        duration: 90,
+        goalsAgainst: 1,
+      };
+
+      const gkStats = computeGoalkeeperMatchStats(gkStarter, events, ctx);
+      expect(gkStats.goalsConceded).toBe(1);
+      expect(gkStats.cleanSheet).toBe(false);
+
+      const defDerived = deriveStatsFromEvents('def_4', events, 'DEF', ctx);
+      expect(defDerived.goles).toBe(0);
+
+      const gkDerived = deriveStatsFromEvents('gk_1', events, 'Portero', { ...ctx, player: gkStarter });
+      expect(gkDerived.isGoalkeeper).toBe(true);
+      expect(gkDerived.conceded).toBe(1);
+      expect(gkDerived.cleanSheet).toBe(false);
+    });
+  });
+
+  // ── 8. HOTFIX-10.1 E3: Z-ORDER Y SELECCIÓN INTELIGENTE EN PIZARRA ──────────
+  describe('HOTFIX-10.1 E3 — boardLayers.js & boardSelection.js', () => {
+    const createMockCanvas = (initialObjects = []) => {
+      const objs = [...initialObjects];
+      return {
+        _objects: objs,
+        preserveObjectStacking: false,
+        activeObject: null,
+        getObjects() {
+          return this._objects;
+        },
+        setActiveObject(o) {
+          this.activeObject = o;
+        },
+        getActiveObject() {
+          return this.activeObject;
+        },
+        getPointer(e) {
+          return { x: e.x, y: e.y };
+        },
+        findTarget(e) {
+          // Simula el findTarget por defecto de Fabric (de arriba abajo en z-order)
+          for (let i = this._objects.length - 1; i >= 0; i--) {
+            const o = this._objects[i];
+            const hit = evaluatePointerHitOnObject(o, { x: e.x, y: e.y });
+            if (hit.hit) return o;
+          }
+          return null;
+        },
+        requestRenderAll() {},
+        renderAll() {},
+      };
+    };
+
+    it('Insertar 11 jugadores y luego insertar un cuadrado => todos los jugadores tienen zIndex > shape.zIndex y siguen arrastrables', () => {
+      const players = Array.from({ length: 11 }, (_, i) => ({
+        id: `player_local_${i + 1}`,
+        type: 'group',
+        isPlayerPiece: true,
+        left: 100 + i * 15,
+        top: 200,
+        radius: 12,
+        width: 24,
+        height: 24,
+        data: { type: 'player', playerType: 'local', label: i + 1 },
+      }));
+
+      // Se inserta el cuadrado DESPUÉS de los 11 jugadores (último en el array inicial)
+      const squareZone = {
+        id: 'zone_rect_1',
+        type: 'rect',
+        left: 80,
+        top: 150,
+        width: 220,
+        height: 140,
+        originX: 'left',
+        originY: 'top',
+        data: { type: 'drawing', tool: 'zone_rect' },
+      };
+
+      const materialZone = {
+        id: 'mat_zona_rectangular_1',
+        type: 'rect',
+        isMaterial: true,
+        left: 180,
+        top: 200,
+        width: 180,
+        height: 120,
+        originX: 'center',
+        originY: 'center',
+        data: { type: 'material', itemId: 'zona_rectangular' },
+      };
+
+      const ball = {
+        id: 'ball',
+        isBall: true,
+        left: 145,
+        top: 200,
+        radius: 8,
+        width: 16,
+        height: 16,
+        data: { type: 'ball', itemId: 'balon' },
+      };
+
+      const canvas = createMockCanvas([...players, squareZone, materialZone, ball]);
+      const ordered = reorderBoardCanvas(canvas);
+
+      expect(canvas.preserveObjectStacking).toBe(true);
+      expect(squareZone.zIndex).toBe(BOARD_LAYERS.SHAPES);
+      expect(materialZone.zIndex).toBe(BOARD_LAYERS.SHAPES);
+      expect(ball.zIndex).toBe(BOARD_LAYERS.BALL);
+
+      for (const p of players) {
+        expect(p.zIndex).toBe(BOARD_LAYERS.PLAYERS);
+        expect(p.zIndex).toBeGreaterThan(squareZone.zIndex);
+        expect(p.zIndex).toBeGreaterThan(materialZone.zIndex);
+        // En el array de renderizado de Fabric (_objects), cada jugador está en un índice posterior al de ambos cuadrados
+        expect(ordered.indexOf(p)).toBeGreaterThan(ordered.indexOf(squareZone));
+        expect(ordered.indexOf(p)).toBeGreaterThan(ordered.indexOf(materialZone));
+      }
+
+      // Arrastrar/seleccionar un jugador situado encima del cuadrado selecciona al jugador, NUNCA al cuadrado
+      installSmartBoardSelection(canvas, () => ({ selectionMode: BOARD_SELECTION_MODES.AUTO }));
+      const targetOnPlayerInsideSquare = canvas.findTarget({ x: players[2].left, y: players[2].top });
+      expect(targetOnPlayerInsideSquare).toBe(players[2]);
+
+      // Y pulsar sobre el balón situado encima de players[3] y del cuadrado selecciona al balón (BALL > PLAYERS > SHAPES)
+      const targetOnBallInsideSquare = canvas.findTarget({ x: ball.left, y: ball.top });
+      expect(targetOnBallInsideSquare).toBe(ball);
+    });
+
+    it('Cono cerca/solapado con jugador: tap en centro del cono selecciona el cono, tap en torso del jugador selecciona el jugador, y hitbox del cono >= 48dp', () => {
+      const player = {
+        id: 'player_local_8',
+        type: 'group',
+        isPlayerPiece: true,
+        left: 200,
+        top: 200,
+        radius: 12,
+        width: 24,
+        height: 24,
+        padding: 12, // bounding box 48x48 (176..224)
+        data: { type: 'player', playerType: 'local', label: 8 },
+      };
+
+      // Cono colocado a solo 14px del centro del jugador (dentro del bounding box 48x48 del jugador)
+      const cone = {
+        id: 'cone_1',
+        type: 'group',
+        isMaterial: true,
+        left: 214,
+        top: 200,
+        width: 15,
+        height: 15,
+        padding: 4,
+        data: { type: 'material', itemId: 'cono' },
+      };
+
+      // Verificar hitbox mínimo >= 48dp para el cono
+      const coneHitbox = ensureMinTouchHitbox(cone, MIN_TOUCH_TARGET_DP);
+      expect(coneHitbox.width).toBeGreaterThanOrEqual(48);
+      expect(coneHitbox.height).toBeGreaterThanOrEqual(48);
+      expect(cone.touchHitboxSize).toBeGreaterThanOrEqual(48);
+      expect(isCompactTacticalTool(cone)).toBe(true);
+
+      const canvas = createMockCanvas([cone, player]);
+      reorderBoardCanvas(canvas);
+      // Aunque el jugador tiene zIndex 40 > cono zIndex 30:
+      expect(player.zIndex).toBeGreaterThan(cone.zIndex);
+
+      // 1. Tap en el centro del cono (214, 200) en modo AUTO => selecciona el CONO sin tener que apartar al jugador
+      const resConeCenter = resolveBoardTargetAtPointer(canvas, { x: 214, y: 200 }, {
+        selectionMode: BOARD_SELECTION_MODES.AUTO,
+      });
+      expect(resConeCenter.target).toBe(cone);
+
+      // 2. Tap en el torso del jugador (198, 200) en modo AUTO => selecciona el JUGADOR
+      const resPlayerTorso = resolveBoardTargetAtPointer(canvas, { x: 198, y: 200 }, {
+        selectionMode: BOARD_SELECTION_MODES.AUTO,
+      });
+      expect(resPlayerTorso.target).toBe(player);
+
+      // 3. Modo explícito TOOLS: tap incluso en (204, 200) selecciona el CONO e ignora al jugador
+      const resToolsMode = resolveBoardTargetAtPointer(canvas, { x: 204, y: 200 }, {
+        selectionMode: BOARD_SELECTION_MODES.TOOLS,
+      });
+      expect(resToolsMode.target).toBe(cone);
+
+      // 4. Modo explícito PLAYERS: tap incluso en (214, 200) selecciona al JUGADOR e ignora el cono
+      const resPlayersMode = resolveBoardTargetAtPointer(canvas, { x: 214, y: 200 }, {
+        selectionMode: BOARD_SELECTION_MODES.PLAYERS,
+      });
+      expect(resPlayersMode.target).toBe(player);
+
+      // 5. Long-press en zona de solape ambiguo devuelve ambos candidatos etiquetados para el selector
+      const resOverlap = resolveBoardTargetAtPointer(canvas, { x: 207, y: 200 }, {
+        selectionMode: BOARD_SELECTION_MODES.AUTO,
+      });
+      expect(resOverlap.isAmbiguousOverlap).toBe(true);
+      expect(resOverlap.candidates.length).toBe(2);
+      expect(getBoardObjectDisplayLabel(player, false)).toContain('#8');
+      expect(getBoardObjectDisplayLabel(cone, false)).toBe('Cono');
+    });
+
+    it('10 reproducciones de animación en reposo: 1 balón, 0 líneas teal residuales, trayectorias doradas limpias en reposo y 0 deriva de formación', () => {
+      const initialFormation = Array.from({ length: 11 }, (_, i) => ({
+        id: `player_local_${i + 1}`,
+        isPlayerPiece: true,
+        category: 'player',
+        left: 60 + i * 25,
+        top: 120 + (i % 3) * 60,
+        xRel: Number((0.1 + i * 0.07).toFixed(4)),
+        yRel: Number((0.2 + (i % 3) * 0.25).toFixed(4)),
+        data: { type: 'player', playerType: 'local', label: i + 1, xRel: Number((0.1 + i * 0.07).toFixed(4)), yRel: Number((0.2 + (i % 3) * 0.25).toFixed(4)) },
+      }));
+      const cone = {
+        id: 'cone_drill_1',
+        isMaterial: true,
+        category: 'material',
+        left: 200,
+        top: 220,
+        xRel: 0.5,
+        yRel: 0.5,
+        data: { type: 'material', itemId: 'cono', xRel: 0.5, yRel: 0.5 },
+      };
+      const square = {
+        id: 'zone_drill_1',
+        type: 'rect',
+        category: 'zone',
+        left: 150,
+        top: 180,
+        width: 160,
+        height: 120,
+        xRel: 0.4,
+        yRel: 0.4,
+        data: { type: 'drawing', tool: 'zone_rect', xRel: 0.4, yRel: 0.4 },
+      };
+      const ball = {
+        id: 'ball',
+        isBall: true,
+        category: 'ball',
+        left: 180,
+        top: 200,
+        xRel: 0.45,
+        yRel: 0.45,
+        data: { type: 'ball', itemId: 'balon', xRel: 0.45, yRel: 0.45 },
+      };
+
+      const snapshotCoords = initialFormation.map(p => ({ id: p.id, xRel: p.xRel, yRel: p.yRel }));
+      const canvas = createMockCanvas([...initialFormation, cone, square, ball]);
+
+      for (let run = 1; run <= 10; run++) {
+        // Simular creación de trayectoria dorada durante el paso de animación y un intento de duplicar balón / línea teal
+        const goldenTrajectory = {
+          id: `traj_run_${run}`,
+          isTrajectory: true,
+          category: 'trajectory',
+          stroke: '#D4A843',
+          data: { type: 'trajectory' },
+        };
+        canvas._objects.push(goldenTrajectory);
+        reorderBoardCanvas(canvas);
+
+        // Durante la animación, la trayectoria es dorada (#D4A843) y está en capa SHAPES (debajo de jugadores)
+        expect(goldenTrajectory.stroke).toBe('#D4A843');
+        expect(goldenTrajectory.zIndex).toBeLessThan(BOARD_LAYERS.PLAYERS);
+
+        // Al finalizar la animación (estado en reposo), purgar trayectorias y deduplicar balones como hace playAnimation/loadFrame
+        canvas._objects = canvas._objects.filter(
+          o => !o.isTrajectory && o.category !== 'trajectory' && o.data?.type !== 'trajectory'
+        );
+        const balls = canvas._objects.filter(b => b.isBall || b.category === 'ball' || b.id === 'ball');
+        if (balls.length > 1) {
+          for (let bIdx = 1; bIdx < balls.length; bIdx++) {
+            canvas._objects.splice(canvas._objects.indexOf(balls[bIdx]), 1);
+          }
+        }
+        reorderBoardCanvas(canvas);
+
+        // Verificaciones en reposo tras cada ciclo
+        const activeBalls = canvas.getObjects().filter(b => b.isBall || b.category === 'ball' || b.id === 'ball');
+        const residualTrajectories = canvas.getObjects().filter(o => o.isTrajectory || o.category === 'trajectory');
+        const tealLines = canvas.getObjects().filter(o => o.stroke === '#008080' || o.stroke === 'teal' || o.stroke === '#2dd4bf');
+
+        expect(activeBalls.length).toBe(1);
+        expect(residualTrajectories.length).toBe(0);
+        expect(tealLines.length).toBe(0);
+
+        // Cero deriva de formación y z-order intacto (jugadores > cono > cuadrado)
+        initialFormation.forEach((p, idx) => {
+          expect(p.data.xRel).toBe(snapshotCoords[idx].xRel);
+          expect(p.data.yRel).toBe(snapshotCoords[idx].yRel);
+          expect(p.zIndex).toBeGreaterThan(cone.zIndex);
+          expect(p.zIndex).toBeGreaterThan(square.zIndex);
+        });
       }
     });
   });

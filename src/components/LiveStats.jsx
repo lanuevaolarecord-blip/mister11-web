@@ -18,7 +18,9 @@ import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
 import { isMatchLocked, getStartingXI, calculateMinutesFromEvents, getEffectiveMatchDuration } from '../utils/minutesEngine';
-import { getGkConcededCount } from '../utils/ratingFormula.js';
+import { getGkConcededCount, calcPerformanceScore } from '../utils/ratingFormula.js';
+import { createMatchEventId, mergeAndDedupeMatchEvents, createActionIdempotencyGuard } from '../utils/matchEventIdempotency.js';
+import { isCanonicalGoalkeeper, resolveActiveGoalkeeper, computeGoalkeeperMatchStats } from '../utils/goalkeeperStats.js';
 import { showToast } from '../utils/toast';
 import { t } from '../i18n/index.js';
 import MatchStatsBlock from './MatchStatsBlock';
@@ -368,13 +370,15 @@ const LiveStats = ({
 
   // ── Estado local para reflejo INMEDIATO (optimista) de eventos capturados ──
   const [localEvents, setLocalEvents] = useState([]);
+  const idempotencyGuardRef = useRef(createActionIdempotencyGuard({ syntheticWindowMs: 120 }));
 
-  // Resetear localEvents cuando cambia el partido
+  // Resetear localEvents y guard de idempotencia cuando cambia el partido
   useEffect(() => {
     setLocalEvents([]);
+    idempotencyGuardRef.current.reset();
   }, [matchId]);
 
-  // La fuente de verdad es: parentEvents ∪ localEvents (deduplicados por id)
+  // La fuente de verdad es: parentEvents ∪ localEvents (deduplicados por eventId / id canónico)
   const rawEvents = useMemo(() => {
     const base = (parentEvents && parentEvents.length > 0)
       ? parentEvents
@@ -382,10 +386,8 @@ const LiveStats = ({
           ? liveStatsHook.events
           : (matchData?.liveStatsEvents || matchData?.events || []));
     const cleanBase = Array.isArray(base) ? base.filter(Boolean) : [];
-    if (localEvents.length === 0) return cleanBase;
-    const baseIds = new Set(cleanBase.map(e => e?.id || `evt_${e?.minute}_${e?.type}`).filter(Boolean));
-    const unique = localEvents.filter(e => e && !baseIds.has(e?.id));
-    return [...cleanBase, ...unique];
+    if (localEvents.length === 0) return mergeAndDedupeMatchEvents(cleanBase);
+    return mergeAndDedupeMatchEvents(cleanBase, localEvents);
   }, [parentEvents, liveStatsHook.events, matchData, localEvents]);
 
   const saving = liveStatsHook.saving;
@@ -695,12 +697,15 @@ const LiveStats = ({
       return;
     }
 
-    const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const acquisition = idempotencyGuardRef.current.tryAcquire(`player_${type}_${activePlayerId}`);
+    if (!acquisition.allowed) return;
+    const tempId = acquisition.eventId;
     const safeMinute = currentHalf === 2
       ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
       : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
     const localDoc = {
       id: tempId,
+      eventId: tempId,
       type,
       half: currentHalf,
       minute: safeMinute,
@@ -714,11 +719,23 @@ const LiveStats = ({
     setFlashType(`player_${type}`);
     setTimeout(() => setFlashType(null), 650);
     const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-    if (hook) {
-      const realId = await hook(type, currentHalf, { sector: selectedSector, x: 50, y: currentHalf === 1 ? 30 : 70, playerId: activePlayerId });
-      if (realId && realId !== tempId) {
-        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+    try {
+      if (hook) {
+        const realId = await hook(type, currentHalf, {
+          id: tempId,
+          eventId: tempId,
+          sector: selectedSector,
+          x: 50,
+          y: currentHalf === 1 ? 30 : 70,
+          playerId: activePlayerId,
+          minute: safeMinute
+        });
+        if (realId) {
+          setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+        }
       }
+    } finally {
+      idempotencyGuardRef.current.confirm(`player_${type}_${activePlayerId}`, tempId);
     }
   }, [activePlayerId, currentHalf, currentMinute, selectedSector, matchData, parentAddLiveEvent, liveStatsHook.addLiveEvent]);
 
@@ -727,7 +744,11 @@ const LiveStats = ({
       showToast(t('livestats.match_locked_use_reopen'), 'warning');
       return null;
     }
-    const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const acquisition = idempotencyGuardRef.current.tryAcquire(`live_${type}`, {
+      eventId: customCoords?.eventId || customCoords?.id
+    });
+    if (!acquisition.allowed) return acquisition.eventId;
+    const tempId = acquisition.eventId;
     const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
 
     const yMap = { left: 16, center: 50, right: 84 };
@@ -741,15 +762,17 @@ const LiveStats = ({
     const xCoord = customCoords?.x ?? defaultX;
 
     const targetPlayerId = customCoords?.playerId || activePlayerId || null;
+    const safeMin = targetHalf === 2
+      ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+      : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
     const localDoc = {
       id: tempId,
+      eventId: tempId,
       type,
       half: targetHalf,
       // Garantizar minuto coherente: 2T siempre >= 46
-      minute: targetHalf === 2
-        ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
-        : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1)),
+      minute: safeMin,
       sector: effectiveSector,
       x: xCoord,
       y: yCoord,
@@ -760,20 +783,27 @@ const LiveStats = ({
 
     setLocalEvents(prev => [...prev, localDoc]);
     const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-    if (hook) {
-      const realId = await hook(type, explicitHalf, { 
-        sector: effectiveSector, 
-        x: xCoord, 
-        y: yCoord,
-        playerId: targetPlayerId,
-        ...customCoords
-      });
-      if (realId && realId !== tempId) {
-        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+    try {
+      if (hook) {
+        const realId = await hook(type, explicitHalf, { 
+          id: tempId,
+          eventId: tempId,
+          minute: customCoords?.minute ?? safeMin,
+          sector: effectiveSector, 
+          x: xCoord, 
+          y: yCoord,
+          playerId: targetPlayerId,
+          ...customCoords
+        });
+        if (realId) {
+          setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+        }
+        return realId || tempId;
       }
-      return realId;
+      return tempId;
+    } finally {
+      idempotencyGuardRef.current.confirm(`live_${type}`, tempId);
     }
-    return tempId;
   }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector, activePlayerId, matchData]);
 
   const addLiveEvent = innerAddLiveEvent;
@@ -783,14 +813,15 @@ const LiveStats = ({
       return;
     }
     setLocalEvents([]);
+    idempotencyGuardRef.current.reset();
     const hook = parentResetLiveStats || liveStatsHook.resetLiveStats;
     if (hook) await hook();
   }, [parentResetLiveStats, liveStatsHook.resetLiveStats, matchData]);
 
-  // ── Portero en Campo Activo (dinámico por alineación y sustituciones) ────────
+  // ── Portero en Campo Activo (dinámico por alineación, sustituciones y variantes POR/GK/PO/Portero) ──
   const activeGoalkeeper = useMemo(() => {
-    return onPitchPlayersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK')) || null;
-  }, [onPitchPlayersList]);
+    return resolveActiveGoalkeeper(onPitchPlayersList, playersList, matchData, activePlayerId);
+  }, [onPitchPlayersList, playersList, matchData, activePlayerId]);
 
   const [showGoalAgainstModal, setShowGoalAgainstModal] = useState(false);
 
@@ -865,13 +896,14 @@ const LiveStats = ({
     // 2. Si fue un remate rival detenido (parada del portero propio)
     // Genera tanto el tiro rival (xG/exposición) como el evento de portería con dificultad
     if (team === 'rival' && result === 'parada') {
-      const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+      const portero = activeGoalkeeper || resolveActiveGoalkeeper(onPitchPlayersList, playersList, matchData, activePlayerId);
       if (portero) {
         await addLiveEvent('save_own', currentHalf, {
           playerId: portero.id,
           playerName: portero.nombre || portero.name || 'Portero',
           saveDifficulty: saveDifficulty || 'normal',
           isDecisive: saveDifficulty === 'decisiva',
+          shotEventId: addedId || undefined,
           sector: sector || selectedSector || 'center',
           x: 10,
           y: yCoord
@@ -886,7 +918,7 @@ const LiveStats = ({
 
     // 4. Notificar gol rival si aplica y registrar acción de gol encajado al portero en campo
     if (team === 'rival' && result === 'gol') {
-      const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+      const portero = activeGoalkeeper || resolveActiveGoalkeeper(onPitchPlayersList, playersList, matchData, activePlayerId);
       const rivalGoalId = `rival_goal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       if (portero) {
         await addLiveEvent('conceded', currentHalf, {
@@ -937,17 +969,20 @@ const LiveStats = ({
         return;
       }
       if (type === 'card_yellow_rival' || type === 'card_red_rival') {
+        const acquisition = idempotencyGuardRef.current.tryAcquire(`press_${type}`);
+        if (!acquisition.allowed) return;
+        const tempId = acquisition.eventId;
         const cardType = type === 'card_yellow_rival' ? 'amarilla' : 'roja';
         const rivalName = matchData?.rival || 'Rival';
         const targetMin = currentHalf === 2
           ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
           : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
-        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         if (onAddCard) {
-          onAddCard(cardType, 'rival', rivalName, { id: tempId, minute: targetMin, half: currentHalf, isRival: true });
+          onAddCard(cardType, 'rival', rivalName, { id: tempId, eventId: tempId, minute: targetMin, half: currentHalf, isRival: true });
         }
         const localDoc = {
           id: tempId,
+          eventId: tempId,
           type,
           half: currentHalf,
           minute: targetMin,
@@ -959,16 +994,21 @@ const LiveStats = ({
         };
         setLocalEvents(prev => [...prev, localDoc]);
         const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-        if (hook) {
-          const realId = await hook(type, currentHalf, {
-            id: tempId,
-            minute: targetMin,
-            sector: selectedSector || 'center',
-            team: 'rival',
-            playerId: 'rival',
-            playerName: rivalName
-          });
-          if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+        try {
+          if (hook) {
+            const realId = await hook(type, currentHalf, {
+              id: tempId,
+              eventId: tempId,
+              minute: targetMin,
+              sector: selectedSector || 'center',
+              team: 'rival',
+              playerId: 'rival',
+              playerName: rivalName
+            });
+            if (realId) setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+          }
+        } finally {
+          idempotencyGuardRef.current.confirm(`press_${type}`, tempId);
         }
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
@@ -1017,7 +1057,7 @@ const LiveStats = ({
       let effectivePlayerId = activePlayerId || null;
       let effectivePlayerName = '';
       if (!effectivePlayerId && (type === 'save_own' || type === 'save')) {
-        const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+        const portero = activeGoalkeeper || resolveActiveGoalkeeper(onPitchPlayersList, playersList, matchData, activePlayerId);
         if (portero) {
           effectivePlayerId = portero.id;
           effectivePlayerName = portero.nombre || portero.name || '';
@@ -1034,7 +1074,7 @@ const LiveStats = ({
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList, activeGoalkeeper, onAddCard, parentAddLiveEvent, liveStatsHook.addLiveEvent, currentMinute]
+    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, onPitchPlayersList, playersList, activeGoalkeeper, onAddCard, parentAddLiveEvent, liveStatsHook.addLiveEvent, currentMinute]
   );
 
   const handleConfirmPlayerSelection = useCallback(
@@ -1048,12 +1088,15 @@ const LiveStats = ({
         : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
       if (action === 'goal') {
+        const acquisition = idempotencyGuardRef.current.tryAcquire(`confirm_goal_${playerId}`);
+        if (!acquisition.allowed) return;
+        const tempId = acquisition.eventId;
         if (onAddGoalFor) {
           onAddGoalFor(playerId, playerName);
         }
-        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         const localDoc = {
           id: tempId,
+          eventId: tempId,
           type: 'shot_on_target_own',
           half: currentHalf,
           minute: targetMin,
@@ -1066,28 +1109,38 @@ const LiveStats = ({
         };
         setLocalEvents(prev => [...prev, localDoc]);
         const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-        if (hook) {
-          const realId = await hook('shot_on_target_own', currentHalf, {
-            playerId: playerId !== 'unassigned' ? playerId : null,
-            playerName: playerName || '',
-            sector: selectedSector || 'center',
-            x: 85,
-            y: 50
-          });
-          if (realId && realId !== tempId) {
-            setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+        try {
+          if (hook) {
+            const realId = await hook('shot_on_target_own', currentHalf, {
+              id: tempId,
+              eventId: tempId,
+              minute: targetMin,
+              playerId: playerId !== 'unassigned' ? playerId : null,
+              playerName: playerName || '',
+              sector: selectedSector || 'center',
+              x: 85,
+              y: 50
+            });
+            if (realId) {
+              setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+            }
           }
+        } finally {
+          idempotencyGuardRef.current.confirm(`confirm_goal_${playerId}`, tempId);
         }
         setFlashType('shot_on_target_own');
         setTimeout(() => setFlashType(null), 650);
       } else if (action === 'card_yellow_own' || action === 'card_red_own') {
+        const acquisition = idempotencyGuardRef.current.tryAcquire(`confirm_${action}_${playerId}`);
+        if (!acquisition.allowed) return;
+        const tempId = acquisition.eventId;
         const cardType = action === 'card_yellow_own' ? 'amarilla' : 'roja';
-        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         if (onAddCard) {
-          onAddCard(cardType, playerId, playerName, { id: tempId, minute: targetMin, half: currentHalf });
+          onAddCard(cardType, playerId, playerName, { id: tempId, eventId: tempId, minute: targetMin, half: currentHalf });
         }
         const localDoc = {
           id: tempId,
+          eventId: tempId,
           type: action,
           half: currentHalf,
           minute: targetMin,
@@ -1100,19 +1153,24 @@ const LiveStats = ({
         };
         setLocalEvents(prev => [...prev, localDoc]);
         const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-        if (hook) {
-          const realId = await hook(action, currentHalf, {
-            id: tempId,
-            minute: targetMin,
-            playerId: playerId || null,
-            playerName: playerName || '',
-            sector: selectedSector || 'center',
-            x: 30,
-            y: 50
-          });
-          if (realId && realId !== tempId) {
-            setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+        try {
+          if (hook) {
+            const realId = await hook(action, currentHalf, {
+              id: tempId,
+              eventId: tempId,
+              minute: targetMin,
+              playerId: playerId || null,
+              playerName: playerName || '',
+              sector: selectedSector || 'center',
+              x: 30,
+              y: 50
+            });
+            if (realId) {
+              setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+            }
           }
+        } finally {
+          idempotencyGuardRef.current.confirm(`confirm_${action}_${playerId}`, tempId);
         }
         setFlashType(action);
         setTimeout(() => setFlashType(null), 650);
@@ -1613,9 +1671,12 @@ const LiveStats = ({
                         ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) 
                         : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
-                      const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                      const acquisition = idempotencyGuardRef.current.tryAcquire(`indiv_${actType}_${activePlayerId}`);
+                      if (!acquisition.allowed) return;
+                      const tempId = acquisition.eventId;
                       const localDoc = {
                         id: tempId,
+                        eventId: tempId,
                         type: actType,
                         half: currentHalf,
                         minute: targetMin,
@@ -1629,23 +1690,31 @@ const LiveStats = ({
                       };
                       setLocalEvents(prev => [...prev, localDoc]);
                       const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-                      if (hook) {
-                        const realId = await hook(actType, currentHalf, {
-                          id: tempId,
-                          minute: targetMin,
-                          playerId: activePlayerId,
-                          playerName: ap?.nombre || ap?.name || '',
-                          sector: selectedSector || 'center',
-                          zone2D: selectedSector2D,
-                          x: 60,
-                          y: 50
-                        });
-                        if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                      try {
+                        if (hook) {
+                          const realId = await hook(actType, currentHalf, {
+                            id: tempId,
+                            eventId: tempId,
+                            minute: targetMin,
+                            playerId: activePlayerId,
+                            playerName: ap?.nombre || ap?.name || '',
+                            sector: selectedSector || 'center',
+                            zone2D: selectedSector2D,
+                            x: 60,
+                            y: 50
+                          });
+                          if (realId) setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+                        }
+                      } finally {
+                        idempotencyGuardRef.current.confirm(`indiv_${actType}_${activePlayerId}`, tempId);
                       }
                     };
 
                     const handleIndividualCard = async (cardAction) => {
                       if (isMatchLocked(matchData)) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
+                      const acquisition = idempotencyGuardRef.current.tryAcquire(`indiv_card_${cardAction}_${activePlayerId}`);
+                      if (!acquisition.allowed) return;
+                      const tempId = acquisition.eventId;
                       setFlashType(`player_${cardAction}`);
                       setTimeout(() => setFlashType(null), 650);
 
@@ -1654,15 +1723,15 @@ const LiveStats = ({
                         : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
                       const cardType = cardAction === 'card_yellow_own' ? 'amarilla' : 'roja';
-                      const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
                       const playerName = ap?.nombre || ap?.name || '';
 
                       if (onAddCard) {
-                        onAddCard(cardType, activePlayerId, playerName, { id: tempId, minute: targetMin, half: currentHalf });
+                        onAddCard(cardType, activePlayerId, playerName, { id: tempId, eventId: tempId, minute: targetMin, half: currentHalf });
                       }
 
                       const localDoc = {
                         id: tempId,
+                        eventId: tempId,
                         type: cardAction,
                         half: currentHalf,
                         minute: targetMin,
@@ -1676,18 +1745,23 @@ const LiveStats = ({
                       };
                       setLocalEvents(prev => [...prev, localDoc]);
                       const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-                      if (hook) {
-                        const realId = await hook(cardAction, currentHalf, {
-                          id: tempId,
-                          minute: targetMin,
-                          playerId: activePlayerId,
-                          playerName,
-                          sector: selectedSector || 'center',
-                          zone2D: selectedSector2D,
-                          x: 30,
-                          y: 50
-                        });
-                        if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                      try {
+                        if (hook) {
+                          const realId = await hook(cardAction, currentHalf, {
+                            id: tempId,
+                            eventId: tempId,
+                            minute: targetMin,
+                            playerId: activePlayerId,
+                            playerName,
+                            sector: selectedSector || 'center',
+                            zone2D: selectedSector2D,
+                            x: 30,
+                            y: 50
+                          });
+                          if (realId) setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+                        }
+                      } finally {
+                        idempotencyGuardRef.current.confirm(`indiv_card_${cardAction}_${activePlayerId}`, tempId);
                       }
                     };
 
@@ -1998,6 +2072,9 @@ const LiveStats = ({
                       disabled={isLocked || saving}
                       onClick={async () => {
                         if (isLocked) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
+                        const acquisition = idempotencyGuardRef.current.tryAcquire(`gk_${gkAction.type}`);
+                        if (!acquisition.allowed) return;
+                        const tempId = acquisition.eventId;
                         setFlashType(`gk_${gkAction.type}`);
                         setTimeout(() => setFlashType(null), 650);
 
@@ -2005,34 +2082,41 @@ const LiveStats = ({
                           ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
                           : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
 
-                        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                        const targetGk = activeGoalkeeper || resolveActiveGoalkeeper(onPitchPlayersList, playersList, matchData, activePlayerId);
                         const rivalGoalId = `rival_goal_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
                         const localDoc = {
                           id: tempId,
+                          eventId: tempId,
                           type: gkAction.type,
                           half: currentHalf,
                           minute: safeMin,
                           sector: selectedSector || 'center',
                           x: 15,
                           y: 50,
-                          playerId: activeGoalkeeper?.id || null,
-                          playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
+                          playerId: targetGk?.id || null,
+                          playerName: targetGk?.nombre || targetGk?.name || '',
                           rivalGoalId: gkAction.type === 'conceded' ? rivalGoalId : undefined,
                           timestamp: new Date().toISOString()
                         };
                         setLocalEvents(prev => [...prev, localDoc]);
                         const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-                        if (hook) {
-                          const realId = await hook(gkAction.type, currentHalf, {
-                            playerId: activeGoalkeeper?.id || null,
-                            playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
-                            sector: selectedSector || 'center',
-                            x: 15,
-                            y: 50,
-                            minute: safeMin,
-                            rivalGoalId: gkAction.type === 'conceded' ? rivalGoalId : undefined
-                          });
-                          if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                        try {
+                          if (hook) {
+                            const realId = await hook(gkAction.type, currentHalf, {
+                              id: tempId,
+                              eventId: tempId,
+                              playerId: targetGk?.id || null,
+                              playerName: targetGk?.nombre || targetGk?.name || '',
+                              sector: selectedSector || 'center',
+                              x: 15,
+                              y: 50,
+                              minute: safeMin,
+                              rivalGoalId: gkAction.type === 'conceded' ? rivalGoalId : undefined
+                            });
+                            if (realId) setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
+                          }
+                        } finally {
+                          idempotencyGuardRef.current.confirm(`gk_${gkAction.type}`, tempId);
                         }
 
                         // Si la acción del portero es Gol Encajado, sincronizar con el marcador y bitácora del partido (+1 Gol Rival)
@@ -2338,12 +2422,12 @@ const LiveStats = ({
             <StatsDataTable
               playerStats={playersList.map((p) => {
                 const pid = String(p.id);
-                // Consolidar todos los eventos reales del jugador (LiveStats + Match events + guardados en matchData)
-                const poolEvents = [
-                  ...(rawEvents || []), 
-                  ...(matchData?.events || []), 
-                  ...(matchData?.liveStatsEvents || [])
-                ];
+                // Consolidar y deduplicar todos los eventos reales del jugador (LiveStats + Match events + guardados en matchData)
+                const poolEvents = mergeAndDedupeMatchEvents(
+                  rawEvents || [],
+                  matchData?.events || [],
+                  matchData?.liveStatsEvents || []
+                );
                 const evsByPlayer = poolEvents.filter(e => {
                   if (!e) return false;
                   const ePid = String(e.playerId || e.jugadorId || e.fromPlayerId || '');
@@ -2354,9 +2438,14 @@ const LiveStats = ({
                 const pStats = matchData?.playerStats?.[pid] || matchData?.playerStats?.[p.id] || {};
                 const actaActual = matchData?.actaOficial?.actual?.[pid];
 
-                // Goles reales: eventos + goleadoresList + acta + pStats
-                const golesFromEvs = poolEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal' || e.isGoal) && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
-                const golesFromList = (matchData?.goleadoresList || []).filter(g => String(g.jugadorId) === pid).length;
+                // Goles reales: eventos + goleadoresList + acta + pStats (excluyendo autogoles)
+                const golesFromEvs = poolEvents.filter(e => {
+                  const t = String(e.type || '').toLowerCase();
+                  if (t === 'own_goal' || t === 'autogol' || t === 'gol_propia' || e.isOwnGoal === true) return false;
+                  if (t.includes('rival') || e.team === 'rival') return false;
+                  return (t === 'gol_local' || t === 'goal' || e.isGoal === true) && (String(e.playerId) === pid || String(e.jugadorId) === pid);
+                }).length;
+                const golesFromList = (matchData?.goleadoresList || []).filter(g => String(g.jugadorId) === pid && !g.isRival).length;
                 const golesFromActa = Number(actaActual?.goals || 0);
                 const golesFromPStats = Number(pStats.goals || pStats.goles || 0);
                 const goles = Math.max(golesFromEvs, golesFromList, golesFromActa, golesFromPStats);
@@ -2379,20 +2468,6 @@ const LiveStats = ({
                 const rFromActa = Number(actaActual?.redCards || 0);
                 const rojas = Math.max(rFromEvs, rFromList, rFromActa, Number(pStats.redCards || 0));
 
-                // Acciones de campo
-                const paradas = Math.max(countP('save_own'), Number(pStats.paradas || pStats.saves || 0));
-                const pasesC = Math.max(countP('pass_completed') + countP('key_pass'), Number(pStats.pasesExitosos || pStats.pasesC || 0));
-                const pasesF = Math.max(countP('pass_failed'), Number(pStats.pasesFallidos || pStats.pasesF || 0));
-                const duelosG = Math.max(countP('duel_won'), Number(pStats.duelosGanados || pStats.duelosG || 0));
-                const duelosP = Math.max(countP('duel_lost'), Number(pStats.duelosPerdidos || pStats.duelosP || 0));
-                const recup = Math.max(countP('recovery'), Number(pStats.recuperaciones || pStats.recup || 0));
-                const perd = Math.max(countP('ball_loss') + countP('loss'), Number(pStats.perdidas || pStats.perd || 0));
-                const tirosP = Math.max(countP('shot_on_target_own') + goles, Number(pStats.tirosPuerta || pStats.tirosP || (goles > 0 ? goles : 0)));
-                const tirosF = Math.max(countP('shot_off_target_own'), Number(pStats.tirosFuera || pStats.tirosF || 0));
-                const tirosTot = Math.max(tirosP + tirosF, Number(pStats.tiros || 0));
-                const faltas = Math.max(countP('foul_against'), Number(pStats.faltas || 0));
-                const pasesClave = Math.max(countP('key_pass'), Number(pStats.pasesClave || 0));
-
                 // Minutos jugados
                 let minutos = 0;
                 if (actaActual && actaActual.minutes !== undefined && actaActual.minutes !== null) {
@@ -2408,10 +2483,10 @@ const LiveStats = ({
                   const curMin = (currentMinute && currentMinute > 0) ? currentMinute : dur;
 
                   if (isTit) {
-                    const subOut = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerOutId || e.jugadorSaleId) === pid);
+                    const subOut = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerOutId || e.jugadorSaleId || e.subOutId) === pid);
                     minutos = subOut ? Math.max(1, parseInt(subOut.minute || subOut.minuto || curMin, 10)) : curMin;
                   } else if (isSup) {
-                    const subIn = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerInId || e.jugadorEntraId) === pid);
+                    const subIn = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerInId || e.jugadorEntraId || e.subInId) === pid);
                     minutos = subIn ? Math.max(0, curMin - parseInt(subIn.minute || subIn.minuto || curMin, 10)) : 0;
                   } else {
                     const hasEv = evsByPlayer.length > 0;
@@ -2419,11 +2494,60 @@ const LiveStats = ({
                   }
                 }
 
-                // Nota (Rating)
+                // Estadísticas canónicas de portero (E2: incluye 'save', 'save_own', 'parada', 'penaltySave', 'claim', 'errorGoal', 'conceded')
+                const isGk = isCanonicalGoalkeeper(p);
+                const gkSummary = isGk
+                  ? computeGoalkeeperMatchStats(p, poolEvents, {
+                      matchData,
+                      titulares: matchData?.titulares || matchData?.alineacion?.titulares,
+                      suplentes: matchData?.suplentes || matchData?.alineacion?.suplentes,
+                      playerMinutes: minutos,
+                      goalsAgainst: awayScore,
+                    })
+                  : null;
+
+                // Acciones de campo y portería
+                const rawSavesCount = countP('save') + countP('save_own') + countP('parada');
+                const paradas = Math.max(
+                  rawSavesCount,
+                  gkSummary ? gkSummary.saves : 0,
+                  Number(pStats.paradas || pStats.saves || 0)
+                );
+                const golesEncajados = isGk ? gkSummary.goalsConceded : 0;
+                const penaltisParados = isGk ? gkSummary.penaltiesSaved : (countP('penaltySave') + countP('penalty_save'));
+                const salidas = isGk ? gkSummary.claims : countP('claim');
+                const erroresGol = isGk ? gkSummary.errorGoal : countP('errorGoal');
+                const porteriaCero = isGk ? gkSummary.cleanSheet : false;
+                const golesEncajadosPor90 = isGk ? gkSummary.goalsAgainstPer90 : 0;
+                const savePct = isGk ? gkSummary.savePct : 0;
+
+                const pasesC = Math.max(countP('pass_completed') + countP('key_pass'), Number(pStats.pasesExitosos || pStats.pasesC || 0));
+                const pasesF = Math.max(countP('pass_failed'), Number(pStats.pasesFallidos || pStats.pasesF || 0));
+                const duelosG = Math.max(countP('duel_won'), Number(pStats.duelosGanados || pStats.duelosG || 0));
+                const duelosP = Math.max(countP('duel_lost'), Number(pStats.duelosPerdidos || pStats.duelosP || 0));
+                const recup = Math.max(countP('recovery'), Number(pStats.recuperaciones || pStats.recup || 0));
+                const perd = Math.max(countP('ball_loss') + countP('loss'), Number(pStats.perdidas || pStats.perd || 0));
+                const tirosP = Math.max(countP('shot_on_target_own') + goles, Number(pStats.tirosPuerta || pStats.tirosP || (goles > 0 ? goles : 0)));
+                const tirosF = Math.max(countP('shot_off_target_own'), Number(pStats.tirosFuera || pStats.tirosF || 0));
+                const tirosTot = Math.max(tirosP + tirosF, Number(pStats.tiros || 0));
+                const faltas = Math.max(countP('foul_against'), Number(pStats.faltas || 0));
+                const pasesClave = Math.max(countP('key_pass'), Number(pStats.pasesClave || 0));
+
+                // Nota (Rating): usa fórmula canónica GK para porteros y fórmula outfield para jugadores de campo
                 const manualRating = actaActual?.rating || matchData?.playerRatings?.[pid] || matchData?.ratings?.[pid] || matchData?.notas?.[pid];
                 let rating = null;
                 if (manualRating !== undefined && manualRating !== null && manualRating !== '' && !isNaN(Number(manualRating))) {
                   rating = parseFloat(Number(manualRating).toFixed(1));
+                } else if (isGk && (minutos > 0 || paradas > 0 || penaltisParados > 0 || salidas > 0 || golesEncajados > 0 || evsByPlayer.length > 0)) {
+                  rating = calcPerformanceScore({
+                    ...gkSummary.ratingInputs,
+                    saves: paradas,
+                    conceded: golesEncajados,
+                    penaltySaves: penaltisParados,
+                    claims: salidas,
+                    errorGoal: erroresGol,
+                    cleanSheet: porteriaCero,
+                  });
                 } else if (minutos > 0 || goles > 0 || asistencias > 0 || paradas > 0 || evsByPlayer.length > 0) {
                   const base = 6.0;
                   const bonus = (goles * 1.2) + (asistencias * 0.8) + (paradas * 0.4) + (pasesClave * 0.3) + (recup * 0.15) - (perd * 0.15) + (duelosG * 0.2) - (duelosP * 0.15) + (tirosP * 0.2) - (faltas * 0.2) - (amarillas * 0.5) - (rojas * 2.0);
@@ -2434,11 +2558,19 @@ const LiveStats = ({
 
                 return {
                   ...p,
+                  isGoalkeeper: isGk,
                   minutos,
                   rating,
                   goles,
                   asistencias,
                   paradas,
+                  golesEncajados,
+                  penaltisParados,
+                  salidas,
+                  erroresGol,
+                  porteriaCero,
+                  golesEncajadosPor90,
+                  savePct,
                   tiros: tirosTot,
                   tirosPuerta: tirosP,
                   pasesExitosos: pasesC,
@@ -2527,7 +2659,18 @@ const LiveStats = ({
                 {playersList.map(p => {
                   const pid = p.id;
                   const counters = postMatchCounters[pid] || {};
+                  const isGkPlayer = isCanonicalGoalkeeper(p);
+                  const GK_COUNTER_TYPES = isGkPlayer
+                    ? [
+                        { key: 'paradas',         label: 'Paradas',      color: '#4CAF7D' },
+                        { key: 'golesEncajados',  label: 'Goles Encaj.', color: '#C85A32' },
+                        { key: 'penaltisParados', label: 'Penal. Parado',color: '#D4A843' },
+                        { key: 'salidas',         label: 'Salidas/Aéreo',color: '#D4A843' },
+                        { key: 'erroresGol',      label: 'Error -> Gol', color: '#9C6A3B' },
+                      ]
+                    : [];
                   const COUNTER_TYPES = [
+                    ...GK_COUNTER_TYPES,
                     { key: 'goles',             label: 'Goles',        color: '#4CAF7D' },
                     { key: 'asistencias',       label: 'Asistencias',  color: '#D4A843' },
                     { key: 'tirosPuerta',       label: 'Tiros Puerta', color: '#4CAF7D' },
@@ -2588,6 +2731,11 @@ const LiveStats = ({
                   onClick={async () => {
                     // Registrar todos los contadores como eventos reales por jugador
                     const TYPE_MAP = {
+                      paradas: 'save',
+                      golesEncajados: 'conceded',
+                      penaltisParados: 'penaltySave',
+                      salidas: 'claim',
+                      erroresGol: 'errorGoal',
                       goles: 'gol_local',
                       asistencias: 'asistencia',
                       tirosPuerta: 'shot_on_target_own',
@@ -2613,11 +2761,12 @@ const LiveStats = ({
                           extraPayload.asistenciaId = pid;
                         }
                         for (let i = 0; i < count; i++) {
-                          const tempId = `pm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-                          setLocalEvents(prev => [...prev, { id: tempId, type: evType, ...extraPayload, half: currentHalf, minute: 90, timestamp: new Date().toISOString() }]);
+                          const tempId = createMatchEventId(`pm_${evType}_${pid}`);
+                          const evPayload = { ...extraPayload, id: tempId, eventId: tempId };
+                          setLocalEvents(prev => [...prev, { id: tempId, eventId: tempId, type: evType, ...extraPayload, half: currentHalf, minute: 90, timestamp: new Date().toISOString() }]);
                           if (hook) {
-                            const realId = await hook(evType, currentHalf, extraPayload);
-                            if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                            const realId = await hook(evType, currentHalf, evPayload);
+                            if (realId) setLocalEvents(prev => prev.filter(e => e.id !== tempId && e.eventId !== tempId));
                           }
                         }
                       }

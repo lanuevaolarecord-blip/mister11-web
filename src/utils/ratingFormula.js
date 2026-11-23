@@ -23,25 +23,29 @@
  */
 
 import { calcGkPerformanceScore } from './testScoreEngine.js';
+import { isCanonicalGoalkeeper, computeGoalkeeperMatchStats } from './goalkeeperStats.js';
+import { mergeAndDedupeMatchEvents } from './matchEventIdempotency.js';
 
 /**
  * Calcula la nota de rendimiento estadístico puro (base 10).
- * Para jugadores de campo y porteros (rol POR).
+ * Para jugadores de campo y porteros (rol POR / GK / Portero).
  * @param {Object} stats
  * @returns {number} score ∈ [4.0, 10.0]
  */
 export function calcPerformanceScore(stats = {}) {
   const isGk = Boolean(
-    stats.isGoalkeeper || 
-    stats.position === 'POR' || 
-    stats.posicion === 'POR' || 
-    stats.role === 'POR' ||
+    isCanonicalGoalkeeper(stats) ||
     stats.gkStats
   );
 
   if (isGk) {
     const gkData = stats.gkStats || stats;
-    return calcGkPerformanceScore(gkData);
+    const baseScore = calcGkPerformanceScore(gkData);
+    const penaltyBonus = (Number(gkData.penaltySaves ?? gkData.penaltiesSaved ?? 0)) * 0.8;
+    const claimsBonus = (Number(gkData.claims ?? 0)) * 0.15;
+    const cleanSheetBonus = gkData.cleanSheet ? 0.4 : 0;
+    const errorPenalty = (Number(gkData.errorGoal ?? 0)) * 0.8;
+    return parseFloat(Math.min(10.0, Math.max(4.0, baseScore + penaltyBonus + claimsBonus + cleanSheetBonus - errorPenalty)).toFixed(1));
   }
 
   const {
@@ -122,7 +126,7 @@ export function calcMixedRating(stats = {}, actitud = 3, misterOverride = null) 
  * @param {string|null} playerRole
  * @returns {Object} stats
  */
-export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], playerRole = null) {
+export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], playerRole = null, teamContext = {}) {
   let pid = '';
   let events = [];
   if (Array.isArray(playerIdOrEvents)) {
@@ -132,45 +136,61 @@ export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], p
     pid = String(playerIdOrEvents);
     events = eventsOrPlayerId;
   }
-  const validEvents = (events || []).filter(e => e && e.attributed !== false);
+  const dedupedEvents = mergeAndDedupeMatchEvents(events || []);
+  const validEvents = dedupedEvents.filter(e => e && e.attributed !== false && e.isValid !== false);
 
-  const byPlayer = validEvents.filter(e => String(e.playerId) === pid || String(e.fromPlayerId) === pid);
+  const byPlayer = validEvents.filter(e => String(e.playerId || e.jugadorId || '') === pid || String(e.fromPlayerId || '') === pid);
   const count = (type) => byPlayer.filter(e => e.type === type).length;
 
-  const allSaves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own');
+  const allSaves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own' || e.type === 'parada');
   const normalSaves = allSaves.filter(e => e.saveDifficulty !== 'decisiva' && e.difficulty !== 'decisiva').length;
   const decisiveSaves = allSaves.filter(e => e.saveDifficulty === 'decisiva' || e.difficulty === 'decisiva').length;
   let conceded = count('conceded');
-  const isGk = playerRole === 'POR' || playerRole === 'GK' || allSaves.length > 0 || conceded > 0;
-  if (isGk && conceded === 0) {
-    // Si no hay evento explícito 'conceded' atribuido directamente al ID del portero,
-    // pero hubo goles del rival en el partido ('gol_rival', 'goal_rival' o remates gol rival),
-    // derivar fielmente los goles encajados.
-    const rivalGoals = validEvents.filter(e => {
-      const t = String(e.type || '').toLowerCase();
-      return t === 'gol_rival' || t === 'goal_rival' || (t.includes('rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol'));
-    }).length;
-    if (rivalGoals > 0) conceded = rivalGoals;
-  }
-  const penaltySaves = count('penaltySave') + count('penalty_save');
-  const claims = count('claim');
-  const errorGoal = count('errorGoal');
+  const penaltySaves = count('penaltySave') + count('penalty_save') + count('penalti_parado');
+  const claims = count('claim') + count('salida');
+  const errorGoal = count('errorGoal') + count('error_goal');
 
-  // Tiros a puerta propios del jugador
+  const isGk = Boolean(
+    isCanonicalGoalkeeper(playerRole) ||
+    isCanonicalGoalkeeper(teamContext?.player) ||
+    allSaves.length > 0 ||
+    conceded > 0 ||
+    penaltySaves > 0
+  );
+
+  let gkComputed = null;
+  if (isGk) {
+    gkComputed = computeGoalkeeperMatchStats(
+      {
+        id: pid,
+        position: playerRole || 'POR',
+        ...(teamContext?.player || {}),
+        isGoalkeeper: true,
+      },
+      validEvents,
+      teamContext
+    );
+    conceded = gkComputed.goalsConceded;
+  }
+
+  // Tiros a puerta propios del jugador (excluyendo autogoles)
   const tirosPuerta = byPlayer.filter(e => {
     const t = String(e.type || '').toLowerCase();
-    const isOwn = !t.includes('rival');
+    const isOwn = !t.includes('rival') && t !== 'own_goal' && t !== 'autogol' && !e.isOwnGoal;
     return isOwn && (t === 'shot_on_target_own' || e.outcome === 'on_target' || e.result === 'parada' || e.result === 'gol' || e.isGoal);
   }).length;
 
   return {
     goles: validEvents.filter(e => {
-      const isScorer = String(e.playerId) === pid;
-      const isGoalType = e.type === 'gol_local' || e.type === 'goal' || e.isGoal || e.result === 'gol';
-      const isNotRival = !String(e.type || '').includes('rival') && e.team !== 'rival';
+      const isScorer = String(e.playerId || e.jugadorId || '') === pid;
+      const t = String(e.type || '').toLowerCase();
+      const isOwnGoal = t === 'own_goal' || t === 'autogol' || t === 'gol_propia' || e.isOwnGoal === true;
+      if (isOwnGoal) return false;
+      const isGoalType = t === 'gol_local' || t === 'goal' || e.isGoal === true || e.result === 'gol';
+      const isNotRival = !t.includes('rival') && e.team !== 'rival';
       return isScorer && isGoalType && isNotRival;
     }).length,
-    asistencias: validEvents.filter(e => String(e.asistenciaId) === pid).length,
+    asistencias: validEvents.filter(e => String(e.asistenciaId || e.assistId || '') === pid || ((e.type === 'asistencia' || e.type === 'assist') && String(e.playerId || '') === pid)).length,
     tirosPuerta,
     recuperaciones: count('recovery') + count('recuperacion'),
     perdidas: count('ball_loss') + count('loss') + count('perdida') + count('turnover'),
@@ -179,17 +199,22 @@ export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], p
     pasesClave: count('key_pass'),
     faltas: count('foul_against'),
     faltasProvocadas: count('foul_favor'),
-    tarjetasAmarillas: validEvents.filter(e => String(e.playerId) === pid && (e.type === 'card_yellow_own' || (e.type === 'amarilla' && e.card !== 'roja'))).length,
-    tarjetasRojas: validEvents.filter(e => String(e.playerId) === pid && (e.type === 'card_red_own' || e.type === 'roja' || e.type === 'expulsion')).length,
+    tarjetasAmarillas: validEvents.filter(e => String(e.playerId || e.jugadorId || '') === pid && (e.type === 'card_yellow_own' || (e.type === 'amarilla' && e.card !== 'roja'))).length,
+    tarjetasRojas: validEvents.filter(e => String(e.playerId || e.jugadorId || '') === pid && (e.type === 'card_red_own' || e.type === 'roja' || e.type === 'expulsion')).length,
     // Métricas GK específicas
-    saves: allSaves.length,
-    normalSaves,
-    decisiveSaves,
+    saves: gkComputed ? gkComputed.saves : allSaves.length,
+    normalSaves: gkComputed ? gkComputed.normalSaves : normalSaves,
+    decisiveSaves: gkComputed ? gkComputed.decisiveSaves : decisiveSaves,
     conceded,
-    penaltySaves,
-    claims,
-    errorGoal,
-    isGoalkeeper: playerRole === 'POR',
+    goalsConceded: conceded,
+    penaltySaves: gkComputed ? gkComputed.penaltiesSaved : penaltySaves,
+    penaltiesSaved: gkComputed ? gkComputed.penaltiesSaved : penaltySaves,
+    claims: gkComputed ? gkComputed.claims : claims,
+    errorGoal: gkComputed ? gkComputed.errorGoal : errorGoal,
+    cleanSheet: gkComputed ? gkComputed.cleanSheet : (isGk && conceded === 0),
+    goalsAgainstPer90: gkComputed ? gkComputed.goalsAgainstPer90 : 0,
+    savePct: gkComputed ? gkComputed.savePct : 0,
+    isGoalkeeper: isGk,
   };
 }
 
@@ -214,7 +239,7 @@ export function getGkConcededCount(events = [], gk = null, matchData = null) {
     ...(Array.isArray(matchData?.liveStatsEvents) ? matchData.liveStatsEvents : [])
   ].filter(Boolean);
 
-  const allEvents = [...safeEvents, ...matchEvents];
+  const allEvents = mergeAndDedupeMatchEvents(safeEvents, matchEvents);
 
   const rivalGoalEvents = allEvents.filter(e => {
     if (e.isValid === false) return false;
@@ -223,7 +248,8 @@ export function getGkConcededCount(events = [], gk = null, matchData = null) {
     const isRivalGoal = t === 'gol_rival' || t === 'goal_rival';
     const isRivalShotGoal = (t === 'shot_on_target_rival' || t === 'shot_rival') && (e.outcome === 'goal' || e.isGoal === true || e.result === 'gol');
     const isGoalAgainst = (t === 'goal' || t === 'gol') && (e.team === 'rival' || e.isRival || e.playerId === 'rival');
-    return isExplicitConceded || isRivalGoal || isRivalShotGoal || isGoalAgainst;
+    const isOwnGoalAgainst = t === 'own_goal' || t === 'autogol' || t === 'gol_propia' || e.isOwnGoal === true;
+    return isExplicitConceded || isRivalGoal || isRivalShotGoal || isGoalAgainst || isOwnGoalAgainst;
   });
 
   const matchGoalsAgainst = Number(

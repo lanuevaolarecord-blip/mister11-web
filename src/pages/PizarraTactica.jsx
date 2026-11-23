@@ -54,6 +54,19 @@ import ExportAnimationModal from '../components/ExportAnimationModal';
 import { showToast } from '../utils/toast';
 import { useTranslation } from '../hooks/useTranslation';
 import {
+  BOARD_LAYERS,
+  classifyBoardObjectLayer,
+  setBoardLayer,
+  reorderBoardCanvas,
+} from '../utils/boardLayers.js';
+import {
+  BOARD_SELECTION_MODES,
+  MIN_TOUCH_TARGET_DP,
+  ensureMinTouchHitbox,
+  resolveBoardTargetAtPointer,
+  installSmartBoardSelection,
+} from '../utils/boardSelection.js';
+import {
   WHITEBOARD_CONFIG,
   getPlayerCircleRadius,
   getPlayerFontSize,
@@ -256,29 +269,17 @@ const PizarraTactica = () => {
     const fc = fcRef.current;
     if (!fc) return;
 
-    // 1. Enviar el objeto del campo (si existe) al fondo absoluto
+    // E3 (HOTFIX-10.1): Aplicar hitbox mínimo >= 48x48dp en herramientas/conos/jugadores
+    // y ordenar estrictamente por capas: FIELD (0) < SHAPES (20) < TOOLS (30) < PLAYERS (40) < BALL (50) < UI_OVERLAY (60)
     fc.getObjects().forEach(obj => {
-      if (
-        obj.data?.type === 'field' || 
-        obj.data?.type === 'campo' || 
-        obj.id === 'campo' || 
-        obj.data?.type === 'background' ||
-        (obj.fill && (obj.fill === '#1b3a2d' || obj.fill === '#132a14' || obj.fill === '#224422'))
-      ) {
-        fc.sendToBack(obj);
+      const layer = classifyBoardObjectLayer(obj);
+      setBoardLayer(obj, layer);
+      if (layer === BOARD_LAYERS.TOOLS || layer === BOARD_LAYERS.PLAYERS || layer === BOARD_LAYERS.BALL) {
+        ensureMinTouchHitbox(obj, MIN_TOUCH_TARGET_DP);
       }
     });
 
-    // 2. Traer jugadores y materiales al frente
-    fc.getObjects().forEach(obj => {
-      const isPlayer = obj.data?.type === 'player' || obj.data?.tipo === 'jugador';
-      const isMaterial = obj.data?.type === 'material' || obj.data?.tipo === 'material' || obj.data?.isMaterial || obj.type === 'image';
-      if (isPlayer || isMaterial) {
-        fc.bringToFront(obj);
-      }
-    });
-
-    // 3. Refrescar instancia
+    reorderBoardCanvas(fc);
     fc.calcOffset();
     fc.renderAll();
   }, []);
@@ -584,7 +585,20 @@ const PizarraTactica = () => {
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
-  const [activeTool,   setActiveTool]   = useState('select');
+  const [activeTool,   setActiveToolState] = useState('select');
+  const activeToolRef = useRef('select');
+  const setActiveTool = useCallback((tool) => {
+    activeToolRef.current = tool;
+    setActiveToolState(tool);
+  }, []);
+  const [selectionMode, setSelectionModeState] = useState(BOARD_SELECTION_MODES.AUTO);
+  const selectionModeRef = useRef(BOARD_SELECTION_MODES.AUTO);
+  const setSelectionMode = useCallback((mode) => {
+    selectionModeRef.current = mode;
+    setSelectionModeState(mode);
+  }, []);
+  const lastSelectedIdRef = useRef(null);
+  const [overlapPicker, setOverlapPicker] = useState(null);
   const [activeColor,  setActiveColor]  = useState('#FFFFFF');
   const [activeWidth,  setActiveWidth]  = useState(4);
   const [placingMat,   setPlacingMat]   = useState(null);
@@ -1522,24 +1536,98 @@ const PizarraTactica = () => {
     renderer.draw('full');
     frRef.current = renderer;
 
-    // 2. Fabric overlay canvas
+    // 2. Fabric overlay canvas (preserveObjectStacking: true evita que las formas suban por encima de jugadores al seleccionarse)
     const fc = new fabric.Canvas(fabricElemRef.current, {
       width: initW, height: initH,
       allowTouchScrolling: false,
       selection: true,
-      targetFindTolerance: 16,
-      perPixelTargetFind: true,
+      preserveObjectStacking: true,
+      targetFindTolerance: 12,
+      perPixelTargetFind: false,
     });
     fcRef.current = fc;
 
-    // Cerrar drawers flotantes al pulsar sobre el canvas
-    fc.on('mouse:down', () => {
+    // E3: Instalar resolución inteligente de selección (Cono vs. Jugador vs. Forma)
+    const uninstallSmartSelection = installSmartBoardSelection(fc, () => ({
+      selectionMode: selectionModeRef.current,
+      lastSelectedId: lastSelectedIdRef.current,
+      isEn,
+      isDrawingToolActive:
+        Boolean(activeToolRef.current) &&
+        activeToolRef.current !== 'select' &&
+        activeToolRef.current !== 'place_material',
+    }));
+
+    const updateLastSelected = (ev) => {
+      const sel = ev?.selected?.[0] || fc.getActiveObject();
+      if (sel) {
+        lastSelectedIdRef.current = sel.id || sel.data?.id || null;
+      }
+    };
+    fc.on('selection:created', updateLastSelected);
+    fc.on('selection:updated', updateLastSelected);
+
+    // Long-press (420ms) en zona de solape ambiguo abre selector rápido de piezas solapadas
+    let overlapPressTimer = null;
+    let pressStartPt = null;
+    const clearOverlapTimer = () => {
+      if (overlapPressTimer) {
+        clearTimeout(overlapPressTimer);
+        overlapPressTimer = null;
+      }
+    };
+
+    // Cerrar drawers flotantes al pulsar sobre el canvas y evaluar long-press de solape
+    fc.on('mouse:down', (opt) => {
       setShowTeamsDrawer(false);
       setShowMatsDrawer(false);
+      setOverlapPicker(null);
+      clearOverlapTimer();
+
+      if (activeToolRef.current && activeToolRef.current !== 'select') return;
+      if (!opt?.e) return;
+      const ptr = fc.getPointer(opt.e);
+      pressStartPt = { x: ptr.x, y: ptr.y };
+
+      const resolved = resolveBoardTargetAtPointer(fc, ptr, {
+        selectionMode: selectionModeRef.current,
+        lastSelectedId: lastSelectedIdRef.current,
+        isEn,
+      });
+
+      if (resolved && resolved.candidates && resolved.candidates.length >= 2) {
+        overlapPressTimer = setTimeout(() => {
+          setOverlapPicker({
+            x: Math.min(Math.max(24, ptr.x), Math.max(40, (fc.width || 300) - 180)),
+            y: Math.min(Math.max(24, ptr.y), Math.max(40, (fc.height || 200) - 140)),
+            candidates: resolved.candidates.slice(0, 4),
+          });
+        }, 420);
+      }
     });
 
-    // 3. ToolManager
-    const tm = new ToolManager(fc);
+    fc.on('mouse:move', (opt) => {
+      if (!pressStartPt || !overlapPressTimer || !opt?.e) return;
+      const ptr = fc.getPointer(opt.e);
+      if (Math.hypot(ptr.x - pressStartPt.x, ptr.y - pressStartPt.y) > 7) {
+        clearOverlapTimer();
+      }
+    });
+
+    fc.on('mouse:up', () => {
+      clearOverlapTimer();
+      pressStartPt = null;
+    });
+
+    // 3. ToolManager (con callback onObjectAdded para reordenar capas al dibujar cuadrado/zona)
+    const tm = new ToolManager(fc, {
+      onObjectAdded: (addedObj) => {
+        if (addedObj) {
+          setBoardLayer(addedObj, classifyBoardObjectLayer(addedObj));
+        }
+        ensurePlayersOnTop();
+      },
+    });
     tmRef.current = tm;
 
     attachListeners();
@@ -1806,6 +1894,8 @@ const PizarraTactica = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      clearOverlapTimer();
+      uninstallSmartSelection();
       // P-G2: Cancelar animación en desmontaje
       playingR.current = false;
       if (animTimeoutR.current) {
@@ -2336,18 +2426,32 @@ const PizarraTactica = () => {
     };
 
     const onDown = (o) => {
-      // Regla de resolución de gesto: Si se pulsa sobre una pieza existente, ARRASTRARLA y no colocar material encima
-      if (o.target && !isFieldLayer(o.target) && o.target.data?.type !== 'temp') {
+      // Regla de resolución de gesto: Si se pulsa sobre un jugador, balón o herramienta puntual existente (NO una forma/zona de fondo),
+      // seleccionarla/arrastrarla y no colocar material duplicado encima. Si es una zona/cuadrado (SHAPES), permitir colocar conos dentro.
+      const targetLayer = o.target ? classifyBoardObjectLayer(o.target) : BOARD_LAYERS.FIELD;
+      if (
+        o.target &&
+        !isFieldLayer(o.target) &&
+        o.target.data?.type !== 'temp' &&
+        targetLayer !== BOARD_LAYERS.SHAPES &&
+        targetLayer !== BOARD_LAYERS.FIELD
+      ) {
         if (ghostObj) ghostObj.set({ visible: false });
         fc.setActiveObject(o.target);
         fc.renderAll();
         return;
       }
 
-      // Clic sobre vacío/césped: colocar una instancia de material
+      // Clic sobre vacío/césped o dentro de una zona táctica: colocar instancia de material
       const p = fc.getPointer(o.e);
       if (ghostObj) ghostObj.set({ visible: false });
-      placeMaterialOnCanvas(fc, placingMat, p.x, p.y).then(() => {
+      placeMaterialOnCanvas(fc, placingMat, p.x, p.y).then((placedObj) => {
+        if (placedObj) {
+          const pLayer = classifyBoardObjectLayer(placedObj);
+          setBoardLayer(placedObj, pLayer);
+          ensureMinTouchHitbox(placedObj, MIN_TOUCH_TARGET_DP);
+        }
+        ensurePlayersOnTop();
         if (ghostObj) ghostObj.set({ visible: true });
         fc.renderAll();
       });
@@ -3361,6 +3465,150 @@ const PizarraTactica = () => {
             <div className="placing-hint" style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, background: 'rgba(0,0,0,0.8)', color: 'white', padding: '10px 20px', borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'center' }}>
               📍 Haz clic en el campo para colocar el material. 
               <button onClick={() => { setPlacingMat(null); setActiveTool('select'); }} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+            </div>
+          )}
+
+          {/* E3: Modo de Selección Rápida (Auto / Solo Jugadores / Solo Materiales) con Touch Target >= 48dp */}
+          <div
+            className="pizarra-selection-mode-bar"
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 990,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'rgba(11, 24, 18, 0.86)',
+              border: '1px solid rgba(212, 168, 67, 0.45)',
+              borderRadius: '24px',
+              padding: '3px 6px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.45)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            {[
+              { id: BOARD_SELECTION_MODES.AUTO, label: isEn ? 'Auto' : 'Auto' },
+              { id: BOARD_SELECTION_MODES.PLAYERS, label: isEn ? 'Players' : 'Jugadores' },
+              { id: BOARD_SELECTION_MODES.TOOLS, label: isEn ? 'Tools' : 'Materiales' },
+            ].map((m) => {
+              const isSel = selectionMode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectionMode(m.id);
+                    setOverlapPicker(null);
+                  }}
+                  style={{
+                    minHeight: '48px',
+                    minWidth: '48px',
+                    padding: '0 10px',
+                    borderRadius: '20px',
+                    border: 'none',
+                    background: isSel ? '#4CAF7D' : 'transparent',
+                    color: isSel ? '#FFFFFF' : '#CBD5E1',
+                    fontSize: '11px',
+                    fontWeight: isSel ? 800 : 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={
+                    m.id === BOARD_SELECTION_MODES.AUTO
+                      ? (isEn ? 'Smart priority selection (Auto)' : 'Selección inteligente por proximidad (Auto)')
+                      : m.id === BOARD_SELECTION_MODES.PLAYERS
+                        ? (isEn ? 'Select only players & ball' : 'Seleccionar solo jugadores y balón')
+                        : (isEn ? 'Select only cones, tools & zones' : 'Seleccionar solo conos, herramientas y zonas')
+                  }
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* E3: Selector flotante por Long-Press cuando hay solape entre Cono, Jugador y/o Zona */}
+          {overlapPicker && Array.isArray(overlapPicker.candidates) && overlapPicker.candidates.length >= 2 && (
+            <div
+              className="pizarra-overlap-picker"
+              style={{
+                position: 'absolute',
+                left: `${overlapPicker.x}px`,
+                top: `${overlapPicker.y}px`,
+                zIndex: 1005,
+                background: 'rgba(15, 36, 25, 0.96)',
+                border: '1.5px solid #D4A843',
+                borderRadius: '12px',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                minWidth: '170px',
+                boxShadow: '0 10px 28px rgba(0,0,0,0.65)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px 4px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>
+                  {isEn ? 'Select Element' : 'Elegir pieza solapada'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOverlapPicker(null)}
+                  style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '14px', cursor: 'pointer', padding: '2px 6px' }}
+                >
+                  ✕
+                </button>
+              </div>
+              {overlapPicker.candidates.map((cand, idx) => (
+                <button
+                  key={`ov_${idx}`}
+                  type="button"
+                  onClick={() => {
+                    const fc = fcRef.current;
+                    if (fc && cand.obj) {
+                      lastSelectedIdRef.current = cand.obj.id || cand.obj.data?.id || null;
+                      fc.setActiveObject(cand.obj);
+                      fc.requestRenderAll();
+                    }
+                    setOverlapPicker(null);
+                  }}
+                  style={{
+                    minHeight: '48px',
+                    minWidth: '48px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    background: idx === 0 ? 'rgba(76, 175, 125, 0.22)' : 'rgba(255,255,255,0.06)',
+                    color: '#FFFFFF',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                  }}
+                >
+                  <span>{cand.label}</span>
+                  <span style={{ fontSize: '10px', color: '#D4A843', fontWeight: 800 }}>
+                    {cand.layer === BOARD_LAYERS.PLAYERS
+                      ? (isEn ? 'PLAYER' : 'JUG')
+                      : cand.layer === BOARD_LAYERS.BALL
+                        ? (isEn ? 'BALL' : 'BALÓN')
+                        : cand.layer === BOARD_LAYERS.SHAPES
+                          ? (isEn ? 'ZONE' : 'ZONA')
+                          : (isEn ? 'TOOL' : 'MAT')}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 

@@ -15,11 +15,12 @@ export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exercise
       <div
         className="exercise-illustration-frame exercise-illustration-hybrid"
         style={{
-          margin: compact ? '4px 0 8px 0' : '10px 0 14px 0',
+          margin: compact ? '6px 0 10px 0' : '10px 0 14px 0',
           borderRadius: '8px',
           overflow: 'hidden',
           border: '1px solid rgba(27, 58, 45, 0.2)',
-          background: '#F2F2E8'
+          background: '#F2F2E8',
+          width: '100%'
         }}
       >
         <img
@@ -27,8 +28,9 @@ export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exercise
           alt={exerciseName || resolvedId}
           style={{
             width: '100%',
-            height: compact ? '140px' : '280px',
-            objectFit: 'contain',
+            height: 'auto',
+            aspectRatio: '4 / 5',
+            objectFit: 'cover',
             display: 'block',
             background: '#F2F2E8'
           }}
@@ -36,7 +38,7 @@ export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exercise
         <div style={{
           fontSize: '0.72rem',
           color: '#1B3A2D',
-          padding: '4px 8px',
+          padding: '6px 10px',
           background: '#F7F5F0',
           borderTop: '1px solid rgba(27, 58, 45, 0.12)',
           display: 'flex',
@@ -44,9 +46,9 @@ export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exercise
           justifyContent: 'space-between',
           gap: '8px'
         }}>
-          <span style={{ fontWeight: 700 }}>{t('exercise.hybridPreviewLabel', 'Rayos-X 3D Híbrido')}</span>
+          <span style={{ fontWeight: 700 }}>{t('exercise.hybridPreviewLabel', {}, 'Rayos-X 3D Híbrido')}</span>
           <span style={{ color: '#9C6A3B', fontWeight: 700 }}>
-            {t('exercise.pilotInReview', 'Piloto en Revisión')}
+            {t('exercise.pilotInReview', {}, 'Piloto en Revisión')}
           </span>
         </div>
       </div>

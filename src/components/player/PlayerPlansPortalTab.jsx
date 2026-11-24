@@ -362,7 +362,10 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     const rawMaterial = ex.material_preferido || ex.material || catMatch?.material_preferido || null;
     const preferredMaterial = rawMaterial ? localizeMaterial(rawMaterial, t) : null;
 
+    const resolvedExerciseId = ex.exerciseId || ex.id || catMatch?.id || foundInTeam?.id || null;
+
     return {
+      id: resolvedExerciseId,
       name,
       category,
       sets,
@@ -656,6 +659,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                               <ExerciseIllustrationBlock 
                                 illustration={details.illustration} 
                                 exerciseName={details.name} 
+                                exerciseId={details.id}
                                 compact={true} 
                               />
 

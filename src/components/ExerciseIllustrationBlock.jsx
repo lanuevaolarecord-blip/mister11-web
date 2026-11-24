@@ -2,9 +2,56 @@ import React from 'react';
 import { ImageOff, ShieldAlert } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { getPilotIllustration } from '../data/vectorIllustrations';
+import { getHybridPilotUrl } from '../data/hybridPilotAssets';
 
 export const ExerciseIllustrationBlock = ({ illustration, exerciseName, exerciseId, compact = false }) => {
   const { t, language } = useTranslation();
+  const resolvedId = exerciseId || illustration?.id;
+  const hybridPilotUrl = getHybridPilotUrl(resolvedId);
+
+  // Piloto Híbrido Rayos-X 3D (Batch 01 en revisión)
+  if (hybridPilotUrl) {
+    return (
+      <div
+        className="exercise-illustration-frame exercise-illustration-hybrid"
+        style={{
+          margin: compact ? '4px 0 8px 0' : '10px 0 14px 0',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          border: '1px solid rgba(27, 58, 45, 0.2)',
+          background: '#F2F2E8'
+        }}
+      >
+        <img
+          src={hybridPilotUrl}
+          alt={exerciseName || resolvedId}
+          style={{
+            width: '100%',
+            height: compact ? '140px' : '280px',
+            objectFit: 'contain',
+            display: 'block',
+            background: '#F2F2E8'
+          }}
+        />
+        <div style={{
+          fontSize: '0.72rem',
+          color: '#1B3A2D',
+          padding: '4px 8px',
+          background: '#F7F5F0',
+          borderTop: '1px solid rgba(27, 58, 45, 0.12)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px'
+        }}>
+          <span style={{ fontWeight: 700 }}>{t('exercise.hybridPreviewLabel', 'Rayos-X 3D Híbrido')}</span>
+          <span style={{ color: '#9C6A3B', fontWeight: 700 }}>
+            {t('exercise.pilotInReview', 'Piloto en Revisión')}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   // B5-A: Si es ilustración vectorial del piloto
   if (illustration?.type === 'vector_svg') {

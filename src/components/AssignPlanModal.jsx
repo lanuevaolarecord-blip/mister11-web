@@ -307,6 +307,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                         <ExerciseIllustrationBlock 
                           illustration={ex.illustration} 
                           exerciseName={displayName} 
+                          exerciseId={ex.id}
                           compact={true} 
                         />
 

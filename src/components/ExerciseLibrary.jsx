@@ -20,6 +20,7 @@ import { useExercises, getLocalizedExercise } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import ExerciseIllustrationBlock from './ExerciseIllustrationBlock';
+import { getHybridPilotUrl } from '../data/hybridPilotAssets';
 import { ClinicalFallbackChip } from './common/ClinicalFallbackChip';
 import { PilotIllustrationsReview } from './admin/PilotIllustrationsReview';
 import './ExerciseLibrary.css';
@@ -179,6 +180,14 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                 </div>
               </div>
               <div className="exercise-card-body">
+                {getHybridPilotUrl(ex.id) && (
+                  <ExerciseIllustrationBlock
+                    illustration={ex.illustration}
+                    exerciseName={ex.name || ex.titulo || ex.title}
+                    exerciseId={ex.id}
+                    compact={true}
+                  />
+                )}
                 <span className={`badge-cat cat-${ex.category}`}>
                   {ex.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
                    ex.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
